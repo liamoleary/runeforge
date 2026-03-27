@@ -23,6 +23,7 @@
   --blue:     #4488dd;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+button,a,[onclick]{touch-action:manipulation}
 html,body{height:100%;overflow-x:hidden}
 body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,serif;font-size:15px}
 
@@ -344,7 +345,7 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
       <div class="stat-box">
         <div class="sb-lbl">Hit Points</div>
         <div class="sb-val" id="hp-val">10</div>
-        <div class="sb-bar"><div class="sb-bar-fill" id="hp-fill" style="background:#e03030"></div></div>
+ &      <div class="sb-bar"><div class="sb-bar-fill" id="hp-fill" style="background:#e03030"></div></div>
       </div>
       <div class="stat-box">
         <div class="sb-lbl">Attack</div>
@@ -419,9 +420,9 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 </div>
 
 <script>
-// ═══════════════════════════════════════
+// ════════════════════════════════════════
 //  DATA
-// ═══════════════════════════════════════
+// ══════════════════════════════════════
 const SKILLS = {
   woodcutting:{name:'Woodcutting',icon:'🪓',color:'#8B4513'},
   mining:     {name:'Mining',     icon:'⛏️', color:'#909090'},
@@ -430,7 +431,7 @@ const SKILLS = {
   combat:     {name:'Combat',     icon:'⚔️', color:'#DC143C'},
   cooking:    {name:'Cooking',    icon:'🍳', color:'#FF6347'},
   fletching:  {name:'Fletching',  icon:'🏹',color:'#228B22'},
-  crafting:   {name:'Crafting',   icon:'🧵', color:'#9370DB'},
+  crafting:   {name:'Crafting',   icon:'🧵', color:'#937LDB'},
 };
 
 // XP table (classic OSRS-style)
@@ -497,7 +498,7 @@ const ACTIONS = {
     {id:'cb1',name:'Goblin',     icon:'👺',req:5, xp:25, dur:3200,mhp:6,  dmg:[1,4], drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:8,c:.8},{id:'cowhide',n:1,c:.3}]},
     {id:'cb2',name:'Giant Rat',  icon:'🐀',req:10,xp:35, dur:3500,mhp:8,  dmg:[1,5], drops:[{id:'bones',n:1,c:1},{id:'raw_meat',n:1,c:.7},{id:'gold_coins',n:5,c:.5}]},
     {id:'cb3',name:'Guard',      icon:'💂',req:22,xp:60, dur:4000,mhp:14, dmg:[2,6], drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:28,c:.9},{id:'iron_ore',n:1,c:.4}]},
-    {id:'cb4',name:'Dark Knight',icon:'🗡️',req:40,xp:120,dur:4500,mhp:28, dmg:[3,9], drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:65,c:1},{id:'iron_bar',n:1,c:.5},{id:'iron_sword',n:1,c:.1}]},
+ &  {id:'cb4',name:'Dark Knight',icon:'🗡️',req:40,xp:120,dur:4500,mhp:28, dmg:[3,9], drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:65,c:1},{id:'iron_bar',n:1,c:.5},{id:'iron_sword',n:1,c:.1}]},
   ],
 };
 
@@ -523,7 +524,7 @@ const ITEMS = {
   c_sardine:    {name:'Sardine',         icon:'🐟',sell:12,  type:'food',hp:4},
   c_trout:      {name:'Trout',           icon:'🐠',sell:25,  type:'food',hp:7},
   c_salmon:     {name:'Salmon',          icon:'🐡',sell:35,  type:'food',hp:9},
-  c_lobster:    {name:'Lobster',         icon:'🦞',sell:55,  type:'food',hp:12},
+  c_lobster:    {name:'Lobster', &       icon:'🦞',sell:55,  type:'food',hp:12},
   c_meat:       {name:'Cooked Meat',     icon:'🍖',sell:15,  type:'food',hp:5},
   bones:        {name:'Bones',           icon:'🦴',sell:5,   type:'res'},
   feather:      {name:'Feathers',        icon:'🪶',sell:2,   type:'res'},
@@ -531,7 +532,7 @@ const ITEMS = {
   leather:      {name:'Leather',         icon:'📜',sell:15,  type:'res'},
   arrow_shaft:  {name:'Arrow Shafts',    icon:'↑', sell:1,   type:'res'},
   iron_arrow:   {name:'Iron Arrows',     icon:'🪃',sell:3,   type:'res'},
-  shortbow:     {name:'Shortbow',        icon:'🏹',sell:40,  type:'weapon',atk:3},
+  shortbow: &   {name:'Shortbow',        icon:'🏹',sell:40,  type:'weapon',atk:3},
   oak_bow:      {name:'Oak Shortbow',    icon:'🏹',sell:90,  type:'weapon',atk:6},
   willow_bow:   {name:'Willow Bow',      icon:'🏹',sell:180, type:'weapon',atk:10},
   bronze_sword: {name:'Bronze Sword',    icon:'🗡️',sell:50,  type:'weapon',atk:2},
@@ -549,7 +550,7 @@ const SHOP=[
   {id:'pick',    name:'Mithril Pick',  icon:'⛏️', cost:120, eff:'Mining +15% faster',  up:'spd_mine'},
   {id:'rod',     name:'Fly Rod',       icon:'🎣', cost:60,  eff:'Fishing +15% faster', up:'spd_fish'},
   {id:'tinder',  name:'Tinderbox',     icon:'🔥',cost:25,  eff:'Cooking +15% faster', up:'spd_cook'},
-  {id:'hammer',  name:'Smith Hammer',  icon:'🔨',cost:90,  eff:'Smithing +15% faster',up:'spd_smith'},
+  {id:'nammer',  name:'Smith Hammer',  icon:'🔨',cost:90,  eff:'Smithing +15% faster',up:'spd_smith'},
   {id:'combat_p',name:'Combat Potion', icon:'⚗️', cost:50,  eff:'+2 Attack boost',     up:'pot_atk'},
   {id:'bread',   name:'Bread x5',      icon:'🍞',cost:25,  eff:'Heals 4 HP each',     up:null,item:'c_meat',qty:5},
   {id:'pot_hp',  name:'HP Potion',     icon:'🧪', cost:40,  eff:'Restore 15 HP now',   up:null,item:'_heal15'},
@@ -585,7 +586,7 @@ function load(){
 
 // ═══════════════════════════════════════
 //  SKILL HELPERS
-// ═══════════════════════════════════════
+// ══════════════════════════════════════
 function slvl(sk){return lvlOf(G.skills[sk]?.xp||0);}
 function sxp(sk){return G.skills[sk]?.xp||0;}
 function xpPct(sk){
@@ -599,7 +600,7 @@ function addXP(sk,amt){
   const nl=slvl(sk);
   if(nl>ol){
     showLvlUp(sk,nl);
-    log(`<span class="ll">⭐ LEVEL UP! ${SKILLS[sk].name} is now level ${nl}!</span>`);
+    log('<span class="ll">\u2B50 LEVEL UP! '+SKILLS[sk].name+' is now level '+nl+'!</span>');
     if(sk==='combat'){G.maxhp=10+Math.floor(nl*1.6);G.hp=Math.min(G.hp+3,G.maxhp);}
   }
 }
@@ -625,7 +626,7 @@ function getDef(){
   return d;
 }
 
-// ═══════════════════════════════════════
+// ══════════════════════════════════════
 //  GAME LOOP
 // ═══════════════════════════════════════
 let lastT=Date.now();
@@ -646,13 +647,13 @@ function tick(){
           const d=Math.max(0,Math.floor(mn+Math.random()*(mx-mn+1))-getDef());
           if(d>0){
             G.hp=Math.max(0,G.hp-d);
-            log(`<span class="lc">🐾 ${action.name} hits you for ${d}!</span>`);
+            log('<span class="lc">\uD83D\uDC3E '+action.name+' hits you for '+d+'!</span>');
             document.body.classList.add('dmg-flash');
             setTimeout(()=>document.body.classList.remove('dmg-flash'),500);
           }
           if(G.hp<=0){
             G.hp=1;
-            log(`<span class="lc">💀 Near death! Eat food immediately!</span>`);
+            log('<span class="lc">\uD83D\uDC80 Near death! Eat food immediately!</span>');
             stopTask();
           }
         }
@@ -679,7 +680,7 @@ function completeTick(){
   if(a.need){
     for(const c of a.need){
       if(!has(c.id,c.n)){
-        log(`❌ Out of ${ITEMS[c.id]?.name||c.id}. Task stopped.`);
+        log('\u274C Out of '+(ITEMS[c.id]?.name||c.id)+'. Task stopped.');
         stopTask();return;
       }
     }
@@ -694,24 +695,24 @@ function completeTick(){
     if(G.mhp<=0){
       // Monster dead
       addXP(sk,a.xp);
-      log(`<span class="lc">☠️ You slew the ${a.name}! (+${a.xp} XP)</span>`);
+      log('<span class="lc">\u2620\uFE0F You slew the '+a.name+'! (+'+a.xp+' XP)</span>');
       for(const d of a.drops){
         if(Math.random()<d.c){
-          if(d.id==='gold_coins'){G.gold+=d.n;log(`<span class="lg">🪙 Looted ${d.n} gold.</span>`);}
-          else{give(d.id,d.n);log(`<span class="li">📦 ${ITEMS[d.id]?.icon||''}${ITEMS[d.id]?.name||d.id} x${d.n}</span>`);}
+          if(d.id==='gold_coins'){G.gold+=d.n;log('<span class="lg">\uD83E\uDE99 Looted '+d.n+' gold.</span>');}
+          else{give(d.id,d.n);log('<span class="li">\uD83D\uDCE6 '+(ITEMS[d.id]?.icon||'')+(ITEMS[d.id]?.name||d.id)+' x'+d.n+'</span>');}
         }
       }
       G.mhp=a.mhp; // Respawn monster
     } else {
       addXP(sk,a.xp/4); // small XP per hit
-      log(`<span class="lc">⚔️ Hit ${a.name} for ${dmgDone}. HP: ${G.mhp}/${G.mmhp}</span>`);
+      log('<span class="lc">\u2694\uFE0F Hit '+a.name+' for '+dmgDone+'. HP: '+G.mhp+'/'+G.mmhp+'</span>');
     }
   } else {
     // Non-combat production
     addXP(sk,a.xp);
     for(const p of a.prod){give(p.id,p.n);}
-    const desc=a.prod.map(p=>`${ITEMS[p.id]?.icon||''}${ITEMS[p.id]?.name||p.id}×${p.n}`).join(', ');
-    log(`${a.icon} ${desc} <span class="lx">(+${a.xp}xp ${SKILLS[sk].name})</span>`);
+    const desc=a.prod.map(p=>(ITEMS[p.id]?.icon||'')+(ITEMS[p.id]?.name||p.id)+'\xd7'+p.n).join(', ');
+    log(a.icon+' '+desc+' <span class="lx">(+'+a.xp+'xp '+SKILLS[sk].name+')</span>');
   }
   showXPFloat(a.xp,sk);
   refreshButtons(G.tab);
@@ -733,10 +734,10 @@ function startTask(id){
   const a=findAction(id);if(!a)return;
   const sk=findSkill(id);
   const lv=slvl(sk);
-  if(lv<a.req){log(`❌ Need level ${a.req} ${SKILLS[sk].name}.`);return;}
+  if(lv<a.req){log('\u274C Need level '+a.req+' '+SKILLS[sk].name+'.');return;}
   if(a.need){
     for(const c of a.need){
-      if(!has(c.id,c.n)){log(`❌ Need ${ITEMS[c.id]?.name||c.id} ×${c.n}.`);return;}
+      if(!has(c.id,c.n)){log('\u274C Need '+(ITEMS[c.id]?.name||c.id)+' \xd7'+c.n+'.');return;}
     }
   }
   if(G.task===id){stopTask();return;}
@@ -750,13 +751,13 @@ function startTask(id){
 
   if(a.mhp!==undefined){G.mhp=a.mhp;G.mmhp=a.mhp;}
 
-  document.getElementById('task-title').textContent=`${a.icon} ${a.name}`;
-  document.getElementById('task-xp-lbl').textContent=`+${a.xp} XP · ${SKILLS[sk].name}`;
-  document.getElementById('task-dur-lbl').textContent=`~${(G.dur/1000).toFixed(1)}s`;
+  document.getElementById('task-title').textContent=a.icon+' '+a.name;
+  document.getElementById('task-xp-lbl').textContent='+'+a.xp+' XP \u00b7 '+SKILLS[sk].name;
+  document.getElementById('task-dur-lbl').textContent='~'+(G.dur/1000).toFixed(1)+'s';
   document.getElementById('task-stop').style.display='block';
 
   anim();refreshButtons(G.tab);
-  log(`▶ Started: ${a.name}`);
+  log('\u25b6 Started: '+a.name);
 }
 
 function stopTask(){
@@ -776,12 +777,12 @@ function updateUI(){
   // Skills grid
   for(const sk of Object.keys(SKILLS)){
     const lv=slvl(sk),pc=xpPct(sk);
-    const el=document.getElementById(`sk-${sk}`);
+    const el=document.getElementById('sk-'+sk);
     if(!el)continue;
     el.querySelector('.sk-lvl').textContent=lv;
     el.querySelector('.xp-fill').style.width=pc+'%';
-    const nxt=XP[Math.min(lv+1,99)],cur=XP[lv];
-    el.querySelector('.xp-label').textContent=`${sxp(sk)-cur}/${nxt-cur}`;
+    const lxt=XP[Math.min(lv+1,99)],cur=XP[lv];
+    el.querySelector('.xp-label').textContent=(sxp(sk)-cur)+'/'+(nxt-cur);
     if(G.task&&findSkill(G.task)===sk)el.classList.add('sk-active');
     else el.classList.remove('sk-active');
   }
@@ -790,7 +791,7 @@ function updateUI(){
   const hppc=(G.hp/G.maxhp)*100;
   document.getElementById('hm').style.width=hppc+'%';
   document.getElementById('hp-fill').style.width=hppc+'%';
-  document.getElementById('hp-val').textContent=`${Math.ceil(G.hp)}/${G.maxhp}`;
+  document.getElementById('hp-val').textContent=Math.ceil(G.hp)+'/'+G.maxhp;
   const atk=getAtk(),def=getDef();
   document.getElementById('atk-val').textContent=atk;
   document.getElementById('def-val').textContent=def;
@@ -798,7 +799,7 @@ function updateUI(){
   document.getElementById('def-fill').style.width=Math.min(100,def*10)+'%';
 
   // Gold
-  document.getElementById('gld').textContent=`🪙 ${G.gold}`;
+  document.getElementById('gld').textContent='\uD83E\uDE99 '+G.gold;
 
   // Inventory
   renderInv();
@@ -808,7 +809,7 @@ function updateUI(){
 
   // Inv count
   const cnt=Object.values(G.inv).filter(v=>v>0).length;
-  document.getElementById('inv-count').textContent=`${cnt}/28`;
+  document.getElementById('inv-count').textContent=cnt+'/28';
 }
 
 function renderInv(){
@@ -819,7 +820,8 @@ function renderInv(){
     const it=ITEMS[id];if(!it)return;
     const d=document.createElement('div');
     d.className='iv-slot has';
-    d.innerHTML<`<span class="iv-ico">${it.icon}</span><span class="iv-nm">${it.name}</span>${qty>1?`<span class="iv-qty">${qty>=1000?(qty/1000).toFixed(1)+'k':qty}</span>`:''}`;
+    const qtyStr=qty>1?'<span class="iv-qty">'+(qty>=1000?(qty/1000).toFixed(1)+'k':qty)+'</span>':'';
+    d.innerHTML='<span class="iv-ico">'+it.icon+'</span><span class="iv-nm">'+it.name+'</span>'+qtyStr;
     d.onclick=()=>useItem(id);
     grid.appendChild(d);
   });
@@ -833,13 +835,13 @@ function renderInv(){
 function renderEquip(){
   const wp=G.equip.weapon,am=G.equip.armour;
   const wel=document.getElementById('eq-wp'),ael=document.getElementById('eq-am'),fel=document.getElementById('eq-fd');
-  if(wp&&ITEMS[wp]){wel.innerHTML<`<span class="eq-icon">${ITEMS[wp].icon}</span><span class="eq-name">${ITEMS[wp].name}</span>`;wel.classList.add('on');}
-  else{wel.innerHTML=`<span class="eq-icon">🗡️</span><span class="eq-lbl">Weapon</span>`;wel.classList.remove('on');}
-  if(am&&ITEMS[am]){ael.innerHTML=`<span class="eq-icon">${ITEMS[am].icon}</span><span class="eq-name">${ITEMS[am].name}</span>`;ael.classList.add('on');}
-  else{ael.innerHTML<`<span class="eq-icon">🛡️</span><span class="eq-lbl">Armour</span>`;ael.classList.remove('on');}
+  if(wp&&ITEMS[wp]){wel.innerHTML='<span class="eq-icon">'+ITEMS[wp].icon+'</span><span class="eq-name">'+ITEMS[wp].name+'</span>';wel.classList.add('on');}
+  else{wel.innerHTML='<span class="eq-icon">\uD83D\uDDE1\uFE0F</span><span class="eq-lbl">Weapon</span>';wel.classList.remove('on');}
+  if(am&&ITEMS[am]){ael.innerHTML='<span class="eq-icon">'+ITEMS[am].icon+'</span><span class="eq-name">'+ITEMS[am].name+'</span>';ael.classList.add('on');}
+  else{ael.innerHTML='<span class="eq-icon">\uD83D\uDEE1\uFE0F</span><span class="eq-lbl">Armour</span>';ael.classList.remove('on');}
   const foods=Object.entries(G.inv).filter(([id,q])=>ITEMS[id]?.type==='food'&&q>0).sort((a,b)=>(ITEMS[b[0]].hp||0)-(ITEMS[a[0]].hp||0));
-  if(foods.length){const[fid,fq]=foods[0];fel.innerHTML=`<span class="eq-icon">${ITEMS[fid].icon}</span><span class="eq-name">${ITEMS[fid].name}(${fq})</span>`;fel.classList.add('on');}
-  else{fel.innerHTML<`<span class="eq-icon">🍖</span><span class="eq-lbl">Food</span>`;fel.classList.remove('on');}
+  if(foods.length){const[fid,fq]=foods[0];fel.innerHTML='<span class="eq-icon">'+ITEMS[fid].icon+'</span><span class="eq-name">'+ITEMS[fid].name+'('+fq+')</span>';fel.classList.add('on');}
+  else{fel.innerHTML='<span class="eq-icon">\uD83C\uDF56</span><span class="eq-lbl">Food</span>';fel.classList.remove('on');}
 }
 
 // ═══════════════════════════════════════
@@ -849,8 +851,21 @@ function buildSkills(){
   const g=document.getElementById('skills-grid');
   for(const[sk,info]of Object.entries(SKILLS)){
     const d=document.createElement('div');
-    d.className='sk-card';d.id=`sk-${sk}`;
-    d.innerHTML<`<div class="sk-top"><span class="sk-icon">${info.icon}</span><div><div class="sk-name">${info.name}</div><div class="sk-lvl">1</div></div></div><div class="xp-track"><div class="xp-fill" style="background:${info.color};width:0%"></div></div><div class="xp-label">0/83</div>`;
+    d.className='sk-card';d.id='sk-'+sk;
+    // Build inner DOM nodes (avoids template literal encoding issues)
+    const top=document.createElement('div');top.className='sk-top';
+    const ico=document.createElement('span');ico.className='sk-icon';ico.textContent=info.icon;
+    const inf=document.createElement('div');
+    const nm=document.createElement('div');nm.className='sk-name';nm.textContent=info.name;
+    const lv=document.createElement('div');lv.className='sk-lvl';lv.textContent='1';
+    inf.appendChild(nm);inf.appendChild(lv);
+    top.appendChild(ico);top.appendChild(inf);
+    const trk=document.createElement('div');trk.className='xp-track';
+    const fil=document.createElement('div');fil.className='xp-fill';
+    fil.style.background=info.color;fil.style.width='0%';
+    trk.appendChild(fil);
+    const lbl=document.createElement('div');lbl.className='xp-label';lbl.textContent='0/83';
+    d.appendChild(top);d.appendChild(trk);d.appendChild(lbl);
     d.onclick=()=>switchTab(sk);
     g.appendChild(d);
   }
@@ -861,12 +876,13 @@ function buildTabs(){
   for(const[sk,info]of Object.entries(SKILLS)){
     // Tab
     const t=document.createElement('div');
-    t.className='tab'+(sk===G.tab?' active':'');t.id=`tab-${sk}`;
-    t.innerHTML<`<span class="tab-icon">${info.icon}</span>${info.name.slice(0,5)}`;
+    t.className='tab'+(sk===G.tab?' active':'');t.id='tab-'+sk;
+    const tico=document.createElement('span');tico.className='tab-icon';tico.textContent=info.icon;
+    t.appendChild(tico);t.appendChild(document.createTextNode(info.name.slice(0,5)));
     t.onclick=()=>switchTab(sk);tabs.appendChild(t);
     // Page
     const p=document.createElement('div');
-    p.className='act-page'+(sk===G.tab?' active':'');p.id=`page-${sk}`;
+    p.className='act-page'+(sk===G.tab?' active':'');p.id='page-'+sk;
     p.innerHTML=buildActPage(sk);
     pages.appendChild(p);
   }
@@ -877,15 +893,15 @@ function buildActPage(sk){
   let html='<div class="act-grid">';
   for(const a of acts){
     let meta='';
-    if(a.need)meta=a.need.map(c=>`${ITEMS[c.id]?.icon||''}×${c.n}`).join(' ');
-    else if(a.mhp)meta=`❤️${a.mhp} hp`;
-    else meta=`~${(a.dur/1000).toFixed(1)}s`;
-    html+=`<button class="act-btn" data-id="${a.id}" data-req="${a.req}" onclick="startTask('${a.id}')">
-      <span class="ab-icon">${a.icon}</span>
-      <span class="ab-name">${a.name}</span>
-      <span class="ab-req">Lv.${a.req} · +${a.xp}xp</span>
-      <span class="ab-meta">${meta}</span>
-    </button>`;
+    if(a.need)meta=a.need.map(c=>(ITEMS[c.id]?.icon||'')+'x'+c.n).join(' ');
+    else if(a.mhp)meta='\u2764\ufe0f'+a.mhp+' hp';
+    else meta='~'+(a.dur/1000).toFixed(1)+'s';
+    html+='<button class="act-btn" data-id="'+a.id+'" data-req="'+a.req+'" onclick="startTask(\''+a.id+'\')">'
+         +'<span class="ab-icon">'+a.icon+'</span>'
+         +'<span class="ab-name">'+a.name+'</span>'
+         +'<span class="ab-req">Lv.'+a.req+' \u00b7 +'+a.xp+'xp</span>'
+         +'<span class="ab-meta">'+meta+'</span>'
+         +'</button>';
   }
   return html+'</div>';
 }
@@ -894,14 +910,14 @@ function switchTab(sk){
   G.tab=sk;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.act-page').forEach(p=>p.classList.remove('active'));
-  document.getElementById(`tab-${sk}`)?.classList.add('active');
-  document.getElementById(`page-${sk}`)?.classList.add('active');
+  document.getElementById('tab-'+sk)?.classList.add('active');
+  document.getElementById('page-'+sk)?.classList.add('active');
   refreshButtons(sk);
 }
 
 function refreshButtons(sk){
   const lv=slvl(sk);
-  document.querySelectorAll(`#page-${sk} .act-btn`).forEach(btn=>{
+  document.querySelectorAll('#page-'+sk+' .act-btn').forEach(btn=>{
     const req=parseInt(btn.dataset.req);
     btn.classList.toggle('locked',lv<req);
     btn.classList.toggle('going',btn.dataset.id===G.task);
@@ -913,7 +929,7 @@ function buildShop(){
   SHOP.forEach(s=>{
     const d=document.createElement('div');
     d.className='sh-item'+(s.up&&G.upgrades[s.up]?' owned':'');
-    d.innerHTML<`<div class="sh-top"><span class="sh-icon">${s.icon}</span><span class="sh-name">${s.name}</span></div><div class="sh-price">🪙 ${s.cost}</div><div class="sh-eff">${s.eff}</div>`;
+    d.innerHTML='<div class="sh-top"><span class="sh-icon">'+s.icon+'</span><span class="sh-name">'+s.name+'</span></div><div class="sh-price">\ud83e\ude99 '+s.cost+'</div><div class="sh-eff">'+s.eff+'</div>';
     d.onclick=()=>buy(s);g.appendChild(d);
   });
 }
@@ -926,21 +942,21 @@ function useItem(id){
   if(it.type==='food'){
     if(G.hp>=G.maxhp){log('❤️ Already full HP!');return;}
     take(id,1);G.hp=Math.min(G.maxhp,G.hp+(it.hp||3));
-    log(`🍽️ Ate ${it.name} and restored ${it.hp} HP.`);
+    log('\uD83C\uDF7D\uFE0F Ate '+it.name+' and restored '+it.hp+' HP.');
   } else if(it.type==='weapon'){
-    if(G.equip.weapon===id){G.equip.weapon=null;log(`Unequipped ${it.name}`);}
-    else{G.equip.weapon=id;log(`⚔️ Equipped ${it.name} (+${it.atk} Atk)`);}
+    if(G.equip.weapon===id){G.equip.weapon=null;log('Unequipped '+it.name);}
+    else{G.equip.weapon=id;log('\u2694\uFE0F Equipped '+it.name+' (+'+it.atk+' Atk)');}
   } else if(it.type==='armour'){
-    if(G.equip.armour===id){G.equip.armour=null;log(`Unequipped ${it.name}`);}
-    else{G.equip.armour=id;log(`🛡️ Equipped ${it.name} (+${it.def} Def)`);}
+    if(G.equip.armour===id){G.equip.armour=null;log('Unequipped '+it.name);}
+    else{G.equip.armour=id;log('\uD83D\uDEE1\uFE0F Equipped '+it.name+' (+'+it.def+' Def)');}
   } else {
-    log(`${it.icon} ${it.name} ×${G.inv[id]||0}`);
+    log(it.icon+' '+it.name+' \xd7'+(G.inv[id]||0));
   }
 }
 
 function unequipSlot(slot){
   G.equip[slot]=null;
-  log(`Unequipped ${slot}.`);
+  log('Unequipped '+slot+'.');
 }
 
 function eatFood(){
@@ -953,13 +969,13 @@ function eatFood(){
 function sellAll(){
   let gold=0,sold=[];
   for(const[id,qty]of Object.entries(G.inv)){
-    if(!xty||qty<=0)continue;
+    if(!qty||qty<=0)continue;
     const it=ITEMS[id];if(!it)continue;
     if(it.type==='weapon'||it.type==='armour'||it.type==='food'||it.type==='accessory')continue;
-    if(it.type==='currency'){gold+=qty;sold.push(`${it.icon}×${qty}`);delete G.inv[id];continue;}
-    gold+=it.sell*qty;sold.push(`${it.icon}×${qty}`);delete G.inv[id];
+    if(it.type==='currency'){gold+=qty;sold.push(it.icon+'\xd7'+qty);delete G.inv[id];continue;}
+    gold+=it.sell*qty;sold.push(it.icon+'\xd7'+qty);delete G.inv[id];
   }
-  if(gold>0){G.gold+=gold;log(`<span class="lg">💰 Sold for ${gold} gp (${sold.join(', ')})</span>`);}
+  if(gold>0){G.gold+=gold;log('<span class="lg">\uD83D\uDCB0 Sold for '+gold+' gp ('+sold.join(', ')+')</span>');}
   else log('Nothing to sell.');
 }
 
@@ -968,16 +984,16 @@ function buryBones(){
   const n=G.inv['bones']||0;
   take('bones',n);
   addXP('combat',n*5);
-  log(`🦴 Buried ${n} bones. +${n*5} Combat XP.`);
+  log('\uD83E\uDDB4 Buried '+n+' bones. +'+(n*5)+' Combat XP.');
 }
 
 function buy(s){
-  if(G.gold<s.cost){log(`❌ Need ${s.cost} gp (have ${G.gold}).`);return;}
-  if(s.up&&G.upgrades[s.up]){log(`Already owned!`);return;}
+  if(G.gold<s.cost){log('\u274C Need '+s.cost+' gp (have '+G.gold+').');return;}
+  if(s.up&&G.upgrades[s.up]){log('Already owned!');return;}
   G.gold-=s.cost;
-  if(s.item==='_heal15'){G.hp=Math.min(G.maxhp,G.hp+15);log(`⚗️ Drank HP Potion. +15 HP!`);}
-  else if(s.item){give(s.item,s.qty);log(`🛒 Bought ${s.name}.`);}
-  else if(s.up){G.upgrades[s.up]=true;log(`✅ Purchased ${s.name}! ${s.eff}`);}
+  if(s.item==='_heal15'){G.hp=Math.min(G.maxhp,G.hp+15);log('\u2697\uFE0F Drank HP Potion. +15 HP!');}
+  else if(s.item){give(s.item,s.qty);log('\uD83D\uDED2 Bought '+s.name+'.');}
+  else if(s.up){G.upgrades[s.up]=true;log('\u2705 Purchased '+s.name+'! '+s.eff);}
   // Rebuild shop
   document.getElementById('shop-grid').innerHTML='';buildShop();
 }
@@ -1010,59 +1026,53 @@ function anim(){
     case 'woodcutting':
       al.style.animation='chop .65s ease-in-out infinite';
       ar.style.animation='chop .65s ease-in-out infinite .32s';
-      prop.innerHTML=`
-        <div class="prop-tree-t" style="animation:sway 2.5s ease-in-out infinite;transform-origin:bottom center"></div>
-        <div class="prop-tree-l" style="animation:sway 2.5s ease-in-out infinite;transform-origin:bottom center"></div>
-        <div class="prop-tool" style="bottom:28px;right:55px;transform:rotate(-25deg)">🪓</div>`;
+      prop.innerHTML='<div class="prop-tree-t" style="animation:sway 2.5s ease-in-out infinite;transform-origin:bottom center"></div>'
+        +'<div class="prop-tree-l" style="animation:sway 2.5s ease-in-out infinite;transform-origin:bottom center"></div>'
+        +'<div class="prop-tool" style="bottom:28px;right:55px;transform:rotate(-25deg)">\uD83E\uDE93</div>';
       break;
     case 'mining':
       al.style.animation='chop .55s ease-in-out infinite';
       ar.style.animation='chop .55s ease-in-out infinite .27s';
-      prop.innerHTML=`
-        <div class="prop-rock"></div>
-        <div class="prop-tool" style="bottom:26px;right:50px;transform:rotate(40deg)">⛏️</div>`;
+      prop.innerHTML='<div class="prop-rock"></div>'
+        +'<div class="prop-tool" style="bottom:26px;right:50px;transform:rotate(40deg)">\u26CF\uFE0F</div>';
       break;
     case 'fishing':
       al.style.animation='cast 1.6s ease-in-out infinite';
       ar.style.animation='cast 1.6s ease-in-out infinite .8s';
-      prop.innerHTML=`
-        <div class="prop-water" style="animation:ripple 1.5s ease-in-out infinite"></div>
-        <div class="prop-tool" style="bottom:32px;right:50px">🎣</div>`;
+      prop.innerHTML='<div class="prop-water" style="animation:ripple 1.5s ease-in-out infinite"></div>'
+        +'<div class="prop-tool" style="bottom:32px;right:50px">\uD83C\uDFA3</div>';
       break;
     case 'smithing':
       al.style.animation='chop .5s ease-in-out infinite';
       ar.style.animation='chop .5s ease-in-out infinite .25s';
-      prop.innerHTML=`
-        <div class="prop-fire" style="animation:flicker .45s ease-in-out infinite">🔥</div>
-        <div class="prop-anvil">⚙️</div>
-        <div class="prop-tool" style="bottom:27px;right:50px;transform:rotate(30deg)">🔨</div>`;
+      prop.innerHTML='<div class="prop-fire" style="animation:flicker .45s ease-in-out infinite">\uD83D\uDD25</div>'
+        +'<div class="prop-anvil">\u2699\uFE0F</div>'
+        +'<div class="prop-tool" style="bottom:27px;right:50px;transform:rotate(30deg)">\uD83D\uDD28</div>';
       break;
     case 'cooking':
       al.style.animation='stir 1s ease-in-out infinite';
       ar.style.animation='stir 1s ease-in-out infinite .5s';
-      prop.innerHTML=`
-        <div class="prop-fire" style="animation:flicker .4s ease-in-out infinite">🔥</div>
-        <div class="prop-tool" style="bottom:30px;right:46px">🍳</div>`;
+      prop.innerHTML='<div class="prop-fire" style="animation:flicker .4s ease-in-out infinite">\uD83D\uDD25</div>'
+        +'<div class="prop-tool" style="bottom:30px;right:46px">\uD83C\uDF73</div>';
       break;
     case 'combat':
       al.style.animation='swing .6s ease-in-out infinite';
       ar.style.animation='swing2 .6s ease-in-out infinite';
       ll.style.animation='walk-l .55s ease-in-out infinite';
       lr.style.animation='walk-r .55s ease-in-out infinite';
-      const wico=G.equip.weapon&&ITEMS[G.equip.weapon]?ITEMS[G.equip.weapon].icon:'⚔️';
-      prop.innerHTML=`
-        <div class="prop-monster">${a?a.icon:'👺'}</div>
-        <div class="prop-tool" style="bottom:22px;right:55px;transform:rotate(-20deg)">${wico}</div>`;
+      const wico=G.equip.weapon&&ITEMS[G.equip.weapon]?ITEMS[G.equip.weapon].icon:'\u2694\uFE0F';
+      prop.innerHTML='<div class="prop-monster">'+(a?a.icon:'\uD83D\uDC7A')+'</div>'
+        +'<div class="prop-tool" style="bottom:22px;right:55px;transform:rotate(-20deg)">'+wico+'</div>';
       break;
     case 'fletching':
       al.style.animation='stir 1.1s ease-in-out infinite';
       ar.style.animation='cast 1.1s ease-in-out infinite .55s';
-      prop.innerHTML=`<div class="prop-tool" style="bottom:32px;right:48px">🏹</div>`;
+      prop.innerHTML='<div class="prop-tool" style="bottom:32px;right:48px">\uD83C\uDFF9</div>';
       break;
     case 'crafting':
       al.style.animation='stir 1.2s ease-in-out infinite';
       ar.style.animation='stir 1.2s ease-in-out infinite .6s';
-      prop.innerHTML=`<div class="prop-tool" style="bottom:30px;right:48px">🧵</div>`;
+      prop.innerHTML='<div class="prop-tool" style="bottom:30px;right:48px">\uD83E\uDDF5</div>';
       break;
   }
 }
@@ -1079,14 +1089,16 @@ function log(msg){
 
 function showLvlUp(sk,lv){
   const d=document.createElement('div');d.className='lv-popup';
-  d.innerHTML=`<div class="lv-title">⭐ LEVEL UP!</div><div class="lv-sub">${SKILLS[sk].icon} ${SKILLS[sk].name} — Level ${lv}</div>`;
+  const t=document.createElement('div');t.className='lv-title';t.textContent='\u2B50 LEVEL UP!';
+  const s=document.createElement('div');s.className='lv-sub';s.textContent=SKILLS[sk].icon+' '+SKILLS[sk].name+' \u2014 Level '+lv;
+  d.appendChild(t);d.appendChild(s);
   document.body.appendChild(d);setTimeout(()=>d.remove(),2700);
 }
 
 function showXPFloat(xp,sk){
   const d=document.createElement('div');d.className='xp-float';
-  d.textContent=`+${xp} ${SKILLS[sk]?.name||''}`;
-  d.style.cssText=`left:${20+Math.random()*60}%;top:55%;`;
+  d.textContent='+'+xp+' '+(SKILLS[sk]?.name||'');
+  d.style.left=(20+Math.random()*60)+'%';d.style.top='55%';
   document.body.appendChild(d);setTimeout(()=>d.remove(),1500);
 }
 
@@ -1109,8 +1121,8 @@ function init(){
     const a=findAction(G.task);
     if(sk&&a){
       switchTab(sk);
-      document.getElementById('task-title').textContent=`${a.icon} ${a.name}`;
-      document.getElementById('task-xp-lbl').textContent=`+${a.xp} XP · ${SKILLS[sk].name}`;
+      document.getElementById('task-title').textContent=a.icon+' '+a.name;
+      document.getElementById('task-xp-lbl').textContent='+'+a.xp+' XP \u00b7 '+SKILLS[sk].name;
       document.getElementById('task-stop').style.display='block';
     }
   } else {
