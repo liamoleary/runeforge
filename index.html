@@ -781,7 +781,7 @@ function updateUI(){
     if(!el)continue;
     el.querySelector('.sk-lvl').textContent=lv;
     el.querySelector('.xp-fill').style.width=pc+'%';
-    const lxt=XP[Math.min(lv+1,99)],cur=XP[lv];
+    const nxt=XP[Math.min(lv+1,99)],cur=XP[lv];
     el.querySelector('.xp-label').textContent=(sxp(sk)-cur)+'/'+(nxt-cur);
     if(G.task&&findSkill(G.task)===sk)el.classList.add('sk-active');
     else el.classList.remove('sk-active');
