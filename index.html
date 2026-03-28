@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RuneForge</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0b0905;
+  --bg1:      #13100a;
+  --bg2:      #1c1710;
+  --bg3:      #251e14;
+  --bdr:      #3a2c18;
+  --bdr2:     #6b4f22;
+  --gold:     #f0c040;
+  --gold2:    #ffd966;
+  --text:     #e8d898;
+  --text2:    #9a7e50;
+  --text3:    #5a4830;
+  --green:    #5ac85a;
+  --red:      #e03030;
+  --blue:     #4488dd;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+button,a,[onclick]{touch-action:manipulation}
+html,body{height:100%;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,serif;font-size:15px}
+
+/* ── HEADER ── */
+#hdr{
+  position:sticky;top:0;z-index:200;
+  background:linear-gradient(180deg,#140e04,#0e0a03);
+  border-bottom:2px solid var(--bdr2);
+  padding:6px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 18px rgba(180,120,0,.35);
+}
+#logo{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--gold);letter-spacing:3px;text-shadow:0 0 14px rgba(240,192,64,.5)}
+#hdr-right{display:flex;align-items:center;gap:10px}
+.hpill{background:var(--bg2);border:1px solid var(--bdr);border-radius:20px;padding:3px 9px;font-size:12px;display:flex;align-items:center;gap:5px}
+.hpbar{width:55px;height:7px;background:#3a0a0a;border-radius:4px;overflow:hidden}
+.hpbar-fill{height:100%;background:linear-gradient(90deg,#c02020,#f03030);transition:width .3s;border-radius:4px}
+#gold-hdr{font-family:'Cinzel',serif;font-size:13px;color:var(--gold)}
+
+/* ── MAIN SCROLL AREA ── */
+#main{max-width:470px;margin:0 auto;padding:8px 8px 230px;display:flex;flex-direction:column;gap:8px}
+
+/* ── PANELS ── */
+.panel{background:var(--bg1);border:1px solid var(--bdr);border-radius:10px;overflow:hidden}
+.panel-hdr{
+  background:linear-gradient(90deg,#1a1208,#231a0c);
+  border-bottom:1px solid var(--bdr);
+  padding:7px 12px;
+  font-family:'Cinzel',serif;font-size:12px;font-weight:700;
+  color:var(--text2);letter-spacing:1px;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:space-between;
+}
+
+/* ── SKILLS GRID ── */
+#skills-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bdr)}
+.sk-card{
+  background:var(--bg2);padding:9px 10px;cursor:pointer;
+  transition:background .15s,transform .1s;position:relative;
+}
+.sk-card:active{transform:scale(.97)}
+.sk-card.sk-active{background:#241c0c;box-shadow:inset 0 0 16px rgba(240,192,64,.08)}
+.sk-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.sk-icon{font-size:20px;width:26px;text-align:center;line-height:1}
+.sk-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text2);letter-spacing:.5px}
+.sk-lvl{font-size:17px;font-weight:700;line-height:1.15;color:var(--text)}
+.xp-track{background:#0a0804;height:5px;border-radius:3px;overflow:hidden}
+.xp-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.xp-label{font-size:9px;color:var(--text3);margin-top:2px}
+
+/* ── ACTIVITY PANEL ── */
+#act-panel .panel-hdr{}
+#task-box{
+  margin:10px;background:var(--bg2);border:1px solid var(--bdr);
+  border-radius:8px;padding:11px;
+}
+#task-title{font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:7px}
+#task-prog-wrap{background:#0a0804;height:9px;border-radius:5px;overflow:hidden}
+#task-prog{height:100%;border-radius:5px;transition:width .08s linear;background:linear-gradient(90deg,var(--gold),#ff9900)}
+#task-sub{font-size:11px;color:var(--text3);margin-top:4px;display:flex;justify-content:space-between}
+#task-stop{
+  background:#2a1808;border:1px solid var(--bdr2);border-radius:6px;
+  color:var(--gold);font-size:11px;font-family:'Cinzel',serif;padding:3px 9px;cursor:pointer;
+  display:none;
+}
+#task-stop:active{transform:scale(.95)}
+
+/* ── TABS ── */
+#tabs{display:flex;overflow-x:auto;background:#0e0b06;border-bottom:1px solid var(--bdr);scrollbar-width:none}
+#tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex:0 0 auto;padding:7px 11px;cursor:pointer;
+  font-size:9px;font-family:'Cinzel',serif;color:var(--text3);
+  border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;
+  text-transform:uppercase;letter-spacing:.4px;
+}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(240,192,64,.04)}
+.tab-icon{font-size:14px;display:block;margin-bottom:1px;text-align:center}
+
+/* ── ACTIONS ── */
+.act-page{display:none;padding:8px}
+.act-page.active{display:block}
+.act-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.act-btn{
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;
+  padding:10px 7px;color:var(--text);cursor:pointer;text-align:center;
+  font-family:'Crimson Text',serif;font-size:13px;
+  transition:all .18s;min-height:56px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+}
+.act-btn:active{transform:scale(.95);background:#2a1e08}
+.act-btn.locked{opacity:.35;cursor:not-allowed}
+.act-btn.going{border-color:var(--gold);background:#251a06;box-shadow:0 0 10px rgba(240,192,64,.18)}
+.act-btn .ab-icon{font-size:17px}
+.act-btn .ab-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text2)}
+.act-btn .ab-meta{font-size:9px;color:var(--text3)}
+.act-btn .ab-req{font-size:9px;color:#c08020}
+
+/* ── CHAR PANEL ── */
+#char-panel{}
+#char-stats{display:flex;gap:8px;padding:10px 12px}
+.stat-box{flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;padding:8px;text-align:center}
+.stat-box .sb-lbl{font-size:9px;color:var(--text3);font-family:'Cinzel',serif;text-transform:uppercase;letter-spacing:.5px}
+.stat-box .sb-val{font-size:18px;font-weight:700;color:var(--text);line-height:1.2}
+.stat-box .sb-bar{background:#0a0804;height:5px;border-radius:3px;overflow:hidden;margin-top:4px}
+.stat-box .sb-bar-fill{height:100%;border-radius:3px;transition:width .3s}
+
+/* ── EQUIP ── */
+#equip-row{display:flex;gap:6px;padding:0 10px 10px}
+.eq-slot{
+  flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;
+  padding:8px 4px;text-align:center;cursor:pointer;transition:all .2s;
+  min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+}
+.eq-slot:active{transform:scale(.95)}
+.eq-slot.on{border-color:var(--bdr2);background:#1e1508}
+.eq-slot .eq-icon{font-size:18px}
+.eq-slot .eq-lbl{font-size:8px;color:var(--text3)}
+.eq-slot .eq-name{font-size:9px;color:var(--text2)}
+
+/* ── INVENTORY ── */
+#inv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px}
+.iv-slot{
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;
+  aspect-ratio:1;min-height:58px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;cursor:pointer;
+  transition:all .18s;padding:4px;position:relative;
+}
+.iv-slot:active{transform:scale(.95)}
+.iv-slot.has{border-color:var(--bdr2)}
+.iv-ico{font-size:18px;line-height:1}
+.iv-nm{font-size:7px;color:var(--text3);text-align:center;line-height:1.1;margin-top:2px}
+.iv-qty{position:absolute;bottom:3px;right:4px;font-size:9px;color:var(--gold);font-weight:bold}
+#inv-btns{display:flex;gap:6px;padding:4px 8px 8px;flex-wrap:wrap}
+.inv-btn{
+  background:var(--bg2);border:1px solid var(--bdr2);border-radius:5px;
+  padding:5px 10px;color:var(--gold);cursor:pointer;font-size:11px;font-family:'Cinzel',serif;
+}
+.inv-btn:active{transform:scale(.95);background:var(--bg3)}
+
+/* ── SHOP ── */
+#shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px}
+.sh-item{
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;
+  padding:9px;cursor:pointer;transition:all .18s;
+}
+.sh-item:active{transform:scale(.95);background:var(--bg3)}
+.sh-item.owned{border-color:var(--green);opacity:.6}
+.sh-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.sh-icon{font-size:18px}
+.sh-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text)}
+.sh-price{font-size:12px;color:var(--gold)}
+.sh-eff{font-size:9px;color:var(--text3);margin-top:2px}
+
+/* ── LOG ── */
+#log-inner{padding:6px 10px;max-height:140px;overflow-y:auto}
+#log-inner::-webkit-scrollbar{width:3px}
+#log-inner::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+.le{font-size:11px;color:var(--text2);padding:2px 0;border-bottom:1px solid #140f07;line-height:1.5}
+.lx{color:#5de05d}.li{color:#88ccff}.lg{color:var(--gold)}.ll{color:var(--gold2);font-weight:bold}.lc{color:#ff7070}
+
+/* ── CHARACTER STAGE ── */
+#stage{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:470px;height:190px;
+  background:linear-gradient(0deg,#0b0905 0%,rgba(11,9,5,.96) 75%,transparent 100%);
+  display:flex;align-items:flex-end;justify-content:center;
+  padding-bottom:12px;z-index:100;pointer-events:none;
+}
+#scene{position:relative;width:140px;height:160px}
+#ground{
+  position:absolute;bottom:0;left:-40px;right:-40px;height:22px;
+  background:linear-gradient(0deg,#160e02,#221508);border-top:2px solid #3a2812;
+}
+
+/* ── CHARACTER ── */
+#char{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:34px;height:50px}
+.c-head{
+  position:absolute;top:0;left:8px;width:18px;height:15px;
+  background:#e0bc8c;border-radius:5px 5px 3px 3px;border:1px solid #c09868;
+}
+.c-el,.c-er{position:absolute;width:3px;height:3px;background:#1e1208;border-radius:50%;top:5px}
+.c-el{left:3px}.c-er{right:3px}
+.c-mouth{position:absolute;width:6px;height:2px;background:#c08060;border-radius:1px;bottom:3px;left:5px}
+.c-helm{
+  position:absolute;top:-5px;left:5px;width:24px;height:12px;
+  background:#888;border-radius:50% 50% 0 0;border:1px solid #aaa;display:none;
+}
+.c-body{
+  position:absolute;top:14px;left:6px;width:22px;height:21px;
+  background:#3c6040;border-radius:2px;border:1px solid #2c5030;
+}
+.c-belt{position:absolute;top:21px;left:6px;width:22px;height:4px;background:#5a3a18;border:1px solid #3a2010}
+.c-al{
+  position:absolute;top:14px;left:1px;width:7px;height:17px;
+  background:#3c6040;border-radius:3px;border:1px solid #2c5030;
+  transform-origin:top center;
+}
+.c-ar{
+  position:absolute;top:14px;right:1px;width:7px;height:17px;
+  background:#3c6040;border-radius:3px;border:1px solid #2c5030;
+  transform-origin:top center;
+}
+.c-ll{
+  position:absolute;top:34px;left:7px;width:8px;height:16px;
+  background:#2a3870;border-radius:0 0 3px 3px;transform-origin:top center;
+}
+.c-lr{
+  position:absolute;top:34px;right:7px;width:8px;height:16px;
+  background:#2a3870;border-radius:0 0 3px 3px;transform-origin:top center;
+}
+.c-boot-l{position:absolute;top:47px;left:7px;width:9px;height:5px;background:#2a1808;border-radius:1px 2px 3px 2px}
+.c-boot-r{position:absolute;top:47px;right:6px;width:9px;height:5px;background:#2a1808;border-radius:2px 1px 2px 3px}
+
+/* Scene props */
+.prop-tree-t{
+  position:absolute;bottom:20px;right:8px;width:10px;height:28px;
+  background:#6b4218;border:1px solid #4a2e12;
+}
+.prop-tree-l{
+  position:absolute;bottom:44px;right:-8px;width:38px;height:34px;
+  background:radial-gradient(ellipse,#2e7030,#1e5020);
+  border-radius:50%;border:1px solid #1a4018;
+}
+.prop-rock{
+  position:absolute;bottom:20px;right:10px;width:32px;height:22px;
+  background:linear-gradient(135deg,#7a7a7a,#555);
+  border-radius:8px 14px 4px 6px;border:2px solid #444;
+}
+.prop-water{
+  position:absolute;bottom:20px;right:4px;width:55px;height:14px;
+  background:linear-gradient(180deg,#1a4890,#0a2860);border-radius:4px 4px 0 0;
+}
+.prop-fire{position:absolute;bottom:20px;right:14px;font-size:22px;line-height:1}
+.prop-monster{position:absolute;bottom:18px;right:2px;font-size:28px;line-height:1}
+.prop-anvil{position:absolute;bottom:18px;right:12px;font-size:20px;line-height:1}
+.prop-tool{position:absolute;font-size:15px;pointer-events:none}
+
+/* ── ANIMATIONS ── */
+@keyframes bob    {0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-3px)}}
+@keyframes idle   {0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-1px)}}
+@keyframes swing  {0%,100%{transform:rotate(-25deg)} 50%{transform:rotate(35deg)}}
+@keyframes swing2 {0%,100%{transform:rotate(25deg)}  50%{transform:rotate(-35deg)}}
+@keyframes chop   {0%,100%{transform:rotate(-35deg)} 40%{transform:rotate(45deg)}}
+@keyframes cast   {0%,100%{transform:rotate(5deg)}   30%{transform:rotate(-40deg)} 60%{transform:rotate(25deg)}}
+@keyframes stir   {0%,100%{transform:rotate(-12deg)} 50%{transform:rotate(12deg)}}
+@keyframes walk-l {0%,100%{transform:rotate(14deg)}  50%{transform:rotate(-10deg)}}
+@keyframes walk-r {0%,100%{transform:rotate(-10deg)} 50%{transform:rotate(14deg)}}
+@keyframes armrest{0%,100%{transform:rotate(5deg)}   50%{transform:rotate(-5deg)}}
+@keyframes sway   {0%,100%{transform:rotate(0deg)}   50%{transform:rotate(2.5deg)}}
+@keyframes flicker{0%,100%{transform:scaleY(1) scaleX(1)} 25%{transform:scaleY(1.12) scaleX(.93)} 75%{transform:scaleY(.9) scaleX(1.08)}}
+@keyframes ripple {0%,100%{opacity:.7} 50%{opacity:1}}
+
+@keyframes lvlup{
+  0%{transform:translate(-50%,-50%) scale(0);opacity:0}
+  25%{transform:translate(-50%,-50%) scale(1.15);opacity:1}
+  70%{transform:translate(-50%,-50%) scale(1);opacity:1}
+  100%{transform:translate(-50%,-50%) scale(.9);opacity:0}
+}
+@keyframes xpup{0%{transform:translateY(0);opacity:1} 100%{transform:translateY(-38px);opacity:0}}
+@keyframes dmgflash{0%,100%{background:var(--bg1)} 50%{background:#3a0808}}
+
+/* ── LEVEL UP POPUP ── */
+.lv-popup{
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(0);opacity:0;
+  background:linear-gradient(135deg,#1a1002,#362200);
+  border:2px solid var(--gold);border-radius:14px;
+  padding:22px 32px;text-align:center;z-index:500;
+  box-shadow:0 0 40px rgba(240,192,64,.5);
+  animation:lvlup 2.6s ease forwards;
+  pointer-events:none;
+}
+.lv-title{font-family:'Cinzel',serif;font-size:22px;color:var(--gold);text-shadow:0 0 14px rgba(240,192,64,.7)}
+.lv-sub{font-size:13px;color:var(--text2);margin-top:6px}
+.xp-float{
+  position:fixed;font-size:12px;color:#6ef06e;font-weight:bold;
+  pointer-events:none;z-index:300;animation:xpup 1.4s ease forwards;
+}
+.dmg-flash{animation:dmgflash .5s ease}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div id="logo">⚔ RuneForge</div>
+  <div id="hdr-right">
+    <div class="hpill">❤️ <div class="hpbar"><div class="hpbar-fill" id="hm"></div></div></div>
+    <div class="hpill" id="gld">🪙 0</div>
+  </div>
+</div>
+
+<div id="main">
+
+  <!-- Skills overview -->
+  <div class="panel">
+    <div class="panel-hdr">Skills</div>
+    <div id="skills-grid"></div>
+  </div>
+
+  <!-- Activity panel -->
+  <div class="panel" id="act-panel">
+    <div class="panel-hdr">
+      <span>Active Task</span>
+      <button id="task-stop" onclick="stopTask()">■ Stop</button>
+    </div>
+    <div id="task-box">
+      <div id="task-title">Idle — choose a skill and action below</div>
+      <div id="task-prog-wrap"><div id="task-prog"></div></div>
+      <div id="task-sub"><span id="task-xp-lbl"></span><span id="task-dur-lbl"></span></div>
+    </div>
+    <div id="tabs"></div>
+    <div id="pages"></div>
+  </div>
+
+  <!-- Character -->
+  <div class="panel">
+    <div class="panel-hdr">Character</div>
+    <div id="char-stats">
+      <div class="stat-box">
+        <div class="sb-lbl">Hit Points</div>
+        <div class="sb-val" id="hp-val">10</div>
+        <div class="sb-bar"><div class="sb-bar-fill" id="hp-fill" style="background:#e03030"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="sb-lbl">Attack</div>
+        <div class="sb-val" id="atk-val">1</div>
+        <div class="sb-bar"><div class="sb-bar-fill" id="atk-fill" style="background:#e08020"></div></div>
+      </div>
+      <div class="stat-box">
+        <div class="sb-lbl">Defence</div>
+        <div class="sb-val" id="def-val">0</div>
+        <div class="sb-bar"><div class="sb-bar-fill" id="def-fill" style="background:#4488dd"></div></div>
+      </div>
+    </div>
+    <div id="equip-row">
+      <div class="eq-slot" id="eq-wp" onclick="unequipSlot('weapon')">
+        <span class="eq-icon">🗡️</span><span class="eq-lbl">Weapon</span>
+      </div>
+      <div class="eq-slot" id="eq-am" onclick="unequipSlot('armour')">
+        <span class="eq-icon">🛡️</span><span class="eq-lbl">Armour</span>
+      </div>
+      <div class="eq-slot" id="eq-fd" onclick="eatFood()">
+        <span class="eq-icon">🍖</span><span class="eq-lbl">Food</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inventory -->
+  <div class="panel">
+    <div class="panel-hdr"><span>Inventory</span><span id="inv-count">0/28</span></div>
+    <div id="inv-grid"></div>
+    <div id="inv-btns">
+      <button class="inv-btn" onclick="sellAll()">💰 Sell Resources</button>
+      <button class="inv-btn" onclick="eatFood()">🍽️ Eat Best Food</button>
+      <button class="inv-btn" onclick="buryBones()">🦴 Bury Bones</button>
+    </div>
+  </div>
+
+  <!-- Shop -->
+  <div class="panel">
+    <div class="panel-hdr">⚒ General Store</div>
+    <div id="shop-grid"></div>
+  </div>
+
+  <!-- Log -->
+  <div class="panel">
+    <div class="panel-hdr">Activity Log</div>
+    <div id="log-inner"></div>
+  </div>
+
+</div>
+
+<!-- Character stage -->
+<div id="stage">
+  <div id="scene">
+    <div id="ground"></div>
+    <div id="prop"></div>
+    <div id="char">
+      <div class="c-head">
+        <div class="c-el"></div><div class="c-er"></div>
+        <div class="c-mouth"></div>
+        <div class="c-helm" id="chelm"></div>
+      </div>
+      <div class="c-body" id="cbody"></div>
+      <div class="c-belt"></div>
+      <div class="c-al" id="cal"></div>
+      <div class="c-ar" id="car"></div>
+      <div class="c-ll" id="cll"></div>
+      <div class="c-lr" id="clr"></div>
+      <div class="c-boot-l"></div>
+      <div class="c-boot-r"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════
+const SKILLS = {
+  woodcutting:{name:'Woodcutting',icon:'🪓',color:'#8B4513'},
+  mining:     {name:'Mining',     icon:'⛏️', color:'#909090'},
+  fishing:    {name:'Fishing',    icon:'🎣', color:'#4488dd'},
+  smithing:   {name:'Smithing',   icon:'🔨',color:'#FF8C00'},
+  combat:     {name:'Combat',     icon:'⚔️', color:'#DC143C'},
+  cooking:    {name:'Cooking',    icon:'🍳', color:'#FF6347'},
+  fletching:  {name:'Fletching',  icon:'🏹',color:'#228B22'},
+  crafting:   {name:'Crafting',   icon:'🧵', color:'#9370DB'},
+};
+
+// XP table (classic OSRS-style)
+function xpNeeded(lvl){
+  if(lvl<=1)return 0;
+  let t=0;for(let i=1;i<lvl;i++)t+=Math.floor(i+300*Math.pow(2,i/7));
+  return Math.floor(t/4);
+}
+const XP=[];for(let i=0;i<=99;i++)XP[i]=xpNeeded(i);
+function lvlOf(xp){for(let i=98;i>=1;i--)if(xp>=XP[i])return i;return 1;}
+
+const ACTIONS = {
+  woodcutting:[
+    {id:'wc0',name:'Normal Tree', icon:'🌲',req:1, xp:25, dur:3500,prod:[{id:'logs',n:1}]},
+    {id:'wc1',name:'Oak Tree',    icon:'🌳',req:15,xp:38, dur:5000,prod:[{id:'oak_log',n:1}]},
+    {id:'wc2',name:'Willow Tree', icon:'🌿',req:30,xp:68, dur:6000,prod:[{id:'willow_log',n:1}]},
+    {id:'wc3',name:'Yew Tree',    icon:'🌑',req:60,xp:175,dur:8000,prod:[{id:'yew_log',n:1}]},
+  ],
+  mining:[
+    {id:'mn0',name:'Copper Rock', icon:'🟫',req:1, xp:18, dur:3000,prod:[{id:'copper_ore',n:1}]},
+    {id:'mn1',name:'Tin Rock',    icon:'⬜',req:1, xp:18, dur:3000,prod:[{id:'tin_ore',n:1}]},
+    {id:'mn2',name:'Iron Rock',   icon:'🔵',req:15,xp:35, dur:4500,prod:[{id:'iron_ore',n:1}]},
+    {id:'mn3',name:'Coal Rock',   icon:'🖤',req:30,xp:50, dur:5500,prod:[{id:'coal',n:1}]},
+    {id:'mn4',name:'Gold Rock',   icon:'💛',req:40,xp:65, dur:7000,prod:[{id:'gold_ore',n:1}]},
+  ],
+  fishing:[
+    {id:'fs0',name:'Net (Shrimp)',  icon:'🦐',req:1, xp:10, dur:3500,prod:[{id:'raw_shrimp',n:1}]},
+    {id:'fs1',name:'Sardine',       icon:'🐟',req:5, xp:20, dur:4000,prod:[{id:'raw_sardine',n:1}]},
+    {id:'fs2',name:'Trout',         icon:'🐠',req:20,xp:50, dur:5500,prod:[{id:'raw_trout',n:1}]},
+    {id:'fs3',name:'Salmon',        icon:'🐡',req:30,xp:70, dur:6500,prod:[{id:'raw_salmon',n:1}]},
+    {id:'fs4',name:'Lobster Cage',  icon:'🦞',req:40,xp:90, dur:8000,prod:[{id:'raw_lobster',n:1}]},
+  ],
+  smithing:[
+    {id:'sm0',name:'Bronze Bar',   icon:'🟫',req:1, xp:7,  dur:4000,prod:[{id:'bronze_bar',n:1}],  need:[{id:'copper_ore',n:1},{id:'tin_ore',n:1}]},
+    {id:'sm1',name:'Iron Bar',     icon:'⬛',req:15,xp:13, dur:4500,prod:[{id:'iron_bar',n:1}],    need:[{id:'iron_ore',n:2}]},
+    {id:'sm2',name:'Bronze Sword', icon:'🗡️',req:4, xp:13, dur:5000,prod:[{id:'bronze_sword',n:1}],need:[{id:'bronze_bar',n:1}]},
+    {id:'sm3',name:'Iron Sword',   icon:'⚔️',req:19,xp:25, dur:5500,prod:[{id:'iron_sword',n:1}],  need:[{id:'iron_bar',n:1}]},
+    {id:'sm4',name:'Bronze Shield',icon:'🛡️',req:7, xp:38, dur:6500,prod:[{id:'bronze_shield',n:1}],need:[{id:'bronze_bar',n:3}]},
+    {id:'sm5',name:'Iron Platebody',icon:'🛡️',req:33,xp:75,dur:8000,prod:[{id:'iron_platebody',n:1}],need:[{id:'iron_bar',n:5}]},
+  ],
+  cooking:[
+    {id:'ck0',name:'Cook Shrimp',  icon:'🍤',req:1, xp:30, dur:2500,prod:[{id:'c_shrimp',n:1}],  need:[{id:'raw_shrimp',n:1}]},
+    {id:'ck1',name:'Cook Sardine', icon:'🐟',req:1, xp:40, dur:2500,prod:[{id:'c_sardine',n:1}], need:[{id:'raw_sardine',n:1}]},
+    {id:'ck2',name:'Cook Trout',   icon:'🐠',req:15,xp:70, dur:3000,prod:[{id:'c_trout',n:1}],   need:[{id:'raw_trout',n:1}]},
+    {id:'ck3',name:'Cook Salmon',  icon:'🐡',req:25,xp:90, dur:3000,prod:[{id:'c_salmon',n:1}],  need:[{id:'raw_salmon',n:1}]},
+    {id:'ck4',name:'Cook Lobster', icon:'🦞',req:30,xp:120,dur:3500,prod:[{id:'c_lobster',n:1}], need:[{id:'raw_lobster',n:1}]},
+    {id:'ck5',name:'Cook Meat',    icon:'🍖',req:1, xp:30, dur:2500,prod:[{id:'c_meat',n:1}],    need:[{id:'raw_meat',n:1}]},
+  ],
+  fletching:[
+    {id:'fl0',name:'Arrow Shafts',  icon:'↑', req:1, xp:5,  dur:2000,prod:[{id:'arrow_shaft',n:15}],need:[{id:'logs',n:1}]},
+    {id:'fl1',name:'Shortbow (u)',  icon:'🏹',req:5, xp:10, dur:4000,prod:[{id:'shortbow',n:1}],    need:[{id:'logs',n:1}]},
+    {id:'fl2',name:'Oak Shortbow',  icon:'🏹',req:20,xp:25, dur:4500,prod:[{id:'oak_bow',n:1}],     need:[{id:'oak_log',n:1}]},
+    {id:'fl3',name:'Iron Arrows x15',icon:'🪃',req:15,xp:38,dur:3000,prod:[{id:'iron_arrow',n:15}], need:[{id:'arrow_shaft',n:15},{id:'iron_bar',n:1}]},
+    {id:'fl4',name:'Willow Bow',    icon:'🏹',req:35,xp:58, dur:5000,prod:[{id:'willow_bow',n:1}],  need:[{id:'willow_log',n:1}]},
+  ],
+  crafting:[
+    {id:'cr0',name:'Tan Cowhide', icon:'🐄',req:1, xp:0,  dur:2000,prod:[{id:'leather',n:1}],       need:[{id:'cowhide',n:1}]},
+    {id:'cr1',name:'Leather Body',icon:'👕',req:14,xp:25, dur:4000,prod:[{id:'leather_body',n:1}],   need:[{id:'leather',n:3}]},
+    {id:'cr2',name:'Gold Ring',   icon:'💍',req:5, xp:15, dur:3500,prod:[{id:'gold_ring',n:1}],      need:[{id:'gold_ore',n:1}]},
+    {id:'cr3',name:'Gold Necklace',icon:'📿',req:20,xp:35,dur:4500,prod:[{id:'gold_necklace',n:1}],  need:[{id:'gold_ore',n:2}]},
+  ],
+  combat:[
+    {id:'cb0',name:'Chicken',    icon:'🐔',req:1, xp:12, dur:2800,mhp:3,  dmg:[1,3], drops:[{id:'raw_meat',n:1,c:1},{id:'bones',n:1,c:1},{id:'feather',n:5,c:.7},{id:'gold_coins',n:3,c:.5}]},
+    {id:'cb1',name:'Goblin',     icon:'👺',req:5, xp:25, dur:3200,mhp:6,  dmg:[1,4], drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:8,c:.8},{id:'cowhide',n:1,c:.3}]},
+    {id:'cb2',name:'Giant Rat',  icon:'🐀',req:10,xp:35, dur:3500,mhp:8,  dmg:[1,5], drops:[{id:'bones',n:1,c:1},{id:'raw_meat',n:1,c:.7},{id:'gold_coins',n:5,c:.5}]},
+    {id:'cb3',name:'Guard',      icon:'💂',req:22,xp:60, dur:4000,mhp:14, dmg:[2,6], drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:28,c:.9},{id:'iron_ore',n:1,c:.4}]},
+    {id:'cb4',name:'Dark Knight',icon:'🗡️',req:40,xp:120,dur:4500,mhp:28, dmg:[3,9], drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:65,c:1},{id:'iron_bar',n:1,c:.5},{id:'iron_sword',n:1,c:.1}]},
+  ],
+};
+
+const ITEMS = {
+  logs:         {name:'Logs',            icon:'🪵',sell:5,   type:'res'},
+  oak_log:      {name:'Oak Logs',        icon:'🪵',sell:15,  type:'res'},
+  willow_log:   {name:'Willow Logs',     icon:'🪵',sell:30,  type:'res'},
+  yew_log:      {name:'Yew Logs',        icon:'🪵',sell:100, type:'res'},
+  copper_ore:   {name:'Copper Ore',      icon:'🟫',sell:5,   type:'res'},
+  tin_ore:      {name:'Tin Ore',         icon:'⬜',sell:5,   type:'res'},
+  iron_ore:     {name:'Iron Ore',        icon:'🔵',sell:10,  type:'res'},
+  coal:         {name:'Coal',            icon:'🖤',sell:20,  type:'res'},
+  gold_ore:     {name:'Gold Ore',        icon:'💛',sell:45,  type:'res'},
+  bronze_bar:   {name:'Bronze Bar',      icon:'🟫',sell:18,  type:'res'},
+  iron_bar:     {name:'Iron Bar',        icon:'⬛',sell:35,  type:'res'},
+  raw_shrimp:   {name:'Raw Shrimp',      icon:'🦐',sell:2,   type:'raw'},
+  raw_sardine:  {name:'Raw Sardine',     icon:'🐟',sell:4,   type:'raw'},
+  raw_trout:    {name:'Raw Trout',       icon:'🐠',sell:10,  type:'raw'},
+  raw_salmon:   {name:'Raw Salmon',      icon:'🐡',sell:15,  type:'raw'},
+  raw_lobster:  {name:'Raw Lobster',     icon:'🦞',sell:20,  type:'raw'},
+  raw_meat:     {name:'Raw Meat',        icon:'🥩',sell:2,   type:'raw'},
+  c_shrimp:     {name:'Shrimp',          icon:'🍤',sell:8,   type:'food',hp:3},
+  c_sardine:    {name:'Sardine',         icon:'🐟',sell:12,  type:'food',hp:4},
+  c_trout:      {name:'Trout',           icon:'🐠',sell:25,  type:'food',hp:7},
+  c_salmon:     {name:'Salmon',          icon:'🐡',sell:35,  type:'food',hp:9},
+  c_lobster:    {name:'Lobster',         icon:'🦞',sell:55,  type:'food',hp:12},
+  c_meat:       {name:'Cooked Meat',     icon:'🍖',sell:15,  type:'food',hp:5},
+  bones:        {name:'Bones',           icon:'🦴',sell:5,   type:'res'},
+  feather:      {name:'Feathers',        icon:'🪶',sell:2,   type:'res'},
+  cowhide:      {name:'Cowhide',         icon:'🐄',sell:10,  type:'res'},
+  leather:      {name:'Leather',         icon:'📜',sell:15,  type:'res'},
+  arrow_shaft:  {name:'Arrow Shafts',    icon:'↑', sell:1,   type:'res'},
+  iron_arrow:   {name:'Iron Arrows',     icon:'🪃',sell:3,   type:'res'},
+  shortbow:     {name:'Shortbow',        icon:'🏹',sell:40,  type:'weapon',atk:3},
+  oak_bow:      {name:'Oak Shortbow',    icon:'🏹',sell:90,  type:'weapon',atk:6},
+  willow_bow:   {name:'Willow Bow',      icon:'🏹',sell:180, type:'weapon',atk:10},
+  bronze_sword: {name:'Bronze Sword',    icon:'🗡️',sell:50,  type:'weapon',atk:2},
+  iron_sword:   {name:'Iron Sword',      icon:'⚔️',sell:150, type:'weapon',atk:5},
+  bronze_shield:{name:'Bronze Shield',   icon:'🛡️',sell:120, type:'armour',def:2},
+  iron_platebody:{name:'Iron Platebody', icon:'🛡️',sell:350, type:'armour',def:5},
+  leather_body: {name:'Leather Body',    icon:'👕',sell:50,  type:'armour',def:1},
+  gold_ring:    {name:'Gold Ring',       icon:'💍',sell:120, type:'accessory'},
+  gold_necklace:{name:'Gold Necklace',   icon:'📿',sell:200, type:'accessory'},
+  gold_coins:   {name:'Gold Coins',      icon:'🪙',sell:1,   type:'currency'},
+};
+
+const SHOP=[
+  {id:'axe',     name:'Iron Axe',      icon:'🪓',cost:80,  eff:'Woodcut +15% faster', up:'spd_wood'},
+  {id:'pick',    name:'Mithril Pick',  icon:'⛏️', cost:120, eff:'Mining +15% faster',  up:'spd_mine'},
+  {id:'rod',     name:'Fly Rod',       icon:'🎣', cost:60,  eff:'Fishing +15% faster', up:'spd_fish'},
+  {id:'tinder',  name:'Tinderbox',     icon:'🔥',cost:25,  eff:'Cooking +15% faster', up:'spd_cook'},
+  {id:'hammer',  name:'Smith Hammer',  icon:'🔨',cost:90,  eff:'Smithing +15% faster',up:'spd_smith'},
+  {id:'combat_p',name:'Combat Potion', icon:'⚗️', cost:50,  eff:'+2 Attack boost',     up:'pot_atk'},
+  {id:'bread',   name:'Bread x5',      icon:'🍞',cost:25,  eff:'Heals 4 HP each',     up:null,item:'c_meat',qty:5},
+  {id:'pot_hp',  name:'HP Potion',     icon:'🧪', cost:40,  eff:'Restore 15 HP now',   up:null,item:'_heal15'},
+];
+
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+let G = {
+  skills:{},inv:{},equip:{weapon:null,armour:null},
+  gold:0,hp:10,maxhp:10,
+  upgrades:{},
+  tab:'woodcutting',
+  task:null,         // current action id
+  prog:0,dur:0,      // progress ms
+  mhp:0,mmhp:0,      // monster hp
+  mhit:0,            // monster hit timer
+};
+
+function initSkills(){for(const k of Object.keys(SKILLS))if(!G.skills[k])G.skills[k]={xp:0};}
+
+// ═══════════════════════════════════════
+//  SAVE / LOAD
+// ═══════════════════════════════════════
+function save(){try{localStorage.setItem('rforge',JSON.stringify(G));}catch(e){}}
+function load(){
+  try{
+    const s=localStorage.getItem('rforge');
+    if(s){const d=JSON.parse(s);Object.assign(G,d);}
+  }catch(e){}
+  initSkills();
+}
+
+// ═══════════════════════════════════════
+//  SKILL HELPERS
+// ═══════════════════════════════════════
+function slvl(sk){return lvlOf(G.skills[sk]?.xp||0);}
+function sxp(sk){return G.skills[sk]?.xp||0;}
+function xpPct(sk){
+  const l=slvl(sk),x=sxp(sk),nl=Math.min(l+1,99);
+  if(l>=99)return 100;
+  return Math.round(((x-XP[l])/(XP[nl]-XP[l]))*100);
+}
+function addXP(sk,amt){
+  const ol=slvl(sk);
+  G.skills[sk].xp=(G.skills[sk].xp||0)+amt;
+  const nl=slvl(sk);
+  if(nl>ol){
+    showLvlUp(sk,nl);
+    log('<span class="ll">\u2B50 LEVEL UP! '+SKILLS[sk].name+' is now level '+nl+'!</span>');
+    if(sk==='combat'){G.maxhp=10+Math.floor(nl*1.6);G.hp=Math.min(G.hp+3,G.maxhp);}
+  }
+}
+
+// ═══════════════════════════════════════
+//  INVENTORY
+// ═══════════════════════════════════════
+function has(id,n=1){return(G.inv[id]||0)>=n;}
+function give(id,n=1){G.inv[id]=(G.inv[id]||0)+n;}
+function take(id,n=1){if(!has(id,n))return false;G.inv[id]-=n;if(G.inv[id]<=0)delete G.inv[id];return true;}
+
+// ═══════════════════════════════════════
+//  COMBAT STATS
+// ═══════════════════════════════════════
+function getAtk(){
+  let a=1+(G.upgrades.pot_atk?2:0);
+  if(G.equip.weapon&&ITEMS[G.equip.weapon])a+=(ITEMS[G.equip.weapon].atk||0);
+  return a;
+}
+function getDef(){
+  let d=0;
+  if(G.equip.armour&&ITEMS[G.equip.armour])d+=(ITEMS[G.equip.armour].def||0);
+  return d;
+}
+
+// ═══════════════════════════════════════
+//  GAME LOOP
+// ═══════════════════════════════════════
+let lastT=Date.now();
+function tick(){
+  const now=Date.now(),dt=Math.min(now-lastT,500);lastT=now;
+
+  if(G.task){
+    G.prog+=dt;
+
+    // Combat: monster hits back
+    if(G.task.startsWith('cb')){
+      G.mhit+=dt;
+      if(G.mhit>=3800){
+        G.mhit=0;
+        const action=findAction(G.task);
+        if(action){
+          const [mn,mx]=action.dmg;
+          const d=Math.max(0,Math.floor(mn+Math.random()*(mx-mn+1))-getDef());
+          if(d>0){
+            G.hp=Math.max(0,G.hp-d);
+            log('<span class="lc">\uD83D\uDC3E '+action.name+' hits you for '+d+'!</span>');
+            document.body.classList.add('dmg-flash');
+            setTimeout(()=>document.body.classList.remove('dmg-flash'),500);
+          }
+          if(G.hp<=0){
+            G.hp=1;
+            log('<span class="lc">\uD83D\uDC80 Near death! Eat food immediately!</span>');
+            stopTask();
+          }
+        }
+      }
+    }
+
+    if(G.prog>=G.dur){completeTick();G.prog=0;}
+
+    // progress bar
+    const pct=Math.min(100,(G.prog/G.dur)*100);
+    document.getElementById('task-prog').style.width=pct+'%';
+  }
+
+  updateUI();
+  if(Math.floor(now/8000)!==Math.floor((now-dt)/8000))save();
+}
+
+function completeTick(){
+  const a=findAction(G.task);
+  if(!a){stopTask();return;}
+  const sk=findSkill(G.task);
+
+  // Check consumables
+  if(a.need){
+    for(const c of a.need){
+      if(!has(c.id,c.n)){
+        log('\u274C Out of '+(ITEMS[c.id]?.name||c.id)+'. Task stopped.');
+        stopTask();return;
+      }
+    }
+    for(const c of a.need)take(c.id,c.n);
+  }
+
+  // Combat
+  if(a.mhp!==undefined){
+    const atk=getAtk();
+    const dmgDone=atk+Math.floor(Math.random()*3);
+    G.mhp-=dmgDone;
+    if(G.mhp<=0){
+      // Monster dead
+      addXP(sk,a.xp);
+      log('<span class="lc">\u2620\uFE0F You slew the '+a.name+'! (+'+a.xp+' XP)</span>');
+      for(const d of a.drops){
+        if(Math.random()<d.c){
+          if(d.id==='gold_coins'){G.gold+=d.n;log('<span class="lg">\uD83E\uDE99 Looted '+d.n+' gold.</span>');}
+          else{give(d.id,d.n);log('<span class="li">\uD83D\uDCE6 '+(ITEMS[d.id]?.icon||'')+(ITEMS[d.id]?.name||d.id)+' x'+d.n+'</span>');}
+        }
+      }
+      G.mhp=a.mhp; // Respawn monster
+    } else {
+      addXP(sk,a.xp/4); // small XP per hit
+      log('<span class="lc">\u2694\uFE0F Hit '+a.name+' for '+dmgDone+'. HP: '+G.mhp+'/'+G.mmhp+'</span>');
+    }
+  } else {
+    // Non-combat production
+    addXP(sk,a.xp);
+    for(const p of a.prod){give(p.id,p.n);}
+    const desc=a.prod.map(p=>(ITEMS[p.id]?.icon||'')+(ITEMS[p.id]?.name||p.id)+'\xd7'+p.n).join(', ');
+    log(a.icon+' '+desc+' <span class="lx">(+'+a.xp+'xp '+SKILLS[sk].name+')</span>');
+  }
+  showXPFloat(a.xp,sk);
+  refreshButtons(G.tab);
+}
+
+function findAction(id){
+  for(const arr of Object.values(ACTIONS))for(const a of arr)if(a.id===id)return a;
+  return null;
+}
+function findSkill(id){
+  for(const[sk,arr]of Object.entries(ACTIONS))for(const a of arr)if(a.id===id)return sk;
+  return null;
+}
+
+// ═══════════════════════════════════════
+//  TASK CONTROL
+// ═══════════════════════════════════════
+function startTask(id){
+  const a=findAction(id);if(!a)return;
+  const sk=findSkill(id);
+  const lv=slvl(sk);
+  if(lv<a.req){log('\u274C Need level '+a.req+' '+SKILLS[sk].name+'.');return;}
+  if(a.need){
+    for(const c of a.need){
+      if(!has(c.id,c.n)){log('\u274C Need '+(ITEMS[c.id]?.name||c.id)+' \xd7'+c.n+'.');return;}
+    }
+  }
+  if(G.task===id){stopTask();return;}
+  G.task=id;G.prog=0;G.mhit=0;
+
+  // Speed bonus
+  let dur=a.dur;
+  const spd=G.upgrades['spd_'+sk.slice(0,4)]?0.85:1;
+  const lvBonus=Math.max(0.5,1-(lv-a.req)*0.006);
+  G.dur=Math.max(800,Math.floor(dur*spd*lvBonus));
+
+  if(a.mhp!==undefined){G.mhp=a.mhp;G.mmhp=a.mhp;}
+
+  document.getElementById('task-title').textContent=a.icon+' '+a.name;
+  document.getElementById('task-xp-lbl').textContent='+'+a.xp+' XP \u00b7 '+SKILLS[sk].name;
+  document.getElementById('task-dur-lbl').textContent='~'+(G.dur/1000).toFixed(1)+'s';
+  document.getElementById('task-stop').style.display='block';
+
+  anim();refreshButtons(G.tab);
+  log('\u25b6 Started: '+a.name);
+}
+
+function stopTask(){
+  G.task=null;G.prog=0;
+  document.getElementById('task-title').textContent='Idle — choose a skill and action below';
+  document.getElementById('task-prog').style.width='0%';
+  document.getElementById('task-xp-lbl').textContent='';
+  document.getElementById('task-dur-lbl').textContent='';
+  document.getElementById('task-stop').style.display='none';
+  anim();refreshButtons(G.tab);
+}
+
+// ═══════════════════════════════════════
+//  UI UPDATE
+// ═══════════════════════════════════════
+function updateUI(){
+  // Skills grid
+  for(const sk of Object.keys(SKILLS)){
+    const lv=slvl(sk),pc=xpPct(sk);
+    const el=document.getElementById('sk-'+sk);
+    if(!el)continue;
+    el.querySelector('.sk-lvl').textContent=lv;
+    el.querySelector('.xp-fill').style.width=pc+'%';
+    const nxt=XP[Math.min(lv+1,99)],cur=XP[lv];
+    el.querySelector('.xp-label').textContent=(sxp(sk)-cur)+'/'+(nxt-cur);
+    if(G.task&&findSkill(G.task)===sk)el.classList.add('sk-active');
+    else el.classList.remove('sk-active');
+  }
+
+  // HP
+  const hppc=(G.hp/G.maxhp)*100;
+  document.getElementById('hm').style.width=hppc+'%';
+  document.getElementById('hp-fill').style.width=hppc+'%';
+  document.getElementById('hp-val').textContent=Math.ceil(G.hp)+'/'+G.maxhp;
+  const atk=getAtk(),def=getDef();
+  document.getElementById('atk-val').textContent=atk;
+  document.getElementById('def-val').textContent=def;
+  document.getElementById('atk-fill').style.width=Math.min(100,atk*8)+'%';
+  document.getElementById('def-fill').style.width=Math.min(100,def*10)+'%';
+
+  // Gold
+  document.getElementById('gld').textContent='\uD83E\uDE99 '+G.gold;
+
+  // Inventory
+  renderInv();
+
+  // Equipment
+  renderEquip();
+
+  // Inv count
+  const cnt=Object.values(G.inv).filter(v=>v>0).length;
+  document.getElementById('inv-count').textContent=cnt+'/28';
+}
+
+function renderInv(){
+  const grid=document.getElementById('inv-grid');
+  grid.innerHTML='';
+  const items=Object.entries(G.inv).filter(([,v])=>v>0);
+  items.forEach(([id,qty])=>{
+    const it=ITEMS[id];if(!it)return;
+    const d=document.createElement('div');
+    d.className='iv-slot has';
+    const qtyStr=qty>1?'<span class="iv-qty">'+(qty>=1000?(qty/1000).toFixed(1)+'k':qty)+'</span>':'';
+    d.innerHTML='<span class="iv-ico">'+it.icon+'</span><span class="iv-nm">'+it.name+'</span>'+qtyStr;
+    d.onclick=()=>useItem(id);
+    grid.appendChild(d);
+  });
+  // Empty slots
+  const empty=Math.max(0,28-items.length);
+  for(let i=0;i<Math.min(empty,28-items.length);i++){
+    const d=document.createElement('div');d.className='iv-slot';grid.appendChild(d);
+  }
+}
+
+function renderEquip(){
+  const wp=G.equip.weapon,am=G.equip.armour;
+  const wel=document.getElementById('eq-wp'),ael=document.getElementById('eq-am'),fel=document.getElementById('eq-fd');
+  if(wp&&ITEMS[wp]){wel.innerHTML='<span class="eq-icon">'+ITEMS[wp].icon+'</span><span class="eq-name">'+ITEMS[wp].name+'</span>';wel.classList.add('on');}
+  else{wel.innerHTML='<span class="eq-icon">\uD83D\uDDE1\uFE0F</span><span class="eq-lbl">Weapon</span>';wel.classList.remove('on');}
+  if(am&&ITEMS[am]){ael.innerHTML='<span class="eq-icon">'+ITEMS[am].icon+'</span><span class="eq-name">'+ITEMS[am].name+'</span>';ael.classList.add('on');}
+  else{ael.innerHTML='<span class="eq-icon">\uD83D\uDEE1\uFE0F</span><span class="eq-lbl">Armour</span>';ael.classList.remove('on');}
+  const foods=Object.entries(G.inv).filter(([id,q])=>ITEMS[id]?.type==='food'&&q>0).sort((a,b)=>(ITEMS[b[0]].hp||0)-(ITEMS[a[0]].hp||0));
+  if(foods.length){const[fid,fq]=foods[0];fel.innerHTML='<span class="eq-icon">'+ITEMS[fid].icon+'</span><span class="eq-name">'+ITEMS[fid].name+'('+fq+')</span>';fel.classList.add('on');}
+  else{fel.innerHTML='<span class="eq-icon">\uD83C\uDF56</span><span class="eq-lbl">Food</span>';fel.classList.remove('on');}
+}
+
+// ═══════════════════════════════════════
+//  BUILD UI
+// ═══════════════════════════════════════
+function buildSkills(){
+  const g=document.getElementById('skills-grid');
+  for(const[sk,info]of Object.entries(SKILLS)){
+    const d=document.createElement('div');
+    d.className='sk-card';d.id='sk-'+sk;
+    // Build inner DOM nodes (avoids template literal encoding issues)
+    const top=document.createElement('div');top.className='sk-top';
+    const ico=document.createElement('span');ico.className='sk-icon';ico.textContent=info.icon;
+    const inf=document.createElement('div');
+    const nm=document.createElement('div');nm.className='sk-name';nm.textContent=info.name;
+    const lv=document.createElement('div');lv.className='sk-lvl';lv.textContent='1';
+    inf.appendChild(nm);inf.appendChild(lv);
+    top.appendChild(ico);top.appendChild(inf);
+    const trk=document.createElement('div');trk.className='xp-track';
+    const fil=document.createElement('div');fil.className='xp-fill';
+    fil.style.background=info.color;fil.style.width='0%';
+    trk.appendChild(fil);
+    const lbl=document.createElement('div');lbl.className='xp-label';lbl.textContent='0/83';
+    d.appendChild(top);d.appendChild(trk);d.appendChild(lbl);
+    d.onclick=()=>switchTab(sk);
+    g.appendChild(d);
+  }
+}
+
+function buildTabs(){
+  const tabs=document.getElementById('tabs'),pages=document.getElementById('pages');
+  for(const[sk,info]of Object.entries(SKILLS)){
+    // Tab
+    const t=document.createElement('div');
+    t.className='tab'+(sk===G.tab?' active':'');t.id='tab-'+sk;
+    const tico=document.createElement('span');tico.className='tab-icon';tico.textContent=info.icon;
+    t.appendChild(tico);t.appendChild(document.createTextNode(info.name.slice(0,5)));
+    t.onclick=()=>switchTab(sk);tabs.appendChild(t);
+    // Page
+    const p=document.createElement('div');
+    p.className='act-page'+(sk===G.tab?' active':'');p.id='page-'+sk;
+    p.innerHTML=buildActPage(sk);
+    pages.appendChild(p);
+  }
+}
+
+function buildActPage(sk){
+  const acts=ACTIONS[sk];
+  let html='<div class="act-grid">';
+  for(const a of acts){
+    let meta='';
+    if(a.need)meta=a.need.map(c=>(ITEMS[c.id]?.icon||'')+'x'+c.n).join(' ');
+    else if(a.mhp)meta='\u2764\ufe0f'+a.mhp+' hp';
+    else meta='~'+(a.dur/1000).toFixed(1)+'s';
+    html+='<button class="act-btn" data-id="'+a.id+'" data-req="'+a.req+'" onclick="startTask(\''+a.id+'\')">'
+         +'<span class="ab-icon">'+a.icon+'</span>'
+         +'<span class="ab-name">'+a.name+'</span>'
+         +'<span class="ab-req">Lv.'+a.req+' \u00b7 +'+a.xp+'xp</span>'
+         +'<span class="ab-meta">'+meta+'</span>'
+         +'</button>';
+  }
+  return html+'</div>';
+}
+
+function switchTab(sk){
+  G.tab=sk;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.act-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+sk)?.classList.add('active');
+  document.getElementById('page-'+sk)?.classList.add('active');
+  refreshButtons(sk);
+}
+
+function refreshButtons(sk){
+  const lv=slvl(sk);
+  document.querySelectorAll('#page-'+sk+' .act-btn').forEach(btn=>{
+    const req=parseInt(btn.dataset.req);
+    btn.classList.toggle('locked',lv<req);
+    btn.classList.toggle('going',btn.dataset.id===G.task);
+  });
+}
+
+function buildShop(){
+  const g=document.getElementById('shop-grid');
+  SHOP.forEach(s=>{
+    const d=document.createElement('div');
+    d.className='sh-item'+(s.up&&G.upgrades[s.up]?' owned':'');
+    d.innerHTML='<div class="sh-top"><span class="sh-icon">'+s.icon+'</span><span class="sh-name">'+s.name+'</span></div><div class="sh-price">\ud83e\ude99 '+s.cost+'</div><div class="sh-eff">'+s.eff+'</div>';
+    d.onclick=()=>buy(s);g.appendChild(d);
+  });
+}
+
+// ═══════════════════════════════════════
+//  ACTIONS
+// ═══════════════════════════════════════
+function useItem(id){
+  const it=ITEMS[id];if(!it)return;
+  if(it.type==='food'){
+    if(G.hp>=G.maxhp){log('❤️ Already full HP!');return;}
+    take(id,1);G.hp=Math.min(G.maxhp,G.hp+(it.hp||3));
+    log('\uD83C\uDF7D\uFE0F Ate '+it.name+' and restored '+it.hp+' HP.');
+  } else if(it.type==='weapon'){
+    if(G.equip.weapon===id){G.equip.weapon=null;log('Unequipped '+it.name);}
+    else{G.equip.weapon=id;log('\u2694\uFE0F Equipped '+it.name+' (+'+it.atk+' Atk)');}
+  } else if(it.type==='armour'){
+    if(G.equip.armour===id){G.equip.armour=null;log('Unequipped '+it.name);}
+    else{G.equip.armour=id;log('\uD83D\uDEE1\uFE0F Equipped '+it.name+' (+'+it.def+' Def)');}
+  } else {
+    log(it.icon+' '+it.name+' \xd7'+(G.inv[id]||0));
+  }
+}
+
+function unequipSlot(slot){
+  G.equip[slot]=null;
+  log('Unequipped '+slot+'.');
+}
+
+function eatFood(){
+  const f=Object.entries(G.inv).filter(([id,q])=>ITEMS[id]?.type==='food'&&q>0).sort((a,b)=>(ITEMS[b[0]].hp||0)-(ITEMS[a[0]].hp||0));
+  if(!f.length){log('❌ No food!');return;}
+  if(G.hp>=G.maxhp){log('❤️ Already full HP!');return;}
+  useItem(f[0][0]);
+}
+
+function sellAll(){
+  let gold=0,sold=[];
+  for(const[id,qty]of Object.entries(G.inv)){
+    if(!qty||qty<=0)continue;
+    const it=ITEMS[id];if(!it)continue;
+    if(it.type==='weapon'||it.type==='armour'||it.type==='food'||it.type==='accessory')continue;
+    if(it.type==='currency'){gold+=qty;sold.push(it.icon+'\xd7'+qty);delete G.inv[id];continue;}
+    gold+=it.sell*qty;sold.push(it.icon+'\xd7'+qty);delete G.inv[id];
+  }
+  if(gold>0){G.gold+=gold;log('<span class="lg">\uD83D\uDCB0 Sold for '+gold+' gp ('+sold.join(', ')+')</span>');}
+  else log('Nothing to sell.');
+}
+
+function buryBones(){
+  if(!has('bones')){log('❌ No bones!');return;}
+  const n=G.inv['bones']||0;
+  take('bones',n);
+  addXP('combat',n*5);
+  log('\uD83E\uDDB4 Buried '+n+' bones. +'+(n*5)+' Combat XP.');
+}
+
+function buy(s){
+  if(G.gold<s.cost){log('\u274C Need '+s.cost+' gp (have '+G.gold+').');return;}
+  if(s.up&&G.upgrades[s.up]){log('Already owned!');return;}
+  G.gold-=s.cost;
+  if(s.item==='_heal15'){G.hp=Math.min(G.maxhp,G.hp+15);log('\u2697\uFE0F Drank HP Potion. +15 HP!');}
+  else if(s.item){give(s.item,s.qty);log('\uD83D\uDED2 Bought '+s.name+'.');}
+  else if(s.up){G.upgrades[s.up]=true;log('\u2705 Purchased '+s.name+'! '+s.eff);}
+  // Rebuild shop
+  document.getElementById('shop-grid').innerHTML='';buildShop();
+}
+
+// ═══════════════════════════════════════
+//  CHARACTER ANIMATION
+// ═══════════════════════════════════════
+function anim(){
+  const ch=document.getElementById('char');
+  const al=document.getElementById('cal'),ar=document.getElementById('car');
+  const ll=document.getElementById('cll'),lr=document.getElementById('clr');
+  const prop=document.getElementById('prop');
+  const body=document.getElementById('cbody');
+
+  al.style.animation=ar.style.animation=ll.style.animation=lr.style.animation=ch.style.animation='';
+  prop.innerHTML='';
+
+  const sk=G.task?findSkill(G.task):null;
+  const a=G.task?findAction(G.task):null;
+
+  ch.style.animation=sk?'bob .75s ease-in-out infinite':'idle 2s ease-in-out infinite';
+
+  if(!sk){
+    al.style.animation='armrest 2.2s ease-in-out infinite';
+    ar.style.animation='armrest 2.2s ease-in-out infinite reverse';
+    return;
+  }
+
+  switch(sk){
+    case 'woodcutting':
+      al.style.animation='chop .65s ease-in-out infinite';
+      ar.style.animation='chop .65s ease-in-out infinite .32s';
+      prop.innerHTML='<div class="prop-tree-t" style="animation:sway 2.5s ease-in-out infinite;transform-origin:bottom center"></div>'
+        +'<div class="prop-tree-l" style="animation:sway 2.5s ease-in-out infinite;transform-origin:bottom center"></div>'
+        +'<div class="prop-tool" style="bottom:28px;right:55px;transform:rotate(-25deg)">\uD83E\uDE93</div>';
+      break;
+    case 'mining':
+      al.style.animation='chop .55s ease-in-out infinite';
+      ar.style.animation='chop .55s ease-in-out infinite .27s';
+      prop.innerHTML='<div class="prop-rock"></div>'
+        +'<div class="prop-tool" style="bottom:26px;right:50px;transform:rotate(40deg)">\u26CF\uFE0F</div>';
+      break;
+    case 'fishing':
+      al.style.animation='cast 1.6s ease-in-out infinite';
+      ar.style.animation='cast 1.6s ease-in-out infinite .8s';
+      prop.innerHTML='<div class="prop-water" style="animation:ripple 1.5s ease-in-out infinite"></div>'
+        +'<div class="prop-tool" style="bottom:32px;right:50px">\uD83C\uDFA3</div>';
+      break;
+    case 'smithing':
+      al.style.animation='chop .5s ease-in-out infinite';
+      ar.style.animation='chop .5s ease-in-out infinite .25s';
+      prop.innerHTML='<div class="prop-fire" style="animation:flicker .45s ease-in-out infinite">\uD83D\uDD25</div>'
+        +'<div class="prop-anvil">\u2699\uFE0F</div>'
+        +'<div class="prop-tool" style="bottom:27px;right:50px;transform:rotate(30deg)">\uD83D\uDD28</div>';
+      break;
+    case 'cooking':
+      al.style.animation='stir 1s ease-in-out infinite';
+      ar.style.animation='stir 1s ease-in-out infinite .5s';
+      prop.innerHTML='<div class="prop-fire" style="animation:flicker .4s ease-in-out infinite">\uD83D\uDD25</div>'
+        +'<div class="prop-tool" style="bottom:30px;right:46px">\uD83C\uDF73</div>';
+      break;
+    case 'combat':
+      al.style.animation='swing .6s ease-in-out infinite';
+      ar.style.animation='swing2 .6s ease-in-out infinite';
+      ll.style.animation='walk-l .55s ease-in-out infinite';
+      lr.style.animation='walk-r .55s ease-in-out infinite';
+      const wico=G.equip.weapon&&ITEMS[G.equip.weapon]?ITEMS[G.equip.weapon].icon:'\u2694\uFE0F';
+      prop.innerHTML='<div class="prop-monster">'+(a?a.icon:'\uD83D\uDC7A')+'</div>'
+        +'<div class="prop-tool" style="bottom:22px;right:55px;transform:rotate(-20deg)">'+wico+'</div>';
+      break;
+    case 'fletching':
+      al.style.animation='stir 1.1s ease-in-out infinite';
+      ar.style.animation='cast 1.1s ease-in-out infinite .55s';
+      prop.innerHTML='<div class="prop-tool" style="bottom:32px;right:48px">\uD83C\uDFF9</div>';
+      break;
+    case 'crafting':
+      al.style.animation='stir 1.2s ease-in-out infinite';
+      ar.style.animation='stir 1.2s ease-in-out infinite .6s';
+      prop.innerHTML='<div class="prop-tool" style="bottom:30px;right:48px">\uD83E\uDDF5</div>';
+      break;
+  }
+}
+
+// ═══════════════════════════════════════
+//  NOTIFICATIONS
+// ═══════════════════════════════════════
+function log(msg){
+  const el=document.getElementById('log-inner');
+  const d=document.createElement('div');d.className='le';d.innerHTML=msg;
+  el.insertBefore(d,el.firstChild);
+  while(el.children.length>60)el.removeChild(el.lastChild);
+}
+
+function showLvlUp(sk,lv){
+  const d=document.createElement('div');d.className='lv-popup';
+  const t=document.createElement('div');t.className='lv-title';t.textContent='\u2B50 LEVEL UP!';
+  const s=document.createElement('div');s.className='lv-sub';s.textContent=SKILLS[sk].icon+' '+SKILLS[sk].name+' \u2014 Level '+lv;
+  d.appendChild(t);d.appendChild(s);
+  document.body.appendChild(d);setTimeout(()=>d.remove(),2700);
+}
+
+function showXPFloat(xp,sk){
+  const d=document.createElement('div');d.className='xp-float';
+  d.textContent='+'+xp+' '+(SKILLS[sk]?.name||'');
+  d.style.left=(20+Math.random()*60)+'%';d.style.top='55%';
+  document.body.appendChild(d);setTimeout(()=>d.remove(),1500);
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+function init(){
+  load();
+  buildSkills();buildTabs();buildShop();
+  updateUI();anim();
+
+  setInterval(tick,50);
+
+  log('🎮 <b>Welcome to RuneForge!</b> Tap a skill tab and choose an action to begin.');
+  log('💡 Tip: Chop logs → Fletch bows. Mine ores → Smith gear. Fish → Cook food. Fight monsters for gold!');
+
+  // Restore active tab display
+  if(G.task){
+    const sk=findSkill(G.task);
+    const a=findAction(G.task);
+    if(sk&&a){
+      switchTab(sk);
+      document.getElementById('task-title').textContent=a.icon+' '+a.name;
+      document.getElementById('task-xp-lbl').textContent='+'+a.xp+' XP \u00b7 '+SKILLS[sk].name;
+      document.getElementById('task-stop').style.display='block';
+    }
+  } else {
+    switchTab(G.tab||'woodcutting');
+  }
+}
+
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)lastT=Date.now();});
+window.addEventListener('load',init);
+</script>
+</body>
+</html>
