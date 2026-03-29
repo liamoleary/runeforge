@@ -73,8 +73,36 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .xp-fill{height:100%;border-radius:3px;transition:width .4s ease}
 .xp-label{font-size:9px;color:var(--text3);margin-top:2px}
 
+/* ── DUNGEONS ── */
+#dungeon-grid{display:flex;flex-direction:column;gap:0}
+.dg-card{
+  padding:12px;border-bottom:1px solid var(--bdr);
+  display:flex;align-items:flex-start;gap:12px;
+  transition:background .2s;position:relative;
+}
+.dg-card:last-child{border-bottom:none}
+.dg-card:not(.dg-locked){cursor:pointer}
+.dg-card:not(.dg-locked):active{background:var(--bg3)}
+.dg-card.dg-locked{opacity:.38;filter:grayscale(.5)}
+.dg-card.dg-active{background:#1e1506;border-left:3px solid var(--gold)}
+.dg-icon{font-size:30px;width:38px;text-align:center;flex-shrink:0;padding-top:2px}
+.dg-info{flex:1;min-width:0}
+.dg-name{font-family:'Cinzel',serif;font-size:12px;color:var(--text);font-weight:700}
+.dg-desc{font-size:10px;color:var(--text3);margin-top:2px;line-height:1.4}
+.dg-mobs{font-size:10px;color:var(--text2);margin-top:3px}
+.dg-reqs{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.dg-req{font-size:9px;background:var(--bg3);border:1px solid var(--bdr);border-radius:4px;padding:2px 6px;color:var(--text2);font-family:'Cinzel',serif;letter-spacing:.3px}
+.dg-req.met{border-color:#3a6a3a;color:#5ac85a}
+.dg-req.unmet{border-color:#6a3a3a;color:#e06060}
+.dg-enter{flex-shrink:0;font-size:9px;font-family:'Cinzel',serif;color:var(--gold);background:var(--bg3);border:1px solid var(--bdr2);border-radius:5px;padding:4px 8px;margin-top:2px;white-space:nowrap}
+.dg-card.dg-active .dg-enter{color:#e06060;border-color:#7a2a2a}
+.dg-mob{margin-top:7px}
+.dg-mob-name{font-size:10px;color:var(--text2);margin-bottom:3px}
+.dg-mob-bar{background:#3a0a0a;height:5px;border-radius:3px;overflow:hidden}
+.dg-mob-fill{height:100%;background:linear-gradient(90deg,#c02020,#f04040);border-radius:3px;transition:width .12s}
+.dg-mob-text{font-size:9px;color:var(--text3);margin-top:2px}
+
 /* ── ACTIVITY PANEL ── */
-#act-panel .panel-hdr{}
 #task-box{
   margin:10px;background:var(--bg2);border:1px solid var(--bdr);
   border-radius:8px;padding:11px;
@@ -122,7 +150,6 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .act-btn .ab-req{font-size:9px;color:#c08020}
 
 /* ── CHAR PANEL ── */
-#char-panel{}
 #char-stats{display:flex;gap:8px;padding:10px 12px}
 .stat-box{flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;padding:8px;text-align:center}
 .stat-box .sb-lbl{font-size:9px;color:var(--text3);font-family:'Cinzel',serif;text-transform:uppercase;letter-spacing:.5px}
@@ -200,62 +227,25 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 
 /* ── CHARACTER ── */
 #char{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:34px;height:50px}
-.c-head{
-  position:absolute;top:0;left:8px;width:18px;height:15px;
-  background:#e0bc8c;border-radius:5px 5px 3px 3px;border:1px solid #c09868;
-}
+.c-head{position:absolute;top:0;left:8px;width:18px;height:15px;background:#e0bc8c;border-radius:5px 5px 3px 3px;border:1px solid #c09868;}
 .c-el,.c-er{position:absolute;width:3px;height:3px;background:#1e1208;border-radius:50%;top:5px}
 .c-el{left:3px}.c-er{right:3px}
 .c-mouth{position:absolute;width:6px;height:2px;background:#c08060;border-radius:1px;bottom:3px;left:5px}
-.c-helm{
-  position:absolute;top:-5px;left:5px;width:24px;height:12px;
-  background:#888;border-radius:50% 50% 0 0;border:1px solid #aaa;display:none;
-}
-.c-body{
-  position:absolute;top:14px;left:6px;width:22px;height:21px;
-  background:#3c6040;border-radius:2px;border:1px solid #2c5030;
-}
+.c-helm{position:absolute;top:-5px;left:5px;width:24px;height:12px;background:#888;border-radius:50% 50% 0 0;border:1px solid #aaa;display:none;}
+.c-body{position:absolute;top:14px;left:6px;width:22px;height:21px;background:#3c6040;border-radius:2px;border:1px solid #2c5030;}
 .c-belt{position:absolute;top:21px;left:6px;width:22px;height:4px;background:#5a3a18;border:1px solid #3a2010}
-.c-al{
-  position:absolute;top:14px;left:1px;width:7px;height:17px;
-  background:#3c6040;border-radius:3px;border:1px solid #2c5030;
-  transform-origin:top center;
-}
-.c-ar{
-  position:absolute;top:14px;right:1px;width:7px;height:17px;
-  background:#3c6040;border-radius:3px;border:1px solid #2c5030;
-  transform-origin:top center;
-}
-.c-ll{
-  position:absolute;top:34px;left:7px;width:8px;height:16px;
-  background:#2a3870;border-radius:0 0 3px 3px;transform-origin:top center;
-}
-.c-lr{
-  position:absolute;top:34px;right:7px;width:8px;height:16px;
-  background:#2a3870;border-radius:0 0 3px 3px;transform-origin:top center;
-}
+.c-al{position:absolute;top:14px;left:1px;width:7px;height:17px;background:#3c6040;border-radius:3px;border:1px solid #2c5030;transform-origin:top center;}
+.c-ar{position:absolute;top:14px;right:1px;width:7px;height:17px;background:#3c6040;border-radius:3px;border:1px solid #2c5030;transform-origin:top center;}
+.c-ll{position:absolute;top:34px;left:7px;width:8px;height:16px;background:#2a3870;border-radius:0 0 3px 3px;transform-origin:top center;}
+.c-lr{position:absolute;top:34px;right:7px;width:8px;height:16px;background:#2a3870;border-radius:0 0 3px 3px;transform-origin:top center;}
 .c-boot-l{position:absolute;top:47px;left:7px;width:9px;height:5px;background:#2a1808;border-radius:1px 2px 3px 2px}
 .c-boot-r{position:absolute;top:47px;right:6px;width:9px;height:5px;background:#2a1808;border-radius:2px 1px 2px 3px}
 
 /* Scene props */
-.prop-tree-t{
-  position:absolute;bottom:20px;right:8px;width:10px;height:28px;
-  background:#6b4218;border:1px solid #4a2e12;
-}
-.prop-tree-l{
-  position:absolute;bottom:44px;right:-8px;width:38px;height:34px;
-  background:radial-gradient(ellipse,#2e7030,#1e5020);
-  border-radius:50%;border:1px solid #1a4018;
-}
-.prop-rock{
-  position:absolute;bottom:20px;right:10px;width:32px;height:22px;
-  background:linear-gradient(135deg,#7a7a7a,#555);
-  border-radius:8px 14px 4px 6px;border:2px solid #444;
-}
-.prop-water{
-  position:absolute;bottom:20px;right:4px;width:55px;height:14px;
-  background:linear-gradient(180deg,#1a4890,#0a2860);border-radius:4px 4px 0 0;
-}
+.prop-tree-t{position:absolute;bottom:20px;right:8px;width:10px;height:28px;background:#6b4218;border:1px solid #4a2e12}
+.prop-tree-l{position:absolute;bottom:44px;right:-8px;width:38px;height:34px;background:radial-gradient(ellipse,#2e7030,#1e5020);border-radius:50%;border:1px solid #1a4018}
+.prop-rock{position:absolute;bottom:20px;right:10px;width:32px;height:22px;background:linear-gradient(135deg,#7a7a7a,#555);border-radius:8px 14px 4px 6px;border:2px solid #444}
+.prop-water{position:absolute;bottom:20px;right:4px;width:55px;height:14px;background:linear-gradient(180deg,#1a4890,#0a2860);border-radius:4px 4px 0 0}
 .prop-fire{position:absolute;bottom:20px;right:14px;font-size:22px;line-height:1}
 .prop-monster{position:absolute;bottom:18px;right:2px;font-size:28px;line-height:1}
 .prop-anvil{position:absolute;bottom:18px;right:12px;font-size:20px;line-height:1}
@@ -275,33 +265,15 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 @keyframes sway   {0%,100%{transform:rotate(0deg)}   50%{transform:rotate(2.5deg)}}
 @keyframes flicker{0%,100%{transform:scaleY(1) scaleX(1)} 25%{transform:scaleY(1.12) scaleX(.93)} 75%{transform:scaleY(.9) scaleX(1.08)}}
 @keyframes ripple {0%,100%{opacity:.7} 50%{opacity:1}}
-
-@keyframes lvlup{
-  0%{transform:translate(-50%,-50%) scale(0);opacity:0}
-  25%{transform:translate(-50%,-50%) scale(1.15);opacity:1}
-  70%{transform:translate(-50%,-50%) scale(1);opacity:1}
-  100%{transform:translate(-50%,-50%) scale(.9);opacity:0}
-}
+@keyframes lvlup{0%{transform:translate(-50%,-50%) scale(0);opacity:0} 25%{transform:translate(-50%,-50%) scale(1.15);opacity:1} 70%{transform:translate(-50%,-50%) scale(1);opacity:1} 100%{transform:translate(-50%,-50%) scale(.9);opacity:0}}
 @keyframes xpup{0%{transform:translateY(0);opacity:1} 100%{transform:translateY(-38px);opacity:0}}
 @keyframes dmgflash{0%,100%{background:var(--bg1)} 50%{background:#3a0808}}
 
 /* ── LEVEL UP POPUP ── */
-.lv-popup{
-  position:fixed;top:50%;left:50%;
-  transform:translate(-50%,-50%) scale(0);opacity:0;
-  background:linear-gradient(135deg,#1a1002,#362200);
-  border:2px solid var(--gold);border-radius:14px;
-  padding:22px 32px;text-align:center;z-index:500;
-  box-shadow:0 0 40px rgba(240,192,64,.5);
-  animation:lvlup 2.6s ease forwards;
-  pointer-events:none;
-}
+.lv-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);opacity:0;background:linear-gradient(135deg,#1a1002,#362200);border:2px solid var(--gold);border-radius:14px;padding:22px 32px;text-align:center;z-index:500;box-shadow:0 0 40px rgba(240,192,64,.5);animation:lvlup 2.6s ease forwards;pointer-events:none;}
 .lv-title{font-family:'Cinzel',serif;font-size:22px;color:var(--gold);text-shadow:0 0 14px rgba(240,192,64,.7)}
 .lv-sub{font-size:13px;color:var(--text2);margin-top:6px}
-.xp-float{
-  position:fixed;font-size:12px;color:#6ef06e;font-weight:bold;
-  pointer-events:none;z-index:300;animation:xpup 1.4s ease forwards;
-}
+.xp-float{position:fixed;font-size:12px;color:#6ef06e;font-weight:bold;pointer-events:none;z-index:300;animation:xpup 1.4s ease forwards;}
 .dmg-flash{animation:dmgflash .5s ease}
 </style>
 </head>
@@ -323,6 +295,12 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
     <div id="skills-grid"></div>
   </div>
 
+  <!-- Dungeons -->
+  <div class="panel" id="dungeon-panel">
+    <div class="panel-hdr">⚔ Dungeons</div>
+    <div id="dungeon-grid"></div>
+  </div>
+
   <!-- Activity panel -->
   <div class="panel" id="act-panel">
     <div class="panel-hdr">
@@ -330,7 +308,7 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
       <button id="task-stop" onclick="stopTask()">■ Stop</button>
     </div>
     <div id="task-box">
-      <div id="task-title">Idle — choose a skill and action below</div>
+      <div id="task-title">Idle — choose a skill or enter a dungeon</div>
       <div id="task-prog-wrap"><div id="task-prog"></div></div>
       <div id="task-sub"><span id="task-xp-lbl"></span><span id="task-dur-lbl"></span></div>
     </div>
@@ -443,6 +421,7 @@ function xpNeeded(lvl){
 const XP=[];for(let i=0;i<=99;i++)XP[i]=xpNeeded(i);
 function lvlOf(xp){for(let i=98;i>=1;i--)if(xp>=XP[i])return i;return 1;}
 
+// Skill actions — combat removed (handled by dungeon system)
 const ACTIONS = {
   woodcutting:[
     {id:'wc0',name:'Normal Tree', icon:'🌲',req:1, xp:25, dur:3500,prod:[{id:'logs',n:1}]},
@@ -465,12 +444,13 @@ const ACTIONS = {
     {id:'fs4',name:'Lobster Cage',  icon:'🦞',req:40,xp:90, dur:8000,prod:[{id:'raw_lobster',n:1}]},
   ],
   smithing:[
-    {id:'sm0',name:'Bronze Bar',   icon:'🟫',req:1, xp:7,  dur:4000,prod:[{id:'bronze_bar',n:1}],  need:[{id:'copper_ore',n:1},{id:'tin_ore',n:1}]},
-    {id:'sm1',name:'Iron Bar',     icon:'⬛',req:15,xp:13, dur:4500,prod:[{id:'iron_bar',n:1}],    need:[{id:'iron_ore',n:2}]},
-    {id:'sm2',name:'Bronze Sword', icon:'🗡️',req:4, xp:13, dur:5000,prod:[{id:'bronze_sword',n:1}],need:[{id:'bronze_bar',n:1}]},
-    {id:'sm3',name:'Iron Sword',   icon:'⚔️',req:19,xp:25, dur:5500,prod:[{id:'iron_sword',n:1}],  need:[{id:'iron_bar',n:1}]},
-    {id:'sm4',name:'Bronze Shield',icon:'🛡️',req:7, xp:38, dur:6500,prod:[{id:'bronze_shield',n:1}],need:[{id:'bronze_bar',n:3}]},
-    {id:'sm5',name:'Iron Platebody',icon:'🛡️',req:33,xp:75,dur:8000,prod:[{id:'iron_platebody',n:1}],need:[{id:'iron_bar',n:5}]},
+    {id:'sm0',name:'Bronze Bar',    icon:'🟫',req:1, xp:7,  dur:4000,prod:[{id:'bronze_bar',n:1}],    need:[{id:'copper_ore',n:1},{id:'tin_ore',n:1}]},
+    {id:'sm1',name:'Iron Bar',      icon:'⬛',req:15,xp:13, dur:4500,prod:[{id:'iron_bar',n:1}],      need:[{id:'iron_ore',n:2}]},
+    {id:'sm2',name:'Bronze Sword',  icon:'🗡️',req:4, xp:13, dur:5000,prod:[{id:'bronze_sword',n:1}],  need:[{id:'bronze_bar',n:1}]},
+    {id:'sm3',name:'Iron Sword',    icon:'⚔️',req:19,xp:25, dur:5500,prod:[{id:'iron_sword',n:1}],    need:[{id:'iron_bar',n:1}]},
+    {id:'sm4',name:'Bronze Shield', icon:'🛡️',req:7, xp:38, dur:6500,prod:[{id:'bronze_shield',n:1}], need:[{id:'bronze_bar',n:3}]},
+    {id:'sm5',name:'Iron Platebody',icon:'🛡️',req:33,xp:75, dur:8000,prod:[{id:'iron_platebody',n:1}],need:[{id:'iron_bar',n:5}]},
+    {id:'sm6',name:'Steel Bar',     icon:'🔷',req:30,xp:30, dur:5000,prod:[{id:'steel_bar',n:1}],     need:[{id:'iron_ore',n:1},{id:'coal',n:2}]},
   ],
   cooking:[
     {id:'ck0',name:'Cook Shrimp',  icon:'🍤',req:1, xp:30, dur:2500,prod:[{id:'c_shrimp',n:1}],  need:[{id:'raw_shrimp',n:1}]},
@@ -481,68 +461,63 @@ const ACTIONS = {
     {id:'ck5',name:'Cook Meat',    icon:'🍖',req:1, xp:30, dur:2500,prod:[{id:'c_meat',n:1}],    need:[{id:'raw_meat',n:1}]},
   ],
   fletching:[
-    {id:'fl0',name:'Arrow Shafts',  icon:'↑', req:1, xp:5,  dur:2000,prod:[{id:'arrow_shaft',n:15}],need:[{id:'logs',n:1}]},
-    {id:'fl1',name:'Shortbow (u)',  icon:'🏹',req:5, xp:10, dur:4000,prod:[{id:'shortbow',n:1}],    need:[{id:'logs',n:1}]},
-    {id:'fl2',name:'Oak Shortbow',  icon:'🏹',req:20,xp:25, dur:4500,prod:[{id:'oak_bow',n:1}],     need:[{id:'oak_log',n:1}]},
-    {id:'fl3',name:'Iron Arrows x15',icon:'🪃',req:15,xp:38,dur:3000,prod:[{id:'iron_arrow',n:15}], need:[{id:'arrow_shaft',n:15},{id:'iron_bar',n:1}]},
-    {id:'fl4',name:'Willow Bow',    icon:'🏹',req:35,xp:58, dur:5000,prod:[{id:'willow_bow',n:1}],  need:[{id:'willow_log',n:1}]},
+    {id:'fl0',name:'Arrow Shafts',   icon:'↑', req:1, xp:5,  dur:2000,prod:[{id:'arrow_shaft',n:15}],need:[{id:'logs',n:1}]},
+    {id:'fl1',name:'Shortbow (u)',   icon:'🏹',req:5, xp:10, dur:4000,prod:[{id:'shortbow',n:1}],    need:[{id:'logs',n:1}]},
+    {id:'fl2',name:'Oak Shortbow',   icon:'🏹',req:20,xp:25, dur:4500,prod:[{id:'oak_bow',n:1}],     need:[{id:'oak_log',n:1}]},
+    {id:'fl3',name:'Iron Arrows x15',icon:'🪃',req:15,xp:38, dur:3000,prod:[{id:'iron_arrow',n:15}], need:[{id:'arrow_shaft',n:15},{id:'iron_bar',n:1}]},
+    {id:'fl4',name:'Willow Bow',     icon:'🏹',req:35,xp:58, dur:5000,prod:[{id:'willow_bow',n:1}],  need:[{id:'willow_log',n:1}]},
   ],
   crafting:[
-    {id:'cr0',name:'Tan Cowhide', icon:'🐄',req:1, xp:0,  dur:2000,prod:[{id:'leather',n:1}],       need:[{id:'cowhide',n:1}]},
-    {id:'cr1',name:'Leather Body',icon:'👕',req:14,xp:25, dur:4000,prod:[{id:'leather_body',n:1}],   need:[{id:'leather',n:3}]},
-    {id:'cr2',name:'Gold Ring',   icon:'💍',req:5, xp:15, dur:3500,prod:[{id:'gold_ring',n:1}],      need:[{id:'gold_ore',n:1}]},
-    {id:'cr3',name:'Gold Necklace',icon:'📿',req:20,xp:35,dur:4500,prod:[{id:'gold_necklace',n:1}],  need:[{id:'gold_ore',n:2}]},
-  ],
-  combat:[
-    {id:'cb0',name:'Chicken',    icon:'🐔',req:1, xp:12, dur:2800,mhp:3,  dmg:[1,3], drops:[{id:'raw_meat',n:1,c:1},{id:'bones',n:1,c:1},{id:'feather',n:5,c:.7},{id:'gold_coins',n:3,c:.5}]},
-    {id:'cb1',name:'Goblin',     icon:'👺',req:5, xp:25, dur:3200,mhp:6,  dmg:[1,4], drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:8,c:.8},{id:'cowhide',n:1,c:.3}]},
-    {id:'cb2',name:'Giant Rat',  icon:'🐀',req:10,xp:35, dur:3500,mhp:8,  dmg:[1,5], drops:[{id:'bones',n:1,c:1},{id:'raw_meat',n:1,c:.7},{id:'gold_coins',n:5,c:.5}]},
-    {id:'cb3',name:'Guard',      icon:'💂',req:22,xp:60, dur:4000,mhp:14, dmg:[2,6], drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:28,c:.9},{id:'iron_ore',n:1,c:.4}]},
-    {id:'cb4',name:'Dark Knight',icon:'🗡️',req:40,xp:120,dur:4500,mhp:28, dmg:[3,9], drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:65,c:1},{id:'iron_bar',n:1,c:.5},{id:'iron_sword',n:1,c:.1}]},
+    {id:'cr0',name:'Tan Cowhide',  icon:'🐄',req:1, xp:0,  dur:2000,prod:[{id:'leather',n:1}],      need:[{id:'cowhide',n:1}]},
+    {id:'cr1',name:'Leather Body', icon:'👕',req:14,xp:25, dur:4000,prod:[{id:'leather_body',n:1}],  need:[{id:'leather',n:3}]},
+    {id:'cr2',name:'Gold Ring',    icon:'💍',req:5, xp:15, dur:3500,prod:[{id:'gold_ring',n:1}],     need:[{id:'gold_ore',n:1}]},
+    {id:'cr3',name:'Gold Necklace',icon:'📿',req:20,xp:35, dur:4500,prod:[{id:'gold_necklace',n:1}], need:[{id:'gold_ore',n:2}]},
   ],
 };
 
 const ITEMS = {
-  logs:         {name:'Logs',            icon:'🪵',sell:5,   type:'res'},
-  oak_log:      {name:'Oak Logs',        icon:'🪵',sell:15,  type:'res'},
-  willow_log:   {name:'Willow Logs',     icon:'🪵',sell:30,  type:'res'},
-  yew_log:      {name:'Yew Logs',        icon:'🪵',sell:100, type:'res'},
-  copper_ore:   {name:'Copper Ore',      icon:'🟫',sell:5,   type:'res'},
-  tin_ore:      {name:'Tin Ore',         icon:'⬜',sell:5,   type:'res'},
-  iron_ore:     {name:'Iron Ore',        icon:'🔵',sell:10,  type:'res'},
-  coal:         {name:'Coal',            icon:'🖤',sell:20,  type:'res'},
-  gold_ore:     {name:'Gold Ore',        icon:'💛',sell:45,  type:'res'},
-  bronze_bar:   {name:'Bronze Bar',      icon:'🟫',sell:18,  type:'res'},
-  iron_bar:     {name:'Iron Bar',        icon:'⬛',sell:35,  type:'res'},
-  raw_shrimp:   {name:'Raw Shrimp',      icon:'🦐',sell:2,   type:'raw'},
-  raw_sardine:  {name:'Raw Sardine',     icon:'🐟',sell:4,   type:'raw'},
-  raw_trout:    {name:'Raw Trout',       icon:'🐠',sell:10,  type:'raw'},
-  raw_salmon:   {name:'Raw Salmon',      icon:'🐡',sell:15,  type:'raw'},
-  raw_lobster:  {name:'Raw Lobster',     icon:'🦞',sell:20,  type:'raw'},
-  raw_meat:     {name:'Raw Meat',        icon:'🥩',sell:2,   type:'raw'},
-  c_shrimp:     {name:'Shrimp',          icon:'🍤',sell:8,   type:'food',hp:3},
-  c_sardine:    {name:'Sardine',         icon:'🐟',sell:12,  type:'food',hp:4},
-  c_trout:      {name:'Trout',           icon:'🐠',sell:25,  type:'food',hp:7},
-  c_salmon:     {name:'Salmon',          icon:'🐡',sell:35,  type:'food',hp:9},
-  c_lobster:    {name:'Lobster',         icon:'🦞',sell:55,  type:'food',hp:12},
-  c_meat:       {name:'Cooked Meat',     icon:'🍖',sell:15,  type:'food',hp:5},
-  bones:        {name:'Bones',           icon:'🦴',sell:5,   type:'res'},
-  feather:      {name:'Feathers',        icon:'🪶',sell:2,   type:'res'},
-  cowhide:      {name:'Cowhide',         icon:'🐄',sell:10,  type:'res'},
-  leather:      {name:'Leather',         icon:'📜',sell:15,  type:'res'},
-  arrow_shaft:  {name:'Arrow Shafts',    icon:'↑', sell:1,   type:'res'},
-  iron_arrow:   {name:'Iron Arrows',     icon:'🪃',sell:3,   type:'res'},
-  shortbow:     {name:'Shortbow',        icon:'🏹',sell:40,  type:'weapon',atk:3},
-  oak_bow:      {name:'Oak Shortbow',    icon:'🏹',sell:90,  type:'weapon',atk:6},
-  willow_bow:   {name:'Willow Bow',      icon:'🏹',sell:180, type:'weapon',atk:10},
-  bronze_sword: {name:'Bronze Sword',    icon:'🗡️',sell:50,  type:'weapon',atk:2},
-  iron_sword:   {name:'Iron Sword',      icon:'⚔️',sell:150, type:'weapon',atk:5},
-  bronze_shield:{name:'Bronze Shield',   icon:'🛡️',sell:120, type:'armour',def:2},
+  logs:          {name:'Logs',           icon:'🪵',sell:5,   type:'res'},
+  oak_log:       {name:'Oak Logs',       icon:'🪵',sell:15,  type:'res'},
+  willow_log:    {name:'Willow Logs',    icon:'🪵',sell:30,  type:'res'},
+  yew_log:       {name:'Yew Logs',       icon:'🪵',sell:100, type:'res'},
+  copper_ore:    {name:'Copper Ore',     icon:'🟫',sell:5,   type:'res'},
+  tin_ore:       {name:'Tin Ore',        icon:'⬜',sell:5,   type:'res'},
+  iron_ore:      {name:'Iron Ore',       icon:'🔵',sell:10,  type:'res'},
+  coal:          {name:'Coal',           icon:'🖤',sell:20,  type:'res'},
+  gold_ore:      {name:'Gold Ore',       icon:'💛',sell:45,  type:'res'},
+  bronze_bar:    {name:'Bronze Bar',     icon:'🟫',sell:18,  type:'res'},
+  iron_bar:      {name:'Iron Bar',       icon:'⬛',sell:35,  type:'res'},
+  steel_bar:     {name:'Steel Bar',      icon:'🔷',sell:80,  type:'res'},
+  rune_fragment: {name:'Rune Fragment',  icon:'💎',sell:200, type:'res'},
+  raw_shrimp:    {name:'Raw Shrimp',     icon:'🦐',sell:2,   type:'raw'},
+  raw_sardine:   {name:'Raw Sardine',    icon:'🐟',sell:4,   type:'raw'},
+  raw_trout:     {name:'Raw Trout',      icon:'🐠',sell:10,  type:'raw'},
+  raw_salmon:    {name:'Raw Salmon',     icon:'🐡',sell:15,  type:'raw'},
+  raw_lobster:   {name:'Raw Lobster',    icon:'🦞',sell:20,  type:'raw'},
+  raw_meat:      {name:'Raw Meat',       icon:'🥩',sell:2,   type:'raw'},
+  c_shrimp:      {name:'Shrimp',         icon:'🍤',sell:8,   type:'food',hp:3},
+  c_sardine:     {name:'Sardine',        icon:'🐟',sell:12,  type:'food',hp:4},
+  c_trout:       {name:'Trout',          icon:'🐠',sell:25,  type:'food',hp:7},
+  c_salmon:      {name:'Salmon',         icon:'🐡',sell:35,  type:'food',hp:9},
+  c_lobster:     {name:'Lobster',        icon:'🦞',sell:55,  type:'food',hp:12},
+  c_meat:        {name:'Cooked Meat',    icon:'🍖',sell:15,  type:'food',hp:5},
+  bones:         {name:'Bones',          icon:'🦴',sell:5,   type:'res'},
+  feather:       {name:'Feathers',       icon:'🪶',sell:2,   type:'res'},
+  cowhide:       {name:'Cowhide',        icon:'🐄',sell:10,  type:'res'},
+  leather:       {name:'Leather',        icon:'📜',sell:15,  type:'res'},
+  arrow_shaft:   {name:'Arrow Shafts',   icon:'↑', sell:1,   type:'res'},
+  iron_arrow:    {name:'Iron Arrows',    icon:'🪃',sell:3,   type:'res'},
+  shortbow:      {name:'Shortbow',       icon:'🏹',sell:40,  type:'weapon',atk:3},
+  oak_bow:       {name:'Oak Shortbow',   icon:'🏹',sell:90,  type:'weapon',atk:6},
+  willow_bow:    {name:'Willow Bow',     icon:'🏹',sell:180, type:'weapon',atk:10},
+  bronze_sword:  {name:'Bronze Sword',   icon:'🗡️',sell:50,  type:'weapon',atk:2},
+  iron_sword:    {name:'Iron Sword',     icon:'⚔️',sell:150, type:'weapon',atk:5},
+  bronze_shield: {name:'Bronze Shield',  icon:'🛡️',sell:120, type:'armour',def:2},
   iron_platebody:{name:'Iron Platebody', icon:'🛡️',sell:350, type:'armour',def:5},
-  leather_body: {name:'Leather Body',    icon:'👕',sell:50,  type:'armour',def:1},
-  gold_ring:    {name:'Gold Ring',       icon:'💍',sell:120, type:'accessory'},
-  gold_necklace:{name:'Gold Necklace',   icon:'📿',sell:200, type:'accessory'},
-  gold_coins:   {name:'Gold Coins',      icon:'🪙',sell:1,   type:'currency'},
+  leather_body:  {name:'Leather Body',   icon:'👕',sell:50,  type:'armour',def:1},
+  gold_ring:     {name:'Gold Ring',      icon:'💍',sell:120, type:'accessory'},
+  gold_necklace: {name:'Gold Necklace',  icon:'📿',sell:200, type:'accessory'},
+  gold_coins:    {name:'Gold Coins',     icon:'🪙',sell:1,   type:'currency'},
 };
 
 const SHOP=[
@@ -557,6 +532,65 @@ const SHOP=[
 ];
 
 // ═══════════════════════════════════════
+//  DUNGEONS
+// ═══════════════════════════════════════
+const DUNGEONS = [
+  {
+    id:'dg0', name:'Chicken Coop', icon:'🐔',
+    desc:'A muddy farmyard teeming with chickens. Drops leather and feathers for crafting.',
+    req:{},
+    monsters:[
+      {name:'Chicken', icon:'🐔', hp:3,  dmg:[1,2], xp:10, speed:3000,
+       drops:[{id:'raw_meat',n:1,c:1},{id:'bones',n:1,c:1},{id:'feather',n:5,c:.9},{id:'cowhide',n:1,c:.3},{id:'gold_coins',n:2,c:.5}]},
+    ]
+  },
+  {
+    id:'dg1', name:'Goblin Cave', icon:'👺',
+    desc:'A foul cave hoarding stolen ore. Drops copper, cowhide, and occasional bronze gear.',
+    req:{combat:5},
+    monsters:[
+      {name:'Goblin',       icon:'👺', hp:6,  dmg:[1,4], xp:22, speed:3200,
+       drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:8,c:.9},{id:'copper_ore',n:2,c:.5},{id:'cowhide',n:1,c:.35}]},
+      {name:'Goblin Chief', icon:'👹', hp:14, dmg:[2,5], xp:50, speed:3800,
+       drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:22,c:1},{id:'iron_ore',n:1,c:.5},{id:'bronze_sword',n:1,c:.12}]},
+    ]
+  },
+  {
+    id:'dg2', name:'Bandit Camp', icon:'🏕️',
+    desc:'Ruthless bandits sitting on iron ore and coal. Equip a weapon before entering.',
+    req:{combat:15, weapon:true},
+    monsters:[
+      {name:'Bandit',        icon:'🥷', hp:12, dmg:[2,5], xp:55, speed:3500,
+       drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:25,c:1},{id:'iron_ore',n:2,c:.5},{id:'coal',n:1,c:.4},{id:'leather_body',n:1,c:.06}]},
+      {name:'Bandit Leader', icon:'🗡️', hp:22, dmg:[3,7], xp:110,speed:4000,
+       drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:65,c:1},{id:'iron_bar',n:1,c:.4},{id:'iron_sword',n:1,c:.1},{id:'coal',n:2,c:.5}]},
+    ]
+  },
+  {
+    id:'dg3', name:'Dark Keep', icon:'🏰',
+    desc:'Fallen knights guard steel and platebody drops. Weapon and armour required.',
+    req:{combat:30, weapon:true, armour:true},
+    monsters:[
+      {name:'Dark Guard',  icon:'💂', hp:22, dmg:[4,8],  xp:85,  speed:3800,
+       drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:45,c:1},{id:'coal',n:2,c:.5},{id:'iron_ore',n:2,c:.4},{id:'steel_bar',n:1,c:.18}]},
+      {name:'Dark Knight', icon:'🗡️', hp:38, dmg:[5,11], xp:170, speed:4200,
+       drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:100,c:1},{id:'iron_bar',n:2,c:.5},{id:'steel_bar',n:1,c:.3},{id:'iron_platebody',n:1,c:.07}]},
+    ]
+  },
+  {
+    id:'dg4', name:'Cursed Crypt', icon:'💀',
+    desc:'Undead horrors drop rune fragments and steel. Only legends survive.',
+    req:{combat:50, weapon:true, armour:true},
+    monsters:[
+      {name:'Skeleton', icon:'💀', hp:32, dmg:[6,13], xp:140, speed:4000,
+       drops:[{id:'bones',n:3,c:1},{id:'gold_coins',n:80,c:1},{id:'coal',n:3,c:.5},{id:'steel_bar',n:1,c:.25},{id:'rune_fragment',n:1,c:.2}]},
+      {name:'Lich',     icon:'🧟', hp:65, dmg:[9,18], xp:300, speed:4500,
+       drops:[{id:'bones',n:5,c:1},{id:'gold_coins',n:220,c:1},{id:'rune_fragment',n:2,c:.4},{id:'steel_bar',n:2,c:.35},{id:'iron_platebody',n:1,c:.05}]},
+    ]
+  },
+];
+
+// ═══════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════
 let G = {
@@ -564,24 +598,34 @@ let G = {
   gold:0,hp:10,maxhp:10,
   upgrades:{},
   tab:'woodcutting',
-  task:null,         // current action id
-  prog:0,dur:0,      // progress ms
-  mhp:0,mmhp:0,      // monster hp
-  mhit:0,            // monster hit timer
+  task:null,prog:0,dur:0,
+  mhit:0,
+  dungeon:null,    // active dungeon id
+  dungeonMob:null, // {hp, maxhp, idx, kills}
 };
 
-function initSkills(){for(const k of Object.keys(SKILLS))if(!G.skills[k])G.skills[k]={xp:0};}
+function initSkills(){
+  for(const k of Object.keys(SKILLS))if(!G.skills[k])G.skills[k]={xp:0};
+  if(!G.skills.combat)G.skills.combat={xp:0};
+}
 
 // ═══════════════════════════════════════
 //  SAVE / LOAD
 // ═══════════════════════════════════════
-function save(){try{localStorage.setItem('rforge',JSON.stringify(G));}catch(e){}}
+function save(){try{localStorage.setItem('rforge2',JSON.stringify(G));}catch(e){}}
 function load(){
   try{
-    const s=localStorage.getItem('rforge');
+    const s=localStorage.getItem('rforge2')||localStorage.getItem('rforge');
     if(s){const d=JSON.parse(s);Object.assign(G,d);}
   }catch(e){}
   initSkills();
+  if(G.task==='dungeon'&&G.dungeon){
+    const dg=findDungeon(G.dungeon);
+    if(!dg){G.task=null;G.dungeon=null;G.dungeonMob=null;}
+    else if(!G.dungeonMob){const m=dg.monsters[0];G.dungeonMob={hp:m.hp,maxhp:m.hp,idx:0,kills:0};}
+  } else if(G.task==='dungeon'){
+    G.task=null;G.dungeon=null;G.dungeonMob=null;
+  }
 }
 
 // ═══════════════════════════════════════
@@ -595,13 +639,15 @@ function xpPct(sk){
   return Math.round(((x-XP[l])/(XP[nl]-XP[l]))*100);
 }
 function addXP(sk,amt){
+  if(!G.skills[sk])G.skills[sk]={xp:0};
   const ol=slvl(sk);
   G.skills[sk].xp=(G.skills[sk].xp||0)+amt;
   const nl=slvl(sk);
   if(nl>ol){
     showLvlUp(sk,nl);
-    log('<span class="ll">\u2B50 LEVEL UP! '+SKILLS[sk].name+' is now level '+nl+'!</span>');
+    log('<span class="ll">⭐ LEVEL UP! '+SKILLS[sk].name+' is now level '+nl+'!</span>');
     if(sk==='combat'){G.maxhp=10+Math.floor(nl*1.6);G.hp=Math.min(G.hp+3,G.maxhp);}
+    refreshDungeons();
   }
 }
 
@@ -627,6 +673,28 @@ function getDef(){
 }
 
 // ═══════════════════════════════════════
+//  DUNGEON HELPERS
+// ═══════════════════════════════════════
+function findDungeon(id){return DUNGEONS.find(d=>d.id===id)||null;}
+
+function canEnterDungeon(dg){
+  const r=dg.req;
+  if(r.combat&&slvl('combat')<r.combat)return false;
+  if(r.weapon===true&&!G.equip.weapon)return false;
+  if(r.armour===true&&!G.equip.armour)return false;
+  return true;
+}
+
+function dungeonReqLabels(dg){
+  const r=dg.req,reqs=[];
+  if(Object.keys(r).length===0){reqs.push({text:'✓ Open to all',met:true});return reqs;}
+  if(r.combat)reqs.push({text:'⚔️ Combat '+r.combat,met:slvl('combat')>=r.combat});
+  if(r.weapon===true)reqs.push({text:'🗡️ Weapon equipped',met:!!G.equip.weapon});
+  if(r.armour===true)reqs.push({text:'🛡️ Armour equipped',met:!!G.equip.armour});
+  return reqs;
+}
+
+// ═══════════════════════════════════════
 //  GAME LOOP
 // ═══════════════════════════════════════
 let lastT=Date.now();
@@ -636,33 +704,37 @@ function tick(){
   if(G.task){
     G.prog+=dt;
 
-    // Combat: monster hits back
-    if(G.task.startsWith('cb')){
+    // Dungeon combat: monster hits back on its own timer
+    if(G.task==='dungeon'&&G.dungeon&&G.dungeonMob){
       G.mhit+=dt;
-      if(G.mhit>=3800){
-        G.mhit=0;
-        const action=findAction(G.task);
-        if(action){
-          const [mn,mx]=action.dmg;
+      const dg=findDungeon(G.dungeon);
+      if(dg){
+        const mob=dg.monsters[G.dungeonMob.idx];
+        if(G.mhit>=mob.speed){
+          G.mhit=0;
+          const[mn,mx]=mob.dmg;
           const d=Math.max(0,Math.floor(mn+Math.random()*(mx-mn+1))-getDef());
           if(d>0){
             G.hp=Math.max(0,G.hp-d);
-            log('<span class="lc">\uD83D\uDC3E '+action.name+' hits you for '+d+'!</span>');
+            log('<span class="lc">🐾 '+mob.name+' hits you for '+d+'!</span>');
             document.body.classList.add('dmg-flash');
             setTimeout(()=>document.body.classList.remove('dmg-flash'),500);
           }
           if(G.hp<=0){
             G.hp=1;
-            log('<span class="lc">\uD83D\uDC80 Near death! Eat food immediately!</span>');
-            stopTask();
+            log('<span class="lc">💀 Near death! Fled from '+dg.name+'!</span>');
+            leaveDungeon();return;
           }
         }
       }
     }
 
-    if(G.prog>=G.dur){completeTick();G.prog=0;}
+    if(G.prog>=G.dur){
+      if(G.task==='dungeon')completeDungeonTick();
+      else completeTick();
+      G.prog=0;
+    }
 
-    // progress bar
     const pct=Math.min(100,(G.prog/G.dur)*100);
     document.getElementById('task-prog').style.width=pct+'%';
   }
@@ -671,49 +743,62 @@ function tick(){
   if(Math.floor(now/8000)!==Math.floor((now-dt)/8000))save();
 }
 
+function completeDungeonTick(){
+  const dg=findDungeon(G.dungeon);
+  if(!dg||!G.dungeonMob){leaveDungeon();return;}
+  const mob=dg.monsters[G.dungeonMob.idx];
+
+  const dmgDone=getAtk()+Math.floor(Math.random()*3);
+  G.dungeonMob.hp-=dmgDone;
+
+  if(G.dungeonMob.hp<=0){
+    addXP('combat',mob.xp);
+    G.dungeonMob.kills=(G.dungeonMob.kills||0)+1;
+    log('<span class="lc">☠️ Slew the '+mob.name+'! (+'+mob.xp+' Combat XP)</span>');
+    for(const d of mob.drops){
+      if(Math.random()<d.c){
+        if(d.id==='gold_coins'){G.gold+=d.n;log('<span class="lg">🪙 Looted '+d.n+' gold.</span>');}
+        else{give(d.id,d.n);log('<span class="li">📦 '+(ITEMS[d.id]?.icon||'')+(ITEMS[d.id]?.name||d.id)+' \xd7'+d.n+'</span>');}
+      }
+    }
+    showXPFloat(mob.xp,'combat');
+    // Advance to next monster in dungeon (cycles)
+    G.dungeonMob.idx=(G.dungeonMob.idx+1)%dg.monsters.length;
+    const next=dg.monsters[G.dungeonMob.idx];
+    G.dungeonMob.hp=next.hp;
+    G.dungeonMob.maxhp=next.hp;
+    log('\u25b6 Next: '+next.icon+' '+next.name+' ('+next.hp+' HP)');
+    syncDungeonTaskBox();
+  } else {
+    showXPFloat(Math.ceil(mob.xp/5),'combat');
+    log('<span class="lc">\u2694\ufe0f Hit '+mob.name+' for '+dmgDone+'. HP: '+G.dungeonMob.hp+'/'+G.dungeonMob.maxhp+'</span>');
+  }
+}
+
+function syncDungeonTaskBox(){
+  const dg=findDungeon(G.dungeon);
+  if(!dg||!G.dungeonMob)return;
+  const mob=dg.monsters[G.dungeonMob.idx];
+  document.getElementById('task-title').textContent=dg.icon+' '+dg.name+' \u2014 '+mob.icon+' '+mob.name;
+  document.getElementById('task-xp-lbl').textContent='\u2694\ufe0f '+mob.xp+' XP \u00b7 Combat Lv.'+slvl('combat');
+}
+
 function completeTick(){
   const a=findAction(G.task);
   if(!a){stopTask();return;}
   const sk=findSkill(G.task);
 
-  // Check consumables
   if(a.need){
     for(const c of a.need){
-      if(!has(c.id,c.n)){
-        log('\u274C Out of '+(ITEMS[c.id]?.name||c.id)+'. Task stopped.');
-        stopTask();return;
-      }
+      if(!has(c.id,c.n)){log('\u274c Out of '+(ITEMS[c.id]?.name||c.id)+'. Task stopped.');stopTask();return;}
     }
     for(const c of a.need)take(c.id,c.n);
   }
 
-  // Combat
-  if(a.mhp!==undefined){
-    const atk=getAtk();
-    const dmgDone=atk+Math.floor(Math.random()*3);
-    G.mhp-=dmgDone;
-    if(G.mhp<=0){
-      // Monster dead
-      addXP(sk,a.xp);
-      log('<span class="lc">\u2620\uFE0F You slew the '+a.name+'! (+'+a.xp+' XP)</span>');
-      for(const d of a.drops){
-        if(Math.random()<d.c){
-          if(d.id==='gold_coins'){G.gold+=d.n;log('<span class="lg">\uD83E\uDE99 Looted '+d.n+' gold.</span>');}
-          else{give(d.id,d.n);log('<span class="li">\uD83D\uDCE6 '+(ITEMS[d.id]?.icon||'')+(ITEMS[d.id]?.name||d.id)+' x'+d.n+'</span>');}
-        }
-      }
-      G.mhp=a.mhp; // Respawn monster
-    } else {
-      addXP(sk,a.xp/4); // small XP per hit
-      log('<span class="lc">\u2694\uFE0F Hit '+a.name+' for '+dmgDone+'. HP: '+G.mhp+'/'+G.mmhp+'</span>');
-    }
-  } else {
-    // Non-combat production
-    addXP(sk,a.xp);
-    for(const p of a.prod){give(p.id,p.n);}
-    const desc=a.prod.map(p=>(ITEMS[p.id]?.icon||'')+(ITEMS[p.id]?.name||p.id)+'\xd7'+p.n).join(', ');
-    log(a.icon+' '+desc+' <span class="lx">(+'+a.xp+'xp '+SKILLS[sk].name+')</span>');
-  }
+  addXP(sk,a.xp);
+  for(const p of a.prod)give(p.id,p.n);
+  const desc=a.prod.map(p=>(ITEMS[p.id]?.icon||'')+(ITEMS[p.id]?.name||p.id)+'\xd7'+p.n).join(', ');
+  log(a.icon+' '+desc+' <span class="lx">(+'+a.xp+'xp '+SKILLS[sk].name+')</span>');
   showXPFloat(a.xp,sk);
   refreshButtons(G.tab);
 }
@@ -734,47 +819,80 @@ function startTask(id){
   const a=findAction(id);if(!a)return;
   const sk=findSkill(id);
   const lv=slvl(sk);
-  if(lv<a.req){log('\u274C Need level '+a.req+' '+SKILLS[sk].name+'.');return;}
+  if(lv<a.req){log('\u274c Need level '+a.req+' '+SKILLS[sk].name+'.');return;}
   if(a.need){
     for(const c of a.need){
-      if(!has(c.id,c.n)){log('\u274C Need '+(ITEMS[c.id]?.name||c.id)+' \xd7'+c.n+'.');return;}
+      if(!has(c.id,c.n)){log('\u274c Need '+(ITEMS[c.id]?.name||c.id)+' \xd7'+c.n+'.');return;}
     }
   }
   if(G.task===id){stopTask();return;}
   G.task=id;G.prog=0;G.mhit=0;
+  G.dungeon=null;G.dungeonMob=null;
 
-  // Speed bonus
-  let dur=a.dur;
   const spd=G.upgrades['spd_'+sk.slice(0,4)]?0.85:1;
   const lvBonus=Math.max(0.5,1-(lv-a.req)*0.006);
-  G.dur=Math.max(800,Math.floor(dur*spd*lvBonus));
-
-  if(a.mhp!==undefined){G.mhp=a.mhp;G.mmhp=a.mhp;}
+  G.dur=Math.max(800,Math.floor(a.dur*spd*lvBonus));
 
   document.getElementById('task-title').textContent=a.icon+' '+a.name;
   document.getElementById('task-xp-lbl').textContent='+'+a.xp+' XP \u00b7 '+SKILLS[sk].name;
   document.getElementById('task-dur-lbl').textContent='~'+(G.dur/1000).toFixed(1)+'s';
   document.getElementById('task-stop').style.display='block';
 
-  anim();refreshButtons(G.tab);
+  anim();refreshButtons(G.tab);refreshDungeons();
   log('\u25b6 Started: '+a.name);
 }
 
-function stopTask(){
+function enterDungeon(id){
+  const dg=findDungeon(id);if(!dg)return;
+  if(!canEnterDungeon(dg)){log('\u274c Requirements not met for '+dg.name+'.');return;}
+  if(G.task==='dungeon'&&G.dungeon===id){leaveDungeon();return;}
+
+  // Stop any skill task
   G.task=null;G.prog=0;
-  document.getElementById('task-title').textContent='Idle — choose a skill and action below';
+  document.getElementById('task-stop').style.display='none';
+
+  G.dungeon=id;
+  const m=dg.monsters[0];
+  G.dungeonMob={hp:m.hp,maxhp:m.hp,idx:0,kills:0};
+  G.task='dungeon';G.prog=0;G.mhit=0;
+
+  // Attack speed scales with combat level
+  G.dur=Math.max(1200,2800-Math.floor((slvl('combat')-1)*22));
+
+  document.getElementById('task-stop').style.display='block';
+  document.getElementById('task-dur-lbl').textContent='';
+  syncDungeonTaskBox();
+  anim();refreshDungeons();
+  log('\u25b6 Entered '+dg.icon+' '+dg.name+'!');
+}
+
+function leaveDungeon(){
+  const name=G.dungeon?findDungeon(G.dungeon)?.name:'dungeon';
+  G.dungeon=null;G.dungeonMob=null;G.task=null;G.prog=0;
+  document.getElementById('task-title').textContent='Idle \u2014 choose a skill or enter a dungeon';
   document.getElementById('task-prog').style.width='0%';
   document.getElementById('task-xp-lbl').textContent='';
   document.getElementById('task-dur-lbl').textContent='';
   document.getElementById('task-stop').style.display='none';
-  anim();refreshButtons(G.tab);
+  anim();refreshDungeons();refreshButtons(G.tab);
+  log('\u25c4 Left '+name+'.');
+}
+
+function stopTask(){
+  if(G.task==='dungeon'){leaveDungeon();return;}
+  G.task=null;G.prog=0;G.dungeon=null;G.dungeonMob=null;
+  document.getElementById('task-title').textContent='Idle \u2014 choose a skill or enter a dungeon';
+  document.getElementById('task-prog').style.width='0%';
+  document.getElementById('task-xp-lbl').textContent='';
+  document.getElementById('task-dur-lbl').textContent='';
+  document.getElementById('task-stop').style.display='none';
+  anim();refreshButtons(G.tab);refreshDungeons();
 }
 
 // ═══════════════════════════════════════
 //  UI UPDATE
 // ═══════════════════════════════════════
 function updateUI(){
-  // Skills grid
   for(const sk of Object.keys(SKILLS)){
     const lv=slvl(sk),pc=xpPct(sk);
     const el=document.getElementById('sk-'+sk);
@@ -783,11 +901,10 @@ function updateUI(){
     el.querySelector('.xp-fill').style.width=pc+'%';
     const nxt=XP[Math.min(lv+1,99)],cur=XP[lv];
     el.querySelector('.xp-label').textContent=(sxp(sk)-cur)+'/'+(nxt-cur);
-    if(G.task&&findSkill(G.task)===sk)el.classList.add('sk-active');
-    else el.classList.remove('sk-active');
+    const active=(G.task==='dungeon'&&sk==='combat')||(G.task&&G.task!=='dungeon'&&findSkill(G.task)===sk);
+    el.classList.toggle('sk-active',!!active);
   }
 
-  // HP
   const hppc=(G.hp/G.maxhp)*100;
   document.getElementById('hm').style.width=hppc+'%';
   document.getElementById('hp-fill').style.width=hppc+'%';
@@ -797,19 +914,20 @@ function updateUI(){
   document.getElementById('def-val').textContent=def;
   document.getElementById('atk-fill').style.width=Math.min(100,atk*8)+'%';
   document.getElementById('def-fill').style.width=Math.min(100,def*10)+'%';
-
-  // Gold
   document.getElementById('gld').textContent='\uD83E\uDE99 '+G.gold;
 
-  // Inventory
   renderInv();
-
-  // Equipment
   renderEquip();
+  document.getElementById('inv-count').textContent=Object.values(G.inv).filter(v=>v>0).length+'/28';
 
-  // Inv count
-  const cnt=Object.values(G.inv).filter(v=>v>0).length;
-  document.getElementById('inv-count').textContent=cnt+'/28';
+  // Live mob HP bar in dungeon card
+  if(G.task==='dungeon'&&G.dungeonMob){
+    const fill=document.querySelector('#dg-'+G.dungeon+' .dg-mob-fill');
+    if(fill)fill.style.width=Math.max(0,(G.dungeonMob.hp/G.dungeonMob.maxhp)*100)+'%';
+    const txt=document.querySelector('#dg-'+G.dungeon+' .dg-mob-text');
+    if(txt)txt.textContent=G.dungeonMob.hp+'/'+G.dungeonMob.maxhp+' HP';
+    document.getElementById('task-dur-lbl').textContent='HP: '+G.dungeonMob.hp+'/'+G.dungeonMob.maxhp;
+  }
 }
 
 function renderInv(){
@@ -818,18 +936,14 @@ function renderInv(){
   const items=Object.entries(G.inv).filter(([,v])=>v>0);
   items.forEach(([id,qty])=>{
     const it=ITEMS[id];if(!it)return;
-    const d=document.createElement('div');
-    d.className='iv-slot has';
+    const d=document.createElement('div');d.className='iv-slot has';
     const qtyStr=qty>1?'<span class="iv-qty">'+(qty>=1000?(qty/1000).toFixed(1)+'k':qty)+'</span>':'';
     d.innerHTML='<span class="iv-ico">'+it.icon+'</span><span class="iv-nm">'+it.name+'</span>'+qtyStr;
     d.onclick=()=>useItem(id);
     grid.appendChild(d);
   });
-  // Empty slots
   const empty=Math.max(0,28-items.length);
-  for(let i=0;i<Math.min(empty,28-items.length);i++){
-    const d=document.createElement('div');d.className='iv-slot';grid.appendChild(d);
-  }
+  for(let i=0;i<empty;i++){const d=document.createElement('div');d.className='iv-slot';grid.appendChild(d);}
 }
 
 function renderEquip(){
@@ -850,9 +964,7 @@ function renderEquip(){
 function buildSkills(){
   const g=document.getElementById('skills-grid');
   for(const[sk,info]of Object.entries(SKILLS)){
-    const d=document.createElement('div');
-    d.className='sk-card';d.id='sk-'+sk;
-    // Build inner DOM nodes (avoids template literal encoding issues)
+    const d=document.createElement('div');d.className='sk-card';d.id='sk-'+sk;
     const top=document.createElement('div');top.className='sk-top';
     const ico=document.createElement('span');ico.className='sk-icon';ico.textContent=info.icon;
     const inf=document.createElement('div');
@@ -866,7 +978,12 @@ function buildSkills(){
     trk.appendChild(fil);
     const lbl=document.createElement('div');lbl.className='xp-label';lbl.textContent='0/83';
     d.appendChild(top);d.appendChild(trk);d.appendChild(lbl);
-    d.onclick=()=>switchTab(sk);
+    // Combat card scrolls to dungeons; others switch tab
+    if(sk==='combat'){
+      d.onclick=()=>document.getElementById('dungeon-panel').scrollIntoView({behavior:'smooth',block:'start'});
+    } else {
+      d.onclick=()=>switchTab(sk);
+    }
     g.appendChild(d);
   }
 }
@@ -874,13 +991,12 @@ function buildSkills(){
 function buildTabs(){
   const tabs=document.getElementById('tabs'),pages=document.getElementById('pages');
   for(const[sk,info]of Object.entries(SKILLS)){
-    // Tab
+    if(!ACTIONS[sk])continue; // combat has no skill tab — handled by dungeons
     const t=document.createElement('div');
     t.className='tab'+(sk===G.tab?' active':'');t.id='tab-'+sk;
     const tico=document.createElement('span');tico.className='tab-icon';tico.textContent=info.icon;
     t.appendChild(tico);t.appendChild(document.createTextNode(info.name.slice(0,5)));
     t.onclick=()=>switchTab(sk);tabs.appendChild(t);
-    // Page
     const p=document.createElement('div');
     p.className='act-page'+(sk===G.tab?' active':'');p.id='page-'+sk;
     p.innerHTML=buildActPage(sk);
@@ -892,10 +1008,7 @@ function buildActPage(sk){
   const acts=ACTIONS[sk];
   let html='<div class="act-grid">';
   for(const a of acts){
-    let meta='';
-    if(a.need)meta=a.need.map(c=>(ITEMS[c.id]?.icon||'')+'x'+c.n).join(' ');
-    else if(a.mhp)meta='\u2764\ufe0f'+a.mhp+' hp';
-    else meta='~'+(a.dur/1000).toFixed(1)+'s';
+    let meta=a.need?a.need.map(c=>(ITEMS[c.id]?.icon||'')+'\xd7'+c.n).join(' '):'~'+(a.dur/1000).toFixed(1)+'s';
     html+='<button class="act-btn" data-id="'+a.id+'" data-req="'+a.req+'" onclick="startTask(\''+a.id+'\')">'
          +'<span class="ab-icon">'+a.icon+'</span>'
          +'<span class="ab-name">'+a.name+'</span>'
@@ -907,6 +1020,7 @@ function buildActPage(sk){
 }
 
 function switchTab(sk){
+  if(!ACTIONS[sk])return;
   G.tab=sk;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.act-page').forEach(p=>p.classList.remove('active'));
@@ -916,6 +1030,7 @@ function switchTab(sk){
 }
 
 function refreshButtons(sk){
+  if(!ACTIONS[sk])return;
   const lv=slvl(sk);
   document.querySelectorAll('#page-'+sk+' .act-btn').forEach(btn=>{
     const req=parseInt(btn.dataset.req);
@@ -924,12 +1039,78 @@ function refreshButtons(sk){
   });
 }
 
+function buildDungeons(){
+  const grid=document.getElementById('dungeon-grid');
+  grid.innerHTML='';
+  DUNGEONS.forEach(dg=>{
+    const card=document.createElement('div');card.className='dg-card';card.id='dg-'+dg.id;
+    card.onclick=()=>enterDungeon(dg.id);
+
+    const ico=document.createElement('div');ico.className='dg-icon';ico.textContent=dg.icon;
+
+    const info=document.createElement('div');info.className='dg-info';
+    const name=document.createElement('div');name.className='dg-name';name.textContent=dg.name;
+    const desc=document.createElement('div');desc.className='dg-desc';desc.textContent=dg.desc;
+    const mobprev=document.createElement('div');mobprev.className='dg-mobs';
+    mobprev.textContent=dg.monsters.map(m=>m.icon+' '+m.name).join(' · ');
+    const reqRow=document.createElement('div');reqRow.className='dg-reqs';reqRow.id='dg-reqs-'+dg.id;
+
+    info.appendChild(name);info.appendChild(desc);info.appendChild(mobprev);info.appendChild(reqRow);
+
+    const btn=document.createElement('div');btn.className='dg-enter';btn.id='dg-btn-'+dg.id;btn.textContent='Enter \u25b6';
+
+    card.appendChild(ico);card.appendChild(info);card.appendChild(btn);
+    grid.appendChild(card);
+  });
+  refreshDungeons();
+}
+
+function refreshDungeons(){
+  DUNGEONS.forEach(dg=>{
+    const card=document.getElementById('dg-'+dg.id);if(!card)return;
+    const can=canEnterDungeon(dg);
+    const isActive=G.task==='dungeon'&&G.dungeon===dg.id;
+    card.classList.toggle('dg-locked',!can);
+    card.classList.toggle('dg-active',isActive);
+
+    const btn=document.getElementById('dg-btn-'+dg.id);
+    if(btn)btn.textContent=isActive?'Leave \u2715':'Enter \u25b6';
+
+    const reqRow=document.getElementById('dg-reqs-'+dg.id);
+    if(reqRow){
+      reqRow.innerHTML='';
+      dungeonReqLabels(dg).forEach(r=>{
+        const span=document.createElement('span');
+        span.className='dg-req '+(r.met?'met':'unmet');
+        span.textContent=r.text;
+        reqRow.appendChild(span);
+      });
+    }
+
+    // Mob HP bar — only shown while active
+    let mobSec=card.querySelector('.dg-mob');
+    if(isActive&&G.dungeonMob){
+      if(!mobSec){
+        mobSec=document.createElement('div');mobSec.className='dg-mob';
+        card.querySelector('.dg-info').appendChild(mobSec);
+      }
+      const mob=findDungeon(dg.id).monsters[G.dungeonMob.idx];
+      const pct=Math.max(0,(G.dungeonMob.hp/G.dungeonMob.maxhp)*100);
+      mobSec.innerHTML='<div class="dg-mob-name">'+mob.icon+' '+mob.name+'</div>'
+        +'<div class="dg-mob-bar"><div class="dg-mob-fill" style="width:'+pct+'%"></div></div>'
+        +'<div class="dg-mob-text">'+G.dungeonMob.hp+'/'+G.dungeonMob.maxhp+' HP</div>';
+    } else if(mobSec){
+      mobSec.remove();
+    }
+  });
+}
+
 function buildShop(){
   const g=document.getElementById('shop-grid');
   SHOP.forEach(s=>{
     const d=document.createElement('div');
     d.className='sh-item'+(s.up&&G.upgrades[s.up]?' owned':'');
-    d.innerHTML='<div class="sh-top"><span class="sh-icon">'+s.icon+'</span><span class="sh-name">'+s.name+'</span></div><div class="sh-price">\ud83e\ude99 '+s.cost+'</div><div class="sh-eff">'+s.eff+'</div>';
+    d.innerHTML='<div class="sh-top"><span class="sh-icon">'+s.icon+'</span><span class="sh-name">'+s.name+'</span></div><div class="sh-price">\uD83E\uDE99 '+s.cost+'</div><div class="sh-eff">'+s.eff+'</div>';
     d.onclick=()=>buy(s);g.appendChild(d);
   });
 }
@@ -940,29 +1121,28 @@ function buildShop(){
 function useItem(id){
   const it=ITEMS[id];if(!it)return;
   if(it.type==='food'){
-    if(G.hp>=G.maxhp){log('❤️ Already full HP!');return;}
+    if(G.hp>=G.maxhp){log('\u2764\ufe0f Already full HP!');return;}
     take(id,1);G.hp=Math.min(G.maxhp,G.hp+(it.hp||3));
     log('\uD83C\uDF7D\uFE0F Ate '+it.name+' and restored '+it.hp+' HP.');
   } else if(it.type==='weapon'){
     if(G.equip.weapon===id){G.equip.weapon=null;log('Unequipped '+it.name);}
-    else{G.equip.weapon=id;log('\u2694\uFE0F Equipped '+it.name+' (+'+it.atk+' Atk)');}
+    else{G.equip.weapon=id;log('\u2694\ufe0f Equipped '+it.name+' (+'+it.atk+' Atk)');refreshDungeons();}
   } else if(it.type==='armour'){
     if(G.equip.armour===id){G.equip.armour=null;log('Unequipped '+it.name);}
-    else{G.equip.armour=id;log('\uD83D\uDEE1\uFE0F Equipped '+it.name+' (+'+it.def+' Def)');}
+    else{G.equip.armour=id;log('\uD83D\uDEE1\uFE0F Equipped '+it.name+' (+'+it.def+' Def)');refreshDungeons();}
   } else {
     log(it.icon+' '+it.name+' \xd7'+(G.inv[id]||0));
   }
 }
 
 function unequipSlot(slot){
-  G.equip[slot]=null;
-  log('Unequipped '+slot+'.');
+  G.equip[slot]=null;log('Unequipped '+slot+'.');refreshDungeons();
 }
 
 function eatFood(){
   const f=Object.entries(G.inv).filter(([id,q])=>ITEMS[id]?.type==='food'&&q>0).sort((a,b)=>(ITEMS[b[0]].hp||0)-(ITEMS[a[0]].hp||0));
-  if(!f.length){log('❌ No food!');return;}
-  if(G.hp>=G.maxhp){log('❤️ Already full HP!');return;}
+  if(!f.length){log('\u274c No food!');return;}
+  if(G.hp>=G.maxhp){log('\u2764\ufe0f Already full HP!');return;}
   useItem(f[0][0]);
 }
 
@@ -980,21 +1160,19 @@ function sellAll(){
 }
 
 function buryBones(){
-  if(!has('bones')){log('❌ No bones!');return;}
-  const n=G.inv['bones']||0;
-  take('bones',n);
+  if(!has('bones')){log('\u274c No bones!');return;}
+  const n=G.inv['bones']||0;take('bones',n);
   addXP('combat',n*5);
   log('\uD83E\uDDB4 Buried '+n+' bones. +'+(n*5)+' Combat XP.');
 }
 
 function buy(s){
-  if(G.gold<s.cost){log('\u274C Need '+s.cost+' gp (have '+G.gold+').');return;}
+  if(G.gold<s.cost){log('\u274c Need '+s.cost+' gp (have '+G.gold+').');return;}
   if(s.up&&G.upgrades[s.up]){log('Already owned!');return;}
   G.gold-=s.cost;
-  if(s.item==='_heal15'){G.hp=Math.min(G.maxhp,G.hp+15);log('\u2697\uFE0F Drank HP Potion. +15 HP!');}
+  if(s.item==='_heal15'){G.hp=Math.min(G.maxhp,G.hp+15);log('\u2697\ufe0f Drank HP Potion. +15 HP!');}
   else if(s.item){give(s.item,s.qty);log('\uD83D\uDED2 Bought '+s.name+'.');}
   else if(s.up){G.upgrades[s.up]=true;log('\u2705 Purchased '+s.name+'! '+s.eff);}
-  // Rebuild shop
   document.getElementById('shop-grid').innerHTML='';buildShop();
 }
 
@@ -1006,72 +1184,56 @@ function anim(){
   const al=document.getElementById('cal'),ar=document.getElementById('car');
   const ll=document.getElementById('cll'),lr=document.getElementById('clr');
   const prop=document.getElementById('prop');
-  const body=document.getElementById('cbody');
-
   al.style.animation=ar.style.animation=ll.style.animation=lr.style.animation=ch.style.animation='';
   prop.innerHTML='';
 
-  const sk=G.task?findSkill(G.task):null;
-  const a=G.task?findAction(G.task):null;
-
+  const isDungeon=G.task==='dungeon';
+  const sk=isDungeon?'dungeon':(G.task?findSkill(G.task):null);
   ch.style.animation=sk?'bob .75s ease-in-out infinite':'idle 2s ease-in-out infinite';
 
-  if(!sk){
-    al.style.animation='armrest 2.2s ease-in-out infinite';
-    ar.style.animation='armrest 2.2s ease-in-out infinite reverse';
-    return;
-  }
+  if(!sk){al.style.animation='armrest 2.2s ease-in-out infinite';ar.style.animation='armrest 2.2s ease-in-out infinite reverse';return;}
 
   switch(sk){
+    case 'dungeon':{
+      al.style.animation='swing .6s ease-in-out infinite';
+      ar.style.animation='swing2 .6s ease-in-out infinite';
+      ll.style.animation='walk-l .55s ease-in-out infinite';
+      lr.style.animation='walk-r .55s ease-in-out infinite';
+      const dg=G.dungeon?findDungeon(G.dungeon):null;
+      const mobIcon=dg&&G.dungeonMob?dg.monsters[G.dungeonMob.idx].icon:'\uD83D\uDC79';
+      const wico=G.equip.weapon&&ITEMS[G.equip.weapon]?ITEMS[G.equip.weapon].icon:'\u2694\ufe0f';
+      prop.innerHTML='<div class="prop-monster">'+mobIcon+'</div>'
+        +'<div class="prop-tool" style="bottom:22px;right:55px;transform:rotate(-20deg)">'+wico+'</div>';
+      break;
+    }
     case 'woodcutting':
-      al.style.animation='chop .65s ease-in-out infinite';
-      ar.style.animation='chop .65s ease-in-out infinite .32s';
+      al.style.animation='chop .65s ease-in-out infinite';ar.style.animation='chop .65s ease-in-out infinite .32s';
       prop.innerHTML='<div class="prop-tree-t" style="animation:sway 2.5s ease-in-out infinite;transform-origin:bottom center"></div>'
         +'<div class="prop-tree-l" style="animation:sway 2.5s ease-in-out infinite;transform-origin:bottom center"></div>'
         +'<div class="prop-tool" style="bottom:28px;right:55px;transform:rotate(-25deg)">\uD83E\uDE93</div>';
       break;
     case 'mining':
-      al.style.animation='chop .55s ease-in-out infinite';
-      ar.style.animation='chop .55s ease-in-out infinite .27s';
-      prop.innerHTML='<div class="prop-rock"></div>'
-        +'<div class="prop-tool" style="bottom:26px;right:50px;transform:rotate(40deg)">\u26CF\uFE0F</div>';
+      al.style.animation='chop .55s ease-in-out infinite';ar.style.animation='chop .55s ease-in-out infinite .27s';
+      prop.innerHTML='<div class="prop-rock"></div><div class="prop-tool" style="bottom:26px;right:50px;transform:rotate(40deg)">\u26cf\ufe0f</div>';
       break;
     case 'fishing':
-      al.style.animation='cast 1.6s ease-in-out infinite';
-      ar.style.animation='cast 1.6s ease-in-out infinite .8s';
-      prop.innerHTML='<div class="prop-water" style="animation:ripple 1.5s ease-in-out infinite"></div>'
-        +'<div class="prop-tool" style="bottom:32px;right:50px">\uD83C\uDFA3</div>';
+      al.style.animation='cast 1.6s ease-in-out infinite';ar.style.animation='cast 1.6s ease-in-out infinite .8s';
+      prop.innerHTML='<div class="prop-water" style="animation:ripple 1.5s ease-in-out infinite"></div><div class="prop-tool" style="bottom:32px;right:50px">\uD83C\uDFA3</div>';
       break;
     case 'smithing':
-      al.style.animation='chop .5s ease-in-out infinite';
-      ar.style.animation='chop .5s ease-in-out infinite .25s';
-      prop.innerHTML='<div class="prop-fire" style="animation:flicker .45s ease-in-out infinite">\uD83D\uDD25</div>'
-        +'<div class="prop-anvil">\u2699\uFE0F</div>'
-        +'<div class="prop-tool" style="bottom:27px;right:50px;transform:rotate(30deg)">\uD83D\uDD28</div>';
+      al.style.animation='chop .5s ease-in-out infinite';ar.style.animation='chop .5s ease-in-out infinite .25s';
+      prop.innerHTML='<div class="prop-fire" style="animation:flicker .45s ease-in-out infinite">\uD83D\uDD25</div><div class="prop-anvil">\u2699\ufe0f</div><div class="prop-tool" style="bottom:27px;right:50px;transform:rotate(30deg)">\uD83D\uDD28</div>';
       break;
     case 'cooking':
-      al.style.animation='stir 1s ease-in-out infinite';
-      ar.style.animation='stir 1s ease-in-out infinite .5s';
-      prop.innerHTML='<div class="prop-fire" style="animation:flicker .4s ease-in-out infinite">\uD83D\uDD25</div>'
-        +'<div class="prop-tool" style="bottom:30px;right:46px">\uD83C\uDF73</div>';
-      break;
-    case 'combat':
-      al.style.animation='swing .6s ease-in-out infinite';
-      ar.style.animation='swing2 .6s ease-in-out infinite';
-      ll.style.animation='walk-l .55s ease-in-out infinite';
-      lr.style.animation='walk-r .55s ease-in-out infinite';
-      const wico=G.equip.weapon&&ITEMS[G.equip.weapon]?ITEMS[G.equip.weapon].icon:'\u2694\uFE0F';
-      prop.innerHTML='<div class="prop-monster">'+(a?a.icon:'\uD83D\uDC7A')+'</div>'
-        +'<div class="prop-tool" style="bottom:22px;right:55px;transform:rotate(-20deg)">'+wico+'</div>';
+      al.style.animation='stir 1s ease-in-out infinite';ar.style.animation='stir 1s ease-in-out infinite .5s';
+      prop.innerHTML='<div class="prop-fire" style="animation:flicker .4s ease-in-out infinite">\uD83D\uDD25</div><div class="prop-tool" style="bottom:30px;right:46px">\uD83C\uDF73</div>';
       break;
     case 'fletching':
-      al.style.animation='stir 1.1s ease-in-out infinite';
-      ar.style.animation='cast 1.1s ease-in-out infinite .55s';
+      al.style.animation='stir 1.1s ease-in-out infinite';ar.style.animation='cast 1.1s ease-in-out infinite .55s';
       prop.innerHTML='<div class="prop-tool" style="bottom:32px;right:48px">\uD83C\uDFF9</div>';
       break;
     case 'crafting':
-      al.style.animation='stir 1.2s ease-in-out infinite';
-      ar.style.animation='stir 1.2s ease-in-out infinite .6s';
+      al.style.animation='stir 1.2s ease-in-out infinite';ar.style.animation='stir 1.2s ease-in-out infinite .6s';
       prop.innerHTML='<div class="prop-tool" style="bottom:30px;right:48px">\uD83E\uDDF5</div>';
       break;
   }
@@ -1089,15 +1251,14 @@ function log(msg){
 
 function showLvlUp(sk,lv){
   const d=document.createElement('div');d.className='lv-popup';
-  const t=document.createElement('div');t.className='lv-title';t.textContent='\u2B50 LEVEL UP!';
+  const t=document.createElement('div');t.className='lv-title';t.textContent='\u2b50 LEVEL UP!';
   const s=document.createElement('div');s.className='lv-sub';s.textContent=SKILLS[sk].icon+' '+SKILLS[sk].name+' \u2014 Level '+lv;
-  d.appendChild(t);d.appendChild(s);
-  document.body.appendChild(d);setTimeout(()=>d.remove(),2700);
+  d.appendChild(t);d.appendChild(s);document.body.appendChild(d);setTimeout(()=>d.remove(),2700);
 }
 
 function showXPFloat(xp,sk){
   const d=document.createElement('div');d.className='xp-float';
-  d.textContent='+'+xp+' '+(SKILLS[sk]?.name||'');
+  d.textContent='+'+Math.ceil(xp)+' '+(SKILLS[sk]?.name||'');
   d.style.left=(20+Math.random()*60)+'%';d.style.top='55%';
   document.body.appendChild(d);setTimeout(()=>d.remove(),1500);
 }
@@ -1107,18 +1268,19 @@ function showXPFloat(xp,sk){
 // ═══════════════════════════════════════
 function init(){
   load();
-  buildSkills();buildTabs();buildShop();
+  buildSkills();buildTabs();buildDungeons();buildShop();
   updateUI();anim();
-
   setInterval(tick,50);
 
-  log('🎮 <b>Welcome to RuneForge!</b> Tap a skill tab and choose an action to begin.');
-  log('💡 Tip: Chop logs → Fletch bows. Mine ores → Smith gear. Fish → Cook food. Fight monsters for gold!');
+  log('\uD83C\uDFAE <b>Welcome to RuneForge!</b> Level skills, then enter Dungeons to fight for gear and crafting supplies.');
+  log('\uD83D\uDCA1 Tip: Mine + Smith gear to unlock higher dungeons. Bury bones or fight for Combat XP. Fish + Cook to stay alive!');
 
-  // Restore active tab display
-  if(G.task){
-    const sk=findSkill(G.task);
-    const a=findAction(G.task);
+  if(G.task==='dungeon'&&G.dungeon){
+    syncDungeonTaskBox();
+    document.getElementById('task-stop').style.display='block';
+    refreshDungeons();
+  } else if(G.task){
+    const sk=findSkill(G.task),a=findAction(G.task);
     if(sk&&a){
       switchTab(sk);
       document.getElementById('task-title').textContent=a.icon+' '+a.name;
