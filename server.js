@@ -120,15 +120,19 @@ app.get('/api/save', requireAuth, (req, res) => {
     res.json({ hasSave: true, saveData: JSON.parse(save.save_data), updatedAt: save.updated_at });
 });
 
-// Serve auth.js
+// Serve static JS files
 app.get('/auth.js', (req, res) => {
     res.sendFile(path.join(__dirname, 'auth.js'));
 });
 
-// Serve index.html with auth.js injected
+app.get('/dungeon.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dungeon.js'));
+});
+
+// Serve index.html with modules injected
 app.get('/', (req, res) => {
     let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-    html = html.replace('</body>', '<script src="/auth.js"></script></body>');
+    html = html.replace('</body>', '<script src="/auth.js"></script><script src="/dungeon.js"></script></body>');
     res.type('html').send(html);
 });
 
