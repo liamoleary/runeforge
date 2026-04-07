@@ -60,7 +60,7 @@ app.post('/api/register', (req, res) => {
     if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
     if (username.length < 3 || username.length > 20) return res.status(400).json({ error: 'Username must be 3-20 characters' });
     if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) return res.status(400).json({ error: 'Username can only contain letters, numbers, and underscores' });
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) return res.status(400).json({ error: 'Username: letters, numbers, underscores only' });
 
            try {
                  const hash = bcrypt.hashSync(password, 10);
@@ -120,9 +120,16 @@ app.get('/api/save', requireAuth, (req, res) => {
     res.json({ hasSave: true, saveData: JSON.parse(save.save_data), updatedAt: save.updated_at });
 });
 
-// Serve index.html from root
+// Serve auth.js
+app.get('/auth.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'auth.js'));
+});
+
+// Serve index.html with auth.js injected
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+    html = html.replace('</body>', '<script src="/auth.js"></script></body>');
+    res.type('html').send(html);
 });
 
 app.listen(PORT, '0.0.0.0', () => {
