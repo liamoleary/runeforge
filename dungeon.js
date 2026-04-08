@@ -582,7 +582,9 @@
     for(var i=st;i<s.combatLog.length;i++) h+='<div style="color:#9a7e50;">'+s.combatLog[i]+'</div>';
     h+='</div>';
 
-    content.innerHTML=h;
+    var bodyEl=document.getElementById('dg-body');
+    if(!bodyEl){var nb=document.createElement('div');nb.id='dg-body';content.appendChild(nb);bodyEl=nb;}
+    bodyEl.innerHTML=h;
     var logEl=document.getElementById('dg-log');
     if(logEl) logEl.scrollTop=logEl.scrollHeight;
   }
@@ -592,7 +594,7 @@
     var ov=document.createElement('div');
     ov.id='dungeon-overlay';
     ov.style.cssText='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9998;justify-content:center;align-items:center;padding:12px;box-sizing:border-box;';
-    ov.innerHTML='<div id="dg-content" style="position:relative;background:#13100a;border:2px solid #3a2c18;border-radius:8px;padding:16px;width:360px;max-width:95vw;max-height:90vh;overflow-y:auto;font-family:Cinzel,serif;"></div>';
+    ov.innerHTML='<div id="dg-content" style="position:relative;background:#13100a;border:2px solid #3a2c18;border-radius:8px;padding:16px;width:360px;max-width:95vw;max-height:90vh;overflow-y:auto;font-family:Cinzel,serif;"><div id="dg-body"></div></div>';
     ov.addEventListener('click',function(e){if(e.target===ov) leaveDungeon();});
     document.body.appendChild(ov);
   }
@@ -646,7 +648,9 @@
     else h+='<button disabled style="padding:9px 20px;background:#251e14;border:1px solid #3a2c18;color:#5a4830;border-radius:4px;font-family:Cinzel,serif;font-size:13px;cursor:not-allowed;">⚔ Not Ready</button>';
     h+='</div>';
 
-    content.innerHTML=h;
+    var bodyEl2=document.getElementById('dg-body');
+    if(!bodyEl2){var nb2=document.createElement('div');nb2.id='dg-body';content.appendChild(nb2);bodyEl2=nb2;}
+    bodyEl2.innerHTML=h;
     document.getElementById('dungeon-overlay').style.display='flex';
   }
 
