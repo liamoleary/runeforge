@@ -155,8 +155,8 @@
                                  localStorage.setItem('rforge', JSON.stringify(data.saveData));
                                  if(typeof G!=='undefined'){
                                                Object.assign(G, data.saveData);
-                                               if(typeof updateUI==='function') updateUI();
-                                               if(typeof buildSkills==='function') buildSkills();
+                                               if(typeof updateUI==='function') updateUI(); if(typeof giveStarterSword==='function') giveStarterSword();
+                                               if(typeof buildSkills==='function') buildSkills(); if(typeof initXpTracking==='function') initXpTracking();
                                  }
                      }
            }).catch(function(){});
