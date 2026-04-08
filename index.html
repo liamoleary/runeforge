@@ -726,7 +726,7 @@ function buildSkills(){
   const dgBtn=document.createElement('div');
   dgBtn.className='sk-card dg-btn-in-grid';dgBtn.id='sk-dungeon';
   dgBtn.innerHTML='<div style="font-size:26px">🏰</div><div class="sk-name" style="color:var(--gold)">DUNGEON</div>';
-  dgBtn.onclick=()=>{if(typeof showDungeonEntry==='function')showDungeonEntry();};
+  dgBtn.onclick=()=>{if(typeof window._dgShowEntry==='function')window._dgShowEntry();};
   g.appendChild(dgBtn);
 }
 
