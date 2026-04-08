@@ -9,7 +9,14 @@
     + '@keyframes dgWobble{0%{transform:scale(0.6) rotate(-15deg)}50%{transform:scale(1.5) rotate(8deg)}100%{transform:scale(1) rotate(0deg)}}'
     + '@keyframes dgCritZoom{0%{transform:scale(0.2) rotate(0deg);opacity:0}25%{transform:scale(1.6) rotate(45deg);opacity:1}100%{transform:scale(2.2) rotate(90deg);opacity:0}}'
     + '@keyframes dgDeath{0%{opacity:1;transform:scale(1) rotate(0deg)}20%{opacity:1;transform:scale(1.7) rotate(-12deg)}100%{opacity:0;transform:scale(0.4) rotate(180deg) translate(0,30px)}}'
-    + '@keyframes dgSpawn{0%{opacity:0;transform:scale(0.1) rotate(-180deg)}45%{opacity:1;transform:scale(1.5) rotate(20deg)}75%{opacity:1;transform:scale(1) rotate(0deg)}100%{opacity:0;transform:scale(1) rotate(0deg)}}';
+    + '@keyframes dgSpawn{0%{opacity:0;transform:scale(0.1) rotate(-180deg)}45%{opacity:1;transform:scale(1.5) rotate(20deg)}75%{opacity:1;transform:scale(1) rotate(0deg)}100%{opacity:0;transform:scale(1) rotate(0deg)}}'
+    + '@keyframes dgFadeIn{0%{opacity:0}100%{opacity:1}}'
+    + '@keyframes dgVictoryPop{0%{transform:scale(0.3);opacity:0}55%{transform:scale(1.12);opacity:1}80%{transform:scale(0.97)}100%{transform:scale(1);opacity:1}}'
+    + '@keyframes dgRewardSpin{0%{transform:scale(0) rotate(-180deg);opacity:0}50%{transform:scale(1.5) rotate(20deg);opacity:1}100%{transform:scale(1) rotate(0deg);opacity:1}}'
+    + '@keyframes dgRewardGlow{0%,100%{filter:drop-shadow(0 0 18px #ffaa00) drop-shadow(0 0 36px #ff8800)}50%{filter:drop-shadow(0 0 28px #ffd966) drop-shadow(0 0 50px #ffaa00)}}'
+    + '@keyframes dgFwFlash{0%{opacity:1;transform:scale(0.5)}30%{opacity:1;transform:scale(2.6)}100%{opacity:0;transform:scale(3)}}'
+    + '@keyframes dgFwSpark{0%{opacity:1;transform:translate(0,0) scale(1)}60%{opacity:1;transform:translate(calc(var(--dx) * 0.85),calc(var(--dy) * 0.85 - 6px)) scale(0.7)}100%{opacity:0;transform:translate(var(--dx),calc(var(--dy) + 26px)) scale(0.2)}}'
+    + '@keyframes dgFwTrail{0%{opacity:0;transform:translateY(40px) scale(0.6)}40%{opacity:1}100%{opacity:0;transform:translateY(-10px) scale(1)}}';
   document.head.appendChild(dgStyle);
 
 
@@ -557,6 +564,84 @@
     setTimeout(function(){ if(fx.parentNode) fx.remove(); }, 900);
   }
 
+  // === FIRST-VICTORY REWARD POPUP ===
+  function showFirstVictoryPopup(dungeon, reward){
+    // Don't double-show
+    if(document.getElementById('dg-victory-popup'))return;
+    var ov=document.createElement('div');
+    ov.id='dg-victory-popup';
+    ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle,rgba(20,12,4,0.85) 0%,rgba(0,0,0,0.95) 100%);z-index:10000;display:flex;align-items:center;justify-content:center;animation:dgFadeIn 0.35s ease-out;overflow:hidden;padding:20px;box-sizing:border-box;';
+
+    var modal=document.createElement('div');
+    modal.style.cssText='position:relative;background:linear-gradient(135deg,#1a1308 0%,#2a1f0c 100%);border:3px solid #f0c040;border-radius:14px;padding:28px 30px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 0 50px rgba(240,192,64,0.55),0 0 100px rgba(240,192,64,0.25);animation:dgVictoryPop 0.7s cubic-bezier(0.2,1.3,0.6,1) forwards;font-family:Cinzel,serif;z-index:2;';
+    modal.innerHTML=
+      '<div style="color:#f0c040;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;font-weight:700;">⚔ First Victory ⚔</div>'+
+      '<div style="color:#e8d898;font-size:18px;margin-bottom:18px;">'+dungeon.name+'</div>'+
+      '<div style="font-size:78px;line-height:1;margin-bottom:12px;display:inline-block;animation:dgRewardSpin 0.9s ease-out forwards,dgRewardGlow 2.2s ease-in-out 0.9s infinite;">'+reward.icon+'</div>'+
+      '<div style="color:#f0c040;font-size:22px;font-weight:700;margin-bottom:4px;text-shadow:0 0 12px rgba(240,192,64,0.6);">'+reward.name+'</div>'+
+      '<div style="color:#9a7e50;font-size:13px;margin-bottom:22px;font-family:Arial,sans-serif;">'+(reward.eff||'')+'</div>'+
+      '<button id="dg-victory-claim" style="background:linear-gradient(180deg,#f0c040,#c08020);border:2px solid #f0c040;color:#0b0905;padding:11px 28px;font-family:Cinzel,serif;font-size:14px;font-weight:700;border-radius:6px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;box-shadow:0 0 18px rgba(240,192,64,0.55);">Claim</button>';
+
+    ov.appendChild(modal);
+    document.body.appendChild(ov);
+
+    // Spawn fireworks across the screen
+    var fwColors=['#f0c040','#ffd966','#ff6644','#5ac85a','#88ddff','#cc88ff','#ff88cc','#ffaa00'];
+    function fwRandom(){return fwColors[Math.floor(Math.random()*fwColors.length)];}
+    // Initial burst wave
+    for(var i=0;i<10;i++){
+      (function(idx){
+        setTimeout(function(){if(ov.parentNode)spawnFireworkBurst(ov,fwRandom());},idx*180);
+      })(i);
+    }
+    // Continuous fireworks for ~4s
+    var interval=setInterval(function(){
+      if(!ov.parentNode){clearInterval(interval);return;}
+      spawnFireworkBurst(ov,fwRandom());
+    },380);
+    setTimeout(function(){clearInterval(interval);},4200);
+
+    function dismiss(){
+      clearInterval(interval);
+      if(ov.parentNode){
+        ov.style.animation='dgFadeIn 0.25s ease-out reverse';
+        setTimeout(function(){if(ov.parentNode)ov.remove();},250);
+      }
+    }
+    document.getElementById('dg-victory-claim').onclick=dismiss;
+    ov.addEventListener('click',function(e){if(e.target===ov)dismiss();});
+  }
+
+  function spawnFireworkBurst(parent,color){
+    // Random position avoiding the dead-center where the modal sits
+    var x=8+Math.random()*84;
+    var y=8+Math.random()*72;
+    // If too close to center (modal area), nudge to the edges
+    if(Math.abs(x-50)<22&&Math.abs(y-45)<22){
+      x=x<50?(x-15):(x+15);
+    }
+    var burst=document.createElement('div');
+    burst.style.cssText='position:absolute;left:'+x+'%;top:'+y+'%;width:0;height:0;pointer-events:none;z-index:1;';
+
+    // Center flash
+    var flash=document.createElement('div');
+    flash.style.cssText='position:absolute;left:-9px;top:-9px;width:18px;height:18px;background:'+color+';border-radius:50%;box-shadow:0 0 22px '+color+',0 0 44px '+color+';animation:dgFwFlash 0.6s ease-out forwards;';
+    burst.appendChild(flash);
+
+    // Sparks flying outward (with gravity-ish curve via dgFwSpark keyframes)
+    var n=14;
+    for(var j=0;j<n;j++){
+      var ang=(Math.PI*2*j)/n+Math.random()*0.25;
+      var dist=70+Math.random()*55;
+      var sp=document.createElement('div');
+      sp.style.cssText='position:absolute;left:-3px;top:-3px;width:6px;height:6px;background:'+color+';border-radius:50%;box-shadow:0 0 8px '+color+',0 0 14px '+color+';animation:dgFwSpark 1.25s ease-out forwards;--dx:'+(Math.cos(ang)*dist).toFixed(1)+'px;--dy:'+(Math.sin(ang)*dist).toFixed(1)+'px;';
+      burst.appendChild(sp);
+    }
+
+    parent.appendChild(burst);
+    setTimeout(function(){if(burst.parentNode)burst.remove();},1400);
+  }
+
   function dungeonAttack(mode){
     if(!dungeonState||dungeonState.victory||dungeonState.fled) return;
     if(dungeonState.dying) return;
@@ -640,8 +725,14 @@
         dungeonState.victory=true;
         var rwd=activeDungeon.reward||{id:'gold_coins',name:'Gold',icon:'🪙',eff:''};
         var rare=activeDungeon.rareReward;
+        if(typeof G!=='undefined'&&!G.dungeonRewards)G.dungeonRewards={};
+        var firstClear=(typeof G!=='undefined')&&!G.dungeonRewards[activeDungeon.id];
         dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The dungeon falls silent. You are victorious!</span>');
-        dungeonState.combatLog.push('<span style="color:#f0c040">Reward: '+rwd.icon+' '+rwd.name+(rwd.eff?' ('+rwd.eff+')':'')+'</span>');
+        if(firstClear){
+          dungeonState.combatLog.push('<span style="color:#f0c040">First Victory! Reward: '+rwd.icon+' '+rwd.name+(rwd.eff?' ('+rwd.eff+')':'')+'</span>');
+        } else {
+          dungeonState.combatLog.push('<span style="color:#9a7e50">'+rwd.icon+' '+rwd.name+' already claimed.</span>');
+        }
 
         var gotSpecial=rare?(Math.random()<(rare.chance||0.05)):false;
         if(gotSpecial) dungeonState.combatLog.push('<span style="color:#ff69b4;font-weight:bold">✨ RARE DROP! '+rare.icon+' '+rare.name+(rare.eff?' ('+rare.eff+')':'')+' ✨</span>');
@@ -651,7 +742,10 @@
 
         if(typeof G!=='undefined'){
           if(!G.inv) G.inv={};
-          G.inv[rwd.id]=(G.inv[rwd.id]||0)+1;
+          if(firstClear){
+            G.inv[rwd.id]=(G.inv[rwd.id]||0)+1;
+            G.dungeonRewards[activeDungeon.id]=true;
+          }
           if(gotSpecial&&rare) G.inv[rare.id]=(G.inv[rare.id]||0)+1;
           if(gotLevelPotion) G.inv.level_potion=(G.inv.level_potion||0)+1;
           G.gold=(G.gold||0)+dungeonState.totalGold;
@@ -663,10 +757,14 @@
           if(typeof updateUI==='function') updateUI();
           if(typeof renderInv==='function') renderInv();
           if(typeof log==='function'){
-            var msg=rwd.icon+' <b>'+activeDungeon.name+' cleared!</b> '+rwd.name+' + '+dungeonState.totalGold+' gold';
+            var msg=rwd.icon+' <b>'+activeDungeon.name+' cleared!</b> '+(firstClear?rwd.name:'(reward already claimed)')+' + '+dungeonState.totalGold+' gold';
             if(gotSpecial&&rare) msg+=' + <span style="color:#ff69b4">✨ '+rare.name+'!</span>';
             if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">🧪 Level Potion!</span>';
             log(msg+' + loot!');
+          }
+          // First-victory popup with fireworks
+          if(firstClear){
+            setTimeout(function(){showFirstVictoryPopup(activeDungeon,rwd);},700);
           }
         }
       } else {
@@ -909,7 +1007,8 @@
       h+='<div style="display:flex;justify-content:space-between;color:#9a7e50;font-size:10px;margin-bottom:2px;"><span>'+l.icon+' '+l.name+'</span><span>'+l.min+'-'+l.max+'</span></div>';
     });
     h+='<div style="border-top:1px solid #251e14;margin-top:6px;padding-top:6px;">';
-    h+='<div style="display:flex;justify-content:space-between;color:#f0c040;font-size:10px;margin-bottom:2px;"><span>'+rwd.icon+' '+rwd.name+(rwd.eff?' ('+rwd.eff+')':'')+'</span><span>Guaranteed</span></div>';
+    var claimed=(typeof G!=='undefined'&&G.dungeonRewards&&G.dungeonRewards[activeDungeon.id]);
+    h+='<div style="display:flex;justify-content:space-between;color:'+(claimed?'#5a4830':'#f0c040')+';font-size:10px;margin-bottom:2px;"><span>'+rwd.icon+' '+rwd.name+(rwd.eff?' ('+rwd.eff+')':'')+'</span><span>'+(claimed?'✓ Claimed':'Guaranteed')+'</span></div>';
     if(rare) h+='<div style="display:flex;justify-content:space-between;color:#ff69b4;font-size:10px;margin-bottom:2px;"><span>✨ '+rare.name+(rare.eff?' ('+rare.eff+')':'')+'</span><span>'+Math.round((rare.chance||0.05)*100)+'%</span></div>';
     h+='<div style="display:flex;justify-content:space-between;color:#9b59b6;font-size:10px;"><span>🧪 Level Potion</span><span>2%</span></div>';
     h+='</div></div>';

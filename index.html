@@ -665,7 +665,7 @@ const SHOP=[
 let G = {
   skills:{},inv:{},equip:{weapon:null,armour:null},
   gold:0,hp:10,maxhp:10,
-  upgrades:{},tools:{},
+  upgrades:{},tools:{},dungeonRewards:{},
   tab:'woodcutting',
   task:null,prog:0,dur:0,
   mhp:0,mmhp:0,mhit:0,
@@ -690,12 +690,23 @@ function load(){
   try{const s=localStorage.getItem('rforge');if(s){const d=JSON.parse(s);Object.assign(G,d);}}catch(e){}
   initSkills();initXpTracking();
   if(!G.tools)G.tools={};
+  if(!G.dungeonRewards)G.dungeonRewards={};
   if(!G.xpEarned)G.xpEarned={};
   if(!G.startedWithSword)G.startedWithSword=false;
   // Trinket removal cleanup: drop legacy state and any trinket items in inventory
   if(G.trinkets)delete G.trinkets;
   const oldTrinketIds=['grove_wc_trinket','grove_mn_trinket','grove_fs_trinket','grove_ck_trinket','grove_sm_trinket','grove_cb_trinket','grove_fl_trinket','grove_cr_trinket','grove_mg_trinket'];
   if(G.inv){for(const tid of oldTrinketIds){if(G.inv[tid])delete G.inv[tid];}}
+  // Backfill dungeonRewards: if the player already has a dungeon reward in their inventory,
+  // mark that dungeon as already-claimed so the first-victory popup doesn't fire again.
+  if(window.DUNGEONS&&G.inv){
+    for(const dgId of Object.keys(window.DUNGEONS)){
+      const rwd=window.DUNGEONS[dgId].reward;
+      if(rwd&&rwd.id&&G.inv[rwd.id]&&!G.dungeonRewards[dgId]){
+        G.dungeonRewards[dgId]=true;
+      }
+    }
+  }
 }
 
 // SKILL HELPERS
