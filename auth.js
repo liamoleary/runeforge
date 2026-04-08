@@ -25,9 +25,16 @@
 
         document.getElementById('auth-btn').onclick = showAuthModal;
            document.getElementById('logout-btn').onclick = doLogout;
-function doLogout
-      
-   function createAuthModal(){
+function doLogout(){
+      fetch('/api/logout',{method:'POST'}).then(function(){
+        localStorage.removeItem('rforge');
+        window.location.reload();
+      }).catch(function(){
+        localStorage.removeItem('rforge');
+        window.location.reload();
+      });
+    }
+    function createAuthModal(){
            if(document.getElementById('auth-modal')) return;
            var m = document.createElement('div');
            m.id = 'auth-modal';
@@ -138,7 +145,39 @@ function doLogout
            }, 2000);
    }
 
-   function loadCloudSave(){ if(!currentUser) return Promise.resolve(); return fetch('/api/save').then(function(res){ return res.json(); }).then(function(data){ if(data.hasSave && data.saveData){ localStorage.setItem('rforge', JSON.stringify(data.saveData)); if(typeof G!=='undefined'){ Object.assign(G, data.saveData); if(typeof updateUI==='function') updateUI(); if(typeof giveStarterSword==='function') giveStarterSword(); if(typeof buildSkills==='function') buildSkills(); if(typeof initXpTracking==='function') initXpTracking(); } } else { localStorage.removeItem('rforge'); if(typeof G!=='undefined'){ G.skills={}; G.inv={}; G.equip={weapon:null,armour:null}; G.gold=0; G.hp=10; G.maxhp=10; G.upgrades={}; G.trinkets={}; G.tab='woodcutting'; G.task=null; G.prog=0; G.dur=0; G.critStacks=0; G.xpEarned={}; G.startedWithSword=false; G.hasSeenIntro=false; if(typeof initSkills==='function') initSkills(); if(typeof initXpTracking==='function') initXpTracking(); if(typeof giveStarterSword==='function') giveStarterSword(); if(typeof buildSkills==='function') buildSkills(); if(typeof updateUI==='function') updateUI(); if(typeof showIntro==='function') showIntro(); } } }).catch(function(){}); } function startAutoSave(){
+   function loadCloudSave(){
+      if(!currentUser) return Promise.resolve();
+      return fetch('/api/save').then(function(res){
+        return res.json();
+      }).then(function(data){
+        if(data.hasSave && data.saveData){
+          localStorage.setItem('rforge', JSON.stringify(data.saveData));
+          if(typeof G!=='undefined'){
+            Object.assign(G, data.saveData);
+            if(typeof updateUI==='function') updateUI();
+            if(typeof giveStarterSword==='function') giveStarterSword();
+            if(typeof buildSkills==='function') buildSkills();
+            if(typeof initXpTracking==='function') initXpTracking();
+          }
+        } else {
+          localStorage.removeItem('rforge');
+          if(typeof G!=='undefined'){
+            G.skills={};G.inv={};G.equip={weapon:null,armour:null};
+            G.gold=0;G.hp=10;G.maxhp=10;G.upgrades={};G.trinkets={};
+            G.tab='woodcutting';G.task=null;G.prog=0;G.dur=0;
+            G.critStacks=0;G.xpEarned={};G.startedWithSword=false;
+            G.hasSeenIntro=false;
+            if(typeof initSkills==='function') initSkills();
+            if(typeof initXpTracking==='function') initXpTracking();
+            if(typeof giveStarterSword==='function') giveStarterSword();
+            if(typeof buildSkills==='function') buildSkills();
+            if(typeof updateUI==='function') updateUI();
+            if(typeof showIntro==='function') showIntro();
+          }
+        }
+      }).catch(function(){});
+    }
+    function startAutoSave(){
            if(autoSaveInterval) clearInterval(autoSaveInterval);
            // Auto-save every 30 seconds
         autoSaveInterval = setInterval(function(){
