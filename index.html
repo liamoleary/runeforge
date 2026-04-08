@@ -660,7 +660,7 @@ function tick(){
   if(G.task){
     G.prog+=dt;
     // Combat: monster hits back
-    if(G.task.startsWith('cb')){
+    if(G.task&&G.task.startsWith('cb')){
       G.mhit+=dt;
       if(G.mhit>=3800){
         G.mhit=0;
@@ -680,7 +680,7 @@ function tick(){
       }
     }
     // Magic combat spells also get hit by monsters if applicable
-    if(G.task.startsWith('mg')&&findAction(G.task)?.isCombatSpell){
+    if(G.task&&G.task.startsWith('mg')&&findAction(G.task)?.isCombatSpell){
       G.mhit+=dt;
       if(G.mhit>=4200){
         G.mhit=0;
