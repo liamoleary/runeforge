@@ -629,18 +629,6 @@ const ITEMS = {
   level_potion:{name:'Level Potion',icon:'🧪',sell:0,type:'potion',special:true},
 };
 
-const TRINKETS = {
-  grove_wc_trinket:{name:'Sylvan Charm',icon:'🌿',skill:'woodcutting',bonus:0.05,desc:'+5% Woodcutting XP'},
-  grove_mn_trinket:{name:'Stone Heart',icon:'💎',skill:'mining',bonus:0.05,desc:'+5% Mining XP'},
-  grove_fs_trinket:{name:'Coral Lure',icon:'🐚',skill:'fishing',bonus:0.05,desc:'+5% Fishing XP'},
-  grove_ck_trinket:{name:'Ember Spice',icon:'🌶️',skill:'cooking',bonus:0.05,desc:'+5% Cooking XP'},
-  grove_sm_trinket:{name:'Molten Core',icon:'🔥',skill:'smithing',bonus:0.05,desc:'+5% Smithing XP'},
-  grove_cb_trinket:{name:'War Token',icon:'⚔️',skill:'combat',bonus:0.05,desc:'+5% Combat XP'},
-  grove_fl_trinket:{name:'Swift Feather',icon:'🪶',skill:'fletching',bonus:0.05,desc:'+5% Fletching XP'},
-  grove_cr_trinket:{name:'Golden Thread',icon:'🧵',skill:'crafting',bonus:0.05,desc:'+5% Crafting XP'},
-  grove_mg_trinket:{name:'Arcane Shard',icon:'✨',skill:'magic',bonus:0.05,desc:'+5% Magic XP'},
-};
-
 const TOOL_MAP={
   woodcutting:['axe','steel_axe','enchanted_axe'],
   mining:['pick','steel_pickaxe'],
@@ -677,7 +665,7 @@ const SHOP=[
 let G = {
   skills:{},inv:{},equip:{weapon:null,armour:null},
   gold:0,hp:10,maxhp:10,
-  upgrades:{},trinkets:{},tools:{},
+  upgrades:{},tools:{},
   tab:'woodcutting',
   task:null,prog:0,dur:0,
   mhp:0,mmhp:0,mhit:0,
@@ -701,10 +689,13 @@ function save(){try{localStorage.setItem('rforge',JSON.stringify(G));}catch(e){}
 function load(){
   try{const s=localStorage.getItem('rforge');if(s){const d=JSON.parse(s);Object.assign(G,d);}}catch(e){}
   initSkills();initXpTracking();
-  if(!G.trinkets)G.trinkets={};
   if(!G.tools)G.tools={};
   if(!G.xpEarned)G.xpEarned={};
   if(!G.startedWithSword)G.startedWithSword=false;
+  // Trinket removal cleanup: drop legacy state and any trinket items in inventory
+  if(G.trinkets)delete G.trinkets;
+  const oldTrinketIds=['grove_wc_trinket','grove_mn_trinket','grove_fs_trinket','grove_ck_trinket','grove_sm_trinket','grove_cb_trinket','grove_fl_trinket','grove_cr_trinket','grove_mg_trinket'];
+  if(G.inv){for(const tid of oldTrinketIds){if(G.inv[tid])delete G.inv[tid];}}
 }
 
 // SKILL HELPERS
@@ -714,11 +705,6 @@ function xpPct(sk){
   const l=slvl(sk),x=sxp(sk),nl=Math.min(l+1,99);
   if(l>=99)return 100;
   return Math.round(((x-XP[l])/(XP[nl]-XP[l]))*100);
-}
-function getTrinketBonus(sk){
-  const tid=G.trinkets[sk];
-  if(!tid||!TRINKETS[tid])return 0;
-  return TRINKETS[tid].bonus||0;
 }
 function getToolSpeedMult(sk){
   // Lower = faster. Best (smallest) wins between shop upgrade and equipped tool.
@@ -767,12 +753,10 @@ function recomputeActiveTaskDur(forSk){
   updateActiveTaskBar();
 }
 function addXP(sk,amt){
-  const bonus=getTrinketBonus(sk);
-  const finalAmt=Math.floor(amt*(1+bonus));
   const ol=slvl(sk);
-  G.skills[sk].xp=(G.skills[sk].xp||0)+finalAmt;
+  G.skills[sk].xp=(G.skills[sk].xp||0)+amt;
   if(!G.xpEarned)G.xpEarned={};
-  G.xpEarned[sk]=(G.xpEarned[sk]||0)+finalAmt;
+  G.xpEarned[sk]=(G.xpEarned[sk]||0)+amt;
   const nl=slvl(sk);
   if(nl>ol){
     showLvlUp(sk,nl);
@@ -962,20 +946,6 @@ function updateUI(){
     if(earnedEl)earnedEl.textContent='Total: '+(G.xpEarned[sk]||0)+' xp';
     if(G.task&&findSkill(G.task)===sk)el.classList.add('sk-active');
     else el.classList.remove('sk-active');
-    // Update trinket slot display
-    const trinketSlot=el.querySelector('.trinket-slot');
-    if(trinketSlot){
-      const tid=G.trinkets[sk];
-      if(tid&&TRINKETS[tid]){
-        trinketSlot.textContent=TRINKETS[tid].icon;
-        trinketSlot.classList.add('filled');
-        trinketSlot.title=TRINKETS[tid].name+': '+TRINKETS[tid].desc;
-      } else {
-        trinketSlot.textContent='○';
-        trinketSlot.classList.remove('filled');
-        trinketSlot.title='Trinket slot (empty)';
-      }
-    }
     // Update tool slot display
     const toolSlot=el.querySelector('.tool-slot');
     if(toolSlot){
@@ -1016,7 +986,7 @@ function renderInv(){
   const grid=document.getElementById('inv-grid');grid.innerHTML='';
   const items=Object.entries(G.inv).filter(([,v])=>v>0);
   items.forEach(([id,qty])=>{
-    const it=ITEMS[id]||TRINKETS[id];if(!it)return;
+    const it=ITEMS[id];if(!it)return;
     const d=document.createElement('div');d.className='iv-slot has';
     const qtyStr=qty>1?'<span class="iv-qty">'+(qty>=1000?(qty/1000).toFixed(1)+'k':qty)+'</span>':'';
     d.innerHTML='<span class="iv-ico">'+it.icon+'</span><span class="iv-nm">'+it.name+'</span>'+qtyStr;
@@ -1064,9 +1034,7 @@ function buildSkills(){
     const slots=document.createElement('div');slots.className='sk-slots';
     const toolS=document.createElement('span');toolS.className='sk-slot tool-slot';toolS.textContent='○';toolS.title='Tool slot';
     toolS.onclick=(e)=>{e.stopPropagation();showSlotMenu(sk,'tool');};
-    const trinS=document.createElement('span');trinS.className='sk-slot trinket-slot';trinS.textContent='○';trinS.title='Trinket slot';
-    trinS.onclick=(e)=>{e.stopPropagation();showSlotMenu(sk,'trinket');};
-    slots.appendChild(toolS);slots.appendChild(trinS);
+    slots.appendChild(toolS);
     top.appendChild(slots);
     front.appendChild(top);front.appendChild(trk);front.appendChild(lbl);
     front.onclick=()=>switchTab(sk);
@@ -1144,26 +1112,6 @@ function showSlotMenu(sk, slotType){
       }});
     });
     if(items.length===0) items.push({icon:'❌',name:'No tool',desc:'Buy one from the General Store, or find one in the dungeon',equipped:false,action:()=>closeSlotMenu()});
-  } else {
-    title=SKILLS[sk].icon+' '+SKILLS[sk].name+' - Trinket Slot';
-    const current=G.trinkets[sk];
-    if(current&&TRINKETS[current]){
-      const t=TRINKETS[current];
-      items.push({icon:t.icon,name:t.name+' (equipped)',desc:t.desc,equipped:true,action:()=>{
-        give(current,1);delete G.trinkets[sk];log('Removed trinket from '+SKILLS[sk].name+'.');closeSlotMenu();
-      }});
-    }
-    // Show available trinkets for this skill from inventory
-    Object.entries(G.inv).filter(([id,q])=>q>0&&TRINKETS[id]&&TRINKETS[id].skill===sk).forEach(([id])=>{
-      if(id===current)return;
-      const t=TRINKETS[id];
-      items.push({icon:t.icon,name:t.name,desc:t.desc,equipped:false,action:()=>{
-        if(G.trinkets[sk]){give(G.trinkets[sk],1);}
-        take(id,1);G.trinkets[sk]=id;
-        log('✨ Equipped '+t.icon+' '+t.name+' to '+SKILLS[sk].name+'!');closeSlotMenu();
-      }});
-    });
-    if(items.length===0) items.push({icon:'❌',name:'No trinkets available',desc:'Find trinkets in dungeons for '+SKILLS[sk].name,equipped:false,action:()=>closeSlotMenu()});
   }
   let h='<h3>'+title+'</h3>';
   items.forEach((it,i)=>{
@@ -1177,7 +1125,6 @@ function showSlotMenu(sk, slotType){
   ov.onclick=(e)=>{if(e.target===ov)closeSlotMenu();};
 }
 function closeSlotMenu(){const ov=document.getElementById('slot-menu-overlay');if(ov)ov.remove();updateUI();}
-function showTrinketMenu(sk){showSlotMenu(sk,'trinket');}
 
 function buildTabs(){
   const pages=document.getElementById('pages');
@@ -1248,19 +1195,6 @@ function buildShop(){
 // ACTIONS
 function useItem(id){
   const it=ITEMS[id];
-  const tr=TRINKETS[id];
-  if(tr){
-    // It's a trinket - try to equip it
-    const sk=tr.skill;
-    if(G.trinkets[sk]){
-      log('❌ '+SKILLS[sk].name+' trinket slot is full. Remove it first.');
-      return;
-    }
-    take(id,1);
-    G.trinkets[sk]=id;
-    log('✨ Equipped '+tr.icon+' '+tr.name+' to '+SKILLS[sk].name+'! '+tr.desc);
-    return;
-  }
   if(!it)return;
   if(id==='level_potion'){
     // Show skill selection for level potion
@@ -1333,7 +1267,6 @@ function sellAll(){
     const it=ITEMS[id];if(!it)continue;
     if(it.type==='weapon'||it.type==='armour'||it.type==='food'||it.type==='accessory'||it.type==='potion')continue;
     if(it.special)continue;
-    if(TRINKETS[id])continue;
     if(it.type==='currency'){gold+=qty;sold.push(it.icon+'×'+qty);delete G.inv[id];continue;}
     gold+=it.sell*qty;sold.push(it.icon+'×'+qty);delete G.inv[id];
   }
