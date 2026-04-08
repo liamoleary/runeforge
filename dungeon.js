@@ -1,7 +1,13 @@
 (function(){
   // Inject dungeon shake CSS
   var dgStyle = document.createElement('style');
-  dgStyle.textContent = '@keyframes dgShake{0%{transform:translate(0,0)}20%{transform:translate(-2px,1px)}40%{transform:translate(3px,-1px)}60%{transform:translate(-1px,2px)}80%{transform:translate(2px,-1px)}100%{transform:translate(0,0)}}';
+  dgStyle.textContent = '@keyframes dgShake{0%{transform:translate(0,0)}20%{transform:translate(-2px,1px)}40%{transform:translate(3px,-1px)}60%{transform:translate(-1px,2px)}80%{transform:translate(2px,-1px)}100%{transform:translate(0,0)}}'
+    + '@keyframes dgFxFade{0%{opacity:1;transform:scale(0.3)}30%{opacity:1;transform:scale(1.2)}100%{opacity:0;transform:scale(1.6)}}'
+    + '@keyframes dgSpark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0.2)}}'
+    + '@keyframes dgRing{0%{opacity:0.9;transform:scale(0.2)}100%{opacity:0;transform:scale(2.2)}}'
+    + '@keyframes dgFlash{0%{opacity:0}30%{opacity:0.55}100%{opacity:0}}'
+    + '@keyframes dgWobble{0%{transform:scale(0.6) rotate(-15deg)}50%{transform:scale(1.5) rotate(8deg)}100%{transform:scale(1) rotate(0deg)}}'
+    + '@keyframes dgCritZoom{0%{transform:scale(0.2) rotate(0deg);opacity:0}25%{transform:scale(1.6) rotate(45deg);opacity:1}100%{transform:scale(2.2) rotate(90deg);opacity:0}}';
   document.head.appendChild(dgStyle);
 
 
@@ -196,6 +202,90 @@
     }
   }
 
+  // === DUNGEON HIT VFX (sprites overlaid on combatants) ===
+  function showDungeonHitFX(targetSide, type) {
+    var content = document.getElementById('dg-content');
+    if (!content) return;
+    content.style.position = 'relative';
+
+    // Anchor over the character icon (player on left, monster on right of the VS row)
+    var fx = document.createElement('div');
+    var sideStyle = targetSide === 'left' ? 'left:18%;' : 'right:18%;';
+    fx.style.cssText = 'position:absolute;top:78px;width:0;height:0;pointer-events:none;z-index:99;' + sideStyle;
+
+    var i, ang, dist, sp;
+
+    if (type === 'crit') {
+      // Dramatic gold starburst
+      var center = document.createElement('div');
+      center.textContent = '✦';
+      center.style.cssText = 'position:absolute;left:-22px;top:-26px;font-size:44px;color:#ffd966;text-shadow:0 0 14px #ffaa00,0 0 24px #ff8800,0 0 4px #fff;animation:dgCritZoom 0.75s ease-out forwards;font-weight:900;';
+      fx.appendChild(center);
+
+      var ring = document.createElement('div');
+      ring.style.cssText = 'position:absolute;left:-30px;top:-30px;width:60px;height:60px;border:3px solid #ffd966;border-radius:50%;box-shadow:0 0 16px #ffaa00 inset,0 0 16px #ffaa00;animation:dgRing 0.75s ease-out forwards;';
+      fx.appendChild(ring);
+
+      var ring2 = document.createElement('div');
+      ring2.style.cssText = 'position:absolute;left:-22px;top:-22px;width:44px;height:44px;border:2px solid #fff8cc;border-radius:50%;animation:dgRing 0.6s ease-out 0.1s forwards;opacity:0;';
+      fx.appendChild(ring2);
+
+      // 14 sparks
+      for (i = 0; i < 14; i++) {
+        ang = (Math.PI * 2 * i) / 14 + Math.random() * 0.2;
+        dist = 50 + Math.random() * 25;
+        sp = document.createElement('div');
+        sp.style.cssText = 'position:absolute;left:-4px;top:-4px;width:8px;height:8px;background:#ffd966;border-radius:50%;box-shadow:0 0 8px #ffaa00,0 0 14px #ff8800;animation:dgSpark 0.75s ease-out forwards;--dx:' + (Math.cos(ang) * dist).toFixed(1) + 'px;--dy:' + (Math.sin(ang) * dist).toFixed(1) + 'px;';
+        fx.appendChild(sp);
+      }
+
+      // Brief screen flash overlay across whole dialog
+      var flash = document.createElement('div');
+      flash.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle,#ffd96666,transparent 65%);pointer-events:none;animation:dgFlash 0.55s ease-out forwards;z-index:1;border-radius:6px;';
+      content.appendChild(flash);
+      setTimeout(function(){ if(flash.parentNode) flash.remove(); }, 600);
+
+    } else if (type === 'block') {
+      // Silver/blue shield clang
+      var shield = document.createElement('div');
+      shield.textContent = '🛡';
+      shield.style.cssText = 'position:absolute;left:-16px;top:-18px;font-size:32px;text-shadow:0 0 10px #88ddff,0 0 18px #4488dd;animation:dgWobble 0.5s ease-out forwards;';
+      fx.appendChild(shield);
+
+      var bring = document.createElement('div');
+      bring.style.cssText = 'position:absolute;left:-22px;top:-22px;width:44px;height:44px;border:2px solid #88ddff;border-radius:50%;box-shadow:0 0 10px #88ddff;animation:dgRing 0.55s ease-out forwards;';
+      fx.appendChild(bring);
+
+      // 8 silver sparks
+      for (i = 0; i < 8; i++) {
+        ang = (Math.PI * 2 * i) / 8 + Math.random() * 0.3;
+        dist = 28 + Math.random() * 14;
+        sp = document.createElement('div');
+        sp.style.cssText = 'position:absolute;left:-3px;top:-3px;width:6px;height:6px;background:#cce7ff;border-radius:50%;box-shadow:0 0 6px #88ddff;animation:dgSpark 0.55s ease-out forwards;--dx:' + (Math.cos(ang) * dist).toFixed(1) + 'px;--dy:' + (Math.sin(ang) * dist).toFixed(1) + 'px;';
+        fx.appendChild(sp);
+      }
+
+    } else {
+      // Normal hit: red splat + sparks
+      var color = targetSide === 'left' ? '#e03030' : '#ff5533';
+      var splat = document.createElement('div');
+      splat.style.cssText = 'position:absolute;left:-16px;top:-16px;width:32px;height:32px;background:radial-gradient(circle,' + color + ' 0%,' + color + 'cc 35%,transparent 70%);border-radius:50%;animation:dgFxFade 0.5s ease-out forwards;';
+      fx.appendChild(splat);
+
+      // 9 sparks
+      for (i = 0; i < 9; i++) {
+        ang = (Math.PI * 2 * i) / 9 + Math.random() * 0.4;
+        dist = 28 + Math.random() * 18;
+        sp = document.createElement('div');
+        sp.style.cssText = 'position:absolute;left:-3px;top:-3px;width:6px;height:6px;background:' + color + ';border-radius:50%;box-shadow:0 0 6px ' + color + ';animation:dgSpark 0.55s ease-out forwards;--dx:' + (Math.cos(ang) * dist).toFixed(1) + 'px;--dy:' + (Math.sin(ang) * dist).toFixed(1) + 'px;';
+        fx.appendChild(sp);
+      }
+    }
+
+    content.appendChild(fx);
+    setTimeout(function(){ if(fx.parentNode) fx.remove(); }, type === 'crit' ? 850 : 650);
+  }
+
   function dungeonAttack(mode){
     if(!dungeonState||dungeonState.victory||dungeonState.fled) return;
     var mon=dungeonState.monsters[dungeonState.room];
@@ -206,8 +296,15 @@
       var cChance=Math.min(90,dungeonState.critStacks*30);
       dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ You focus energy! Crit chance: '+cChance+'% (stack: '+dungeonState.critStacks+')</span>');
       // Monster still attacks
+      var hasArm2=G.equip&&G.equip.armour&&ITEMS[G.equip.armour];
+      var blocked2=hasArm2&&Math.random()<0.18;
+      if(blocked2){
+        showDungeonHitFX('left','block');
+        showDungeonDmgFloat(0,'miss','left');
+        dungeonState.combatLog.push('<span style="color:#88ddff;">🛡 You block '+mon.icon+' '+mon.name+'\'s attack!</span>');
+      } else {
       var mDmg2=rollDmg(mon.dmg[0],mon.dmg[1]),def2=getPlayerDef(),ad2=Math.max(1,mDmg2-Math.floor(def2*0.5));
-      dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad2);showDungeonDmgFloat(ad2,'enemy-hit','left');
+      dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad2);showDungeonDmgFloat(ad2,'enemy-hit','left');showDungeonHitFX('left','hit');
       dungeonState.combatLog.push(mon.icon+' '+mon.name+' hits you for <span style="color:#e03030">'+ad2+'</span> damage.');
       if(dungeonState.playerHp<=0){
         dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
@@ -217,6 +314,7 @@
         G.hp=Math.max(1,Math.floor(G.maxhp*0.25));
         if(typeof save==='function') save();
         if(typeof updateUI==='function') updateUI();
+      }
       }
       if(dungeonState&&dungeonState.playerHp>0) G.hp=dungeonState.playerHp;
       renderDungeon();
@@ -238,7 +336,7 @@
       else{dungeonState.combatLog.push('<span style="color:#9a7e50;">No crit ('+Math.round(critChance*100)+'% chance)</span>');}
       dungeonState.critStacks=0;
     }
-    mon.hp=Math.max(0,mon.hp-pDmg);showDungeonDmgFloat(pDmg,isCrit?'crit':'hit','right');
+    mon.hp=Math.max(0,mon.hp-pDmg);showDungeonDmgFloat(pDmg,isCrit?'crit':'hit','right');showDungeonHitFX('right',isCrit?'crit':'hit');
     var atkType=mode==='magic'?'magic':'physical';
     var effectiveness='';
     if(mon.weak===atkType){pDmg=Math.floor(pDmg*1.5);effectiveness='<span style="color:#5ac85a;font-size:9px;"> ✔ Super effective!</span>';}
@@ -314,8 +412,15 @@
       }
     } else {
       // Monster hits back on normal attack
+      var hasArm=G.equip&&G.equip.armour&&ITEMS[G.equip.armour];
+      var blocked=hasArm&&Math.random()<0.18;
+      if(blocked){
+        showDungeonHitFX('left','block');
+        showDungeonDmgFloat(0,'miss','left');
+        dungeonState.combatLog.push('<span style="color:#88ddff;">🛡 You block '+mon.icon+' '+mon.name+'\'s attack!</span>');
+      } else {
       var mDmg=rollDmg(mon.dmg[0],mon.dmg[1]),def=getPlayerDef(),ad=Math.max(1,mDmg-Math.floor(def*0.5));
-      dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad);showDungeonDmgFloat(ad,'enemy-hit','left');
+      dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad);showDungeonDmgFloat(ad,'enemy-hit','left');showDungeonHitFX('left','hit');
       dungeonState.combatLog.push(mon.icon+' '+mon.name+' hits you for <span style="color:#e03030">'+ad+'</span> damage.');
       if(dungeonState.playerHp<=0){
         dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
@@ -325,6 +430,7 @@
         G.hp=Math.max(1,Math.floor(G.maxhp*0.25));
         if(typeof save==='function') save();
         if(typeof updateUI==='function') updateUI();
+      }
       }
     }
     if(dungeonState&&!dungeonState.victory&&dungeonState.playerHp>0) G.hp=dungeonState.playerHp;
