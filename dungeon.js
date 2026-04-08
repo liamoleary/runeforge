@@ -43,7 +43,6 @@
       ],
       reward:{id:'steel_axe',icon:'🪓',name:'Steel Axe',eff:'ATK +7'},
       rareReward:{id:'enchanted_axe',icon:'🪓',name:'Enchanted Grove Axe',eff:'ATK +12',chance:0.05},
-      trinketIds:['grove_wc_trinket'],
       loot:[
         {id:'logs',name:'Logs',icon:'🪵',weight:30,min:2,max:5},
         {id:'oak_log',name:'Oak Logs',icon:'🪵',weight:22,min:1,max:3},
@@ -65,7 +64,6 @@
         {name:'Stone Warden',icon:'🗿',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_pickaxe',icon:'⛏️',name:'Steel Pickaxe',eff:'+20% Mining speed'},
-      trinketIds:['grove_mn_trinket'],
       loot:[
         {id:'copper_ore',name:'Copper Ore',icon:'🟫',weight:30,min:2,max:5},
         {id:'tin_ore',name:'Tin Ore',icon:'⬜',weight:25,min:2,max:4},
@@ -87,7 +85,6 @@
         {name:'Coral Tyrant',icon:'🪸',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_rod',icon:'🎣',name:'Steel Fishing Rod',eff:'+20% Fishing speed'},
-      trinketIds:['grove_fs_trinket'],
       loot:[
         {id:'raw_shrimp',name:'Raw Shrimp',icon:'🦐',weight:30,min:2,max:5},
         {id:'raw_sardine',name:'Raw Sardine',icon:'🐟',weight:24,min:2,max:4},
@@ -109,7 +106,6 @@
         {name:'Ember Cook',icon:'🔥',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_skillet',icon:'🍳',name:'Steel Skillet',eff:'+20% Cooking speed'},
-      trinketIds:['grove_ck_trinket'],
       loot:[
         {id:'raw_meat',name:'Raw Meat',icon:'🥩',weight:30,min:2,max:4},
         {id:'c_shrimp',name:'Shrimp',icon:'🍤',weight:22,min:2,max:4},
@@ -130,7 +126,6 @@
         {name:'Forge Lord',icon:'🔥',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_smith_hammer',icon:'🔨',name:'Steel Smith Hammer',eff:'+20% Smithing speed'},
-      trinketIds:['grove_sm_trinket'],
       loot:[
         {id:'copper_ore',name:'Copper Ore',icon:'🟫',weight:24,min:2,max:5},
         {id:'tin_ore',name:'Tin Ore',icon:'⬜',weight:22,min:2,max:4},
@@ -153,7 +148,6 @@
         {name:'Hollow Druid',icon:'🧙',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_fletch_knife',icon:'🔪',name:'Steel Fletching Knife',eff:'+20% Fletching speed'},
-      trinketIds:['grove_fl_trinket'],
       loot:[
         {id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:30,min:4,max:10},
         {id:'feather',name:'Feathers',icon:'🪶',weight:28,min:3,max:8},
@@ -174,7 +168,6 @@
         {name:'Spinner Queen',icon:'👑',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_needle',icon:'🪡',name:'Steel Needle',eff:'+20% Crafting speed'},
-      trinketIds:['grove_cr_trinket'],
       loot:[
         {id:'cowhide',name:'Cowhide',icon:'🐄',weight:26,min:2,max:5},
         {id:'leather',name:'Leather',icon:'📜',weight:18,min:1,max:3},
@@ -195,7 +188,6 @@
         {name:'Vault Keeper',icon:'🧙',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'apprentice_wand',icon:'🪄',name:'Apprentice Wand',eff:'+20% Magic speed'},
-      trinketIds:['grove_mg_trinket'],
       loot:[
         {id:'feather',name:'Feathers',icon:'🪶',weight:30,min:3,max:8},
         {id:'bones',name:'Bones',icon:'🦴',weight:25,min:2,max:5},
@@ -216,7 +208,6 @@
         {name:'Bandit Captain',icon:'🗡️',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_shield',icon:'🛡️',name:'Steel Shield',eff:'DEF +5'},
-      trinketIds:['grove_cb_trinket'],
       loot:[
         {id:'bones',name:'Bones',icon:'🦴',weight:30,min:2,max:5},
         {id:'raw_meat',name:'Raw Meat',icon:'🥩',weight:18,min:1,max:3},
@@ -233,7 +224,6 @@
   var DG = {
     minFood: 3,
     levelPotionChance: 0.02,
-    trinketChance: 0.08,
     goldPerRoom: [3, 8]
   };
 
@@ -659,23 +649,11 @@
         var gotLevelPotion=Math.random()<DG.levelPotionChance;
         if(gotLevelPotion) dungeonState.combatLog.push('<span style="color:#9b59b6;font-weight:bold">🧪 EXTREMELY RARE! Level Potion dropped!</span>');
 
-        // Trinket drop
-        var gotTrinket=Math.random()<DG.trinketChance;
-        var trinketDrop=null;
-        var trinketPool=activeDungeon.trinketIds||[];
-        if(gotTrinket&&trinketPool.length>0){
-          var ti=Math.floor(Math.random()*trinketPool.length);
-          trinketDrop=trinketPool[ti];
-          var tInfo=typeof TRINKETS!=='undefined'?TRINKETS[trinketDrop]:null;
-          if(tInfo) dungeonState.combatLog.push('<span style="color:#e67e22;font-weight:bold">💎 TRINKET DROP! '+tInfo.icon+' '+tInfo.name+' - '+tInfo.desc+'</span>');
-        }
-
         if(typeof G!=='undefined'){
           if(!G.inv) G.inv={};
           G.inv[rwd.id]=(G.inv[rwd.id]||0)+1;
           if(gotSpecial&&rare) G.inv[rare.id]=(G.inv[rare.id]||0)+1;
           if(gotLevelPotion) G.inv.level_potion=(G.inv.level_potion||0)+1;
-          if(trinketDrop) G.inv[trinketDrop]=(G.inv[trinketDrop]||0)+1;
           G.gold=(G.gold||0)+dungeonState.totalGold;
           dungeonState.lootCollected.forEach(function(d){
             if(d.id==='gold_coins'){G.gold=(G.gold||0)+d.qty;}
@@ -688,7 +666,6 @@
             var msg=rwd.icon+' <b>'+activeDungeon.name+' cleared!</b> '+rwd.name+' + '+dungeonState.totalGold+' gold';
             if(gotSpecial&&rare) msg+=' + <span style="color:#ff69b4">✨ '+rare.name+'!</span>';
             if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">🧪 Level Potion!</span>';
-            if(trinketDrop) msg+=' + Trinket!';
             log(msg+' + loot!');
           }
         }
@@ -934,8 +911,7 @@
     h+='<div style="border-top:1px solid #251e14;margin-top:6px;padding-top:6px;">';
     h+='<div style="display:flex;justify-content:space-between;color:#f0c040;font-size:10px;margin-bottom:2px;"><span>'+rwd.icon+' '+rwd.name+(rwd.eff?' ('+rwd.eff+')':'')+'</span><span>Guaranteed</span></div>';
     if(rare) h+='<div style="display:flex;justify-content:space-between;color:#ff69b4;font-size:10px;margin-bottom:2px;"><span>✨ '+rare.name+(rare.eff?' ('+rare.eff+')':'')+'</span><span>'+Math.round((rare.chance||0.05)*100)+'%</span></div>';
-    h+='<div style="display:flex;justify-content:space-between;color:#9b59b6;font-size:10px;margin-bottom:2px;"><span>🧪 Level Potion</span><span>2%</span></div>';
-    h+='<div style="display:flex;justify-content:space-between;color:#e67e22;font-size:10px;"><span>💎 Skill Trinket</span><span>8%</span></div>';
+    h+='<div style="display:flex;justify-content:space-between;color:#9b59b6;font-size:10px;"><span>🧪 Level Potion</span><span>2%</span></div>';
     h+='</div></div>';
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;"><div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">ENEMIES</div>';
