@@ -183,6 +183,21 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .slot-menu-close button{background:var(--bg2);border:1px solid var(--bdr);color:var(--text2);padding:6px 16px;border-radius:4px;cursor:pointer;font-family:'Cinzel',serif;font-size:12px}
 .dg-btn-in-grid{background:linear-gradient(180deg,#2a1f0f,#1a1308);border:1px solid var(--gold);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .15s}
 .dg-btn-in-grid:active{transform:scale(.97)}
+
+#intro-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(11,9,5,0.95);z-index:10000;display:flex;justify-content:center;align-items:center;animation:introFadeIn .8s ease}
+@keyframes introFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes introGlow{0%,100%{text-shadow:0 0 20px rgba(240,192,64,0.3)}50%{text-shadow:0 0 40px rgba(240,192,64,0.6),0 0 80px rgba(240,192,64,0.2)}}
+@keyframes swordFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.intro-box{text-align:center;max-width:420px;padding:40px 32px;animation:introSlide .6s ease .3s both}
+@keyframes introSlide{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.intro-sword{font-size:64px;animation:swordFloat 3s ease-in-out infinite;margin-bottom:16px}
+.intro-title{font-family:'Cinzel',serif;font-size:32px;color:var(--gold);font-weight:700;letter-spacing:3px;animation:introGlow 3s ease-in-out infinite;margin-bottom:8px}
+.intro-sub{font-family:'Cinzel',serif;font-size:14px;color:var(--gold2);letter-spacing:2px;margin-bottom:24px;opacity:0.7}
+.intro-text{color:var(--text);font-size:15px;line-height:1.7;margin-bottom:32px}
+.intro-text b{color:var(--gold)}
+.intro-btn{background:linear-gradient(180deg,#f0c040,#c49a30);color:#0b0905;border:none;padding:14px 40px;font-family:'Cinzel',serif;font-size:16px;font-weight:700;letter-spacing:2px;border-radius:6px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.intro-btn:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(240,192,64,0.4)}
+
 </style>
 </head>
 <body>
@@ -1039,10 +1054,35 @@ function showXPFloat(xp,sk){
 }
 
 // INIT
-function init(){
+
+    function showIntro(){
+      var ov=document.createElement('div');
+      ov.id='intro-overlay';
+      ov.innerHTML='<div class="intro-box">'
+        +'<div class="intro-sword">\u2694\uFE0F</div>'
+        +'<div class="intro-title">RuneForge</div>'
+        +'<div class="intro-sub">An Idle Adventure</div>'
+        +'<div class="intro-text">'
+        +'You awaken at the edge of a wild frontier, a <b>Bronze Sword</b> at your side.<br><br>'
+        +'Fish, mine, chop, and cook to survive. Craft powerful gear. '
+        +'Venture into <b>dungeons</b> to battle creatures and claim rare loot.<br><br>'
+        +'Adventure, crafting, and glory await.'
+        +'</div>'
+        +'<button class="intro-btn" onclick="dismissIntro()">Begin Adventure</button>'
+        +'</div>';
+      document.body.appendChild(ov);
+    }
+    function dismissIntro(){
+      var ov=document.getElementById('intro-overlay');
+      if(ov){ov.style.transition='opacity 0.5s';ov.style.opacity='0';setTimeout(function(){ov.remove();},500);}
+      G.hasSeenIntro=true;save();
+    }
+
+    function init(){
   load();
   giveStarterSword();
-  buildSkills();buildTabs();buildShop();
+  if(!G.hasSeenIntro){showIntro();}
+      buildSkills();buildTabs();buildShop();
   updateUI();anim();
   setInterval(tick,50);
   requestNotificationPermission();
