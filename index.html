@@ -628,8 +628,14 @@ const TRINKETS = {
 };
 
 const TOOL_MAP={
-  woodcutting:['axe'],mining:['pick'],fishing:['rod'],cooking:['tinder'],
+  woodcutting:['axe','steel_axe','enchanted_axe'],mining:['pick'],fishing:['rod'],cooking:['tinder'],
   smithing:['hammer'],fletching:['fletch_knife'],crafting:['needle'],magic:['staff'],combat:[]
+};
+// Speed bonus per tool item (fraction faster). Higher = better.
+const TOOL_BONUS={
+  axe:0.15,steel_axe:0.20,enchanted_axe:0.25,
+  pick:0.15,rod:0.15,tinder:0.15,
+  hammer:0.15,fletch_knife:0.15,needle:0.15,staff:0.15
 };
 const SHOP=[
   {id:'axe',name:'Iron Axe',icon:'🪓',cost:80,eff:'Woodcut +15% faster',up:'spd_wood'},
@@ -645,7 +651,7 @@ const SHOP=[
 let G = {
   skills:{},inv:{},equip:{weapon:null,armour:null},
   gold:0,hp:10,maxhp:10,
-  upgrades:{},trinkets:{},
+  upgrades:{},trinkets:{},tools:{},
   tab:'woodcutting',
   task:null,prog:0,dur:0,
   mhp:0,mmhp:0,mhit:0,
@@ -670,6 +676,7 @@ function load(){
   try{const s=localStorage.getItem('rforge');if(s){const d=JSON.parse(s);Object.assign(G,d);}}catch(e){}
   initSkills();initXpTracking();
   if(!G.trinkets)G.trinkets={};
+  if(!G.tools)G.tools={};
   if(!G.xpEarned)G.xpEarned={};
   if(!G.startedWithSword)G.startedWithSword=false;
 }
@@ -686,6 +693,15 @@ function getTrinketBonus(sk){
   const tid=G.trinkets[sk];
   if(!tid||!TRINKETS[tid])return 0;
   return TRINKETS[tid].bonus||0;
+}
+function getToolSpeedMult(sk){
+  // Lower = faster. Best (smallest) wins between shop upgrade and equipped tool.
+  let mult=1;
+  const upKey='spd_'+sk.slice(0,4);
+  if(G.upgrades[upKey])mult=0.85;
+  const tid=G.tools[sk];
+  if(tid&&TOOL_BONUS[tid])mult=Math.min(mult,1-TOOL_BONUS[tid]);
+  return mult;
 }
 function addXP(sk,amt){
   const bonus=getTrinketBonus(sk);
@@ -848,8 +864,7 @@ function startTask(id){
   if(G.task===id){stopTask();return;}
   G.task=id;G.prog=0;G.mhit=0;G.critStacks=0;
   let dur=a.dur;
-  const spdKey='spd_'+sk.slice(0,4);
-  const spd=G.upgrades[spdKey]?0.85:1;
+  const spd=getToolSpeedMult(sk);
   const lvBonus=Math.max(0.5,1-(lv-a.req)*0.006);
   G.dur=Math.max(800,Math.floor(dur*spd*lvBonus));
   if(a.mhp!==undefined){G.mhp=a.mhp;G.mmhp=a.mhp;}
@@ -902,10 +917,15 @@ function updateUI(){
     const toolSlot=el.querySelector('.tool-slot');
     if(toolSlot){
       const upKey='spd_'+sk.slice(0,4);
-      if(G.upgrades[upKey]){
+      const equippedTool=G.tools[sk];
+      if(equippedTool&&ITEMS[equippedTool]){
+        toolSlot.textContent=ITEMS[equippedTool].icon;
+        toolSlot.classList.add('filled');
+        toolSlot.title=ITEMS[equippedTool].name+' (tap to change)';
+      } else if(G.upgrades[upKey]){
         toolSlot.textContent='⚒';
         toolSlot.classList.add('filled');
-        toolSlot.title='Tool equipped';
+        toolSlot.title='Shop tool equipped';
       } else {
         toolSlot.textContent='○';
         toolSlot.classList.remove('filled');
@@ -1004,13 +1024,31 @@ function showSlotMenu(sk, slotType){
     title=SKILLS[sk].icon+' '+SKILLS[sk].name+' - Tool Slot';
     const toolIds=TOOL_MAP[sk]||[];
     const upKey='spd_'+sk.slice(0,4);
-    if(G.upgrades[upKey]){
-      // Already have tool - show equipped
-      const shopItem=SHOP.find(s=>toolIds.includes(s.id));
-      items.push({icon:shopItem?shopItem.icon:'⚒',name:shopItem?shopItem.name:'Tool',desc:'Equipped: '+shopItem?.eff,equipped:true,action:()=>{/*cant unequip shop tools*/closeSlotMenu();}});
-    } else {
-      items.push({icon:'❌',name:'No tool',desc:'Buy one from the General Store',equipped:false,action:()=>closeSlotMenu()});
+    const current=G.tools[sk];
+    // Currently equipped inventory tool (can be unequipped back to inventory)
+    if(current&&ITEMS[current]){
+      const it=ITEMS[current];
+      const pct=Math.round((TOOL_BONUS[current]||0)*100);
+      items.push({icon:it.icon,name:it.name+' (equipped)',desc:'+'+pct+'% '+SKILLS[sk].name+' speed · tap to unequip',equipped:true,action:()=>{
+        give(current,1);delete G.tools[sk];log('Removed '+it.name+' from '+SKILLS[sk].name+' tool slot.');closeSlotMenu();
+      }});
     }
+    // Shop upgrade (permanent, separate)
+    if(G.upgrades[upKey]){
+      const shopItem=SHOP.find(s=>toolIds.includes(s.id));
+      items.push({icon:shopItem?shopItem.icon:'⚒',name:(shopItem?shopItem.name:'Tool')+' (shop)',desc:'Permanent shop upgrade · '+(shopItem?shopItem.eff:'+15% speed'),equipped:true,action:()=>closeSlotMenu()});
+    }
+    // Available tool items in inventory
+    Object.entries(G.inv).filter(([id,q])=>q>0&&toolIds.includes(id)&&id!==current).forEach(([id])=>{
+      const it=ITEMS[id];if(!it)return;
+      const pct=Math.round((TOOL_BONUS[id]||0)*100);
+      items.push({icon:it.icon,name:it.name,desc:'+'+pct+'% '+SKILLS[sk].name+' speed',equipped:false,action:()=>{
+        if(G.tools[sk]){give(G.tools[sk],1);}
+        take(id,1);G.tools[sk]=id;
+        log('🛠 Equipped '+it.icon+' '+it.name+' as '+SKILLS[sk].name+' tool!');closeSlotMenu();
+      }});
+    });
+    if(items.length===0) items.push({icon:'❌',name:'No tool',desc:'Buy one from the General Store, or find one in the dungeon',equipped:false,action:()=>closeSlotMenu()});
   } else {
     title=SKILLS[sk].icon+' '+SKILLS[sk].name+' - Trinket Slot';
     const current=G.trinkets[sk];
