@@ -1,18 +1,18 @@
 (function(){
   if(typeof ITEMS !== 'undefined'){
-    if(!ITEMS.steel_axe) ITEMS.steel_axe = {name:'Steel Axe',icon:'\u{1FA93}',sell:250,type:'weapon',atk:7};
-    if(!ITEMS.enchanted_axe) ITEMS.enchanted_axe = {name:'Enchanted Grove Axe',icon:'\u{1FA93}',sell:1200,type:'weapon',atk:12,special:true};
+    if(!ITEMS.steel_axe) ITEMS.steel_axe = {name:'Steel Axe',icon:'🪓',sell:250,type:'weapon',atk:7};
+    if(!ITEMS.enchanted_axe) ITEMS.enchanted_axe = {name:'Enchanted Grove Axe',icon:'🪓',sell:1200,type:'weapon',atk:12,special:true};
   }
 
   var dungeonState = null;
 
   var GROVE_LOOT = [
-    {id:'logs',name:'Logs',icon:'\u{1FAB5}',weight:30,min:2,max:5},
-    {id:'oak_log',name:'Oak Logs',icon:'\u{1FAB5}',weight:22,min:1,max:3},
-    {id:'willow_log',name:'Willow Logs',icon:'\u{1FAB5}',weight:12,min:1,max:2},
-    {id:'arrow_shaft',name:'Arrow Shafts',icon:'\u2191',weight:25,min:3,max:8},
-    {id:'feather',name:'Feathers',icon:'\u{1FAB6}',weight:20,min:2,max:6},
-    {id:'gold_coins',name:'Gold',icon:'\u{1FA99}',weight:35,min:5,max:20}
+    {id:'logs',name:'Logs',icon:'🪵',weight:30,min:2,max:5},
+    {id:'oak_log',name:'Oak Logs',icon:'🪵',weight:22,min:1,max:3},
+    {id:'willow_log',name:'Willow Logs',icon:'🪵',weight:12,min:1,max:2},
+    {id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:25,min:3,max:8},
+    {id:'feather',name:'Feathers',icon:'🪶',weight:20,min:2,max:6},
+    {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
   ];
 
   var GROVE_TRINKETS = [
@@ -29,11 +29,11 @@
 
   var DG = {
     rooms: [
-      {name:'Twisted Sapling',icon:'\uD83C\uDF31',hp:5,maxhp:5,dmg:[1,2],xp:15},
-      {name:'Thorny Sprout',icon:'\uD83C\uDF3F',hp:6,maxhp:6,dmg:[1,3],xp:18},
-      {name:'Whipping Vine',icon:'\uD83C\uDF3E',hp:7,maxhp:7,dmg:[1,3],xp:20},
-      {name:'Fungal Sapling',icon:'\uD83C\uDF44',hp:8,maxhp:8,dmg:[2,3],xp:25},
-      {name:'Ancient Seedling',icon:'\uD83C\uDF32',hp:12,maxhp:12,dmg:[2,4],xp:40}
+      {name:'Twisted Sapling',icon:'🌱',hp:5,maxhp:5,dmg:[1,2],xp:15},
+      {name:'Thorny Sprout',icon:'🌿',hp:6,maxhp:6,dmg:[1,3],xp:18},
+      {name:'Whipping Vine',icon:'🌾',hp:7,maxhp:7,dmg:[1,3],xp:20},
+      {name:'Fungal Sapling',icon:'🍄',hp:8,maxhp:8,dmg:[2,3],xp:25},
+      {name:'Ancient Seedling',icon:'🌲',hp:12,maxhp:12,dmg:[2,4],xp:40}
     ],
     minFood: 3,
     specialAxeChance: 0.05,
@@ -140,7 +140,7 @@
     if(mode==='power'){
       // Skip this turn to charge up
       dungeonState.powerCharged=true;
-      dungeonState.combatLog.push('<span style="color:#ffd966;">\u26A1 You focus your energy... Next attack will deal double damage!</span>');
+      dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ You focus your energy... Next attack will deal double damage!</span>');
       // Monster still attacks
       var mDmg2=rollDmg(mon.dmg[0],mon.dmg[1]),def2=getPlayerDef(),ad2=Math.max(1,mDmg2-Math.floor(def2*0.5));
       dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad2);
@@ -164,7 +164,7 @@
     if(dungeonState.powerCharged){
       pDmg=Math.floor(pDmg*2);
       dungeonState.powerCharged=false;
-      dungeonState.combatLog.push('<span style="color:#ffd966;">\u26A1 POWER STRIKE!</span>');
+      dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ POWER STRIKE!</span>');
     }
     mon.hp=Math.max(0,mon.hp-pDmg);
     dungeonState.combatLog.push('You hit '+mon.icon+' '+mon.name+' for <span style="color:#5ac85a">'+pDmg+'</span> damage.');
@@ -178,7 +178,7 @@
       // Room gold
       var roomGold=rollDmg(DG.goldPerRoom[0],DG.goldPerRoom[1]);
       dungeonState.totalGold+=roomGold;
-      dungeonState.combatLog.push('<span style="color:#f0c040;">\u{1FA99} Found '+roomGold+' gold!</span>');
+      dungeonState.combatLog.push('<span style="color:#f0c040;">🪙 Found '+roomGold+' gold!</span>');
 
       var drops=rollLoot();
       drops.forEach(function(d){
@@ -190,13 +190,13 @@
       if(dungeonState.room>=dungeonState.monsters.length){
         dungeonState.victory=true;
         dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The grove falls silent. You are victorious!</span>');
-        dungeonState.combatLog.push('<span style="color:#f0c040">Reward: \u{1FA93} Steel Axe (ATK +7)</span>');
+        dungeonState.combatLog.push('<span style="color:#f0c040">Reward: 🪓 Steel Axe (ATK +7)</span>');
 
         var gotSpecial=Math.random()<DG.specialAxeChance;
-        if(gotSpecial) dungeonState.combatLog.push('<span style="color:#ff69b4;font-weight:bold">\u2728 RARE DROP! \u{1FA93} Enchanted Grove Axe (ATK +12) \u2728</span>');
+        if(gotSpecial) dungeonState.combatLog.push('<span style="color:#ff69b4;font-weight:bold">✨ RARE DROP! 🪓 Enchanted Grove Axe (ATK +12) ✨</span>');
 
         var gotLevelPotion=Math.random()<DG.levelPotionChance;
-        if(gotLevelPotion) dungeonState.combatLog.push('<span style="color:#9b59b6;font-weight:bold">\u{1F9EA} EXTREMELY RARE! Level Potion dropped!</span>');
+        if(gotLevelPotion) dungeonState.combatLog.push('<span style="color:#9b59b6;font-weight:bold">🧪 EXTREMELY RARE! Level Potion dropped!</span>');
 
         // Trinket drop
         var gotTrinket=Math.random()<DG.trinketChance;
@@ -205,7 +205,7 @@
           var ti=Math.floor(Math.random()*GROVE_TRINKETS.length);
           trinketDrop=GROVE_TRINKETS[ti].id;
           var tInfo=typeof TRINKETS!=='undefined'?TRINKETS[trinketDrop]:null;
-          if(tInfo) dungeonState.combatLog.push('<span style="color:#e67e22;font-weight:bold">\u{1F48E} TRINKET DROP! '+tInfo.icon+' '+tInfo.name+' - '+tInfo.desc+'</span>');
+          if(tInfo) dungeonState.combatLog.push('<span style="color:#e67e22;font-weight:bold">💎 TRINKET DROP! '+tInfo.icon+' '+tInfo.name+' - '+tInfo.desc+'</span>');
         }
 
         if(typeof G!=='undefined'){
@@ -223,9 +223,9 @@
           if(typeof updateUI==='function') updateUI();
           if(typeof renderInv==='function') renderInv();
           if(typeof log==='function'){
-            var msg='\u{1FA93} <b>Dungeon cleared!</b> Steel Axe + '+dungeonState.totalGold+' gold';
-            if(gotSpecial) msg+=' + <span style="color:#ff69b4">\u2728 Enchanted Grove Axe!</span>';
-            if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">\u{1F9EA} Level Potion!</span>';
+            var msg='🪓 <b>Dungeon cleared!</b> Steel Axe + '+dungeonState.totalGold+' gold';
+            if(gotSpecial) msg+=' + <span style="color:#ff69b4">✨ Enchanted Grove Axe!</span>';
+            if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">🧪 Level Potion!</span>';
             if(trinketDrop) msg+=' + Trinket!';
             log(msg+' + loot!');
           }
@@ -271,7 +271,7 @@
   function dungeonFlee(){
     if(!dungeonState||dungeonState.victory||dungeonState.playerHp<=0) return;
     dungeonState.fled=true;
-    dungeonState.combatLog.push('<span style="color:#ffd966;font-weight:bold">\uD83C\uDFC3 You flee from the dungeon! You keep your loot.</span>');
+    dungeonState.combatLog.push('<span style="color:#ffd966;font-weight:bold">🏃 You flee from the dungeon! You keep your loot.</span>');
     // Apply loot on flee - keep everything collected
     if(typeof G!=='undefined'){
       if(!G.inv) G.inv={};
@@ -285,7 +285,7 @@
       if(typeof renderInv==='function') renderInv();
       if(typeof log==='function'){
         var lootMsg=dungeonState.lootCollected.length>0?' + loot':'';
-        log('\uD83C\uDFC3 Fled dungeon with '+dungeonState.totalGold+' gold'+lootMsg+'.');
+        log('🏃 Fled dungeon with '+dungeonState.totalGold+' gold'+lootMsg+'.');
       }
     }
     renderDungeon();
@@ -320,47 +320,47 @@
     var mHp=mon?Math.max(0,(mon.hp/mon.maxhp)*100):0;
 
     var h='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
-    h+='<div style="text-align:center;margin-bottom:10px;"><div style="color:#f0c040;font-family:Cinzel,serif;font-size:16px;">Enchanted Grove</div><div style="color:#9a7e50;font-size:11px;">Room '+(Math.min(s.room+1,s.monsters.length))+'/'+s.monsters.length+(s.totalGold>0?' | \u{1FA99} '+s.totalGold+' gold':'')+'</div></div>';
+    h+='<div style="text-align:center;margin-bottom:10px;"><div style="color:#f0c040;font-family:Cinzel,serif;font-size:16px;">Enchanted Grove</div><div style="color:#9a7e50;font-size:11px;">Room '+(Math.min(s.room+1,s.monsters.length))+'/'+s.monsters.length+(s.totalGold>0?' | 🪙 '+s.totalGold+' gold':'')+'</div></div>';
 
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">';
-    h+='<div style="flex:1;text-align:center;"><div style="font-size:26px;">\uD83E\uDDCD</div><div style="color:#e8d898;font-size:12px;">You</div><div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;"><div style="height:100%;width:'+pHp+'%;background:'+(pHp>30?'#5ac85a':'#e03030')+';transition:width 0.3s;"></div></div><div style="color:#9a7e50;font-size:10px;">'+s.playerHp+'/'+s.playerMaxHp+' HP</div></div>';
+    h+='<div style="flex:1;text-align:center;"><div style="font-size:26px;">🧍</div><div style="color:#e8d898;font-size:12px;">You</div><div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;"><div style="height:100%;width:'+pHp+'%;background:'+(pHp>30?'#5ac85a':'#e03030')+';transition:width 0.3s;"></div></div><div style="color:#9a7e50;font-size:10px;">'+s.playerHp+'/'+s.playerMaxHp+' HP</div></div>';
     h+='<div style="color:#f0c040;font-size:16px;font-family:Cinzel,serif;">VS</div>';
     h+='<div style="flex:1;text-align:center;">';
     if(mon&&mon.hp>0) h+='<div style="font-size:26px;">'+mon.icon+'</div><div style="color:#e8d898;font-size:12px;">'+mon.name+'</div><div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;"><div style="height:100%;width:'+mHp+'%;background:#e03030;transition:width 0.3s;"></div></div><div style="color:#9a7e50;font-size:10px;">'+mon.hp+'/'+mon.maxhp+' HP</div>';
-    else if(s.victory) h+='<div style="font-size:26px;">\u{1FA93}</div><div style="color:#f0c040;font-size:12px;">Victory!</div>';
-    else if(s.fled) h+='<div style="font-size:26px;">\uD83C\uDFC3</div><div style="color:#ffd966;font-size:12px;">Escaped!</div>';
-    else h+='<div style="font-size:26px;">\uD83D\uDC80</div><div style="color:#e03030;font-size:12px;">Defeated</div>';
+    else if(s.victory) h+='<div style="font-size:26px;">🪓</div><div style="color:#f0c040;font-size:12px;">Victory!</div>';
+    else if(s.fled) h+='<div style="font-size:26px;">🏃</div><div style="color:#ffd966;font-size:12px;">Escaped!</div>';
+    else h+='<div style="font-size:26px;">💀</div><div style="color:#e03030;font-size:12px;">Defeated</div>';
     h+='</div></div>';
 
     // Action buttons
     h+='<div style="display:flex;gap:4px;margin-bottom:10px;justify-content:center;flex-wrap:wrap;">';
     if(!done){
       var fc=getFoodCount();
-      h+='<button onclick="window._dgAttack(\'slash\')" style="flex:1;max-width:80px;padding:6px;background:#8B4513;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;font-weight:bold;" title="Normal attack">\u2694 Slash</button>';
-      h+='<button onclick="window._dgAttack(\'power\')" style="flex:1;max-width:80px;padding:6px;background:'+(s.powerCharged?'#4a3010':'#251e14')+';border:1px solid '+(s.powerCharged?'#ffd966':'#3a2c18')+';color:'+(s.powerCharged?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Skip attack to charge, next hit deals 2x damage">\u26A1 Power</button>';
-      h+='<button onclick="window._dgEat()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:'+(fc>0?'#5ac85a':'#5a4830')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Eat food to heal (no damage taken)">\uD83C\uDF56 Eat('+fc+')</button>';
-      h+='<button onclick="window._dgFlee()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:#e03030;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Flee and keep collected loot">\uD83C\uDFC3 Flee</button>';
+      h+='<button onclick="window._dgAttack(\'slash\')" style="flex:1;max-width:80px;padding:6px;background:#8B4513;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;font-weight:bold;" title="Normal attack">⚔ Slash</button>';
+      h+='<button onclick="window._dgAttack(\'power\')" style="flex:1;max-width:80px;padding:6px;background:'+(s.powerCharged?'#4a3010':'#251e14')+';border:1px solid '+(s.powerCharged?'#ffd966':'#3a2c18')+';color:'+(s.powerCharged?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Skip attack to charge, next hit deals 2x damage">⚡ Power</button>';
+      h+='<button onclick="window._dgEat()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:'+(fc>0?'#5ac85a':'#5a4830')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Eat food to heal (no damage taken)">🍖 Eat('+fc+')</button>';
+      h+='<button onclick="window._dgFlee()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:#e03030;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Flee and keep collected loot">🏃 Flee</button>';
     } else {
-      h+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+(s.victory?'\u{1FA93} Claim & Leave':s.fled?'\uD83C\uDFC3 Leave':'Leave Dungeon')+'</button>';
+      h+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+(s.victory?'🪓 Claim & Leave':s.fled?'🏃 Leave':'Leave Dungeon')+'</button>';
     }
     h+='</div>';
 
     // Power charge indicator
     if(!done&&s.powerCharged){
-      h+='<div style="text-align:center;color:#ffd966;font-size:10px;margin-bottom:6px;">\u26A1 Power charged! Next slash deals 2x damage.</div>';
+      h+='<div style="text-align:center;color:#ffd966;font-size:10px;margin-bottom:6px;">⚡ Power charged! Next slash deals 2x damage.</div>';
     }
 
     // Loot display
     if(s.lootCollected.length>0||s.totalGold>0){
       var ls={};s.lootCollected.forEach(function(l){if(!ls[l.id])ls[l.id]={icon:l.icon,name:l.name,qty:0};ls[l.id].qty+=l.qty;});
       if(!done||s.fled){
-        h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:6px;margin-bottom:8px;"><div style="color:#8bc34a;font-size:10px;margin-bottom:4px;">LOOT'+(s.totalGold>0?' (\u{1FA99} '+s.totalGold+' gold)':'')+':</div>';
+        h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:6px;margin-bottom:8px;"><div style="color:#8bc34a;font-size:10px;margin-bottom:4px;">LOOT'+(s.totalGold>0?' (🪙 '+s.totalGold+' gold)':'')+':</div>';
         var lh=[];
         for(var k in ls) lh.push('<span style="color:#9a7e50;font-size:10px;">'+ls[k].icon+ls[k].name+' x'+ls[k].qty+'</span>');
-        h+=lh.join(' \u00b7 ')+'</div>';
+        h+=lh.join(' · ')+'</div>';
       }
       if(s.victory){
-        h+='<div style="background:#1c1710;border:1px solid #f0c040;border-radius:4px;padding:8px;margin-bottom:8px;"><div style="color:#f0c040;font-size:11px;margin-bottom:4px;">LOOT OBTAINED (\u{1FA99} '+s.totalGold+' gold)</div>';
+        h+='<div style="background:#1c1710;border:1px solid #f0c040;border-radius:4px;padding:8px;margin-bottom:8px;"><div style="color:#f0c040;font-size:11px;margin-bottom:4px;">LOOT OBTAINED (🪙 '+s.totalGold+' gold)</div>';
         for(var k2 in ls) h+='<div style="color:#8bc34a;font-size:11px;">'+ls[k2].icon+' '+ls[k2].name+' x'+ls[k2].qty+'</div>';
         h+='</div>';
       }
@@ -403,13 +403,13 @@
     var fc=getFoodCount();
 
     var h='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
-    h+='<div style="text-align:center;"><div style="font-size:32px;margin-bottom:6px;">\uD83C\uDFF0</div><div style="color:#f0c040;font-size:18px;font-family:Cinzel,serif;margin-bottom:2px;">Enchanted Grove</div><div style="color:#9a7e50;font-size:11px;margin-bottom:12px;">Level 1 Dungeon \u2022 5 Rooms</div></div>';
-    h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">Corrupted saplings have taken root deep in the forest. Clear all <b>5 creatures</b> to claim the <span style="color:#f0c040;">\u{1FA93} Steel Axe</span>.<br><span style="color:#9a7e50;font-size:10px;">\u2694 Slash or \u26A1 Power Attack! \uD83C\uDF56 Eating heals without taking damage. \uD83C\uDFC3 Flee to keep loot.</span></div>';
+    h+='<div style="text-align:center;"><div style="font-size:32px;margin-bottom:6px;">🏰</div><div style="color:#f0c040;font-size:18px;font-family:Cinzel,serif;margin-bottom:2px;">Enchanted Grove</div><div style="color:#9a7e50;font-size:11px;margin-bottom:12px;">Level 1 Dungeon • 5 Rooms</div></div>';
+    h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">Corrupted saplings have taken root deep in the forest. Clear all <b>5 creatures</b> to claim the <span style="color:#f0c040;">🪓 Steel Axe</span>.<br><span style="color:#9a7e50;font-size:10px;">⚔ Slash or ⚡ Power Attack! 🍖 Eating heals without taking damage. 🏃 Flee to keep loot.</span></div>';
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;">';
     h+='<div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">REQUIREMENTS</div>';
-    h+='<div style="color:'+(wpn?'#5ac85a':'#e03030')+';font-size:11px;margin-bottom:3px;">'+(wpn?'\u2713':'\u2717')+' Weapon equipped'+(wpn?' ('+wpn.icon+' '+wpn.name+')':'')+'</div>';
-    h+='<div style="color:'+(fc>=DG.minFood?'#5ac85a':'#e03030')+';font-size:11px;margin-bottom:3px;">'+(fc>=DG.minFood?'\u2713':'\u2717')+' '+DG.minFood+'+ food (have: '+fc+')</div>';
+    h+='<div style="color:'+(wpn?'#5ac85a':'#e03030')+';font-size:11px;margin-bottom:3px;">'+(wpn?'✓':'✗')+' Weapon equipped'+(wpn?' ('+wpn.icon+' '+wpn.name+')':'')+'</div>';
+    h+='<div style="color:'+(fc>=DG.minFood?'#5ac85a':'#e03030')+';font-size:11px;margin-bottom:3px;">'+(fc>=DG.minFood?'✓':'✗')+' '+DG.minFood+'+ food (have: '+fc+')</div>';
     if(cLvl>0) h+='<div style="color:#9a7e50;font-size:10px;margin-top:6px;">Combat Level: '+cLvl+' '+(arm?'| '+arm.icon+' '+arm.name:'| No armour')+'</div>';
     h+='</div>';
 
@@ -418,10 +418,10 @@
       h+='<div style="display:flex;justify-content:space-between;color:#9a7e50;font-size:10px;margin-bottom:2px;"><span>'+l.icon+' '+l.name+'</span><span>'+l.min+'-'+l.max+'</span></div>';
     });
     h+='<div style="border-top:1px solid #251e14;margin-top:6px;padding-top:6px;">';
-    h+='<div style="display:flex;justify-content:space-between;color:#f0c040;font-size:10px;margin-bottom:2px;"><span>\u{1FA93} Steel Axe (ATK +7)</span><span>Guaranteed</span></div>';
-    h+='<div style="display:flex;justify-content:space-between;color:#ff69b4;font-size:10px;margin-bottom:2px;"><span>\u2728 Enchanted Grove Axe (ATK +12)</span><span>5%</span></div>';
-    h+='<div style="display:flex;justify-content:space-between;color:#9b59b6;font-size:10px;margin-bottom:2px;"><span>\u{1F9EA} Level Potion</span><span>2%</span></div>';
-    h+='<div style="display:flex;justify-content:space-between;color:#e67e22;font-size:10px;"><span>\u{1F48E} Skill Trinket</span><span>8%</span></div>';
+    h+='<div style="display:flex;justify-content:space-between;color:#f0c040;font-size:10px;margin-bottom:2px;"><span>🪓 Steel Axe (ATK +7)</span><span>Guaranteed</span></div>';
+    h+='<div style="display:flex;justify-content:space-between;color:#ff69b4;font-size:10px;margin-bottom:2px;"><span>✨ Enchanted Grove Axe (ATK +12)</span><span>5%</span></div>';
+    h+='<div style="display:flex;justify-content:space-between;color:#9b59b6;font-size:10px;margin-bottom:2px;"><span>🧪 Level Potion</span><span>2%</span></div>';
+    h+='<div style="display:flex;justify-content:space-between;color:#e67e22;font-size:10px;"><span>💎 Skill Trinket</span><span>8%</span></div>';
     h+='</div></div>';
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;"><div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">ENEMIES</div>';
@@ -431,8 +431,8 @@
     h+='</div><div id="dg-msg" style="display:none;text-align:center;font-size:11px;margin-bottom:6px;"></div>';
 
     h+='<div style="display:flex;gap:8px;justify-content:center;">';
-    if(check.ok) h+='<button onclick="window._dgStart()" style="padding:9px 20px;background:#8B4513;border:2px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">\u2694 Enter Dungeon</button>';
-    else h+='<button disabled style="padding:9px 20px;background:#251e14;border:1px solid #3a2c18;color:#5a4830;border-radius:4px;font-family:Cinzel,serif;font-size:13px;cursor:not-allowed;">\u2694 Not Ready</button>';
+    if(check.ok) h+='<button onclick="window._dgStart()" style="padding:9px 20px;background:#8B4513;border:2px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">⚔ Enter Dungeon</button>';
+    else h+='<button disabled style="padding:9px 20px;background:#251e14;border:1px solid #3a2c18;color:#5a4830;border-radius:4px;font-family:Cinzel,serif;font-size:13px;cursor:not-allowed;">⚔ Not Ready</button>';
     h+='</div>';
 
     content.innerHTML=h;
@@ -443,7 +443,7 @@
     var ct=document.getElementById('tab-combat');
     if(ct){
       ct.id='tab-dungeon';
-      ct.innerHTML='<div style="font-size:14px;color:#f0c040;font-weight:bold;">\uD83C\uDFF0 DUNGEON</div>';
+      ct.innerHTML='<div style="font-size:14px;color:#f0c040;font-weight:bold;">🏰 DUNGEON</div>';
       ct.style.cssText='cursor:pointer;text-align:center;padding:8px 12px;min-width:80px;background:linear-gradient(180deg,#2a1f0f,#1a1308);border:1px solid #f0c040;border-radius:4px;margin:0 2px;';
       ct.onclick=function(e){e.stopPropagation();showDungeonEntry();};
       ct.removeAttribute('data-tab');
@@ -457,7 +457,7 @@
   function initDungeon(){
     replaceCombatTab();
     if(typeof log==='function') setTimeout(function(){
-      log('\uD83C\uDFF0 The <b>Dungeon</b> awaits! Equip your Bronze Sword and bring food!');
+      log('🏰 The <b>Dungeon</b> awaits! Equip your Bronze Sword and bring food!');
     },2000);
   }
 
