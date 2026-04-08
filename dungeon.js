@@ -1,4 +1,10 @@
 (function(){
+  // Inject dungeon shake CSS
+  var dgStyle = document.createElement('style');
+  dgStyle.textContent = '@keyframes dgShake{0%{transform:translate(0,0)}20%{transform:translate(-2px,1px)}40%{transform:translate(3px,-1px)}60%{transform:translate(-1px,2px)}80%{transform:translate(2px,-1px)}100%{transform:translate(0,0)}}';
+  document.head.appendChild(dgStyle);
+
+
   if(typeof ITEMS !== 'undefined'){
     if(!ITEMS.steel_axe) ITEMS.steel_axe = {name:'Steel Axe',icon:'🪓',sell:250,type:'weapon',atk:7};
     if(!ITEMS.enchanted_axe) ITEMS.enchanted_axe = {name:'Enchanted Grove Axe',icon:'🪓',sell:1200,type:'weapon',atk:12,special:true};
@@ -124,6 +130,72 @@
     // Not implemented as real-time yet - skills continue ticking via main loop
   }
 
+
+  // === DUNGEON DAMAGE FLOATER ===
+  function showDungeonDmgFloat(amount, type, targetSide) {
+    // type: 'hit' (player hits), 'crit' (crit hit), 'enemy-hit' (enemy hits player), 'heal', 'miss'
+    // targetSide: 'left' (player) or 'right' (monster)
+    var content = document.getElementById('dg-content');
+    if (!content) return;
+    var el = document.createElement('div');
+    el.style.cssText = 'position:absolute;font-family:Cinzel,serif;font-weight:900;pointer-events:none;z-index:100;text-shadow:0 2px 6px rgba(0,0,0,0.9);';
+    
+    if (type === 'crit') {
+      el.textContent = '⚡' + amount + '!';
+      el.style.fontSize = '26px';
+      el.style.color = '#ffd966';
+      el.style.right = '15%';
+    } else if (type === 'hit') {
+      el.textContent = '-' + amount;
+      el.style.fontSize = '22px';
+      el.style.color = '#5ac85a';
+      el.style.right = (10 + Math.random() * 15) + '%';
+    } else if (type === 'enemy-hit') {
+      el.textContent = '-' + amount;
+      el.style.fontSize = '18px';
+      el.style.color = '#e03030';
+      el.style.left = (10 + Math.random() * 15) + '%';
+    } else if (type === 'heal') {
+      el.textContent = '+' + amount;
+      el.style.fontSize = '18px';
+      el.style.color = '#5ac85a';
+      el.style.left = '20%';
+    } else if (type === 'miss') {
+      el.textContent = 'BLOCK';
+      el.style.fontSize = '14px';
+      el.style.color = '#9a7e50';
+      el.style.left = '25%';
+    }
+    el.style.top = '60px';
+    
+    // Animate
+    var start = Date.now();
+    content.style.position = 'relative';
+    content.appendChild(el);
+    
+    var anim = function() {
+      var elapsed = Date.now() - start;
+      var pct = elapsed / (type === 'crit' ? 1300 : 1100);
+      if (pct >= 1) { el.remove(); return; }
+      var y = 60 - (pct * 45);
+      var scale = type === 'crit' ? (pct < 0.15 ? 0.5 + pct * 10 : (pct < 0.3 ? 2 - pct * 3 : 1.1 - pct * 0.4)) : (pct < 0.15 ? 0.5 + pct * 5 : 1.2 - pct * 0.5);
+      var opacity = pct < 0.1 ? pct * 10 : (pct > 0.6 ? 1 - (pct - 0.6) / 0.4 : 1);
+      el.style.top = y + 'px';
+      el.style.transform = 'scale(' + Math.max(0.5, scale) + ')';
+      el.style.opacity = Math.max(0, opacity);
+      requestAnimationFrame(anim);
+    };
+    requestAnimationFrame(anim);
+    
+    // Shake the overlay content slightly
+    if (type === 'hit' || type === 'crit') {
+      content.style.animation = 'none';
+      void content.offsetWidth;
+      content.style.animation = 'dgShake 0.3s ease';
+      setTimeout(function() { content.style.animation = ''; }, 300);
+    }
+  }
+
   function dungeonAttack(mode){
     if(!dungeonState||dungeonState.victory||dungeonState.fled) return;
     var mon=dungeonState.monsters[dungeonState.room];
@@ -135,7 +207,7 @@
       dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ You focus energy! Crit chance: '+cChance+'% (stack: '+dungeonState.critStacks+')</span>');
       // Monster still attacks
       var mDmg2=rollDmg(mon.dmg[0],mon.dmg[1]),def2=getPlayerDef(),ad2=Math.max(1,mDmg2-Math.floor(def2*0.5));
-      dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad2);
+      dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad2);showDungeonDmgFloat(ad2,'enemy-hit','left');
       dungeonState.combatLog.push(mon.icon+' '+mon.name+' hits you for <span style="color:#e03030">'+ad2+'</span> damage.');
       if(dungeonState.playerHp<=0){
         dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
@@ -166,7 +238,7 @@
       else{dungeonState.combatLog.push('<span style="color:#9a7e50;">No crit ('+Math.round(critChance*100)+'% chance)</span>');}
       dungeonState.critStacks=0;
     }
-    mon.hp=Math.max(0,mon.hp-pDmg);
+    mon.hp=Math.max(0,mon.hp-pDmg);showDungeonDmgFloat(pDmg,isCrit?'crit':'hit','right');
     var atkType=mode==='magic'?'magic':'physical';
     var effectiveness='';
     if(mon.weak===atkType){pDmg=Math.floor(pDmg*1.5);effectiveness='<span style="color:#5ac85a;font-size:9px;"> ✔ Super effective!</span>';}
@@ -243,7 +315,7 @@
     } else {
       // Monster hits back on normal attack
       var mDmg=rollDmg(mon.dmg[0],mon.dmg[1]),def=getPlayerDef(),ad=Math.max(1,mDmg-Math.floor(def*0.5));
-      dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad);
+      dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad);showDungeonDmgFloat(ad,'enemy-hit','left');
       dungeonState.combatLog.push(mon.icon+' '+mon.name+' hits you for <span style="color:#e03030">'+ad+'</span> damage.');
       if(dungeonState.playerHp<=0){
         dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
@@ -265,7 +337,7 @@
     if(foods.length===0){showDungeonMessage('No food left!','#e03030');return;}
     var f=foods[0],healed=Math.min(f.hp,dungeonState.playerMaxHp-dungeonState.playerHp);
     if(healed<=0){showDungeonMessage('Already at full HP!','#ffd966');return;}
-    dungeonState.playerHp=Math.min(dungeonState.playerMaxHp,dungeonState.playerHp+f.hp);
+    dungeonState.playerHp=Math.min(dungeonState.playerMaxHp,dungeonState.playerHp+f.hp);showDungeonDmgFloat(healed,'heal','left');
     G.hp=dungeonState.playerHp;
     G.inv[f.id]--;
     if(G.inv[f.id]<=0) delete G.inv[f.id];
@@ -352,6 +424,29 @@
       h+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+(s.victory?'🪓 Claim & Leave':s.fled?'🏃 Leave':'Leave Dungeon')+'</button>';
     }
     h+='</div>';
+
+
+    // Equipment stats
+    if(!done){
+      var wpnItem=(G.equip&&G.equip.weapon)?ITEMS[G.equip.weapon]:null;
+      var armItem=(G.equip&&G.equip.armour)?ITEMS[G.equip.armour]:null;
+      h+='<div style="display:flex;gap:4px;margin-bottom:6px;">';
+      h+='<div style="flex:1;background:#1c1710;border:1px solid '+(wpnItem?'#8B4513':'#251e14')+';border-radius:4px;padding:4px 6px;display:flex;align-items:center;gap:4px;">';
+      h+='<span style="font-size:14px;">'+(wpnItem?wpnItem.icon:'🗡️')+'</span>';
+      h+='<div><div style="font-size:7px;color:#5a4830;font-family:Cinzel,serif;text-transform:uppercase;">Weapon</div>';
+      h+='<div style="font-size:10px;color:#e8d898;">'+(wpnItem?wpnItem.name:'None')+'</div>';
+      h+='<div style="font-size:9px;color:#f0c040;font-weight:bold;">+'+(wpnItem?wpnItem.atk:0)+' ATK</div></div></div>';
+      h+='<div style="flex:1;background:#1c1710;border:1px solid '+(armItem?'#4488dd':'#251e14')+';border-radius:4px;padding:4px 6px;display:flex;align-items:center;gap:4px;">';
+      h+='<span style="font-size:14px;">'+(armItem?armItem.icon:'🛡️')+'</span>';
+      h+='<div><div style="font-size:7px;color:#5a4830;font-family:Cinzel,serif;text-transform:uppercase;">Armour</div>';
+      h+='<div style="font-size:10px;color:#e8d898;">'+(armItem?armItem.name:'None')+'</div>';
+      h+='<div style="font-size:9px;color:#4488dd;font-weight:bold;">+'+(armItem?armItem.def:0)+' DEF</div></div></div>';
+      h+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;padding:4px 6px;text-align:center;min-width:50px;">';
+      h+='<div style="font-size:7px;color:#5a4830;font-family:Cinzel,serif;">TOTAL</div>';
+      h+='<div style="font-size:11px;color:#f0c040;font-weight:bold;">⚔'+getPlayerAtk()+'</div>';
+      h+='<div style="font-size:11px;color:#4488dd;font-weight:bold;">🛡'+getPlayerDef()+'</div>';
+      h+='</div></div>';
+    }
 
     // Power charge indicator
     if(!done&&s.critStacks>0){
