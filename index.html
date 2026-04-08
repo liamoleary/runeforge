@@ -105,24 +105,35 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .eq-slot .eq-lbl{font-size:8px;color:var(--text3)}
 .eq-slot .eq-name{font-size:9px;color:var(--text2)}
 #inv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px}
-.iv-slot{background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;aspect-ratio:1;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;padding:4px;position:relative;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.iv-slot{background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;aspect-ratio:1;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;padding:4px;position:relative}
 .iv-slot:active{transform:scale(.95)}
 .iv-slot.has{border-color:var(--bdr2)}
-.iv-slot.sel-sell{border-color:var(--gold);background:rgba(240,192,64,.14);box-shadow:0 0 0 2px rgba(240,192,64,.45),0 0 10px rgba(240,192,64,.25)}
-.iv-slot.sel-sell::after{content:'✓';position:absolute;top:1px;right:3px;font-size:11px;color:var(--gold);font-weight:bold;text-shadow:0 0 3px rgba(0,0,0,.9)}
 .iv-ico{font-size:18px;line-height:1}
 .iv-nm{font-size:7px;color:var(--text3);text-align:center;line-height:1.1;margin-top:2px}
 .iv-qty{position:absolute;bottom:3px;right:4px;font-size:9px;color:var(--gold);font-weight:bold}
 #inv-btns{display:flex;gap:6px;padding:4px 8px 8px;flex-wrap:wrap}
 .inv-btn{background:var(--bg2);border:1px solid var(--bdr2);border-radius:5px;padding:5px 10px;color:var(--gold);cursor:pointer;font-size:11px;font-family:'Cinzel',serif}
 .inv-btn:active{transform:scale(.95);background:var(--bg3)}
-#sell-mode-bar{padding:6px 8px 8px;border-top:1px solid var(--bdr);background:linear-gradient(180deg,rgba(240,192,64,.06),rgba(240,192,64,.02))}
-.smb-info{font-family:'Cinzel',serif;font-size:11px;color:var(--gold);text-align:center;margin-bottom:6px;letter-spacing:.5px}
-.smb-hint{font-size:9px;color:var(--text3);text-align:center;margin-bottom:6px;font-style:italic}
-.smb-btns{display:flex;gap:6px}
-.smb-btns .inv-btn{flex:1;text-align:center}
-.smb-sell{border-color:var(--gold) !important;background:rgba(240,192,64,.12) !important}
+#shop-tabs{display:flex;border-bottom:1px solid var(--bdr)}
+.shop-tab{flex:1;text-align:center;padding:8px 6px;font-family:'Cinzel',serif;font-size:11px;color:var(--text3);cursor:pointer;letter-spacing:.5px;border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase}
+.shop-tab:active{background:var(--bg2)}
+.shop-tab.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(240,192,64,.04)}
 #shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px}
+#shop-panel.sell-mode #shop-grid{display:none}
+#shop-panel:not(.sell-mode) #shop-sell-list{display:none}
+#shop-sell-list{padding:8px}
+.ss-empty{font-size:11px;color:var(--text3);text-align:center;padding:16px 8px;font-style:italic}
+.ss-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;margin-bottom:4px}
+.ss-row:active{background:var(--bg3)}
+.ss-ico{font-size:20px;min-width:24px;text-align:center}
+.ss-info{flex:1;min-width:0}
+.ss-name{font-family:'Cinzel',serif;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ss-meta{font-size:9px;color:var(--text3);margin-top:1px}
+.ss-meta .ss-price{color:var(--gold);font-weight:600}
+.ss-btns{display:flex;gap:4px;flex-shrink:0}
+.ss-btn{background:var(--bg1);border:1px solid var(--bdr2);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;padding:5px 9px;border-radius:4px;cursor:pointer;min-width:40px}
+.ss-btn:active{transform:scale(.95);background:var(--bg3)}
+.ss-btn.ss-all{border-color:var(--gold);background:rgba(240,192,64,.08)}
 .sh-item{background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;padding:9px;cursor:pointer;transition:all .18s}
 .sh-item:active{transform:scale(.95);background:var(--bg3)}
 .sh-item.owned{border-color:var(--green);opacity:.6}
@@ -500,7 +511,15 @@ body.shake-hit #stage{animation:screenShake .35s ease}
       <button class="inv-btn" onclick="buryBones()">🦴 Bury Bones</button>
     </div>
   </div>
-  <div class="panel"><div class="panel-hdr">⚒ General Store</div><div id="shop-grid"></div></div>
+  <div class="panel" id="shop-panel">
+    <div class="panel-hdr">⚒ General Store</div>
+    <div id="shop-tabs">
+      <div class="shop-tab active" id="shop-tab-buy" onclick="setShopTab('buy')">🛒 Buy</div>
+      <div class="shop-tab" id="shop-tab-sell" onclick="setShopTab('sell')">💰 Sell</div>
+    </div>
+    <div id="shop-grid"></div>
+    <div id="shop-sell-list"></div>
+  </div>
   <div class="panel" id="log-panel"><div class="panel-hdr">Activity Log</div><div id="log-inner"></div></div>
 </div>
 <div id="stage"><div id="combat-log"><div class="combat-log-hdr">Combat Log</div><div id="combat-log-inner"></div></div><div id="scene"><div id="ground"></div><div id="prop"></div>
@@ -1032,6 +1051,7 @@ function updateUI(){
     updateCombatStatsPanel();updateStageMonsterHP();
   const cnt=Object.values(G.inv).filter(v=>v>0).length;
   document.getElementById('inv-count').textContent=cnt+'/28';
+  if(_shopTab==='sell')renderShopSell();
 }
 
 function renderInv(){
@@ -1040,17 +1060,15 @@ function renderInv(){
   items.forEach(([id,qty])=>{
     const it=ITEMS[id];if(!it)return;
     const d=document.createElement('div');d.className='iv-slot has';
-    if(_sellMode && _sellSelected.has(id)) d.classList.add('sel-sell');
     const qtyStr=qty>1?'<span class="iv-qty">'+(qty>=1000?(qty/1000).toFixed(1)+'k':qty)+'</span>':'';
     d.innerHTML='<span class="iv-ico">'+it.icon+'</span><span class="iv-nm">'+it.name+'</span>'+qtyStr;
-    attachInvSlotHandlers(d,id);
+    d.onclick=()=>useItem(id);
     grid.appendChild(d);
   });
   const empty=Math.max(0,28-items.length);
   for(let i=0;i<Math.min(empty,28-items.length);i++){
     const d=document.createElement('div');d.className='iv-slot';grid.appendChild(d);
   }
-  updateSellModeUI();
 }
 
 function renderEquip(){
@@ -1265,12 +1283,66 @@ function refreshButtons(sk){
 
 function buildShop(){
   const g=document.getElementById('shop-grid');
+  g.innerHTML='';
   SHOP.forEach(s=>{
     const d=document.createElement('div');
     d.className='sh-item'+(s.up&&G.upgrades[s.up]?' owned':'');
     d.innerHTML='<div class="sh-top"><span class="sh-icon">'+s.icon+'</span><span class="sh-name">'+s.name+'</span></div><div class="sh-price">🪙 '+s.cost+'</div><div class="sh-eff">'+s.eff+'</div>';
     d.onclick=()=>buy(s);g.appendChild(d);
   });
+}
+
+let _shopTab='buy';
+function setShopTab(tab){
+  _shopTab=tab;
+  document.getElementById('shop-tab-buy').classList.toggle('active',tab==='buy');
+  document.getElementById('shop-tab-sell').classList.toggle('active',tab==='sell');
+  const panel=document.getElementById('shop-panel');
+  if(panel)panel.classList.toggle('sell-mode',tab==='sell');
+  if(tab==='sell')renderShopSell();
+  else buildShop();
+}
+
+// Sort order for the sell list so related items stay grouped
+const _SELL_TYPE_ORDER={res:0,raw:1,food:2,weapon:3,armour:4,accessory:5,currency:6,tool:7,potion:8};
+
+function renderShopSell(){
+  const list=document.getElementById('shop-sell-list');if(!list)return;
+  list.innerHTML='';
+  const entries=Object.entries(G.inv)
+    .filter(([id,q])=>q>0&&ITEMS[id]&&canSell(id)&&sellValue(id)>0)
+    .map(([id,q])=>{
+      const it=ITEMS[id];
+      return{id,qty:q,it,price:sellValue(id)};
+    })
+    .sort((a,b)=>{
+      const ta=_SELL_TYPE_ORDER[a.it.type]??99;
+      const tb=_SELL_TYPE_ORDER[b.it.type]??99;
+      if(ta!==tb)return ta-tb;
+      return a.price-b.price;
+    });
+  if(!entries.length){
+    list.innerHTML='<div class="ss-empty">Nothing to sell right now — come back with some loot.</div>';
+    return;
+  }
+  entries.forEach(({id,qty,it,price})=>{
+    const row=document.createElement('div');row.className='ss-row';
+    const total=price*qty;
+    row.innerHTML=
+      '<span class="ss-ico">'+it.icon+'</span>'+
+      '<div class="ss-info">'+
+        '<div class="ss-name">'+it.name+'</div>'+
+        '<div class="ss-meta"><span class="ss-price">'+price+' gp</span> each · '+qty+' in bag · '+total+' gp total</div>'+
+      '</div>'+
+      '<div class="ss-btns">'+
+        '<button class="ss-btn" data-sell-one="'+id+'">Sell 1</button>'+
+        '<button class="ss-btn ss-all" data-sell-all="'+id+'">All</button>'+
+      '</div>';
+    list.appendChild(row);
+  });
+  // Wire up via delegated clicks to keep markup simple
+  list.querySelectorAll('[data-sell-one]').forEach(b=>{b.onclick=()=>sellOne(b.dataset.sellOne);});
+  list.querySelectorAll('[data-sell-all]').forEach(b=>{b.onclick=()=>sellStack(b.dataset.sellAll);});
 }
 // ACTIONS
 function useItem(id){
@@ -1354,10 +1426,7 @@ function sellAll(){
   else log('Nothing to sell.');
 }
 
-// ===== Bulk sell mode (long-press to enter, tap to toggle) =====
-let _sellMode=false;
-let _sellSelected=new Set();
-
+// ===== Shop helpers =====
 function canSell(id){
   const it=ITEMS[id];if(!it)return false;
   if(it.special)return false;
@@ -1373,120 +1442,29 @@ function sellValue(id){
   return it.sell||0;
 }
 
-function enterSellMode(initialId){
-  if(!canSell(initialId)){
-    log('❌ '+(ITEMS[initialId]?.name||'That item')+' cannot be sold.');
-    return;
-  }
-  if(sellValue(initialId)<=0){
-    log('❌ '+(ITEMS[initialId]?.name||'That item')+' has no sell value.');
-    return;
-  }
-  _sellMode=true;
-  _sellSelected=new Set([initialId]);
-  log('💰 Sell mode — tap items to select, then hit Sell.');
-  renderInv();
-}
-
-function exitSellMode(){
-  _sellMode=false;
-  _sellSelected=new Set();
-  renderInv();
-}
-
-function toggleSellSelect(id){
-  if(!canSell(id)){
-    log('❌ '+(ITEMS[id]?.name||'That item')+' cannot be sold.');
-    return;
-  }
-  if(sellValue(id)<=0){
-    log('❌ '+(ITEMS[id]?.name||'That item')+' has no sell value.');
-    return;
-  }
-  if(_sellSelected.has(id))_sellSelected.delete(id);
-  else _sellSelected.add(id);
-  renderInv();
-}
-
-function sellSelected(){
-  if(!_sellMode||!_sellSelected.size){exitSellMode();return;}
-  let gold=0,sold=[];
-  for(const id of _sellSelected){
-    const qty=G.inv[id]||0;if(!qty)continue;
-    const it=ITEMS[id];if(!it)continue;
-    if(it.type==='currency'){gold+=qty;sold.push(it.icon+'×'+qty);delete G.inv[id];continue;}
-    gold+=(it.sell||0)*qty;sold.push(it.icon+'×'+qty);delete G.inv[id];
-  }
-  if(gold>0){G.gold+=gold;log('<span class="lg">💰 Sold for '+gold+' gp ('+sold.join(', ')+')</span>');}
-  else log('Nothing to sell.');
-  exitSellMode();
+function sellOne(id){
+  if(!canSell(id)){log('❌ Cannot sell that item.');return;}
+  const qty=G.inv[id]||0;if(!qty){log('❌ None to sell.');return;}
+  const v=sellValue(id);if(v<=0){log('❌ No sell value.');return;}
+  const it=ITEMS[id];
+  G.inv[id]--;if(G.inv[id]<=0)delete G.inv[id];
+  G.gold+=v;
+  log('<span class="lg">💰 Sold '+it.icon+' '+it.name+' for '+v+' gp.</span>');
   updateUI();
+  renderShopSell();
 }
 
-function updateSellModeUI(){
-  const panel=document.getElementById('inv-grid')?.parentElement;
-  const btns=document.getElementById('inv-btns');
-  let bar=document.getElementById('sell-mode-bar');
-  if(_sellMode){
-    if(btns)btns.style.display='none';
-    if(!bar&&panel){
-      bar=document.createElement('div');
-      bar.id='sell-mode-bar';
-      panel.appendChild(bar);
-    }
-    if(bar){
-      let total=0,count=0;
-      for(const id of _sellSelected){
-        const qty=G.inv[id]||0;if(!qty)continue;
-        total+=sellValue(id)*qty;
-        count++;
-      }
-      bar.innerHTML=
-        '<div class="smb-info">💰 Sell Mode · '+count+' selected · '+total+' gp</div>'+
-        '<div class="smb-hint">Tap items to add or remove</div>'+
-        '<div class="smb-btns">'+
-          '<button class="inv-btn smb-sell" onclick="sellSelected()">Sell for '+total+' gp</button>'+
-          '<button class="inv-btn" onclick="exitSellMode()">✖ Cancel</button>'+
-        '</div>';
-    }
-  } else {
-    if(btns)btns.style.display='';
-    if(bar)bar.remove();
-  }
-}
-
-// Long-press vs tap handling for inventory slots
-function attachInvSlotHandlers(el,id){
-  let startX=0,startY=0,timer=null,longFired=false,tracking=false;
-  const cancelTimer=()=>{if(timer){clearTimeout(timer);timer=null;}};
-  el.addEventListener('pointerdown',(e)=>{
-    tracking=true;longFired=false;
-    startX=e.clientX;startY=e.clientY;
-    cancelTimer();
-    timer=setTimeout(()=>{
-      if(tracking){
-        longFired=true;
-        timer=null;
-        if(_sellMode)toggleSellSelect(id);
-        else enterSellMode(id);
-      }
-    },450);
-  });
-  el.addEventListener('pointermove',(e)=>{
-    if(!tracking)return;
-    const dx=e.clientX-startX,dy=e.clientY-startY;
-    if(dx*dx+dy*dy>100){tracking=false;cancelTimer();}
-  });
-  el.addEventListener('pointerup',()=>{
-    const wasLong=longFired;
-    tracking=false;cancelTimer();longFired=false;
-    if(wasLong)return;
-    if(_sellMode)toggleSellSelect(id);
-    else useItem(id);
-  });
-  el.addEventListener('pointercancel',()=>{tracking=false;cancelTimer();});
-  el.addEventListener('pointerleave',()=>{tracking=false;cancelTimer();});
-  el.addEventListener('contextmenu',(e)=>e.preventDefault());
+function sellStack(id){
+  if(!canSell(id)){log('❌ Cannot sell that item.');return;}
+  const qty=G.inv[id]||0;if(!qty){log('❌ None to sell.');return;}
+  const v=sellValue(id);if(v<=0){log('❌ No sell value.');return;}
+  const it=ITEMS[id];
+  const total=v*qty;
+  delete G.inv[id];
+  G.gold+=total;
+  log('<span class="lg">💰 Sold '+it.icon+' '+it.name+' ×'+qty+' for '+total+' gp.</span>');
+  updateUI();
+  renderShopSell();
 }
 
 function buryBones(){
