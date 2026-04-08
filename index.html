@@ -508,7 +508,6 @@ body.shake-hit #stage{animation:screenShake .35s ease}
     <div id="inv-btns">
       <button class="inv-btn" onclick="sellAll()">💰 Sell Resources</button>
       <button class="inv-btn" onclick="eatFood()">🍽️ Eat Best Food</button>
-      <button class="inv-btn" onclick="buryBones()">🦴 Bury Bones</button>
     </div>
   </div>
   <div class="panel" id="shop-panel">
@@ -545,7 +544,6 @@ const SKILLS = {
   mining:{name:'Mining',icon:'⛏️',color:'#909090'},
   fishing:{name:'Fishing',icon:'🎣',color:'#4488dd'},
   smithing:{name:'Smithing',icon:'🔨',color:'#FF8C00'},
-  combat:{name:'Combat',icon:'⚔️',color:'#DC143C'},
   cooking:{name:'Cooking',icon:'🍳',color:'#FF6347'},
   fletching:{name:'Fletching',icon:'🏹',color:'#228B22'},
   crafting:{name:'Crafting',icon:'🧵',color:'#9370DB'},
@@ -611,13 +609,6 @@ const ACTIONS = {
     {id:'mg1',name:'Fire Bolt',icon:'🔥',req:13,xp:30,dur:3500,need:[{id:'feather',n:2}],isCombatSpell:true,spellDmg:5},
     {id:'mg2',name:'Enchant Ring',icon:'💍',req:7,xp:20,dur:4000,prod:[{id:'enchanted_ring',n:1}],need:[{id:'gold_ring',n:1},{id:'feather',n:3}]},
   ],
-  combat:[
-    {id:'cb0',name:'Chicken',icon:'🐔',req:1,xp:12,dur:2800,mhp:3,dmg:[1,3],drops:[{id:'raw_meat',n:1,c:1},{id:'bones',n:1,c:1},{id:'feather',n:5,c:.7},{id:'gold_coins',n:3,c:.5}]},
-    {id:'cb1',name:'Goblin',icon:'👺',req:5,xp:25,dur:3200,mhp:6,dmg:[1,4],drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:8,c:.8},{id:'cowhide',n:1,c:.3}]},
-    {id:'cb2',name:'Giant Rat',icon:'🐀',req:10,xp:35,dur:3500,mhp:8,dmg:[1,5],drops:[{id:'bones',n:1,c:1},{id:'raw_meat',n:1,c:.7},{id:'gold_coins',n:5,c:.5}]},
-    {id:'cb3',name:'Guard',icon:'💂',req:22,xp:60,dur:4000,mhp:14,dmg:[2,6],drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:28,c:.9},{id:'iron_ore',n:1,c:.4}]},
-    {id:'cb4',name:'Dark Knight',icon:'🗡️',req:40,xp:120,dur:4500,mhp:28,dmg:[3,9],drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:65,c:1},{id:'iron_bar',n:1,c:.5},{id:'iron_sword',n:1,c:.1}]},
-  ],
 };
 const ITEMS = {
   logs:{name:'Logs',icon:'🪵',sell:2,type:'res'},
@@ -654,9 +645,9 @@ const ITEMS = {
   willow_bow:{name:'Willow Bow',icon:'🏹',sell:90,type:'weapon',atk:10},
   bronze_sword:{name:'Bronze Sword',icon:'🗡️',sell:25,type:'weapon',atk:2},
   iron_sword:{name:'Iron Sword',icon:'⚔️',sell:75,type:'weapon',atk:5},
-  bronze_shield:{name:'Bronze Shield',icon:'🛡️',sell:60,type:'armour',def:2},
-  iron_platebody:{name:'Iron Platebody',icon:'🛡️',sell:180,type:'armour',def:5},
-  leather_body:{name:'Leather Body',icon:'👕',sell:25,type:'armour',def:1},
+  bronze_shield:{name:'Bronze Shield',icon:'🛡️',sell:60,type:'armour',def:2,hp:6},
+  iron_platebody:{name:'Iron Platebody',icon:'🛡️',sell:180,type:'armour',def:5,hp:20},
+  leather_body:{name:'Leather Body',icon:'👕',sell:25,type:'armour',def:1,hp:8},
   gold_ring:{name:'Gold Ring',icon:'💍',sell:60,type:'accessory'},
   gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory'},
   gold_coins:{name:'Gold Coins',icon:'🪙',sell:1,type:'currency'},
@@ -673,7 +664,6 @@ const TOOL_MAP={
   fletching:['fletch_knife','steel_fletch_knife'],
   crafting:['needle','steel_needle'],
   magic:['staff','apprentice_wand'],
-  combat:[]
 };
 // Speed bonus per tool item (fraction faster). Higher = better.
 const TOOL_BONUS={
@@ -729,6 +719,15 @@ function load(){
   if(!G.dungeonsDiscovered)G.dungeonsDiscovered={};
   if(!G.xpEarned)G.xpEarned={};
   if(!G.startedWithSword)G.startedWithSword=false;
+  // Combat skill removal cleanup.
+  // Preserve any HP ceiling the player already earned from the old combat-level maxhp
+  // formula so existing saves don't lose progression. Anything above BASE_MAXHP becomes
+  // the new baseHp floor; equipped-gear HP bonuses stack on top of that.
+  if(typeof G.baseHp!=='number') G.baseHp=Math.max(BASE_MAXHP,G.maxhp||BASE_MAXHP);
+  if(G.skills&&G.skills.combat) delete G.skills.combat;
+  if(G.xpEarned&&G.xpEarned.combat) delete G.xpEarned.combat;
+  if(G.tab==='combat') G.tab='woodcutting';
+  if(typeof G.task==='string'&&G.task.indexOf('cb')===0){G.task=null;G.prog=0;}
   // Trinket removal cleanup: drop legacy state and any trinket items in inventory
   if(G.trinkets)delete G.trinkets;
   const oldTrinketIds=['grove_wc_trinket','grove_mn_trinket','grove_fs_trinket','grove_ck_trinket','grove_sm_trinket','grove_cb_trinket','grove_fl_trinket','grove_cr_trinket','grove_mg_trinket'];
@@ -753,6 +752,7 @@ function load(){
       }
     }
   }
+  recomputeMaxHp();
 }
 
 // SKILL HELPERS
@@ -818,7 +818,6 @@ function addXP(sk,amt){
   if(nl>ol){
     showLvlUp(sk,nl);
     log('<span class="ll">⭐ LEVEL UP! '+SKILLS[sk].name+' is now level '+nl+'!</span>');
-    if(sk==='combat'){G.maxhp=10+Math.floor(nl*1.6);G.hp=Math.min(G.hp+3,G.maxhp);}
     sendLevelNotification(sk,nl);
     // Dungeon discovery: first time you cross the unlock threshold for a skill,
     // pop the dungeon discovery modal so the player knows it's available.
@@ -851,7 +850,8 @@ function has(id,n=1){return(G.inv[id]||0)>=n;}
 function give(id,n=1){G.inv[id]=(G.inv[id]||0)+n;}
 function take(id,n=1){if(!has(id,n))return false;G.inv[id]-=n;if(G.inv[id]<=0)delete G.inv[id];return true;}
 
-// COMBAT STATS
+// COMBAT STATS — power comes entirely from equipped gear now that the combat skill is gone.
+const BASE_MAXHP=30;
 function getAtk(){
   let a=1;
   if(G.equip.weapon&&ITEMS[G.equip.weapon])a+=(ITEMS[G.equip.weapon].atk||0);
@@ -862,32 +862,26 @@ function getDef(){
   if(G.equip.armour&&ITEMS[G.equip.armour])d+=(ITEMS[G.equip.armour].def||0);
   return d;
 }
+function getHpBonus(){
+  let h=0;
+  if(G.equip.armour&&ITEMS[G.equip.armour])h+=(ITEMS[G.equip.armour].hp||0);
+  if(G.equip.weapon&&ITEMS[G.equip.weapon])h+=(ITEMS[G.equip.weapon].hp||0);
+  return h;
+}
+// Recompute G.maxhp whenever gear changes. Keeps any previously-earned HP ceiling
+// (G.baseHp) so existing saves don't suddenly lose progression.
+function recomputeMaxHp(){
+  if(typeof G.baseHp!=='number'||G.baseHp<BASE_MAXHP) G.baseHp=BASE_MAXHP;
+  G.maxhp=G.baseHp+getHpBonus();
+  if(G.hp>G.maxhp) G.hp=G.maxhp;
+  if(G.hp<1) G.hp=1;
+}
 // GAME LOOP
 let lastT=Date.now();
 function tick(){
   const now=Date.now(),dt=Math.min(now-lastT,500);lastT=now;
   if(G.task){
     G.prog+=dt;
-    // Combat: monster hits back
-    if(G.task&&G.task.startsWith('cb')){
-      G.mhit+=dt;
-      if(G.mhit>=3800){
-        G.mhit=0;
-        const action=findAction(G.task);
-        if(action){
-          const [mn,mx]=action.dmg;
-          const d=Math.max(0,Math.floor(mn+Math.random()*(mx-mn+1))-getDef());
-          if(d<=0){showStageDmg('BLOCK','miss');}
-          if(d>0){
-            G.hp=Math.max(0,G.hp-d);
-            log('<span class="lc">🐾 '+action.name+' hits you for '+d+'!</span>');showStageDmg(d,'enemy-hit');
-            document.body.classList.add('dmg-flash');
-            setTimeout(()=>document.body.classList.remove('dmg-flash'),500);
-          }
-          if(G.hp<=0){G.hp=1;log('<span class="lc">💀 Near death! Eat food immediately!</span>');stopTask();}
-        }
-      }
-    }
     // Magic combat spells also get hit by monsters if applicable
     if(G.task&&G.task.startsWith('mg')&&findAction(G.task)?.isCombatSpell){
       G.mhit+=dt;
@@ -919,28 +913,7 @@ function completeTick(){
     }
     for(const c of a.need)take(c.id,c.n);
   }
-  // Combat
-  if(a.mhp!==undefined){
-    const atk=getAtk();
-    let dmgDone=atk+Math.floor(Math.random()*3);
-    // Power attack: skip turn to charge, next hit is 2x
-    var wasCrit=false;if(G.critStacks>0){var critRoll=Math.random(),critChance=Math.min(0.9,G.critStacks*0.3);if(critRoll<critChance){dmgDone=Math.floor(dmgDone*2.5);log('<span class="lc" style="color:#ffd966">⚡ CRITICAL HIT! '+dmgDone+' damage!</span>');G.critStacks=0;wasCrit=true;showStageDmg(dmgDone,'crit');}else{log('<span class="lc">No crit this time ('+Math.round(critChance*100)+'% chance).</span>');G.critStacks=0;}}
-    G.mhp-=dmgDone;
-    if(G.mhp<=0){
-      addXP(sk,a.xp);
-      log('<span class="lc">☠️ You slew the '+a.name+'! (+'+a.xp+' XP)</span>');if(!wasCrit)showStageDmg(dmgDone,'player-hit');
-      for(const d of a.drops){
-        if(Math.random()<d.c){
-          if(d.id==='gold_coins'){G.gold+=d.n;log('<span class="lg">🪙 Looted '+d.n+' gold.</span>');}
-          else{give(d.id,d.n);log('<span class="li">📦 '+(ITEMS[d.id]?.icon||'')+(ITEMS[d.id]?.name||d.id)+' x'+d.n+'</span>');}
-        }
-      }
-      G.mhp=a.mhp;
-    } else {
-      addXP(sk,a.xp/4);
-      log('<span class="lc">⚔️ Hit '+a.name+' for '+dmgDone+'. HP: '+G.mhp+'/'+G.mmhp+'</span>');if(!wasCrit)showStageDmg(dmgDone,'player-hit');
-    }
-  } else if(a.isCombatSpell) {
+  if(a.isCombatSpell) {
     // Magic combat spell
     addXP('magic',a.xp);
     log('✨ Cast '+a.name+'! <span class="lx">(+'+a.xp+'xp Magic)</span>');
@@ -1395,15 +1368,21 @@ function useItem(id){
   } else if(it.type==='weapon'){
     if(G.equip.weapon===id){G.equip.weapon=null;log('Unequipped '+it.name);}
     else{G.equip.weapon=id;log('⚔️ Equipped '+it.name+' (+'+it.atk+' Atk)');}
+    recomputeMaxHp();
   } else if(it.type==='armour'){
     if(G.equip.armour===id){G.equip.armour=null;log('Unequipped '+it.name);}
-    else{G.equip.armour=id;log('🛡️ Equipped '+it.name+' (+'+it.def+' Def)');}
+    else{
+      const bonus=it.hp?', +'+it.hp+' HP':'';
+      G.equip.armour=id;
+      log('🛡️ Equipped '+it.name+' (+'+it.def+' Def'+bonus+')');
+    }
+    recomputeMaxHp();
   } else {
     log(it.icon+' '+it.name+' ×'+(G.inv[id]||0));
   }
 }
 
-function unequipSlot(slot){G.equip[slot]=null;log('Unequipped '+slot+'.');}
+function unequipSlot(slot){G.equip[slot]=null;log('Unequipped '+slot+'.');recomputeMaxHp();}
 
 function eatFood(){
   const f=Object.entries(G.inv).filter(([id,q])=>ITEMS[id]?.type==='food'&&q>0).sort((a,b)=>(ITEMS[b[0]].hp||0)-(ITEMS[a[0]].hp||0));
@@ -1467,14 +1446,6 @@ function sellStack(id){
   renderShopSell();
 }
 
-function buryBones(){
-  if(!has('bones')){log('❌ No bones!');return;}
-  const n=G.inv['bones']||0;
-  take('bones',n);
-  addXP('combat',n*5);
-  log('🦴 Buried '+n+' bones. +'+(n*5)+' Combat XP.');
-}
-
 function buy(s){
   if(G.gold<s.cost){log('❌ Need '+s.cost+' gp (have '+G.gold+').');return;}
   if(s.up&&G.upgrades[s.up]){log('Already owned!');return;}
@@ -1531,15 +1502,6 @@ function anim(){
       ar.style.animation='stir 1s ease-in-out infinite .5s';
       prop.innerHTML='<div class="prop-fire" style="animation:flicker .4s ease-in-out infinite">🔥</div>'
         +'<div class="prop-tool" style="bottom:30px;right:46px">🍳</div>';
-      break;
-    case 'combat':
-      al.style.animation='swing .6s ease-in-out infinite';
-      ar.style.animation='swing2 .6s ease-in-out infinite';
-      ll.style.animation='walk-l .55s ease-in-out infinite';
-      lr.style.animation='walk-r .55s ease-in-out infinite';
-      const wico=G.equip.weapon&&ITEMS[G.equip.weapon]?ITEMS[G.equip.weapon].icon:'⚔️';
-      prop.innerHTML='<div class="prop-monster">'+(a?a.icon:'👺')+'</div>'
-        +'<div class="prop-tool" style="bottom:22px;right:55px;transform:rotate(-20deg)">'+wico+'</div>';
       break;
     case 'magic':
       al.style.animation='cast 1.1s ease-in-out infinite';
@@ -1828,51 +1790,17 @@ function showStageDmg(amount, type) {
 }
 
 function updateStageMonsterHP() {
+  // Stage monster HP bar was only used by skill-training combat, which has been removed.
   const panel = document.getElementById('stage-monster-hp');
-  if (!panel) return;
-  const sk = G.task ? findSkill(G.task) : null;
-  const a = G.task ? findAction(G.task) : null;
-  if (sk === 'combat' && a && a.mhp !== undefined && G.mhp > 0) {
-    panel.classList.add('active');
-    panel.querySelector('.smhp-name').textContent = a.icon + ' ' + a.name;
-    const pct = Math.max(0, (G.mhp / G.mmhp) * 100);
-    panel.querySelector('.smhp-fill').style.width = pct + '%';
-    panel.querySelector('.smhp-text').textContent = G.mhp + '/' + G.mmhp + ' HP';
-  } else {
-    panel.classList.remove('active');
-  }
+  if (panel) panel.classList.remove('active');
 }
 
 function updateCombatStatsPanel() {
+  // Skill-training combat has been removed — the combat stats panel is now only kept
+  // hidden. Dungeons have their own in-overlay stats UI.
   const panel = document.getElementById('combat-stats-panel');
-  if (!panel) return;
-  const sk = G.task ? findSkill(G.task) : null;
-  const isCombat = sk === 'combat';
-  
-  if (isCombat) {
-    panel.classList.add('active');
-    document.body.classList.add('combat-active');
-    
-    const wp = G.equip.weapon;
-    const am = G.equip.armour;
-    const wpItem = wp ? ITEMS[wp] : null;
-    const amItem = am ? ITEMS[am] : null;
-    
-    document.getElementById('csp-wpn-icon').textContent = wpItem ? wpItem.icon : '🗡️';
-    document.getElementById('csp-wpn-name').textContent = wpItem ? wpItem.name : 'None';
-    document.getElementById('csp-wpn-bonus').textContent = wpItem ? '+' + wpItem.atk + ' ATK' : '+0 ATK';
-    
-    document.getElementById('csp-arm-icon').textContent = amItem ? amItem.icon : '🛡️';
-    document.getElementById('csp-arm-name').textContent = amItem ? amItem.name : 'None';
-    document.getElementById('csp-arm-bonus').textContent = amItem ? '+' + amItem.def + ' DEF' : '+0 DEF';
-    
-    document.getElementById('csp-total-atk').textContent = getAtk();
-    document.getElementById('csp-total-def').textContent = getDef();
-    document.getElementById('csp-total-hp').textContent = Math.ceil(G.hp) + '/' + G.maxhp;
-  } else {
-    panel.classList.remove('active');
-    document.body.classList.remove('combat-active');
-  }
+  if (panel) panel.classList.remove('active');
+  document.body.classList.remove('combat-active');
 }
 
 // INIT

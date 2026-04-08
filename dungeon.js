@@ -214,27 +214,6 @@
         {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
       ]
     },
-    combat: {
-      id:'combat', name:'Bandit Hideout', icon:'⚔️',
-      desc:'Outlaws have set up camp in the old waystation.',
-      flavour:'Steel rasps in the gloom. 5 creatures await.',
-      discovery:'Your reputation has spread, and a frightened merchant begs your help — bandits have seized the old waystation. They will not surrender lightly, and they know your name.',
-      rooms:[
-        {name:'Sneak Thief',icon:'🥷',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:null},
-        {name:'Cutpurse',icon:'💰',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:null},
-        {name:'Brawler',icon:'👊',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'magic',resist:'physical'},
-        {name:'Outlaw Archer',icon:'🏹',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:null},
-        {name:'Bandit Captain',icon:'🗡️',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
-      ],
-      reward:{id:'steel_shield',icon:'🛡️',name:'Steel Shield',eff:'DEF +5'},
-      loot:[
-        {id:'bones',name:'Bones',icon:'🦴',weight:30,min:2,max:5},
-        {id:'raw_meat',name:'Raw Meat',icon:'🥩',weight:18,min:1,max:3},
-        {id:'leather',name:'Leather',icon:'📜',weight:14,min:1,max:2},
-        {id:'cowhide',name:'Cowhide',icon:'🐄',weight:12,min:1,max:2},
-        {id:'gold_coins',name:'Gold',icon:'🪙',weight:40,min:8,max:25}
-      ]
-    }
   };
 
   // Currently active dungeon definition (defaults to woodcutting for legacy entry points)
@@ -263,8 +242,8 @@
   }
 
   function getPlayerAtk(){
+    // Combat skill is gone — attack comes purely from the equipped weapon.
     var b=1;
-    if(typeof G!=='undefined'&&typeof slvl==='function') b=Math.floor(slvl('combat')*0.4)+1;
     if(typeof G!=='undefined'&&G.equip&&G.equip.weapon&&ITEMS[G.equip.weapon]) b+=ITEMS[G.equip.weapon].atk||0;
     return b;
   }
@@ -767,8 +746,7 @@
     if(mon.hp<=0){
       var xp=mon.xp;
       dungeonState.totalXp+=xp;
-      dungeonState.combatLog.push(mon.icon+' '+mon.name+' defeated! (+'+xp+' XP)');
-      if(typeof addXP==='function') addXP('combat',xp);
+      dungeonState.combatLog.push(mon.icon+' '+mon.name+' defeated!');
 
       // Room gold
       var roomGold=rollDmg(DG.goldPerRoom[0],DG.goldPerRoom[1]);
@@ -1064,7 +1042,6 @@
       return;
     }
     var check=canEnterDungeon();
-    var cLvl=typeof slvl==='function'?slvl('combat'):0;
     var wpn=(G.equip&&G.equip.weapon)?ITEMS[G.equip.weapon]:null;
     var arm=(G.equip&&G.equip.armour)?ITEMS[G.equip.armour]:null;
     var fc=getFoodCount();
@@ -1081,7 +1058,7 @@
     h+='<div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">REQUIREMENTS</div>';
     h+='<div style="color:'+(wpn?'#5ac85a':'#e03030')+';font-size:11px;margin-bottom:3px;">'+(wpn?'✓':'✗')+' Weapon equipped'+(wpn?' ('+wpn.icon+' '+wpn.name+')':'')+'</div>';
     h+='<div style="color:'+(fc>=DG.minFood?'#5ac85a':'#e03030')+';font-size:11px;margin-bottom:3px;">'+(fc>=DG.minFood?'✓':'✗')+' '+DG.minFood+'+ food (have: '+fc+')</div>';
-    if(cLvl>0) h+='<div style="color:#9a7e50;font-size:10px;margin-top:6px;">Combat Level: '+cLvl+' '+(arm?'| '+arm.icon+' '+arm.name:'| No armour')+'</div>';
+    h+='<div style="color:#9a7e50;font-size:10px;margin-top:6px;">'+(arm?arm.icon+' '+arm.name:'No armour')+'</div>';
     h+='</div>';
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;"><div style="color:#8bc34a;font-size:11px;margin-bottom:6px;letter-spacing:1px;">POSSIBLE LOOT</div>';
@@ -1112,23 +1089,8 @@
     document.getElementById('dungeon-overlay').style.display='flex';
   }
 
-  function replaceCombatTab(){
-    var ct=document.getElementById('tab-combat');
-    if(ct){
-      ct.id='tab-dungeon';
-      ct.innerHTML='<div style="font-size:14px;color:#f0c040;font-weight:bold;">🏰 DUNGEON</div>';
-      ct.style.cssText='cursor:pointer;text-align:center;padding:8px 12px;min-width:80px;background:linear-gradient(180deg,#2a1f0f,#1a1308);border:1px solid #f0c040;border-radius:4px;margin:0 2px;';
-      ct.onclick=function(e){e.stopPropagation();showDungeonEntry();};
-      ct.removeAttribute('data-tab');
-    }
-    var cp=document.getElementById('page-combat');
-    if(cp){cp.style.display='none';cp.innerHTML='';}
-    var dupes=document.querySelectorAll('#tab-dungeon');
-    if(dupes.length>1) for(var i=1;i<dupes.length;i++) dupes[i].parentNode.removeChild(dupes[i]);
-  }
-
   function initDungeon(){
-    replaceCombatTab();
+    // Combat skill has been removed, so there is no longer a combat tab or page to hijack.
     if(typeof log==='function') setTimeout(function(){
       log('🏰 The <b>Dungeon</b> awaits! Equip your Bronze Sword and bring food!');
     },2000);
