@@ -10,7 +10,6 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Database setup - use persistent volume on Railway, local dir otherwise
 const dbDir = process.env.RAILWAY_VOLUME_MOUNT_PATH || (process.env.RAILWAY_ENVIRONMENT ? '/tmp' : __dirname);
 const db = new Database(path.join(dbDir, 'runeforge.db'));
 db.pragma('journal_mode = WAL');
@@ -31,7 +30,6 @@ db.exec(`
                                                                                         );
                                                                                         `);
 
-// Middleware
 app.use(express.json({ limit: '1mb' }));
 app.set('trust proxy', 1);
 app.use(session({
@@ -39,22 +37,15 @@ app.use(session({
       secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
       resave: false,
       saveUninitialized: false,
-      cookie: {
-              secure: false,
-              httpOnly: true,
-              maxAge: 30 * 24 * 60 * 60 * 1000,
-              sameSite: 'lax'
-      },
+      cookie: { secure: false, httpOnly: true, maxAge: 30*24*60*60*1000, sameSite: 'lax' },
       proxy: true
 }));
 
-// Auth middleware
 function requireAuth(req, res, next) {
       if (!req.session.userId) return res.status(401).json({ error: 'Not logged in' });
       next();
 }
 
-// Auth routes
 app.post('/api/register', (req, res) => {
       const { username, password } = req.body;
       if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
@@ -69,7 +60,7 @@ app.post('/api/register', (req, res) => {
               req.session.username = username.toLowerCase();
               res.json({ success: true, username: username.toLowerCase() });
       } catch (e) {
-                      if (e.message.includes('UNIQUE')) return res.status(409).json({ error: 'Username already taken' });
+              if (e.message.includes('UNIQUE')) return res.status(409).json({ error: 'Username already taken' });
               res.status(500).json({ error: 'Server error' });
       }
 });
@@ -93,7 +84,6 @@ app.get('/api/me', (req, res) => {
       res.json({ loggedIn: true, username: req.session.username });
 });
 
-// Save/Load routes
 app.post('/api/save', requireAuth, (req, res) => {
       const { saveData } = req.body;
       if (!saveData) return res.status(400).json({ error: 'No save data' });
@@ -112,44 +102,70 @@ app.get('/api/save', requireAuth, (req, res) => {
       res.json({ hasSave: true, saveData: JSON.parse(save.save_data), updatedAt: save.updated_at });
 });
 
-// Serve static JS files
 app.get('/auth.js', (req, res) => { res.sendFile(path.join(__dirname, 'auth.js')); });
 app.get('/dungeon.js', (req, res) => { res.sendFile(path.join(__dirname, 'dungeon.js')); });
-
-// PWA files
 app.get('/manifest.json', (req, res) => { res.sendFile(path.join(__dirname, 'manifest.json')); });
 app.get('/sw.js', (req, res) => {
       res.setHeader('Content-Type', 'application/javascript');
       res.sendFile(path.join(__dirname, 'sw.js'));
 });
 
-// Generate app icons as SVG
 function generateIconSVG(size) {
       return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-          <rect width="${size}" height="${size}" rx="${size * 0.15}" fill="#13100a"/>
-              <rect x="${size * 0.05}" y="${size * 0.05}" width="${size * 0.9}" height="${size * 0.9}" rx="${size * 0.1}" fill="#1a1510" stroke="#f0c040" stroke-width="${size * 0.02}"/>
-                  <text x="${size * 0.5}" y="${size * 0.42}" font-family="serif" font-weight="bold" font-size="${size * 0.22}" fill="#f0c040" text-anchor="middle">RUNE</text>
-                      <text x="${size * 0.5}" y="${size * 0.68}" font-family="serif" font-weight="bold" font-size="${size * 0.22}" fill="#c0392b" text-anchor="middle">FORGE</text>
-                          <text x="${size * 0.5}" y="${size * 0.88}" font-size="${size * 0.13}" text-anchor="middle">&#x2694;&#xFE0F;</text>
-                            </svg>`;
+          <rect width="${size}" height="${size}" rx="${size*0.15}" fill="#13100a"/>
+              <rect x="${size*0.05}" y="${size*0.05}" width="${size*0.9}" height="${size*0.9}" rx="${size*0.1}" fill="#1a1510" stroke="#f0c040" stroke-width="${size*0.02}"/>
+                  <text x="${size*0.5}" y="${size*0.42}" font-family="serif" font-weight="bold" font-size="${size*0.22}" fill="#f0c040" text-anchor="middle">RUNE</text>
+                      <text x="${size*0.5}" y="${size*0.68}" font-family="serif" font-weight="bold" font-size="${size*0.22}" fill="#c0392b" text-anchor="middle">FORGE</text>
+                        </svg>`;
 }
 
-app.get('/icon-192.png', (req, res) => {
-      res.setHeader('Content-Type', 'image/svg+xml');
-      res.send(generateIconSVG(192));
-});
+app.get('/icon-192.png', (req, res) => { res.setHeader('Content-Type', 'image/svg+xml'); res.send(generateIconSVG(192)); });
+app.get('/icon-512.png', (req, res) => { res.setHeader('Content-Type', 'image/svg+xml'); res.send(generateIconSVG(512)); });
 
-app.get('/icon-512.png', (req, res) => {
-      res.setHeader('Content-Type', 'image/svg+xml');
-      res.send(generateIconSVG(512));
-});
-
-// Serve index.html with modules injected
 app.get('/', (req, res) => {
       let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-      const pwaHead = `<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#13100a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="/icon-192.png"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">`;
-      html = html.replace('</head>', pwaHead + '</head>');
-      const scripts = `<script src="/auth.js"><\/script><script src="/dungeon.js"><\/script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}<\/script>`;
+
+          // Mobile CSS fixes
+          const mobileCss = `<style>
+              /* Mobile responsive fixes */
+                  #hdr { flex-wrap: wrap; gap: 4px; padding: 6px 8px !important; position: relative; }
+                      #auth-ui { position: static !important; margin-left: auto; display: flex; gap: 4px; flex-shrink: 0; }
+                          #auth-ui button, #auth-ui span { font-size: 11px !important; padding: 4px 8px !important; }
+                              #tabs { overflow-x: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-wrap: nowrap !important; }
+                                  #tabs::-webkit-scrollbar { display: none; }
+                                      #tabs > div, #tabs > button { flex-shrink: 0 !important; min-width: 50px; font-size: 11px !important; padding: 6px 4px !important; }
+                                          #tabs > div img, #tabs > button img { width: 18px !important; height: 18px !important; }
+                                              @media(max-width:600px){
+                                                    body { font-size: 13px; }
+                                                          #hdr h1 { font-size: 16px !important; }
+                                                                .panel { padding: 8px !important; margin: 4px !important; }
+                                                                      #skills-grid { gap: 4px !important; }
+                                                                            #skills-grid > div { padding: 6px !important; font-size: 11px !important; }
+                                                                                  #skills-grid > div span:first-child { font-size: 10px !important; }
+                                                                                        #skills-grid > div .lvl { font-size: 18px !important; }
+                                                                                              .action-card { padding: 8px !important; font-size: 12px !important; }
+                                                                                                    #char, #inv, #shop { padding: 8px !important; }
+                                                                                                        }
+                                                                                                          </style>`;
+
+          // Fix for duplicate skills: patch buildSkills to clear grid first
+          const fixScript = `<script>
+              (function(){
+                    if(typeof buildSkills==='function'){
+                            var _orig=buildSkills;
+                                    buildSkills=function(){
+                                              var g=document.getElementById('skills-grid');
+                                                        if(g)g.innerHTML='';
+                                                                  return _orig.apply(this,arguments);
+                                                                          };
+                                                                                }
+                                                                                    })();
+                                                                                      <\/script>`;
+
+          const pwaHead = `<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#13100a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="/icon-192.png"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">`;
+      html = html.replace('</head>', mobileCss + pwaHead + '</head>');
+
+          const scripts = fixScript + `<script src="/auth.js"><\/script><script src="/dungeon.js"><\/script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}<\/script>`;
       html = html.replace('</body>', scripts + '</body>');
       res.type('html').send(html);
 });
