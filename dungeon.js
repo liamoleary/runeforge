@@ -7,7 +7,9 @@
     + '@keyframes dgRing{0%{opacity:0.9;transform:scale(0.2)}100%{opacity:0;transform:scale(2.2)}}'
     + '@keyframes dgFlash{0%{opacity:0}30%{opacity:0.55}100%{opacity:0}}'
     + '@keyframes dgWobble{0%{transform:scale(0.6) rotate(-15deg)}50%{transform:scale(1.5) rotate(8deg)}100%{transform:scale(1) rotate(0deg)}}'
-    + '@keyframes dgCritZoom{0%{transform:scale(0.2) rotate(0deg);opacity:0}25%{transform:scale(1.6) rotate(45deg);opacity:1}100%{transform:scale(2.2) rotate(90deg);opacity:0}}';
+    + '@keyframes dgCritZoom{0%{transform:scale(0.2) rotate(0deg);opacity:0}25%{transform:scale(1.6) rotate(45deg);opacity:1}100%{transform:scale(2.2) rotate(90deg);opacity:0}}'
+    + '@keyframes dgDeath{0%{opacity:1;transform:scale(1) rotate(0deg)}20%{opacity:1;transform:scale(1.7) rotate(-12deg)}100%{opacity:0;transform:scale(0.4) rotate(180deg) translate(0,30px)}}'
+    + '@keyframes dgSpawn{0%{opacity:0;transform:scale(0.1) rotate(-180deg)}45%{opacity:1;transform:scale(1.5) rotate(20deg)}75%{opacity:1;transform:scale(1) rotate(0deg)}100%{opacity:0;transform:scale(1) rotate(0deg)}}';
   document.head.appendChild(dgStyle);
 
 
@@ -286,8 +288,95 @@
     setTimeout(function(){ if(fx.parentNode) fx.remove(); }, type === 'crit' ? 850 : 650);
   }
 
+  // === DUNGEON ENEMY DEATH / SPAWN VFX ===
+  function showDungeonEnemyFX(type, icon) {
+    var content = document.getElementById('dg-content');
+    if (!content) return;
+    content.style.position = 'relative';
+
+    var fx = document.createElement('div');
+    fx.style.cssText = 'position:absolute;top:78px;right:18%;width:0;height:0;pointer-events:none;z-index:100;';
+
+    var i, ang, dist, sp;
+
+    if (type === 'death') {
+      // Big shattering monster icon
+      var bigIcon = document.createElement('div');
+      bigIcon.textContent = icon;
+      bigIcon.style.cssText = 'position:absolute;left:-26px;top:-30px;font-size:52px;animation:dgDeath 0.85s ease-out forwards;filter:drop-shadow(0 0 12px #ff3333) drop-shadow(0 0 6px #aa0000);';
+      fx.appendChild(bigIcon);
+
+      // Red expanding ring
+      var ring = document.createElement('div');
+      ring.style.cssText = 'position:absolute;left:-32px;top:-32px;width:64px;height:64px;border:3px solid #ff3333;border-radius:50%;box-shadow:0 0 22px #aa0000 inset,0 0 22px #aa0000;animation:dgRing 0.85s ease-out forwards;';
+      fx.appendChild(ring);
+
+      // Skull pop
+      var skull = document.createElement('div');
+      skull.textContent = '💀';
+      skull.style.cssText = 'position:absolute;left:-16px;top:-18px;font-size:32px;animation:dgFxFade 0.85s ease-out 0.1s forwards;opacity:0;';
+      fx.appendChild(skull);
+
+      // 16 dark red shards flying outward
+      for (i = 0; i < 16; i++) {
+        ang = (Math.PI * 2 * i) / 16 + Math.random() * 0.3;
+        dist = 55 + Math.random() * 25;
+        sp = document.createElement('div');
+        sp.style.cssText = 'position:absolute;left:-4px;top:-4px;width:8px;height:8px;background:#cc2222;border-radius:50%;box-shadow:0 0 8px #ff0000,0 0 14px #aa0000;animation:dgSpark 0.85s ease-out forwards;--dx:' + (Math.cos(ang) * dist).toFixed(1) + 'px;--dy:' + (Math.sin(ang) * dist).toFixed(1) + 'px;';
+        fx.appendChild(sp);
+      }
+
+      // Red flash across the dialog
+      var flash = document.createElement('div');
+      flash.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle,#ff222255,transparent 65%);pointer-events:none;animation:dgFlash 0.6s ease-out forwards;z-index:1;border-radius:6px;';
+      content.appendChild(flash);
+      setTimeout(function(){ if(flash.parentNode) flash.remove(); }, 650);
+
+      // Screen shake
+      content.style.animation = 'none';
+      void content.offsetWidth;
+      content.style.animation = 'dgShake 0.45s ease';
+      setTimeout(function() { content.style.animation = ''; }, 450);
+
+    } else if (type === 'spawn') {
+      // New monster icon zoom-in with portal
+      var bigIcon2 = document.createElement('div');
+      bigIcon2.textContent = icon;
+      bigIcon2.style.cssText = 'position:absolute;left:-26px;top:-30px;font-size:52px;animation:dgSpawn 0.85s ease-out forwards;filter:drop-shadow(0 0 12px #aa44ff) drop-shadow(0 0 6px #6622aa);';
+      fx.appendChild(bigIcon2);
+
+      // Purple expanding rings
+      var sring = document.createElement('div');
+      sring.style.cssText = 'position:absolute;left:-32px;top:-32px;width:64px;height:64px;border:3px solid #aa44ff;border-radius:50%;box-shadow:0 0 22px #aa44ff inset,0 0 22px #aa44ff;animation:dgRing 0.7s ease-out forwards;';
+      fx.appendChild(sring);
+
+      var sring2 = document.createElement('div');
+      sring2.style.cssText = 'position:absolute;left:-22px;top:-22px;width:44px;height:44px;border:2px solid #ddaaff;border-radius:50%;animation:dgRing 0.55s ease-out 0.2s forwards;opacity:0;';
+      fx.appendChild(sring2);
+
+      // 14 purple sparks exploding outward
+      for (i = 0; i < 14; i++) {
+        ang = (Math.PI * 2 * i) / 14 + Math.random() * 0.2;
+        dist = 45 + Math.random() * 18;
+        sp = document.createElement('div');
+        sp.style.cssText = 'position:absolute;left:-3px;top:-3px;width:7px;height:7px;background:#cc88ff;border-radius:50%;box-shadow:0 0 8px #aa44ff,0 0 14px #6622aa;animation:dgSpark 0.7s ease-out forwards;--dx:' + (Math.cos(ang) * dist).toFixed(1) + 'px;--dy:' + (Math.sin(ang) * dist).toFixed(1) + 'px;';
+        fx.appendChild(sp);
+      }
+
+      // Purple flash
+      var flash2 = document.createElement('div');
+      flash2.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle,#aa44ff44,transparent 65%);pointer-events:none;animation:dgFlash 0.5s ease-out forwards;z-index:1;border-radius:6px;';
+      content.appendChild(flash2);
+      setTimeout(function(){ if(flash2.parentNode) flash2.remove(); }, 550);
+    }
+
+    content.appendChild(fx);
+    setTimeout(function(){ if(fx.parentNode) fx.remove(); }, 900);
+  }
+
   function dungeonAttack(mode){
     if(!dungeonState||dungeonState.victory||dungeonState.fled) return;
+    if(dungeonState.dying) return;
     var mon=dungeonState.monsters[dungeonState.room];
     if(!mon||mon.hp<=0) return;
 
@@ -362,8 +451,9 @@
         dungeonState.combatLog.push('<span style="color:#8bc34a;">Dropped: '+d.icon+' '+d.name+' x'+d.qty+'</span>');
       });
 
-      dungeonState.room++;
-      if(dungeonState.room>=dungeonState.monsters.length){
+      showDungeonEnemyFX('death',mon.icon);
+      if(dungeonState.room+1>=dungeonState.monsters.length){
+        dungeonState.room++;
         dungeonState.victory=true;
         dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The grove falls silent. You are victorious!</span>');
         dungeonState.combatLog.push('<span style="color:#f0c040">Reward: 🪓 Steel Axe (ATK +7)</span>');
@@ -407,8 +497,17 @@
           }
         }
       } else {
-        var next=dungeonState.monsters[dungeonState.room];
-        dungeonState.combatLog.push('A '+next.icon+' <b>'+next.name+'</b> appears! (Room '+(dungeonState.room+1)+'/5)');
+        var nextIdx=dungeonState.room+1;
+        var next=dungeonState.monsters[nextIdx];
+        dungeonState.combatLog.push('A '+next.icon+' <b>'+next.name+'</b> appears! (Room '+(nextIdx+1)+'/5)');
+        dungeonState.dying=true;
+        setTimeout(function(){
+          if(!dungeonState) return;
+          dungeonState.room=nextIdx;
+          dungeonState.dying=false;
+          showDungeonEnemyFX('spawn',next.icon);
+          renderDungeon();
+        },600);
       }
     } else {
       // Monster hits back on normal attack
