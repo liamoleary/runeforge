@@ -26,9 +26,14 @@ app.get('/api/me', (req, res) => { if (!req.session.userId) return res.json({ lo
 app.post('/api/save', requireAuth, (req, res) => { const { saveData } = req.body; if (!saveData) return res.status(400).json({ error: 'No save data' }); const existing = db.prepare('SELECT id FROM saves WHERE user_id = ?').get(req.session.userId); if (existing) { db.prepare('UPDATE saves SET save_data = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?').run(JSON.stringify(saveData), req.session.userId); } else { db.prepare('INSERT INTO saves (user_id, save_data) VALUES (?, ?)').run(req.session.userId, JSON.stringify(saveData)); } res.json({ success: true }); });
 app.get('/api/save', requireAuth, (req, res) => { const save = db.prepare('SELECT save_data, updated_at FROM saves WHERE user_id = ?').get(req.session.userId); if (!save) return res.json({ hasSave: false }); res.json({ hasSave: true, saveData: JSON.parse(save.save_data), updatedAt: save.updated_at }); });
 
-app.post('/api/reset', requireAuth, (req, res) => {
-  db.prepare('DELETE FROM saves WHERE user_id = ?').run(req.session.userId);
-  res.json({ success: true, message: 'Progress reset' });
+app.post('/api/admin-reset', (req, res) => {
+  const { username, secret } = req.body;
+  if (secret !== 'runeforge-reset-2024') return res.status(403).json({ error: 'Forbidden' });
+  if (!username) return res.status(400).json({ error: 'Username required' });
+  const user = db.prepare('SELECT id FROM users WHERE username = ?').get(username.toLowerCase());
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  db.prepare('DELETE FROM saves WHERE user_id = ?').run(user.id);
+  res.json({ success: true, message: 'Progress reset for ' + username });
 });
 
 app.get('/auth.js', (req, res) => { res.sendFile(path.join(__dirname, 'auth.js')); });
