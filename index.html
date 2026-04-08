@@ -156,18 +156,18 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 </head>
 <body>
 <div id="hdr">
-  <div id="logo">\u2694 RuneForge</div>
+  <div id="logo">⚔ RuneForge</div>
   <div id="hdr-right">
-    <div class="hpill">\u2764\uFE0F <div class="hpbar"><div class="hpbar-fill" id="hm"></div></div></div>
-    <div class="hpill" id="gld">\uD83E\uDE99 0</div>
+    <div class="hpill">❤️ <div class="hpbar"><div class="hpbar-fill" id="hm"></div></div></div>
+    <div class="hpill" id="gld">🪙 0</div>
   </div>
 </div>
 <div id="main">
   <div class="panel"><div class="panel-hdr">Skills</div><div id="skills-grid"></div></div>
   <div class="panel" id="act-panel">
-    <div class="panel-hdr"><span>Active Task</span><button id="task-stop" onclick="stopTask()">\u25A0 Stop</button></div>
+    <div class="panel-hdr"><span>Active Task</span><button id="task-stop" onclick="stopTask()">■ Stop</button></div>
     <div id="task-box">
-      <div id="task-title">Idle \u2014 choose a skill and action below</div>
+      <div id="task-title">Idle — choose a skill and action below</div>
       <div id="task-prog-wrap"><div id="task-prog"></div></div>
       <div id="task-sub"><span id="task-xp-lbl"></span><span id="task-dur-lbl"></span></div>
     </div>
@@ -182,19 +182,19 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
       <div class="stat-box"><div class="sb-lbl">Defence</div><div class="sb-val" id="def-val">0</div><div class="sb-bar"><div class="sb-bar-fill" id="def-fill" style="background:#4488dd"></div></div></div>
     </div>
     <div id="equip-row">
-      <div class="eq-slot" id="eq-wp" onclick="unequipSlot('weapon')"><span class="eq-icon">\uD83D\uDDE1\uFE0F</span><span class="eq-lbl">Weapon</span></div>
-      <div class="eq-slot" id="eq-am" onclick="unequipSlot('armour')"><span class="eq-icon">\uD83D\uDEE1\uFE0F</span><span class="eq-lbl">Armour</span></div>
-      <div class="eq-slot" id="eq-fd" onclick="eatFood()"><span class="eq-icon">\uD83C\uDF56</span><span class="eq-lbl">Food</span></div>
+      <div class="eq-slot" id="eq-wp" onclick="unequipSlot('weapon')"><span class="eq-icon">🗡️</span><span class="eq-lbl">Weapon</span></div>
+      <div class="eq-slot" id="eq-am" onclick="unequipSlot('armour')"><span class="eq-icon">🛡️</span><span class="eq-lbl">Armour</span></div>
+      <div class="eq-slot" id="eq-fd" onclick="eatFood()"><span class="eq-icon">🍖</span><span class="eq-lbl">Food</span></div>
     </div>
   </div>
   <div class="panel"><div class="panel-hdr"><span>Inventory</span><span id="inv-count">0/28</span></div><div id="inv-grid"></div>
     <div id="inv-btns">
-      <button class="inv-btn" onclick="sellAll()">\uD83D\uDCB0 Sell Resources</button>
-      <button class="inv-btn" onclick="eatFood()">\uD83C\uDF7D\uFE0F Eat Best Food</button>
-      <button class="inv-btn" onclick="buryBones()">\uD83E\uDDB4 Bury Bones</button>
+      <button class="inv-btn" onclick="sellAll()">💰 Sell Resources</button>
+      <button class="inv-btn" onclick="eatFood()">🍽️ Eat Best Food</button>
+      <button class="inv-btn" onclick="buryBones()">🦴 Bury Bones</button>
     </div>
   </div>
-  <div class="panel"><div class="panel-hdr">\u2692 General Store</div><div id="shop-grid"></div></div>
+  <div class="panel"><div class="panel-hdr">⚒ General Store</div><div id="shop-grid"></div></div>
   <div class="panel"><div class="panel-hdr">Activity Log</div><div id="log-inner"></div></div>
 </div>
 <div id="stage"><div id="scene"><div id="ground"></div><div id="prop"></div>
@@ -203,15 +203,15 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 <script>
 // DATA
 const SKILLS = {
-  woodcutting:{name:'Woodcutting',icon:'\uD83E\uDE93',color:'#8B4513'},
-  mining:{name:'Mining',icon:'\u26CF\uFE0F',color:'#909090'},
-  fishing:{name:'Fishing',icon:'\uD83C\uDFA3',color:'#4488dd'},
-  smithing:{name:'Smithing',icon:'\uD83D\uDD28',color:'#FF8C00'},
-  combat:{name:'Combat',icon:'\u2694\uFE0F',color:'#DC143C'},
-  cooking:{name:'Cooking',icon:'\uD83C\uDF73',color:'#FF6347'},
-  fletching:{name:'Fletching',icon:'\uD83C\uDFF9',color:'#228B22'},
-  crafting:{name:'Crafting',icon:'\uD83E\uDDF5',color:'#9370DB'},
-  magic:{name:'Magic',icon:'\u2728',color:'#9b59b6'},
+  woodcutting:{name:'Woodcutting',icon:'🪓',color:'#8B4513'},
+  mining:{name:'Mining',icon:'⛏️',color:'#909090'},
+  fishing:{name:'Fishing',icon:'🎣',color:'#4488dd'},
+  smithing:{name:'Smithing',icon:'🔨',color:'#FF8C00'},
+  combat:{name:'Combat',icon:'⚔️',color:'#DC143C'},
+  cooking:{name:'Cooking',icon:'🍳',color:'#FF6347'},
+  fletching:{name:'Fletching',icon:'🏹',color:'#228B22'},
+  crafting:{name:'Crafting',icon:'🧵',color:'#9370DB'},
+  magic:{name:'Magic',icon:'✨',color:'#9b59b6'},
 };
 
 function xpNeeded(lvl){if(lvl<=1)return 0;let t=0;for(let i=1;i<lvl;i++)t+=Math.floor(i+300*Math.pow(2,i/7));return Math.floor(t/4);}
@@ -220,133 +220,133 @@ function lvlOf(xp){for(let i=98;i>=1;i--)if(xp>=XP[i])return i;return 1;}
 
 const ACTIONS = {
   woodcutting:[
-    {id:'wc0',name:'Normal Tree',icon:'\uD83C\uDF32',req:1,xp:25,dur:3500,prod:[{id:'logs',n:1}]},
-    {id:'wc1',name:'Oak Tree',icon:'\uD83C\uDF33',req:15,xp:38,dur:5000,prod:[{id:'oak_log',n:1}]},
-    {id:'wc2',name:'Willow Tree',icon:'\uD83C\uDF3F',req:30,xp:68,dur:6000,prod:[{id:'willow_log',n:1}]},
-    {id:'wc3',name:'Yew Tree',icon:'\uD83C\uDF11',req:60,xp:175,dur:8000,prod:[{id:'yew_log',n:1}]},
+    {id:'wc0',name:'Normal Tree',icon:'🌲',req:1,xp:25,dur:3500,prod:[{id:'logs',n:1}]},
+    {id:'wc1',name:'Oak Tree',icon:'🌳',req:15,xp:38,dur:5000,prod:[{id:'oak_log',n:1}]},
+    {id:'wc2',name:'Willow Tree',icon:'🌿',req:30,xp:68,dur:6000,prod:[{id:'willow_log',n:1}]},
+    {id:'wc3',name:'Yew Tree',icon:'🌑',req:60,xp:175,dur:8000,prod:[{id:'yew_log',n:1}]},
   ],
   mining:[
-    {id:'mn0',name:'Copper Rock',icon:'\uD83D\uDFEB',req:1,xp:18,dur:3000,prod:[{id:'copper_ore',n:1}]},
-    {id:'mn1',name:'Tin Rock',icon:'\u2B1C',req:1,xp:18,dur:3000,prod:[{id:'tin_ore',n:1}]},
-    {id:'mn2',name:'Iron Rock',icon:'\uD83D\uDD35',req:15,xp:35,dur:4500,prod:[{id:'iron_ore',n:1}]},
-    {id:'mn3',name:'Coal Rock',icon:'\uD83D\uDDA4',req:30,xp:50,dur:5500,prod:[{id:'coal',n:1}]},
-    {id:'mn4',name:'Gold Rock',icon:'\uD83D\uDC9B',req:40,xp:65,dur:7000,prod:[{id:'gold_ore',n:1}]},
+    {id:'mn0',name:'Copper Rock',icon:'🟫',req:1,xp:18,dur:3000,prod:[{id:'copper_ore',n:1}]},
+    {id:'mn1',name:'Tin Rock',icon:'⬜',req:1,xp:18,dur:3000,prod:[{id:'tin_ore',n:1}]},
+    {id:'mn2',name:'Iron Rock',icon:'🔵',req:15,xp:35,dur:4500,prod:[{id:'iron_ore',n:1}]},
+    {id:'mn3',name:'Coal Rock',icon:'🖤',req:30,xp:50,dur:5500,prod:[{id:'coal',n:1}]},
+    {id:'mn4',name:'Gold Rock',icon:'💛',req:40,xp:65,dur:7000,prod:[{id:'gold_ore',n:1}]},
   ],
   fishing:[
-    {id:'fs0',name:'Net (Shrimp)',icon:'\uD83E\uDD90',req:1,xp:10,dur:3500,prod:[{id:'raw_shrimp',n:1}]},
-    {id:'fs1',name:'Sardine',icon:'\uD83D\uDC1F',req:5,xp:20,dur:4000,prod:[{id:'raw_sardine',n:1}]},
-    {id:'fs2',name:'Trout',icon:'\uD83D\uDC20',req:20,xp:50,dur:5500,prod:[{id:'raw_trout',n:1}]},
-    {id:'fs3',name:'Salmon',icon:'\uD83D\uDC21',req:30,xp:70,dur:6500,prod:[{id:'raw_salmon',n:1}]},
-    {id:'fs4',name:'Lobster Cage',icon:'\uD83E\uDD9E',req:40,xp:90,dur:8000,prod:[{id:'raw_lobster',n:1}]},
+    {id:'fs0',name:'Net (Shrimp)',icon:'🦐',req:1,xp:10,dur:3500,prod:[{id:'raw_shrimp',n:1}]},
+    {id:'fs1',name:'Sardine',icon:'🐟',req:5,xp:20,dur:4000,prod:[{id:'raw_sardine',n:1}]},
+    {id:'fs2',name:'Trout',icon:'🐠',req:20,xp:50,dur:5500,prod:[{id:'raw_trout',n:1}]},
+    {id:'fs3',name:'Salmon',icon:'🐡',req:30,xp:70,dur:6500,prod:[{id:'raw_salmon',n:1}]},
+    {id:'fs4',name:'Lobster Cage',icon:'🦞',req:40,xp:90,dur:8000,prod:[{id:'raw_lobster',n:1}]},
   ],
   smithing:[
-    {id:'sm0',name:'Bronze Bar',icon:'\uD83D\uDFEB',req:1,xp:7,dur:4000,prod:[{id:'bronze_bar',n:1}],need:[{id:'copper_ore',n:1},{id:'tin_ore',n:1}]},
-    {id:'sm1',name:'Iron Bar',icon:'\u2B1B',req:15,xp:13,dur:4500,prod:[{id:'iron_bar',n:1}],need:[{id:'iron_ore',n:2}]},
-    {id:'sm2',name:'Bronze Sword',icon:'\uD83D\uDDE1\uFE0F',req:1,xp:13,dur:5000,prod:[{id:'bronze_sword',n:1}],need:[{id:'bronze_bar',n:1}]},
-    {id:'sm3',name:'Iron Sword',icon:'\u2694\uFE0F',req:19,xp:25,dur:5500,prod:[{id:'iron_sword',n:1}],need:[{id:'iron_bar',n:1}]},
-    {id:'sm4',name:'Bronze Shield',icon:'\uD83D\uDEE1\uFE0F',req:7,xp:38,dur:6500,prod:[{id:'bronze_shield',n:1}],need:[{id:'bronze_bar',n:3}]},
-    {id:'sm5',name:'Iron Platebody',icon:'\uD83D\uDEE1\uFE0F',req:33,xp:75,dur:8000,prod:[{id:'iron_platebody',n:1}],need:[{id:'iron_bar',n:5}]},
+    {id:'sm0',name:'Bronze Bar',icon:'🟫',req:1,xp:7,dur:4000,prod:[{id:'bronze_bar',n:1}],need:[{id:'copper_ore',n:1},{id:'tin_ore',n:1}]},
+    {id:'sm1',name:'Iron Bar',icon:'⬛',req:15,xp:13,dur:4500,prod:[{id:'iron_bar',n:1}],need:[{id:'iron_ore',n:2}]},
+    {id:'sm2',name:'Bronze Sword',icon:'🗡️',req:1,xp:13,dur:5000,prod:[{id:'bronze_sword',n:1}],need:[{id:'bronze_bar',n:1}]},
+    {id:'sm3',name:'Iron Sword',icon:'⚔️',req:19,xp:25,dur:5500,prod:[{id:'iron_sword',n:1}],need:[{id:'iron_bar',n:1}]},
+    {id:'sm4',name:'Bronze Shield',icon:'🛡️',req:7,xp:38,dur:6500,prod:[{id:'bronze_shield',n:1}],need:[{id:'bronze_bar',n:3}]},
+    {id:'sm5',name:'Iron Platebody',icon:'🛡️',req:33,xp:75,dur:8000,prod:[{id:'iron_platebody',n:1}],need:[{id:'iron_bar',n:5}]},
   ],
   cooking:[
-    {id:'ck0',name:'Cook Shrimp',icon:'\uD83C\uDF64',req:1,xp:30,dur:2500,prod:[{id:'c_shrimp',n:1}],need:[{id:'raw_shrimp',n:1}]},
-    {id:'ck1',name:'Cook Sardine',icon:'\uD83D\uDC1F',req:1,xp:40,dur:2500,prod:[{id:'c_sardine',n:1}],need:[{id:'raw_sardine',n:1}]},
-    {id:'ck2',name:'Cook Trout',icon:'\uD83D\uDC20',req:15,xp:70,dur:3000,prod:[{id:'c_trout',n:1}],need:[{id:'raw_trout',n:1}]},
-    {id:'ck3',name:'Cook Salmon',icon:'\uD83D\uDC21',req:25,xp:90,dur:3000,prod:[{id:'c_salmon',n:1}],need:[{id:'raw_salmon',n:1}]},
-    {id:'ck4',name:'Cook Lobster',icon:'\uD83E\uDD9E',req:30,xp:120,dur:3500,prod:[{id:'c_lobster',n:1}],need:[{id:'raw_lobster',n:1}]},
-    {id:'ck5',name:'Cook Meat',icon:'\uD83C\uDF56',req:1,xp:30,dur:2500,prod:[{id:'c_meat',n:1}],need:[{id:'raw_meat',n:1}]},
+    {id:'ck0',name:'Cook Shrimp',icon:'🍤',req:1,xp:30,dur:2500,prod:[{id:'c_shrimp',n:1}],need:[{id:'raw_shrimp',n:1}]},
+    {id:'ck1',name:'Cook Sardine',icon:'🐟',req:1,xp:40,dur:2500,prod:[{id:'c_sardine',n:1}],need:[{id:'raw_sardine',n:1}]},
+    {id:'ck2',name:'Cook Trout',icon:'🐠',req:15,xp:70,dur:3000,prod:[{id:'c_trout',n:1}],need:[{id:'raw_trout',n:1}]},
+    {id:'ck3',name:'Cook Salmon',icon:'🐡',req:25,xp:90,dur:3000,prod:[{id:'c_salmon',n:1}],need:[{id:'raw_salmon',n:1}]},
+    {id:'ck4',name:'Cook Lobster',icon:'🦞',req:30,xp:120,dur:3500,prod:[{id:'c_lobster',n:1}],need:[{id:'raw_lobster',n:1}]},
+    {id:'ck5',name:'Cook Meat',icon:'🍖',req:1,xp:30,dur:2500,prod:[{id:'c_meat',n:1}],need:[{id:'raw_meat',n:1}]},
   ],
   fletching:[
-    {id:'fl0',name:'Arrow Shafts',icon:'\u2191',req:1,xp:5,dur:2000,prod:[{id:'arrow_shaft',n:15}],need:[{id:'logs',n:1}]},
-    {id:'fl1',name:'Shortbow (u)',icon:'\uD83C\uDFF9',req:5,xp:10,dur:4000,prod:[{id:'shortbow',n:1}],need:[{id:'logs',n:1}]},
-    {id:'fl2',name:'Oak Shortbow',icon:'\uD83C\uDFF9',req:20,xp:25,dur:4500,prod:[{id:'oak_bow',n:1}],need:[{id:'oak_log',n:1}]},
-    {id:'fl3',name:'Iron Arrows x15',icon:'\uD83E\uDE83',req:15,xp:38,dur:3000,prod:[{id:'iron_arrow',n:15}],need:[{id:'arrow_shaft',n:15},{id:'iron_bar',n:1},{id:'feather',n:15}]},
-    {id:'fl4',name:'Willow Bow',icon:'\uD83C\uDFF9',req:35,xp:58,dur:5000,prod:[{id:'willow_bow',n:1}],need:[{id:'willow_log',n:1}]},
+    {id:'fl0',name:'Arrow Shafts',icon:'↑',req:1,xp:5,dur:2000,prod:[{id:'arrow_shaft',n:15}],need:[{id:'logs',n:1}]},
+    {id:'fl1',name:'Shortbow (u)',icon:'🏹',req:5,xp:10,dur:4000,prod:[{id:'shortbow',n:1}],need:[{id:'logs',n:1}]},
+    {id:'fl2',name:'Oak Shortbow',icon:'🏹',req:20,xp:25,dur:4500,prod:[{id:'oak_bow',n:1}],need:[{id:'oak_log',n:1}]},
+    {id:'fl3',name:'Iron Arrows x15',icon:'🪃',req:15,xp:38,dur:3000,prod:[{id:'iron_arrow',n:15}],need:[{id:'arrow_shaft',n:15},{id:'iron_bar',n:1},{id:'feather',n:15}]},
+    {id:'fl4',name:'Willow Bow',icon:'🏹',req:35,xp:58,dur:5000,prod:[{id:'willow_bow',n:1}],need:[{id:'willow_log',n:1}]},
   ],
   crafting:[
-    {id:'cr0',name:'Tan Cowhide',icon:'\uD83D\uDC04',req:1,xp:0,dur:2000,prod:[{id:'leather',n:1}],need:[{id:'cowhide',n:1}]},
-    {id:'cr1',name:'Leather Body',icon:'\uD83D\uDC55',req:14,xp:25,dur:4000,prod:[{id:'leather_body',n:1}],need:[{id:'leather',n:3}]},
-    {id:'cr2',name:'Gold Ring',icon:'\uD83D\uDC8D',req:5,xp:15,dur:3500,prod:[{id:'gold_ring',n:1}],need:[{id:'gold_ore',n:1}]},
-    {id:'cr3',name:'Gold Necklace',icon:'\uD83D\uDCFF',req:20,xp:35,dur:4500,prod:[{id:'gold_necklace',n:1}],need:[{id:'gold_ore',n:2}]},
+    {id:'cr0',name:'Tan Cowhide',icon:'🐄',req:1,xp:0,dur:2000,prod:[{id:'leather',n:1}],need:[{id:'cowhide',n:1}]},
+    {id:'cr1',name:'Leather Body',icon:'👕',req:14,xp:25,dur:4000,prod:[{id:'leather_body',n:1}],need:[{id:'leather',n:3}]},
+    {id:'cr2',name:'Gold Ring',icon:'💍',req:5,xp:15,dur:3500,prod:[{id:'gold_ring',n:1}],need:[{id:'gold_ore',n:1}]},
+    {id:'cr3',name:'Gold Necklace',icon:'📿',req:20,xp:35,dur:4500,prod:[{id:'gold_necklace',n:1}],need:[{id:'gold_ore',n:2}]},
   ],
   magic:[
-    {id:'mg0',name:'Wind Strike',icon:'\uD83C\uDF2C\uFE0F',req:1,xp:12,dur:3000,need:[{id:'feather',n:1}],isCombatSpell:true,spellDmg:2},
-    {id:'mg1',name:'Fire Bolt',icon:'\uD83D\uDD25',req:13,xp:30,dur:3500,need:[{id:'feather',n:2}],isCombatSpell:true,spellDmg:5},
-    {id:'mg2',name:'Enchant Ring',icon:'\uD83D\uDC8D',req:7,xp:20,dur:4000,prod:[{id:'enchanted_ring',n:1}],need:[{id:'gold_ring',n:1},{id:'feather',n:3}]},
+    {id:'mg0',name:'Wind Strike',icon:'🌬️',req:1,xp:12,dur:3000,need:[{id:'feather',n:1}],isCombatSpell:true,spellDmg:2},
+    {id:'mg1',name:'Fire Bolt',icon:'🔥',req:13,xp:30,dur:3500,need:[{id:'feather',n:2}],isCombatSpell:true,spellDmg:5},
+    {id:'mg2',name:'Enchant Ring',icon:'💍',req:7,xp:20,dur:4000,prod:[{id:'enchanted_ring',n:1}],need:[{id:'gold_ring',n:1},{id:'feather',n:3}]},
   ],
   combat:[
-    {id:'cb0',name:'Chicken',icon:'\uD83D\uDC14',req:1,xp:12,dur:2800,mhp:3,dmg:[1,3],drops:[{id:'raw_meat',n:1,c:1},{id:'bones',n:1,c:1},{id:'feather',n:5,c:.7},{id:'gold_coins',n:3,c:.5}]},
-    {id:'cb1',name:'Goblin',icon:'\uD83D\uDC7A',req:5,xp:25,dur:3200,mhp:6,dmg:[1,4],drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:8,c:.8},{id:'cowhide',n:1,c:.3}]},
-    {id:'cb2',name:'Giant Rat',icon:'\uD83D\uDC00',req:10,xp:35,dur:3500,mhp:8,dmg:[1,5],drops:[{id:'bones',n:1,c:1},{id:'raw_meat',n:1,c:.7},{id:'gold_coins',n:5,c:.5}]},
-    {id:'cb3',name:'Guard',icon:'\uD83D\uDC82',req:22,xp:60,dur:4000,mhp:14,dmg:[2,6],drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:28,c:.9},{id:'iron_ore',n:1,c:.4}]},
-    {id:'cb4',name:'Dark Knight',icon:'\uD83D\uDDE1\uFE0F',req:40,xp:120,dur:4500,mhp:28,dmg:[3,9],drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:65,c:1},{id:'iron_bar',n:1,c:.5},{id:'iron_sword',n:1,c:.1}]},
+    {id:'cb0',name:'Chicken',icon:'🐔',req:1,xp:12,dur:2800,mhp:3,dmg:[1,3],drops:[{id:'raw_meat',n:1,c:1},{id:'bones',n:1,c:1},{id:'feather',n:5,c:.7},{id:'gold_coins',n:3,c:.5}]},
+    {id:'cb1',name:'Goblin',icon:'👺',req:5,xp:25,dur:3200,mhp:6,dmg:[1,4],drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:8,c:.8},{id:'cowhide',n:1,c:.3}]},
+    {id:'cb2',name:'Giant Rat',icon:'🐀',req:10,xp:35,dur:3500,mhp:8,dmg:[1,5],drops:[{id:'bones',n:1,c:1},{id:'raw_meat',n:1,c:.7},{id:'gold_coins',n:5,c:.5}]},
+    {id:'cb3',name:'Guard',icon:'💂',req:22,xp:60,dur:4000,mhp:14,dmg:[2,6],drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:28,c:.9},{id:'iron_ore',n:1,c:.4}]},
+    {id:'cb4',name:'Dark Knight',icon:'🗡️',req:40,xp:120,dur:4500,mhp:28,dmg:[3,9],drops:[{id:'bones',n:1,c:1},{id:'gold_coins',n:65,c:1},{id:'iron_bar',n:1,c:.5},{id:'iron_sword',n:1,c:.1}]},
   ],
 };
 const ITEMS = {
-  logs:{name:'Logs',icon:'\uD83E\uDEB5',sell:2,type:'res'},
-  oak_log:{name:'Oak Logs',icon:'\uD83E\uDEB5',sell:8,type:'res'},
-  willow_log:{name:'Willow Logs',icon:'\uD83E\uDEB5',sell:18,type:'res'},
-  yew_log:{name:'Yew Logs',icon:'\uD83E\uDEB5',sell:55,type:'res'},
-  copper_ore:{name:'Copper Ore',icon:'\uD83D\uDFEB',sell:2,type:'res'},
-  tin_ore:{name:'Tin Ore',icon:'\u2B1C',sell:2,type:'res'},
-  iron_ore:{name:'Iron Ore',icon:'\uD83D\uDD35',sell:5,type:'res'},
-  coal:{name:'Coal',icon:'\uD83D\uDDA4',sell:12,type:'res'},
-  gold_ore:{name:'Gold Ore',icon:'\uD83D\uDC9B',sell:25,type:'res'},
-  bronze_bar:{name:'Bronze Bar',icon:'\uD83D\uDFEB',sell:8,type:'res'},
-  iron_bar:{name:'Iron Bar',icon:'\u2B1B',sell:18,type:'res'},
-  raw_shrimp:{name:'Raw Shrimp',icon:'\uD83E\uDD90',sell:1,type:'raw'},
-  raw_sardine:{name:'Raw Sardine',icon:'\uD83D\uDC1F',sell:2,type:'raw'},
-  raw_trout:{name:'Raw Trout',icon:'\uD83D\uDC20',sell:5,type:'raw'},
-  raw_salmon:{name:'Raw Salmon',icon:'\uD83D\uDC21',sell:8,type:'raw'},
-  raw_lobster:{name:'Raw Lobster',icon:'\uD83E\uDD9E',sell:12,type:'raw'},
-  raw_meat:{name:'Raw Meat',icon:'\uD83E\uDD69',sell:1,type:'raw'},
-  c_shrimp:{name:'Shrimp',icon:'\uD83C\uDF64',sell:4,type:'food',hp:3},
-  c_sardine:{name:'Sardine',icon:'\uD83D\uDC1F',sell:6,type:'food',hp:4},
-  c_trout:{name:'Trout',icon:'\uD83D\uDC20',sell:14,type:'food',hp:7},
-  c_salmon:{name:'Salmon',icon:'\uD83D\uDC21',sell:20,type:'food',hp:9},
-  c_lobster:{name:'Lobster',icon:'\uD83E\uDD9E',sell:32,type:'food',hp:12},
-  c_meat:{name:'Cooked Meat',icon:'\uD83C\uDF56',sell:8,type:'food',hp:5},
-  bones:{name:'Bones',icon:'\uD83E\uDDB4',sell:2,type:'res'},
-  feather:{name:'Feathers',icon:'\uD83E\uDEB6',sell:1,type:'res'},
-  cowhide:{name:'Cowhide',icon:'\uD83D\uDC04',sell:5,type:'res'},
-  leather:{name:'Leather',icon:'\uD83D\uDCDC',sell:8,type:'res'},
-  arrow_shaft:{name:'Arrow Shafts',icon:'\u2191',sell:0,type:'res'},
-  iron_arrow:{name:'Iron Arrows',icon:'\uD83E\uDE83',sell:2,type:'res'},
-  shortbow:{name:'Shortbow',icon:'\uD83C\uDFF9',sell:20,type:'weapon',atk:3},
-  oak_bow:{name:'Oak Shortbow',icon:'\uD83C\uDFF9',sell:45,type:'weapon',atk:6},
-  willow_bow:{name:'Willow Bow',icon:'\uD83C\uDFF9',sell:90,type:'weapon',atk:10},
-  bronze_sword:{name:'Bronze Sword',icon:'\uD83D\uDDE1\uFE0F',sell:25,type:'weapon',atk:2},
-  iron_sword:{name:'Iron Sword',icon:'\u2694\uFE0F',sell:75,type:'weapon',atk:5},
-  bronze_shield:{name:'Bronze Shield',icon:'\uD83D\uDEE1\uFE0F',sell:60,type:'armour',def:2},
-  iron_platebody:{name:'Iron Platebody',icon:'\uD83D\uDEE1\uFE0F',sell:180,type:'armour',def:5},
-  leather_body:{name:'Leather Body',icon:'\uD83D\uDC55',sell:25,type:'armour',def:1},
-  gold_ring:{name:'Gold Ring',icon:'\uD83D\uDC8D',sell:60,type:'accessory'},
-  gold_necklace:{name:'Gold Necklace',icon:'\uD83D\uDCFF',sell:100,type:'accessory'},
-  gold_coins:{name:'Gold Coins',icon:'\uD83E\uDE99',sell:1,type:'currency'},
-  enchanted_ring:{name:'Enchanted Ring',icon:'\uD83D\uDC8D',sell:150,type:'accessory',special:true},
-  level_potion:{name:'Level Potion',icon:'\uD83E\uDDEA',sell:0,type:'potion',special:true},
+  logs:{name:'Logs',icon:'🪵',sell:2,type:'res'},
+  oak_log:{name:'Oak Logs',icon:'🪵',sell:8,type:'res'},
+  willow_log:{name:'Willow Logs',icon:'🪵',sell:18,type:'res'},
+  yew_log:{name:'Yew Logs',icon:'🪵',sell:55,type:'res'},
+  copper_ore:{name:'Copper Ore',icon:'🟫',sell:2,type:'res'},
+  tin_ore:{name:'Tin Ore',icon:'⬜',sell:2,type:'res'},
+  iron_ore:{name:'Iron Ore',icon:'🔵',sell:5,type:'res'},
+  coal:{name:'Coal',icon:'🖤',sell:12,type:'res'},
+  gold_ore:{name:'Gold Ore',icon:'💛',sell:25,type:'res'},
+  bronze_bar:{name:'Bronze Bar',icon:'🟫',sell:8,type:'res'},
+  iron_bar:{name:'Iron Bar',icon:'⬛',sell:18,type:'res'},
+  raw_shrimp:{name:'Raw Shrimp',icon:'🦐',sell:1,type:'raw'},
+  raw_sardine:{name:'Raw Sardine',icon:'🐟',sell:2,type:'raw'},
+  raw_trout:{name:'Raw Trout',icon:'🐠',sell:5,type:'raw'},
+  raw_salmon:{name:'Raw Salmon',icon:'🐡',sell:8,type:'raw'},
+  raw_lobster:{name:'Raw Lobster',icon:'🦞',sell:12,type:'raw'},
+  raw_meat:{name:'Raw Meat',icon:'🥩',sell:1,type:'raw'},
+  c_shrimp:{name:'Shrimp',icon:'🍤',sell:4,type:'food',hp:3},
+  c_sardine:{name:'Sardine',icon:'🐟',sell:6,type:'food',hp:4},
+  c_trout:{name:'Trout',icon:'🐠',sell:14,type:'food',hp:7},
+  c_salmon:{name:'Salmon',icon:'🐡',sell:20,type:'food',hp:9},
+  c_lobster:{name:'Lobster',icon:'🦞',sell:32,type:'food',hp:12},
+  c_meat:{name:'Cooked Meat',icon:'🍖',sell:8,type:'food',hp:5},
+  bones:{name:'Bones',icon:'🦴',sell:2,type:'res'},
+  feather:{name:'Feathers',icon:'🪶',sell:1,type:'res'},
+  cowhide:{name:'Cowhide',icon:'🐄',sell:5,type:'res'},
+  leather:{name:'Leather',icon:'📜',sell:8,type:'res'},
+  arrow_shaft:{name:'Arrow Shafts',icon:'↑',sell:0,type:'res'},
+  iron_arrow:{name:'Iron Arrows',icon:'🪃',sell:2,type:'res'},
+  shortbow:{name:'Shortbow',icon:'🏹',sell:20,type:'weapon',atk:3},
+  oak_bow:{name:'Oak Shortbow',icon:'🏹',sell:45,type:'weapon',atk:6},
+  willow_bow:{name:'Willow Bow',icon:'🏹',sell:90,type:'weapon',atk:10},
+  bronze_sword:{name:'Bronze Sword',icon:'🗡️',sell:25,type:'weapon',atk:2},
+  iron_sword:{name:'Iron Sword',icon:'⚔️',sell:75,type:'weapon',atk:5},
+  bronze_shield:{name:'Bronze Shield',icon:'🛡️',sell:60,type:'armour',def:2},
+  iron_platebody:{name:'Iron Platebody',icon:'🛡️',sell:180,type:'armour',def:5},
+  leather_body:{name:'Leather Body',icon:'👕',sell:25,type:'armour',def:1},
+  gold_ring:{name:'Gold Ring',icon:'💍',sell:60,type:'accessory'},
+  gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory'},
+  gold_coins:{name:'Gold Coins',icon:'🪙',sell:1,type:'currency'},
+  enchanted_ring:{name:'Enchanted Ring',icon:'💍',sell:150,type:'accessory',special:true},
+  level_potion:{name:'Level Potion',icon:'🧪',sell:0,type:'potion',special:true},
 };
 
 const TRINKETS = {
-  grove_wc_trinket:{name:'Sylvan Charm',icon:'\uD83C\uDF3F',skill:'woodcutting',bonus:0.05,desc:'+5% Woodcutting XP'},
-  grove_mn_trinket:{name:'Stone Heart',icon:'\uD83D\uDC8E',skill:'mining',bonus:0.05,desc:'+5% Mining XP'},
-  grove_fs_trinket:{name:'Coral Lure',icon:'\uD83D\uDC1A',skill:'fishing',bonus:0.05,desc:'+5% Fishing XP'},
-  grove_ck_trinket:{name:'Ember Spice',icon:'\uD83C\uDF36\uFE0F',skill:'cooking',bonus:0.05,desc:'+5% Cooking XP'},
-  grove_sm_trinket:{name:'Molten Core',icon:'\uD83D\uDD25',skill:'smithing',bonus:0.05,desc:'+5% Smithing XP'},
-  grove_cb_trinket:{name:'War Token',icon:'\u2694\uFE0F',skill:'combat',bonus:0.05,desc:'+5% Combat XP'},
-  grove_fl_trinket:{name:'Swift Feather',icon:'\uD83E\uDEB6',skill:'fletching',bonus:0.05,desc:'+5% Fletching XP'},
-  grove_cr_trinket:{name:'Golden Thread',icon:'\uD83E\uDDF5',skill:'crafting',bonus:0.05,desc:'+5% Crafting XP'},
-  grove_mg_trinket:{name:'Arcane Shard',icon:'\u2728',skill:'magic',bonus:0.05,desc:'+5% Magic XP'},
+  grove_wc_trinket:{name:'Sylvan Charm',icon:'🌿',skill:'woodcutting',bonus:0.05,desc:'+5% Woodcutting XP'},
+  grove_mn_trinket:{name:'Stone Heart',icon:'💎',skill:'mining',bonus:0.05,desc:'+5% Mining XP'},
+  grove_fs_trinket:{name:'Coral Lure',icon:'🐚',skill:'fishing',bonus:0.05,desc:'+5% Fishing XP'},
+  grove_ck_trinket:{name:'Ember Spice',icon:'🌶️',skill:'cooking',bonus:0.05,desc:'+5% Cooking XP'},
+  grove_sm_trinket:{name:'Molten Core',icon:'🔥',skill:'smithing',bonus:0.05,desc:'+5% Smithing XP'},
+  grove_cb_trinket:{name:'War Token',icon:'⚔️',skill:'combat',bonus:0.05,desc:'+5% Combat XP'},
+  grove_fl_trinket:{name:'Swift Feather',icon:'🪶',skill:'fletching',bonus:0.05,desc:'+5% Fletching XP'},
+  grove_cr_trinket:{name:'Golden Thread',icon:'🧵',skill:'crafting',bonus:0.05,desc:'+5% Crafting XP'},
+  grove_mg_trinket:{name:'Arcane Shard',icon:'✨',skill:'magic',bonus:0.05,desc:'+5% Magic XP'},
 };
 
 const SHOP=[
-  {id:'axe',name:'Iron Axe',icon:'\uD83E\uDE93',cost:80,eff:'Woodcut +15% faster',up:'spd_wood'},
-  {id:'pick',name:'Mithril Pick',icon:'\u26CF\uFE0F',cost:120,eff:'Mining +15% faster',up:'spd_mine'},
-  {id:'rod',name:'Fly Rod',icon:'\uD83C\uDFA3',cost:60,eff:'Fishing +15% faster',up:'spd_fish'},
-  {id:'tinder',name:'Tinderbox',icon:'\uD83D\uDD25',cost:25,eff:'Cooking +15% faster',up:'spd_cook'},
-  {id:'hammer',name:'Smith Hammer',icon:'\uD83D\uDD28',cost:90,eff:'Smithing +15% faster',up:'spd_smith'},
-  {id:'fletch_knife',name:'Fletching Knife',icon:'\uD83D\uDD2A',cost:70,eff:'Fletching +15% faster',up:'spd_flet'},
-  {id:'needle',name:'Craft Needle',icon:'\uD83E\uDEA1',cost:50,eff:'Crafting +15% faster',up:'spd_craf'},
-  {id:'staff',name:'Apprentice Staff',icon:'\uD83E\uDE84',cost:100,eff:'Magic +15% faster',up:'spd_magi'},
+  {id:'axe',name:'Iron Axe',icon:'🪓',cost:80,eff:'Woodcut +15% faster',up:'spd_wood'},
+  {id:'pick',name:'Mithril Pick',icon:'⛏️',cost:120,eff:'Mining +15% faster',up:'spd_mine'},
+  {id:'rod',name:'Fly Rod',icon:'🎣',cost:60,eff:'Fishing +15% faster',up:'spd_fish'},
+  {id:'tinder',name:'Tinderbox',icon:'🔥',cost:25,eff:'Cooking +15% faster',up:'spd_cook'},
+  {id:'hammer',name:'Smith Hammer',icon:'🔨',cost:90,eff:'Smithing +15% faster',up:'spd_smith'},
+  {id:'fletch_knife',name:'Fletching Knife',icon:'🔪',cost:70,eff:'Fletching +15% faster',up:'spd_flet'},
+  {id:'needle',name:'Craft Needle',icon:'🪡',cost:50,eff:'Crafting +15% faster',up:'spd_craf'},
+  {id:'staff',name:'Apprentice Staff',icon:'🪄',cost:100,eff:'Magic +15% faster',up:'spd_magi'},
 ];
 // STATE
 let G = {
@@ -367,7 +367,7 @@ function giveStarterSword(){
     G.inv.bronze_sword=(G.inv.bronze_sword||0)+1;
     G.equip.weapon='bronze_sword';
     G.startedWithSword=true;
-    log('\uD83D\uDDE1\uFE0F You start with a <b>Bronze Sword</b>! Equip food and try a dungeon!');
+    log('🗡️ You start with a <b>Bronze Sword</b>! Equip food and try a dungeon!');
   }
 }
 
@@ -404,7 +404,7 @@ function addXP(sk,amt){
   const nl=slvl(sk);
   if(nl>ol){
     showLvlUp(sk,nl);
-    log('<span class="ll">\u2B50 LEVEL UP! '+SKILLS[sk].name+' is now level '+nl+'!</span>');
+    log('<span class="ll">⭐ LEVEL UP! '+SKILLS[sk].name+' is now level '+nl+'!</span>');
     if(sk==='combat'){G.maxhp=10+Math.floor(nl*1.6);G.hp=Math.min(G.hp+3,G.maxhp);}
     sendLevelNotification(sk,nl);
   }
@@ -459,11 +459,11 @@ function tick(){
           const d=Math.max(0,Math.floor(mn+Math.random()*(mx-mn+1))-getDef());
           if(d>0){
             G.hp=Math.max(0,G.hp-d);
-            log('<span class="lc">\uD83D\uDC3E '+action.name+' hits you for '+d+'!</span>');
+            log('<span class="lc">🐾 '+action.name+' hits you for '+d+'!</span>');
             document.body.classList.add('dmg-flash');
             setTimeout(()=>document.body.classList.remove('dmg-flash'),500);
           }
-          if(G.hp<=0){G.hp=1;log('<span class="lc">\uD83D\uDC80 Near death! Eat food immediately!</span>');stopTask();}
+          if(G.hp<=0){G.hp=1;log('<span class="lc">💀 Near death! Eat food immediately!</span>');stopTask();}
         }
       }
     }
@@ -492,7 +492,7 @@ function completeTick(){
   if(a.need){
     for(const c of a.need){
       if(!has(c.id,c.n)){
-        log('\u274C Out of '+(ITEMS[c.id]?.name||c.id)+'. Task stopped.');
+        log('❌ Out of '+(ITEMS[c.id]?.name||c.id)+'. Task stopped.');
         stopTask();return;
       }
     }
@@ -503,32 +503,32 @@ function completeTick(){
     const atk=getAtk();
     let dmgDone=atk+Math.floor(Math.random()*3);
     // Power attack: skip turn to charge, next hit is 2x
-    if(G.powerCharged){dmgDone=Math.floor(dmgDone*2);G.powerCharged=false;log('<span class="lc">\u26A1 POWER STRIKE! '+dmgDone+' damage!</span>');}
+    if(G.powerCharged){dmgDone=Math.floor(dmgDone*2);G.powerCharged=false;log('<span class="lc">⚡ POWER STRIKE! '+dmgDone+' damage!</span>');}
     G.mhp-=dmgDone;
     if(G.mhp<=0){
       addXP(sk,a.xp);
-      log('<span class="lc">\u2620\uFE0F You slew the '+a.name+'! (+'+a.xp+' XP)</span>');
+      log('<span class="lc">☠️ You slew the '+a.name+'! (+'+a.xp+' XP)</span>');
       for(const d of a.drops){
         if(Math.random()<d.c){
-          if(d.id==='gold_coins'){G.gold+=d.n;log('<span class="lg">\uD83E\uDE99 Looted '+d.n+' gold.</span>');}
-          else{give(d.id,d.n);log('<span class="li">\uD83D\uDCE6 '+(ITEMS[d.id]?.icon||'')+(ITEMS[d.id]?.name||d.id)+' x'+d.n+'</span>');}
+          if(d.id==='gold_coins'){G.gold+=d.n;log('<span class="lg">🪙 Looted '+d.n+' gold.</span>');}
+          else{give(d.id,d.n);log('<span class="li">📦 '+(ITEMS[d.id]?.icon||'')+(ITEMS[d.id]?.name||d.id)+' x'+d.n+'</span>');}
         }
       }
       G.mhp=a.mhp;
     } else {
       addXP(sk,a.xp/4);
-      log('<span class="lc">\u2694\uFE0F Hit '+a.name+' for '+dmgDone+'. HP: '+G.mhp+'/'+G.mmhp+'</span>');
+      log('<span class="lc">⚔️ Hit '+a.name+' for '+dmgDone+'. HP: '+G.mhp+'/'+G.mmhp+'</span>');
     }
   } else if(a.isCombatSpell) {
     // Magic combat spell
     addXP('magic',a.xp);
-    log('\u2728 Cast '+a.name+'! <span class="lx">(+'+a.xp+'xp Magic)</span>');
+    log('✨ Cast '+a.name+'! <span class="lx">(+'+a.xp+'xp Magic)</span>');
   } else {
     // Non-combat production
     addXP(sk,a.xp);
     if(a.prod){
       for(const p of a.prod){give(p.id,p.n);}
-      const desc=a.prod.map(p=>(ITEMS[p.id]?.icon||'')+(ITEMS[p.id]?.name||p.id)+'\xd7'+p.n).join(', ');
+      const desc=a.prod.map(p=>(ITEMS[p.id]?.icon||'')+(ITEMS[p.id]?.name||p.id)+'×'+p.n).join(', ');
       log(a.icon+' '+desc+' <span class="lx">(+'+a.xp+'xp '+SKILLS[sk].name+')</span>');
     }
   }
@@ -544,10 +544,10 @@ function startTask(id){
   const a=findAction(id);if(!a)return;
   const sk=findSkill(id);
   const lv=slvl(sk);
-  if(lv<a.req){log('\u274C Need level '+a.req+' '+SKILLS[sk].name+'.');return;}
+  if(lv<a.req){log('❌ Need level '+a.req+' '+SKILLS[sk].name+'.');return;}
   if(a.need){
     for(const c of a.need){
-      if(!has(c.id,c.n)){log('\u274C Need '+(ITEMS[c.id]?.name||c.id)+' \xd7'+c.n+'.');return;}
+      if(!has(c.id,c.n)){log('❌ Need '+(ITEMS[c.id]?.name||c.id)+' ×'+c.n+'.');return;}
     }
   }
   if(G.task===id){stopTask();return;}
@@ -559,15 +559,15 @@ function startTask(id){
   G.dur=Math.max(800,Math.floor(dur*spd*lvBonus));
   if(a.mhp!==undefined){G.mhp=a.mhp;G.mmhp=a.mhp;}
   document.getElementById('task-title').textContent=a.icon+' '+a.name;
-  document.getElementById('task-xp-lbl').textContent='+'+a.xp+' XP \u00b7 '+SKILLS[sk].name;
+  document.getElementById('task-xp-lbl').textContent='+'+a.xp+' XP · '+SKILLS[sk].name;
   document.getElementById('task-dur-lbl').textContent='~'+(G.dur/1000).toFixed(1)+'s';
   document.getElementById('task-stop').style.display='block';
   anim();refreshButtons(G.tab);
-  log('\u25b6 Started: '+a.name);
+  log('▶ Started: '+a.name);
 }
 function stopTask(){
   G.task=null;G.prog=0;G.powerCharged=false;
-  document.getElementById('task-title').textContent='Idle \u2014 choose a skill and action below';
+  document.getElementById('task-title').textContent='Idle — choose a skill and action below';
   document.getElementById('task-prog').style.width='0%';
   document.getElementById('task-xp-lbl').textContent='';
   document.getElementById('task-dur-lbl').textContent='';
@@ -597,7 +597,7 @@ function updateUI(){
         trinketSlot.classList.add('filled');
         trinketSlot.title=TRINKETS[tid].name+': '+TRINKETS[tid].desc;
       } else {
-        trinketSlot.textContent='\u25CB';
+        trinketSlot.textContent='○';
         trinketSlot.classList.remove('filled');
         trinketSlot.title='Trinket slot (empty)';
       }
@@ -607,11 +607,11 @@ function updateUI(){
     if(toolSlot){
       const upKey='spd_'+sk.slice(0,4);
       if(G.upgrades[upKey]){
-        toolSlot.textContent='\u2692';
+        toolSlot.textContent='⚒';
         toolSlot.classList.add('filled');
         toolSlot.title='Tool equipped';
       } else {
-        toolSlot.textContent='\u25CB';
+        toolSlot.textContent='○';
         toolSlot.classList.remove('filled');
         toolSlot.title='Tool slot (empty)';
       }
@@ -626,7 +626,7 @@ function updateUI(){
   document.getElementById('def-val').textContent=def;
   document.getElementById('atk-fill').style.width=Math.min(100,atk*8)+'%';
   document.getElementById('def-fill').style.width=Math.min(100,def*10)+'%';
-  document.getElementById('gld').textContent='\uD83E\uDE99 '+G.gold;
+  document.getElementById('gld').textContent='🪙 '+G.gold;
   renderInv();renderEquip();
   const cnt=Object.values(G.inv).filter(v=>v>0).length;
   document.getElementById('inv-count').textContent=cnt+'/28';
@@ -653,12 +653,12 @@ function renderEquip(){
   const wp=G.equip.weapon,am=G.equip.armour;
   const wel=document.getElementById('eq-wp'),ael=document.getElementById('eq-am'),fel=document.getElementById('eq-fd');
   if(wp&&ITEMS[wp]){wel.innerHTML='<span class="eq-icon">'+ITEMS[wp].icon+'</span><span class="eq-name">'+ITEMS[wp].name+'</span>';wel.classList.add('on');}
-  else{wel.innerHTML='<span class="eq-icon">\uD83D\uDDE1\uFE0F</span><span class="eq-lbl">Weapon</span>';wel.classList.remove('on');}
+  else{wel.innerHTML='<span class="eq-icon">🗡️</span><span class="eq-lbl">Weapon</span>';wel.classList.remove('on');}
   if(am&&ITEMS[am]){ael.innerHTML='<span class="eq-icon">'+ITEMS[am].icon+'</span><span class="eq-name">'+ITEMS[am].name+'</span>';ael.classList.add('on');}
-  else{ael.innerHTML='<span class="eq-icon">\uD83D\uDEE1\uFE0F</span><span class="eq-lbl">Armour</span>';ael.classList.remove('on');}
+  else{ael.innerHTML='<span class="eq-icon">🛡️</span><span class="eq-lbl">Armour</span>';ael.classList.remove('on');}
   const foods=Object.entries(G.inv).filter(([id,q])=>ITEMS[id]?.type==='food'&&q>0).sort((a,b)=>(ITEMS[b[0]].hp||0)-(ITEMS[a[0]].hp||0));
   if(foods.length){const[fid,fq]=foods[0];fel.innerHTML='<span class="eq-icon">'+ITEMS[fid].icon+'</span><span class="eq-name">'+ITEMS[fid].name+'('+fq+')</span>';fel.classList.add('on');}
-  else{fel.innerHTML='<span class="eq-icon">\uD83C\uDF56</span><span class="eq-lbl">Food</span>';fel.classList.remove('on');}
+  else{fel.innerHTML='<span class="eq-icon">🍖</span><span class="eq-lbl">Food</span>';fel.classList.remove('on');}
 }
 // BUILD UI
 function buildSkills(){
@@ -680,8 +680,8 @@ function buildSkills(){
     const lbl=document.createElement('div');lbl.className='xp-label';lbl.textContent='0/83';
     // Slots row
     const slots=document.createElement('div');slots.className='sk-slots';
-    const toolS=document.createElement('span');toolS.className='sk-slot tool-slot';toolS.textContent='\u25CB';toolS.title='Tool slot (empty)';
-    const trinS=document.createElement('span');trinS.className='sk-slot trinket-slot';trinS.textContent='\u25CB';trinS.title='Trinket slot (empty)';
+    const toolS=document.createElement('span');toolS.className='sk-slot tool-slot';toolS.textContent='○';toolS.title='Tool slot (empty)';
+    const trinS=document.createElement('span');trinS.className='sk-slot trinket-slot';trinS.textContent='○';trinS.title='Trinket slot (empty)';
     trinS.onclick=(e)=>{e.stopPropagation();showTrinketMenu(sk);};
     slots.appendChild(toolS);slots.appendChild(trinS);
     d.appendChild(top);d.appendChild(trk);d.appendChild(lbl);d.appendChild(slots);
@@ -704,13 +704,13 @@ function showTrinketMenu(sk){
     }
     return;
   }
-  if(available.length===0){log('\u274C No trinkets for '+SKILLS[sk].name+' in inventory.');return;}
+  if(available.length===0){log('❌ No trinkets for '+SKILLS[sk].name+' in inventory.');return;}
   const[tid]=available[0];
   const t=TRINKETS[tid];
   if(confirm('Equip '+t.icon+' '+t.name+' to '+SKILLS[sk].name+'?\n'+t.desc)){
     take(tid,1);
     G.trinkets[sk]=tid;
-    log('\u2728 Equipped '+t.icon+' '+t.name+' to '+SKILLS[sk].name+'!');
+    log('✨ Equipped '+t.icon+' '+t.name+' to '+SKILLS[sk].name+'!');
   }
 }
 
@@ -735,13 +735,13 @@ function buildActPage(sk){
   for(const a of acts){
     let meta='';
     if(a.need)meta=a.need.map(c=>(ITEMS[c.id]?.icon||'')+'x'+c.n).join(' ');
-    else if(a.mhp)meta='\u2764\ufe0fx'+a.mhp+' hp';
+    else if(a.mhp)meta='❤️x'+a.mhp+' hp';
     else if(a.isCombatSpell)meta='Spell Dmg: '+a.spellDmg;
     else meta='~'+(a.dur/1000).toFixed(1)+'s';
     html+='<button class="act-btn" data-id="'+a.id+'" data-req="'+a.req+'" onclick="startTask(\''+a.id+'\')">'
       +'<span class="ab-icon">'+a.icon+'</span>'
       +'<span class="ab-name">'+a.name+'</span>'
-      +'<span class="ab-req">Lv.'+a.req+' \u00b7 +'+a.xp+'xp</span>'
+      +'<span class="ab-req">Lv.'+a.req+' · +'+a.xp+'xp</span>'
       +'<span class="ab-meta">'+meta+'</span>'
       +'</button>';
   }
@@ -781,7 +781,7 @@ function buildShop(){
   SHOP.forEach(s=>{
     const d=document.createElement('div');
     d.className='sh-item'+(s.up&&G.upgrades[s.up]?' owned':'');
-    d.innerHTML='<div class="sh-top"><span class="sh-icon">'+s.icon+'</span><span class="sh-name">'+s.name+'</span></div><div class="sh-price">\uD83E\uDE99 '+s.cost+'</div><div class="sh-eff">'+s.eff+'</div>';
+    d.innerHTML='<div class="sh-top"><span class="sh-icon">'+s.icon+'</span><span class="sh-name">'+s.name+'</span></div><div class="sh-price">🪙 '+s.cost+'</div><div class="sh-eff">'+s.eff+'</div>';
     d.onclick=()=>buy(s);g.appendChild(d);
   });
 }
@@ -793,12 +793,12 @@ function useItem(id){
     // It's a trinket - try to equip it
     const sk=tr.skill;
     if(G.trinkets[sk]){
-      log('\u274C '+SKILLS[sk].name+' trinket slot is full. Remove it first.');
+      log('❌ '+SKILLS[sk].name+' trinket slot is full. Remove it first.');
       return;
     }
     take(id,1);
     G.trinkets[sk]=id;
-    log('\u2728 Equipped '+tr.icon+' '+tr.name+' to '+SKILLS[sk].name+'! '+tr.desc);
+    log('✨ Equipped '+tr.icon+' '+tr.name+' to '+SKILLS[sk].name+'! '+tr.desc);
     return;
   }
   if(!it)return;
@@ -817,24 +817,24 @@ function useItem(id){
       if(nextLvl<=99){
         G.skills[sk].xp=XP[nextLvl];
         showLvlUp(sk,nextLvl);
-        log('<span class="ll">\uD83E\uDDEA Level Potion used! '+SKILLS[sk].name+' is now level '+nextLvl+'!</span>');
+        log('<span class="ll">🧪 Level Potion used! '+SKILLS[sk].name+' is now level '+nextLvl+'!</span>');
         sendLevelNotification(sk,nextLvl);
       }
     }
     return;
   }
   if(it.type==='food'){
-    if(G.hp>=G.maxhp){log('\u2764\uFE0F Already full HP!');return;}
+    if(G.hp>=G.maxhp){log('❤️ Already full HP!');return;}
     take(id,1);G.hp=Math.min(G.maxhp,G.hp+(it.hp||3));
-    log('\uD83C\uDF7D\uFE0F Ate '+it.name+' and restored '+it.hp+' HP.');
+    log('🍽️ Ate '+it.name+' and restored '+it.hp+' HP.');
   } else if(it.type==='weapon'){
     if(G.equip.weapon===id){G.equip.weapon=null;log('Unequipped '+it.name);}
-    else{G.equip.weapon=id;log('\u2694\uFE0F Equipped '+it.name+' (+'+it.atk+' Atk)');}
+    else{G.equip.weapon=id;log('⚔️ Equipped '+it.name+' (+'+it.atk+' Atk)');}
   } else if(it.type==='armour'){
     if(G.equip.armour===id){G.equip.armour=null;log('Unequipped '+it.name);}
-    else{G.equip.armour=id;log('\uD83D\uDEE1\uFE0F Equipped '+it.name+' (+'+it.def+' Def)');}
+    else{G.equip.armour=id;log('🛡️ Equipped '+it.name+' (+'+it.def+' Def)');}
   } else {
-    log(it.icon+' '+it.name+' \xd7'+(G.inv[id]||0));
+    log(it.icon+' '+it.name+' ×'+(G.inv[id]||0));
   }
 }
 
@@ -842,8 +842,8 @@ function unequipSlot(slot){G.equip[slot]=null;log('Unequipped '+slot+'.');}
 
 function eatFood(){
   const f=Object.entries(G.inv).filter(([id,q])=>ITEMS[id]?.type==='food'&&q>0).sort((a,b)=>(ITEMS[b[0]].hp||0)-(ITEMS[a[0]].hp||0));
-  if(!f.length){log('\u274C No food!');return;}
-  if(G.hp>=G.maxhp){log('\u2764\uFE0F Already full HP!');return;}
+  if(!f.length){log('❌ No food!');return;}
+  if(G.hp>=G.maxhp){log('❤️ Already full HP!');return;}
   useItem(f[0][0]);
 }
 
@@ -855,26 +855,26 @@ function sellAll(){
     if(it.type==='weapon'||it.type==='armour'||it.type==='food'||it.type==='accessory'||it.type==='potion')continue;
     if(it.special)continue;
     if(TRINKETS[id])continue;
-    if(it.type==='currency'){gold+=qty;sold.push(it.icon+'\xd7'+qty);delete G.inv[id];continue;}
-    gold+=it.sell*qty;sold.push(it.icon+'\xd7'+qty);delete G.inv[id];
+    if(it.type==='currency'){gold+=qty;sold.push(it.icon+'×'+qty);delete G.inv[id];continue;}
+    gold+=it.sell*qty;sold.push(it.icon+'×'+qty);delete G.inv[id];
   }
-  if(gold>0){G.gold+=gold;log('<span class="lg">\uD83D\uDCB0 Sold for '+gold+' gp ('+sold.join(', ')+')</span>');}
+  if(gold>0){G.gold+=gold;log('<span class="lg">💰 Sold for '+gold+' gp ('+sold.join(', ')+')</span>');}
   else log('Nothing to sell.');
 }
 
 function buryBones(){
-  if(!has('bones')){log('\u274C No bones!');return;}
+  if(!has('bones')){log('❌ No bones!');return;}
   const n=G.inv['bones']||0;
   take('bones',n);
   addXP('combat',n*5);
-  log('\uD83E\uDDB4 Buried '+n+' bones. +'+(n*5)+' Combat XP.');
+  log('🦴 Buried '+n+' bones. +'+(n*5)+' Combat XP.');
 }
 
 function buy(s){
-  if(G.gold<s.cost){log('\u274C Need '+s.cost+' gp (have '+G.gold+').');return;}
+  if(G.gold<s.cost){log('❌ Need '+s.cost+' gp (have '+G.gold+').');return;}
   if(s.up&&G.upgrades[s.up]){log('Already owned!');return;}
   G.gold-=s.cost;
-  if(s.up){G.upgrades[s.up]=true;log('\u2705 Purchased '+s.name+'! '+s.eff);}
+  if(s.up){G.upgrades[s.up]=true;log('✅ Purchased '+s.name+'! '+s.eff);}
   document.getElementById('shop-grid').innerHTML='';buildShop();
 }
 // CHARACTER ANIMATION
@@ -900,56 +900,56 @@ function anim(){
       ar.style.animation='chop .65s ease-in-out infinite .32s';
       prop.innerHTML='<div class="prop-tree-t" style="animation:sway 2.5s ease-in-out infinite;transform-origin:bottom center"></div>'
         +'<div class="prop-tree-l" style="animation:sway 2.5s ease-in-out infinite;transform-origin:bottom center"></div>'
-        +'<div class="prop-tool" style="bottom:28px;right:55px;transform:rotate(-25deg)">\uD83E\uDE93</div>';
+        +'<div class="prop-tool" style="bottom:28px;right:55px;transform:rotate(-25deg)">🪓</div>';
       break;
     case 'mining':
       al.style.animation='chop .55s ease-in-out infinite';
       ar.style.animation='chop .55s ease-in-out infinite .27s';
       prop.innerHTML='<div class="prop-rock"></div>'
-        +'<div class="prop-tool" style="bottom:26px;right:50px;transform:rotate(40deg)">\u26CF\uFE0F</div>';
+        +'<div class="prop-tool" style="bottom:26px;right:50px;transform:rotate(40deg)">⛏️</div>';
       break;
     case 'fishing':
       al.style.animation='cast 1.6s ease-in-out infinite';
       ar.style.animation='cast 1.6s ease-in-out infinite .8s';
       prop.innerHTML='<div class="prop-water" style="animation:ripple 1.5s ease-in-out infinite"></div>'
-        +'<div class="prop-tool" style="bottom:32px;right:50px">\uD83C\uDFA3</div>';
+        +'<div class="prop-tool" style="bottom:32px;right:50px">🎣</div>';
       break;
     case 'smithing':
       al.style.animation='chop .5s ease-in-out infinite';
       ar.style.animation='chop .5s ease-in-out infinite .25s';
-      prop.innerHTML='<div class="prop-fire" style="animation:flicker .45s ease-in-out infinite">\uD83D\uDD25</div>'
-        +'<div class="prop-anvil">\u2699\uFE0F</div>'
-        +'<div class="prop-tool" style="bottom:27px;right:50px;transform:rotate(30deg)">\uD83D\uDD28</div>';
+      prop.innerHTML='<div class="prop-fire" style="animation:flicker .45s ease-in-out infinite">🔥</div>'
+        +'<div class="prop-anvil">⚙️</div>'
+        +'<div class="prop-tool" style="bottom:27px;right:50px;transform:rotate(30deg)">🔨</div>';
       break;
     case 'cooking':
       al.style.animation='stir 1s ease-in-out infinite';
       ar.style.animation='stir 1s ease-in-out infinite .5s';
-      prop.innerHTML='<div class="prop-fire" style="animation:flicker .4s ease-in-out infinite">\uD83D\uDD25</div>'
-        +'<div class="prop-tool" style="bottom:30px;right:46px">\uD83C\uDF73</div>';
+      prop.innerHTML='<div class="prop-fire" style="animation:flicker .4s ease-in-out infinite">🔥</div>'
+        +'<div class="prop-tool" style="bottom:30px;right:46px">🍳</div>';
       break;
     case 'combat':
       al.style.animation='swing .6s ease-in-out infinite';
       ar.style.animation='swing2 .6s ease-in-out infinite';
       ll.style.animation='walk-l .55s ease-in-out infinite';
       lr.style.animation='walk-r .55s ease-in-out infinite';
-      const wico=G.equip.weapon&&ITEMS[G.equip.weapon]?ITEMS[G.equip.weapon].icon:'\u2694\uFE0F';
-      prop.innerHTML='<div class="prop-monster">'+(a?a.icon:'\uD83D\uDC7A')+'</div>'
+      const wico=G.equip.weapon&&ITEMS[G.equip.weapon]?ITEMS[G.equip.weapon].icon:'⚔️';
+      prop.innerHTML='<div class="prop-monster">'+(a?a.icon:'👺')+'</div>'
         +'<div class="prop-tool" style="bottom:22px;right:55px;transform:rotate(-20deg)">'+wico+'</div>';
       break;
     case 'magic':
       al.style.animation='cast 1.1s ease-in-out infinite';
       ar.style.animation='cast 1.1s ease-in-out infinite .55s';
-      prop.innerHTML='<div class="prop-tool" style="bottom:30px;right:48px">\u2728</div>';
+      prop.innerHTML='<div class="prop-tool" style="bottom:30px;right:48px">✨</div>';
       break;
     case 'fletching':
       al.style.animation='stir 1.1s ease-in-out infinite';
       ar.style.animation='cast 1.1s ease-in-out infinite .55s';
-      prop.innerHTML='<div class="prop-tool" style="bottom:32px;right:48px">\uD83C\uDFF9</div>';
+      prop.innerHTML='<div class="prop-tool" style="bottom:32px;right:48px">🏹</div>';
       break;
     case 'crafting':
       al.style.animation='stir 1.2s ease-in-out infinite';
       ar.style.animation='stir 1.2s ease-in-out infinite .6s';
-      prop.innerHTML='<div class="prop-tool" style="bottom:30px;right:48px">\uD83E\uDDF5</div>';
+      prop.innerHTML='<div class="prop-tool" style="bottom:30px;right:48px">🧵</div>';
       break;
   }
 }
@@ -963,8 +963,8 @@ function log(msg){
 }
 function showLvlUp(sk,lv){
   const d=document.createElement('div');d.className='lv-popup';
-  const t=document.createElement('div');t.className='lv-title';t.textContent='\u2B50 LEVEL UP!';
-  const s=document.createElement('div');s.className='lv-sub';s.textContent=SKILLS[sk].icon+' '+SKILLS[sk].name+' \u2014 Level '+lv;
+  const t=document.createElement('div');t.className='lv-title';t.textContent='⭐ LEVEL UP!';
+  const s=document.createElement('div');s.className='lv-sub';s.textContent=SKILLS[sk].icon+' '+SKILLS[sk].name+' — Level '+lv;
   d.appendChild(t);d.appendChild(s);
   document.body.appendChild(d);setTimeout(()=>d.remove(),2700);
 }
@@ -983,15 +983,15 @@ function init(){
   updateUI();anim();
   setInterval(tick,50);
   requestNotificationPermission();
-  log('\uD83C\uDFAE <b>Welcome to RuneForge!</b> You start with a Bronze Sword!');
-  log('\uD83D\uDCA1 Tip: Fish shrimp \u2192 Cook food \u2192 Enter the Dungeon! Chop logs \u2192 Fletch bows. Mine ores \u2192 Smith gear.');
+  log('🎮 <b>Welcome to RuneForge!</b> You start with a Bronze Sword!');
+  log('💡 Tip: Fish shrimp → Cook food → Enter the Dungeon! Chop logs → Fletch bows. Mine ores → Smith gear.');
   if(G.task){
     const sk=findSkill(G.task);
     const a=findAction(G.task);
     if(sk&&a){
       switchTab(sk);
       document.getElementById('task-title').textContent=a.icon+' '+a.name;
-      document.getElementById('task-xp-lbl').textContent='+'+a.xp+' XP \u00b7 '+SKILLS[sk].name;
+      document.getElementById('task-xp-lbl').textContent='+'+a.xp+' XP · '+SKILLS[sk].name;
       document.getElementById('task-stop').style.display='block';
     }
   } else {
@@ -1000,6 +1000,6 @@ function init(){
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)lastT=Date.now();});
 window.addEventListener('load',init);
-<\/script>
+</script>
 </body>
   </html>
