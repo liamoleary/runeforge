@@ -164,7 +164,7 @@
           localStorage.removeItem('rforge');
           if(typeof G!=='undefined'){
             G.skills={};G.inv={};G.equip={weapon:null,armour:null};
-            G.gold=0;G.hp=10;G.maxhp=10;G.upgrades={};G.tools={};
+            G.gold=0;G.hp=10;G.maxhp=10;G.upgrades={};G.tools={};G.dungeonRewards={};
             G.tab='woodcutting';G.task=null;G.prog=0;G.dur=0;
             G.critStacks=0;G.xpEarned={};G.startedWithSword=false;
             G.hasSeenIntro=false;
