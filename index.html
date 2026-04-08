@@ -47,7 +47,9 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 #task-title{font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:7px}
 #task-prog-wrap{background:#0a0804;height:9px;border-radius:5px;overflow:hidden}
 #task-prog{height:100%;border-radius:5px;transition:width .08s linear;background:linear-gradient(90deg,var(--gold),#ff9900)}
-#task-sub{font-size:11px;color:var(--text3);margin-top:4px;display:flex;justify-content:space-between}
+#task-sub{font-size:11px;color:var(--text3);margin-top:4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.tool-active{display:inline-flex;align-items:center;gap:3px;background:#1c1710;border:1px solid var(--bdr2);border-radius:4px;padding:1px 5px;color:var(--gold);font-size:10px;font-weight:700;margin-left:4px;box-shadow:0 0 6px rgba(240,192,64,0.18)}
+.tool-active .ta-ico{font-size:13px;line-height:1}
 #task-stop{background:#2a1808;border:1px solid var(--bdr2);border-radius:6px;color:var(--gold);font-size:11px;font-family:'Cinzel',serif;padding:3px 9px;cursor:pointer;display:none}
 #task-stop:active{transform:scale(.95)}
 #tabs{display:flex;overflow-x:auto;background:#0e0b06;border-bottom:1px solid var(--bdr);scrollbar-width:none}
@@ -703,6 +705,43 @@ function getToolSpeedMult(sk){
   if(tid&&TOOL_BONUS[tid])mult=Math.min(mult,1-TOOL_BONUS[tid]);
   return mult;
 }
+function getActiveToolBadge(sk){
+  // Returns HTML for the active task bar showing equipped tool + bonus, or ''
+  const tid=G.tools[sk];
+  if(tid&&ITEMS[tid]&&TOOL_BONUS[tid]){
+    const pct=Math.round(TOOL_BONUS[tid]*100);
+    return '<span class="tool-active" title="'+ITEMS[tid].name+' equipped"><span class="ta-ico">'+ITEMS[tid].icon+'</span>−'+pct+'%</span>';
+  }
+  const upKey='spd_'+sk.slice(0,4);
+  if(G.upgrades[upKey]){
+    return '<span class="tool-active" title="Shop tool upgrade"><span class="ta-ico">⚒</span>−15%</span>';
+  }
+  return '';
+}
+function updateActiveTaskBar(){
+  if(!G.task)return;
+  const a=findAction(G.task);const sk=findSkill(G.task);
+  if(!a||!sk)return;
+  const dur='~'+(G.dur/1000).toFixed(1)+'s';
+  document.getElementById('task-dur-lbl').innerHTML=dur+getActiveToolBadge(sk);
+}
+function recomputeActiveTaskDur(forSk){
+  // Re-derives G.dur for the running task (e.g. after equipping a tool).
+  // Preserves progress as a percentage so the bar doesn't jump.
+  if(!G.task)return;
+  const sk=findSkill(G.task);
+  if(forSk&&sk!==forSk)return;
+  const a=findAction(G.task);
+  if(!a||!sk)return;
+  const lv=slvl(sk);
+  const spd=getToolSpeedMult(sk);
+  const lvBonus=Math.max(0.5,1-(lv-a.req)*0.006);
+  const newDur=Math.max(800,Math.floor(a.dur*spd*lvBonus));
+  const pct=G.dur>0?(G.prog/G.dur):0;
+  G.dur=newDur;
+  G.prog=Math.min(newDur,pct*newDur);
+  updateActiveTaskBar();
+}
 function addXP(sk,amt){
   const bonus=getTrinketBonus(sk);
   const finalAmt=Math.floor(amt*(1+bonus));
@@ -870,7 +909,7 @@ function startTask(id){
   if(a.mhp!==undefined){G.mhp=a.mhp;G.mmhp=a.mhp;}
   document.getElementById('task-title').textContent=a.icon+' '+a.name;
   document.getElementById('task-xp-lbl').textContent='+'+a.xp+' XP · '+SKILLS[sk].name;
-  document.getElementById('task-dur-lbl').textContent='~'+(G.dur/1000).toFixed(1)+'s';
+  updateActiveTaskBar();
   document.getElementById('task-stop').style.display='block';
   anim();refreshButtons(G.tab);
   log('▶ Started: '+a.name);
@@ -1030,7 +1069,7 @@ function showSlotMenu(sk, slotType){
       const it=ITEMS[current];
       const pct=Math.round((TOOL_BONUS[current]||0)*100);
       items.push({icon:it.icon,name:it.name+' (equipped)',desc:'+'+pct+'% '+SKILLS[sk].name+' speed · tap to unequip',equipped:true,action:()=>{
-        give(current,1);delete G.tools[sk];log('Removed '+it.name+' from '+SKILLS[sk].name+' tool slot.');closeSlotMenu();
+        give(current,1);delete G.tools[sk];log('Removed '+it.name+' from '+SKILLS[sk].name+' tool slot.');recomputeActiveTaskDur(sk);closeSlotMenu();
       }});
     }
     // Shop upgrade (permanent, separate)
@@ -1045,7 +1084,9 @@ function showSlotMenu(sk, slotType){
       items.push({icon:it.icon,name:it.name,desc:'+'+pct+'% '+SKILLS[sk].name+' speed',equipped:false,action:()=>{
         if(G.tools[sk]){give(G.tools[sk],1);}
         take(id,1);G.tools[sk]=id;
-        log('🛠 Equipped '+it.icon+' '+it.name+' as '+SKILLS[sk].name+' tool!');closeSlotMenu();
+        log('🛠 Equipped '+it.icon+' '+it.name+' as '+SKILLS[sk].name+' tool! (+'+pct+'% speed)');
+        recomputeActiveTaskDur(sk);
+        closeSlotMenu();
       }});
     });
     if(items.length===0) items.push({icon:'❌',name:'No tool',desc:'Buy one from the General Store, or find one in the dungeon',equipped:false,action:()=>closeSlotMenu()});
@@ -1677,6 +1718,7 @@ function updateCombatStatsPanel() {
       switchTab(sk);
       document.getElementById('task-title').textContent=a.icon+' '+a.name;
       document.getElementById('task-xp-lbl').textContent='+'+a.xp+' XP · '+SKILLS[sk].name;
+      updateActiveTaskBar();
       document.getElementById('task-stop').style.display='block';
     }
   } else {
