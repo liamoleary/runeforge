@@ -27,8 +27,10 @@ app.post('/api/save', requireAuth, (req, res) => { const { saveData } = req.body
 app.get('/api/save', requireAuth, (req, res) => { const save = db.prepare('SELECT save_data, updated_at FROM saves WHERE user_id = ?').get(req.session.userId); if (!save) return res.json({ hasSave: false }); res.json({ hasSave: true, saveData: JSON.parse(save.save_data), updatedAt: save.updated_at }); });
 
 app.post('/api/admin-reset', (req, res) => {
+  const expected = process.env.ADMIN_RESET_SECRET;
+  if (!expected) return res.status(503).json({ error: 'Admin reset disabled. Set ADMIN_RESET_SECRET to enable.' });
   const { username, secret } = req.body;
-  if (secret !== 'runeforge-reset-2024') return res.status(403).json({ error: 'Forbidden' });
+  if (!secret || secret !== expected) return res.status(403).json({ error: 'Forbidden' });
   if (!username) return res.status(400).json({ error: 'Username required' });
   const user = db.prepare('SELECT id FROM users WHERE username = ?').get(username.toLowerCase());
   if (!user) return res.status(404).json({ error: 'User not found' });
