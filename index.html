@@ -36,9 +36,9 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .sk-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text2);letter-spacing:.5px}
 .sk-lvl{font-size:17px;font-weight:700;line-height:1.15;color:var(--text)}
 .sk-xp-earned{font-size:8px;color:var(--gold);margin-top:1px}
-.sk-slots{display:flex;gap:3px;margin-top:3px}
-.sk-slot{font-size:9px;background:var(--bg);border:1px solid var(--bdr);border-radius:3px;padding:1px 4px;color:var(--text3);cursor:pointer}
-.sk-slot.filled{border-color:var(--bdr2);color:var(--gold)}
+.sk-slots{display:flex;gap:5px;margin-left:auto;align-items:center}
+.sk-slot{font-size:22px;line-height:1;background:var(--bg);border:1.5px solid var(--bdr);border-radius:6px;min-width:34px;height:38px;display:flex;align-items:center;justify-content:center;color:var(--text3);cursor:pointer;padding:0 4px}
+.sk-slot.filled{border-color:var(--bdr2);color:var(--gold);background:#1c1710;box-shadow:0 0 6px rgba(240,192,64,0.18)}
 .xp-track{background:#0a0804;height:5px;border-radius:3px;overflow:hidden}
 .xp-fill{height:100%;border-radius:3px;transition:width .4s ease}
 .xp-label{font-size:9px;color:var(--text3);margin-top:2px}
@@ -981,7 +981,8 @@ function buildSkills(){
     const trinS=document.createElement('span');trinS.className='sk-slot trinket-slot';trinS.textContent='○';trinS.title='Trinket slot';
     trinS.onclick=(e)=>{e.stopPropagation();showSlotMenu(sk,'trinket');};
     slots.appendChild(toolS);slots.appendChild(trinS);
-    d.appendChild(top);d.appendChild(trk);d.appendChild(lbl);d.appendChild(slots);
+    top.appendChild(slots);
+    d.appendChild(top);d.appendChild(trk);d.appendChild(lbl);
     d.onclick=()=>switchTab(sk);
     g.appendChild(d);
   }
