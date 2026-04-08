@@ -16,24 +16,16 @@
   ];
 
   var GROVE_TRINKETS = [
-    {id:'grove_wc_trinket',weight:1},
-    {id:'grove_mn_trinket',weight:1},
-    {id:'grove_fs_trinket',weight:1},
-    {id:'grove_ck_trinket',weight:1},
-    {id:'grove_sm_trinket',weight:1},
-    {id:'grove_cb_trinket',weight:1},
-    {id:'grove_fl_trinket',weight:1},
-    {id:'grove_cr_trinket',weight:1},
-    {id:'grove_mg_trinket',weight:1}
+    {id:'grove_wc_trinket',weight:1}
   ];
 
   var DG = {
     rooms: [
-      {name:'Twisted Sapling',icon:'🌱',hp:5,maxhp:5,dmg:[1,2],xp:15},
-      {name:'Thorny Sprout',icon:'🌿',hp:6,maxhp:6,dmg:[1,3],xp:18},
-      {name:'Whipping Vine',icon:'🌾',hp:7,maxhp:7,dmg:[1,3],xp:20},
-      {name:'Fungal Sapling',icon:'🍄',hp:8,maxhp:8,dmg:[2,3],xp:25},
-      {name:'Ancient Seedling',icon:'🌲',hp:12,maxhp:12,dmg:[2,4],xp:40}
+      {name:'Twisted Sapling',icon:'🌱',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:'physical'},
+      {name:'Thorny Sprout',icon:'🌿',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:null},
+      {name:'Whipping Vine',icon:'🌾',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'magic',resist:'physical'},
+      {name:'Fungal Sapling',icon:'🍄',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:'magic'},
+      {name:'Ancient Seedling',icon:'🌲',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
     ],
     minFood: 3,
     specialAxeChance: 0.05,
@@ -114,7 +106,7 @@
       lootCollected:[],
       victory:false,
       fled:false,
-      powerCharged:false,
+      critStacks:0,
       bgTaskSkill:null,
       bgTaskAction:null,
       bgTaskProg:0,
@@ -138,9 +130,9 @@
     if(!mon||mon.hp<=0) return;
 
     if(mode==='power'){
-      // Skip this turn to charge up
-      dungeonState.powerCharged=true;
-      dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ You focus your energy... Next attack will deal double damage!</span>');
+      dungeonState.critStacks=(dungeonState.critStacks||0)+1;
+      var cChance=Math.min(90,dungeonState.critStacks*30);
+      dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ You focus energy! Crit chance: '+cChance+'% (stack: '+dungeonState.critStacks+')</span>');
       // Monster still attacks
       var mDmg2=rollDmg(mon.dmg[0],mon.dmg[1]),def2=getPlayerDef(),ad2=Math.max(1,mDmg2-Math.floor(def2*0.5));
       dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad2);
@@ -159,15 +151,29 @@
       return;
     }
 
-    // Normal or power-charged attack
-    var pAtk=getPlayerAtk(),pDmg=Math.max(1,rollDmg(1,pAtk));
-    if(dungeonState.powerCharged){
-      pDmg=Math.floor(pDmg*2);
-      dungeonState.powerCharged=false;
-      dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ POWER STRIKE!</span>');
+    // Handle magic attack
+    if(mode==='magic'){
+      if(!G.inv||!G.inv.feather||(G.inv.feather||0)<1){showDungeonMessage('No feathers for magic!','#e03030');renderDungeon();return;}
+      G.inv.feather--;if(G.inv.feather<=0)delete G.inv.feather;
+      if(typeof addXP==='function')addXP('magic',5);
+    }
+    var pAtk=mode==='magic'?(typeof slvl==='function'?Math.floor(slvl('magic')*0.6)+2:3):getPlayerAtk();
+    var pDmg=Math.max(1,rollDmg(1,pAtk));
+    var isCrit=false;
+    if(dungeonState.critStacks>0){
+      var critChance=Math.min(0.9,dungeonState.critStacks*0.3);
+      if(Math.random()<critChance){isCrit=true;pDmg=Math.floor(pDmg*2.5);dungeonState.combatLog.push('<span style="color:#ffd966;font-size:13px;">⚡ CRITICAL HIT!</span>');}
+      else{dungeonState.combatLog.push('<span style="color:#9a7e50;">No crit ('+Math.round(critChance*100)+'% chance)</span>');}
+      dungeonState.critStacks=0;
     }
     mon.hp=Math.max(0,mon.hp-pDmg);
-    dungeonState.combatLog.push('You hit '+mon.icon+' '+mon.name+' for <span style="color:#5ac85a">'+pDmg+'</span> damage.');
+    var atkType=mode==='magic'?'magic':'physical';
+    var effectiveness='';
+    if(mon.weak===atkType){pDmg=Math.floor(pDmg*1.5);effectiveness='<span style="color:#5ac85a;font-size:9px;"> ✔ Super effective!</span>';}
+    else if(mon.resist===atkType){pDmg=Math.max(1,Math.floor(pDmg*0.6));effectiveness='<span style="color:#e03030;font-size:9px;"> ✖ Resisted!</span>';}
+    else{effectiveness='<span style="color:#9a7e50;font-size:9px;"> Normal</span>';}
+    var dmgColor=isCrit?'#ffd966':(mon.weak===atkType?'#5ac85a':(mon.resist===atkType?'#e03030':'#5ac85a'));
+    dungeonState.combatLog.push('You hit '+mon.icon+' '+mon.name+' for <span style="color:'+dmgColor+';font-weight:bold;">'+pDmg+'</span> damage.'+effectiveness);
 
     if(mon.hp<=0){
       var xp=mon.xp;
@@ -337,8 +343,10 @@
     if(!done){
       var fc=getFoodCount();
       h+='<button onclick="window._dgAttack(\'slash\')" style="flex:1;max-width:80px;padding:6px;background:#8B4513;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;font-weight:bold;" title="Normal attack">⚔ Slash</button>';
-      h+='<button onclick="window._dgAttack(\'power\')" style="flex:1;max-width:80px;padding:6px;background:'+(s.powerCharged?'#4a3010':'#251e14')+';border:1px solid '+(s.powerCharged?'#ffd966':'#3a2c18')+';color:'+(s.powerCharged?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Skip attack to charge, next hit deals 2x damage">⚡ Power</button>';
+      h+='<button onclick="window._dgAttack(\'power\')" style="flex:1;max-width:80px;padding:6px;background:'+(s.critStacks>0?'#4a3010':'#251e14')+';border:1px solid '+(s.critStacks>0?'#ffd966':'#3a2c18')+';color:'+(s.critStacks>0?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Stack crit chance (+30% per stack). You still take damage!">⚡ Power'+(s.critStacks>0?' ('+s.critStacks+')':'')+'</button>';
       h+='<button onclick="window._dgEat()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:'+(fc>0?'#5ac85a':'#5a4830')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Eat food to heal (no damage taken)">🍖 Eat('+fc+')</button>';
+      var hasMagic=typeof G!=='undefined'&&typeof slvl==='function'&&slvl('magic')>=1&&G.inv&&(G.inv.feather||0)>0;
+      if(hasMagic) h+='<button onclick="window._dgAttack(\'magic\')" style="flex:1;max-width:80px;padding:6px;background:#2a1540;border:1px solid #9b59b6;color:#bb77ee;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Cast spell (uses feathers)">✨ Magic</button>';
       h+='<button onclick="window._dgFlee()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:#e03030;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Flee and keep collected loot">🏃 Flee</button>';
     } else {
       h+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+(s.victory?'🪓 Claim & Leave':s.fled?'🏃 Leave':'Leave Dungeon')+'</button>';
@@ -346,8 +354,9 @@
     h+='</div>';
 
     // Power charge indicator
-    if(!done&&s.powerCharged){
-      h+='<div style="text-align:center;color:#ffd966;font-size:10px;margin-bottom:6px;">⚡ Power charged! Next slash deals 2x damage.</div>';
+    if(!done&&s.critStacks>0){
+      var cc=Math.min(90,s.critStacks*30);
+      h+='<div style="text-align:center;color:#ffd966;font-size:10px;margin-bottom:6px;">⚡ Crit stacks: '+s.critStacks+' ('+cc+'% crit chance). Stack more or slash!</div>';
     }
 
     // Loot display
@@ -388,6 +397,7 @@
   }
 
   window._dgAttack=dungeonAttack;
+  window._dgShowEntry=showDungeonEntry;
   window._dgEat=dungeonEat;
   window._dgFlee=dungeonFlee;
   window._dgLeave=leaveDungeon;
@@ -426,7 +436,7 @@
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;"><div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">ENEMIES</div>';
     DG.rooms.forEach(function(r){
-      h+='<div style="display:flex;justify-content:space-between;color:#9a7e50;font-size:10px;margin-bottom:2px;"><span>'+r.icon+' '+r.name+'</span><span>'+r.maxhp+'HP | '+r.dmg[0]+'-'+r.dmg[1]+'</span></div>';
+      var weakStr=r.weak?(' | Weak: '+(r.weak==='magic'?'✨':'⚔')):'';var resistStr=r.resist?(' | Resist: '+(r.resist==='magic'?'✨':'⚔')):'';h+='<div style="display:flex;justify-content:space-between;color:#9a7e50;font-size:10px;margin-bottom:2px;"><span>'+r.icon+' '+r.name+'</span><span>'+r.maxhp+'HP | '+r.dmg[0]+'-'+r.dmg[1]+weakStr+resistStr+'</span></div>';
     });
     h+='</div><div id="dg-msg" style="display:none;text-align:center;font-size:11px;margin-bottom:6px;"></div>';
 
