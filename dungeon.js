@@ -35,12 +35,16 @@
 
   var dungeonState = null;
 
+  // Skill level required to unlock all dungeons.
+  var DUNGEON_UNLOCK_LEVEL = 10;
+
   // Themed level-1 dungeon definitions, one per skill.
   var DUNGEONS = {
     woodcutting: {
       id:'woodcutting', name:'Enchanted Grove', icon:'🌳',
       desc:'Corrupted saplings have taken root deep in the forest.',
       flavour:'The trees stir with dark energy. 5 creatures await.',
+      discovery:'Deep in the woods, your axe strikes uncover a hidden grove choked with twisted growth. Eyes blink in the gloom — something has been waiting.',
       rooms:[
         {name:'Twisted Sapling',icon:'🌱',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:'physical'},
         {name:'Thorny Sprout',icon:'🌿',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:null},
@@ -63,6 +67,7 @@
       id:'mining', name:'Crumbling Mineshaft', icon:'⛏️',
       desc:'An old mineshaft has collapsed and stirred something within.',
       flavour:'Pickaxes echo in the dark. 5 creatures await.',
+      discovery:'Your pickaxe punches through the rock and a draft of cold air rushes out. Beyond the breach, a forgotten mineshaft drops into the dark — and something is moving down there.',
       rooms:[
         {name:'Rock Crawler',icon:'🪨',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:'physical'},
         {name:'Coal Wisp',icon:'⚫',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:null},
@@ -84,6 +89,7 @@
       id:'fishing', name:'Sunken Reef', icon:'🐟',
       desc:'A drowned reef hides predators among its coral spires.',
       flavour:'Bubbles rise from the deep. 5 creatures await.',
+      discovery:'Your line snags on something that pulls back. Hauling it in, you find a chunk of coral from a sunken reef no fisher has charted. The water beneath you suddenly feels much deeper.',
       rooms:[
         {name:'Reef Piranha',icon:'🐟',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:null},
         {name:'Stinging Jelly',icon:'🪼',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:'magic'},
@@ -105,6 +111,7 @@
       id:'cooking', name:'Cursed Pantry', icon:'🍳',
       desc:'Animated pots and ravenous rats infest a forgotten kitchen.',
       flavour:'Something is bubbling. 5 creatures await.',
+      discovery:'A pungent smell drifts out from the back of an abandoned inn. Following the trail of broken crockery, you find a pantry where something is still bubbling — and watching.',
       rooms:[
         {name:'Pantry Rat',icon:'🐀',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'physical',resist:null},
         {name:'Hungry Wisp',icon:'🍖',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:'physical'},
@@ -125,6 +132,7 @@
       id:'smithing', name:'Molten Forge', icon:'🔨',
       desc:'Slag golems shamble through an abandoned smithy.',
       flavour:'Heat shimmers off the anvils. 5 creatures await.',
+      discovery:'A clanging echoes from the hills — anvils that should be silent. You trace the sound to a long-forgotten forge where the bellows still breathe with heat, and the slag is stirring.',
       rooms:[
         {name:'Slag Imp',icon:'🧌',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:'physical'},
         {name:'Anvil Spirit',icon:'⚒️',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:null},
@@ -147,6 +155,7 @@
       id:'fletching', name:'Splinterwood Hollow', icon:'🏹',
       desc:'Vengeful tree spirits guard their fallen kin.',
       flavour:'Branches snap. 5 creatures await.',
+      discovery:'A fletched arrow that isn\'t yours lies in the underbrush, still warm. Following its trajectory, you find a hollow tree gaping into a splintered hallow — and the wood remembers.',
       rooms:[
         {name:'Twig Sprite',icon:'🌿',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'physical',resist:null},
         {name:'Bark Knight',icon:'🪵',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:'physical'},
@@ -167,6 +176,7 @@
       id:'crafting', name:"Spinner's Lair", icon:'🕸️',
       desc:'A web-choked tower hides skittering horrors.',
       flavour:'Silk drapes the walls. 5 creatures await.',
+      discovery:'Threads of strange silk cling to your needle, finer than anything you\'ve woven. They lead away from your workbench, out the door, and up to a tower thick with webs.',
       rooms:[
         {name:'Silk Spider',icon:'🕷️',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'physical',resist:null},
         {name:'Tangle Weaver',icon:'🕸️',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:'physical'},
@@ -187,6 +197,7 @@
       id:'magic', name:'Whispering Vault', icon:'✨',
       desc:'Animated tomes and wisps drift through an old archive.',
       flavour:'The air hums with arcane power. 5 creatures await.',
+      discovery:'Your spells stir a current you didn\'t cast. Tracing it back to its source, you find a vault sealed for centuries, its doors humming open at your touch. Voices whisper from within.',
       rooms:[
         {name:'Wisp',icon:'✨',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'physical',resist:'magic'},
         {name:'Animated Tome',icon:'📖',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:null},
@@ -207,6 +218,7 @@
       id:'combat', name:'Bandit Hideout', icon:'⚔️',
       desc:'Outlaws have set up camp in the old waystation.',
       flavour:'Steel rasps in the gloom. 5 creatures await.',
+      discovery:'Your reputation has spread, and a frightened merchant begs your help — bandits have seized the old waystation. They will not surrender lightly, and they know your name.',
       rooms:[
         {name:'Sneak Thief',icon:'🥷',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:null},
         {name:'Cutpurse',icon:'💰',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:null},
@@ -642,6 +654,56 @@
     setTimeout(function(){if(burst.parentNode)burst.remove();},1400);
   }
 
+  // === DUNGEON DISCOVERY POPUP (fires once when a skill hits unlock level) ===
+  function showDungeonDiscoveryPopup(sk){
+    var dungeon=DUNGEONS[sk];
+    if(!dungeon)return;
+    if(document.getElementById('dg-discovery-popup'))return;
+    var ov=document.createElement('div');
+    ov.id='dg-discovery-popup';
+    ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle,rgba(20,12,4,0.88) 0%,rgba(0,0,0,0.96) 100%);z-index:10000;display:flex;align-items:center;justify-content:center;animation:dgFadeIn 0.4s ease-out;overflow:hidden;padding:20px;box-sizing:border-box;';
+
+    var modal=document.createElement('div');
+    modal.style.cssText='position:relative;background:linear-gradient(135deg,#0f0a04 0%,#1a1308 60%,#2a1f0c 100%);border:3px solid #f0c040;border-radius:14px;padding:26px 30px 20px;max-width:380px;width:100%;text-align:center;box-shadow:0 0 60px rgba(240,192,64,0.55),0 0 120px rgba(240,192,64,0.25);animation:dgVictoryPop 0.7s cubic-bezier(0.2,1.3,0.6,1) forwards;font-family:Cinzel,serif;z-index:2;';
+    var skName=(typeof SKILLS!=='undefined'&&SKILLS[sk])?SKILLS[sk].name:sk;
+    modal.innerHTML=
+      '<div style="color:#f0c040;font-size:12px;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">🗝️ Dungeon Discovered 🗝️</div>'+
+      '<div style="color:#9a7e50;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;">Through your '+skName+' mastery</div>'+
+      '<div style="font-size:64px;line-height:1;margin:6px 0 12px;display:inline-block;animation:dgRewardSpin 0.9s ease-out forwards,dgRewardGlow 2.4s ease-in-out 0.9s infinite;">'+dungeon.icon+'</div>'+
+      '<div style="color:#f0c040;font-size:22px;font-weight:700;margin-bottom:16px;text-shadow:0 0 14px rgba(240,192,64,0.6);">'+dungeon.name+'</div>'+
+      '<div style="color:#e8d898;font-size:13px;line-height:1.55;font-style:italic;font-family:Georgia,serif;margin-bottom:22px;padding:0 4px;">'+(dungeon.discovery||dungeon.desc||'')+'</div>'+
+      '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">'+
+      '<button id="dg-discovery-enter" style="background:linear-gradient(180deg,#f0c040,#c08020);border:2px solid #f0c040;color:#0b0905;padding:11px 22px;font-family:Cinzel,serif;font-size:13px;font-weight:700;border-radius:6px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;box-shadow:0 0 18px rgba(240,192,64,0.55);">⚔ Enter Now</button>'+
+      '<button id="dg-discovery-later" style="background:#1c1710;border:2px solid #3a2c18;color:#9a7e50;padding:11px 22px;font-family:Cinzel,serif;font-size:13px;font-weight:700;border-radius:6px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;">Later</button>'+
+      '</div>';
+
+    ov.appendChild(modal);
+    document.body.appendChild(ov);
+
+    // Light fireworks (less than first-victory)
+    var fwColors=['#f0c040','#ffd966','#ff8866','#88ddff','#cc88ff','#ffaa00'];
+    function fwRandom(){return fwColors[Math.floor(Math.random()*fwColors.length)];}
+    for(var i=0;i<6;i++){
+      (function(idx){setTimeout(function(){if(ov.parentNode)spawnFireworkBurst(ov,fwRandom());},idx*250);})(i);
+    }
+    var interval=setInterval(function(){
+      if(!ov.parentNode){clearInterval(interval);return;}
+      spawnFireworkBurst(ov,fwRandom());
+    },500);
+    setTimeout(function(){clearInterval(interval);},3500);
+
+    function dismiss(){
+      clearInterval(interval);
+      if(ov.parentNode){
+        ov.style.animation='dgFadeIn 0.25s ease-out reverse';
+        setTimeout(function(){if(ov.parentNode)ov.remove();},250);
+      }
+    }
+    document.getElementById('dg-discovery-enter').onclick=function(){dismiss();setTimeout(function(){showDungeonEntry(sk);},260);};
+    document.getElementById('dg-discovery-later').onclick=dismiss;
+    ov.addEventListener('click',function(e){if(e.target===ov)dismiss();});
+  }
+
   function dungeonAttack(mode){
     if(!dungeonState||dungeonState.victory||dungeonState.fled) return;
     if(dungeonState.dying) return;
@@ -975,12 +1037,32 @@
   window._dgFlee=dungeonFlee;
   window._dgLeave=leaveDungeon;
   window._dgStart=startDungeon;
+  window._dgShowDiscovery=showDungeonDiscoveryPopup;
   window.DUNGEONS=DUNGEONS;
+  window.DUNGEON_UNLOCK_LEVEL=DUNGEON_UNLOCK_LEVEL;
 
   function showDungeonEntry(dungeonId){
     if(dungeonId&&DUNGEONS[dungeonId])activeDungeon=DUNGEONS[dungeonId];
     createDungeonOverlay();
     var content=document.getElementById('dg-content');
+    // Lock check: skill must reach DUNGEON_UNLOCK_LEVEL before the dungeon opens
+    var skLvl=(typeof slvl==='function')?slvl(activeDungeon.id):0;
+    if(skLvl<DUNGEON_UNLOCK_LEVEL){
+      var skName2=(typeof SKILLS!=='undefined'&&SKILLS[activeDungeon.id])?SKILLS[activeDungeon.id].name:activeDungeon.id;
+      var hLock='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
+      hLock+='<div style="text-align:center;padding:20px 8px;">';
+      hLock+='<div style="font-size:48px;margin-bottom:10px;filter:grayscale(1);opacity:0.5;">'+activeDungeon.icon+'</div>';
+      hLock+='<div style="font-size:38px;margin-bottom:8px;">🔒</div>';
+      hLock+='<div style="color:#f0c040;font-family:Cinzel,serif;font-size:16px;margin-bottom:6px;">Dungeon Locked</div>';
+      hLock+='<div style="color:#9a7e50;font-size:12px;margin-bottom:14px;line-height:1.4;">Reach <b style="color:#e8d898;">Level '+DUNGEON_UNLOCK_LEVEL+'</b> in <b style="color:#e8d898;">'+skName2+'</b> to discover this dungeon.</div>';
+      hLock+='<div style="color:#5a4830;font-size:10px;line-height:1.4;">Current: Lvl '+skLvl+' / '+DUNGEON_UNLOCK_LEVEL+'</div>';
+      hLock+='</div>';
+      var bodyL=document.getElementById('dg-body');
+      if(!bodyL){var nbL=document.createElement('div');nbL.id='dg-body';content.appendChild(nbL);bodyL=nbL;}
+      bodyL.innerHTML=hLock;
+      document.getElementById('dungeon-overlay').style.display='flex';
+      return;
+    }
     var check=canEnterDungeon();
     var cLvl=typeof slvl==='function'?slvl('combat'):0;
     var wpn=(G.equip&&G.equip.weapon)?ITEMS[G.equip.weapon]:null;
