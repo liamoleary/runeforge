@@ -1,3 +1,5 @@
+// Ensure all fetch calls include credentials (session cookies)
+(function(){var _f=window.fetch;window.fetch=function(url,opts){opts=opts||{};if(!opts.credentials)opts.credentials='same-origin';return _f.call(this,url,opts);}})();
 (function(){
     var currentUser = null;
     var cloudSaveInterval = null;
@@ -8,7 +10,7 @@
          if(!hdr) return;
          var d = document.createElement('div');
          d.id = 'auth-ui';
-         d.style.cssText = 'display:flex;align-items:center;gap:8px;position:absolute;right:160px;top:50%;transform:translateY(-50%);';
+         d.style.cssText = 'display:flex;alighn-items:center;gap:8px;position:absolute;right:160px;top:50%;transform:translateY(-50%);';
          d.innerHTML = '<span id="auth-status" style="color:#ffd966;font-size:13px;font-family:Cinzel,serif;"></span>'
            + '<button id="auth-btn" style="background:#251e14;border:1px solid #3a2c18;color:#f0c040;padding:4px 12px;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:12px;">Login</button>'
            + '<button id="cloud-save-btn" style="display:none;background:#251e14;border:1px solid #3a2c18;color:#f0c040;padding:4px 12px;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:12px;">Cloud Save</button>'
