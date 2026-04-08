@@ -16,33 +16,222 @@
   if(typeof ITEMS !== 'undefined'){
     if(!ITEMS.steel_axe) ITEMS.steel_axe = {name:'Steel Axe',icon:'🪓',sell:250,type:'weapon',atk:7};
     if(!ITEMS.enchanted_axe) ITEMS.enchanted_axe = {name:'Enchanted Grove Axe',icon:'🪓',sell:1200,type:'weapon',atk:12,special:true};
+    if(!ITEMS.steel_pickaxe) ITEMS.steel_pickaxe = {name:'Steel Pickaxe',icon:'⛏️',sell:250,type:'tool'};
+    if(!ITEMS.steel_rod) ITEMS.steel_rod = {name:'Steel Fishing Rod',icon:'🎣',sell:250,type:'tool'};
+    if(!ITEMS.steel_skillet) ITEMS.steel_skillet = {name:'Steel Skillet',icon:'🍳',sell:250,type:'tool'};
+    if(!ITEMS.steel_smith_hammer) ITEMS.steel_smith_hammer = {name:'Steel Smith Hammer',icon:'🔨',sell:250,type:'tool'};
+    if(!ITEMS.steel_fletch_knife) ITEMS.steel_fletch_knife = {name:'Steel Fletching Knife',icon:'🔪',sell:250,type:'tool'};
+    if(!ITEMS.steel_needle) ITEMS.steel_needle = {name:'Steel Needle',icon:'🪡',sell:250,type:'tool'};
+    if(!ITEMS.apprentice_wand) ITEMS.apprentice_wand = {name:'Apprentice Wand',icon:'🪄',sell:250,type:'tool'};
+    if(!ITEMS.steel_shield) ITEMS.steel_shield = {name:'Steel Shield',icon:'🛡️',sell:250,type:'armour',def:5};
   }
 
   var dungeonState = null;
 
-  var GROVE_LOOT = [
-    {id:'logs',name:'Logs',icon:'🪵',weight:30,min:2,max:5},
-    {id:'oak_log',name:'Oak Logs',icon:'🪵',weight:22,min:1,max:3},
-    {id:'willow_log',name:'Willow Logs',icon:'🪵',weight:12,min:1,max:2},
-    {id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:25,min:3,max:8},
-    {id:'feather',name:'Feathers',icon:'🪶',weight:20,min:2,max:6},
-    {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
-  ];
+  // Themed level-1 dungeon definitions, one per skill.
+  var DUNGEONS = {
+    woodcutting: {
+      id:'woodcutting', name:'Enchanted Grove', icon:'🌳',
+      desc:'Corrupted saplings have taken root deep in the forest.',
+      flavour:'The trees stir with dark energy. 5 creatures await.',
+      rooms:[
+        {name:'Twisted Sapling',icon:'🌱',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:'physical'},
+        {name:'Thorny Sprout',icon:'🌿',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:null},
+        {name:'Whipping Vine',icon:'🌾',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'magic',resist:'physical'},
+        {name:'Fungal Sapling',icon:'🍄',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:'magic'},
+        {name:'Ancient Seedling',icon:'🌲',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
+      ],
+      reward:{id:'steel_axe',icon:'🪓',name:'Steel Axe',eff:'ATK +7'},
+      rareReward:{id:'enchanted_axe',icon:'🪓',name:'Enchanted Grove Axe',eff:'ATK +12',chance:0.05},
+      trinketIds:['grove_wc_trinket'],
+      loot:[
+        {id:'logs',name:'Logs',icon:'🪵',weight:30,min:2,max:5},
+        {id:'oak_log',name:'Oak Logs',icon:'🪵',weight:22,min:1,max:3},
+        {id:'willow_log',name:'Willow Logs',icon:'🪵',weight:12,min:1,max:2},
+        {id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:25,min:3,max:8},
+        {id:'feather',name:'Feathers',icon:'🪶',weight:20,min:2,max:6},
+        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
+      ]
+    },
+    mining: {
+      id:'mining', name:'Crumbling Mineshaft', icon:'⛏️',
+      desc:'An old mineshaft has collapsed and stirred something within.',
+      flavour:'Pickaxes echo in the dark. 5 creatures await.',
+      rooms:[
+        {name:'Rock Crawler',icon:'🪨',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:'physical'},
+        {name:'Coal Wisp',icon:'⚫',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:null},
+        {name:'Cave Bat',icon:'🦇',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'physical',resist:null},
+        {name:'Iron Maw',icon:'🟠',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'magic',resist:'physical'},
+        {name:'Stone Warden',icon:'🗿',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
+      ],
+      reward:{id:'steel_pickaxe',icon:'⛏️',name:'Steel Pickaxe',eff:'+20% Mining speed'},
+      trinketIds:['grove_mn_trinket'],
+      loot:[
+        {id:'copper_ore',name:'Copper Ore',icon:'🟫',weight:30,min:2,max:5},
+        {id:'tin_ore',name:'Tin Ore',icon:'⬜',weight:25,min:2,max:4},
+        {id:'iron_ore',name:'Iron Ore',icon:'🔵',weight:18,min:1,max:3},
+        {id:'coal',name:'Coal',icon:'🖤',weight:14,min:1,max:3},
+        {id:'gold_ore',name:'Gold Ore',icon:'💛',weight:6,min:1,max:2},
+        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
+      ]
+    },
+    fishing: {
+      id:'fishing', name:'Sunken Reef', icon:'🐟',
+      desc:'A drowned reef hides predators among its coral spires.',
+      flavour:'Bubbles rise from the deep. 5 creatures await.',
+      rooms:[
+        {name:'Reef Piranha',icon:'🐟',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:null},
+        {name:'Stinging Jelly',icon:'🪼',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:'magic'},
+        {name:'Snapping Crab',icon:'🦀',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'magic',resist:'physical'},
+        {name:'Eel Spawn',icon:'🐍',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:null},
+        {name:'Coral Tyrant',icon:'🪸',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
+      ],
+      reward:{id:'steel_rod',icon:'🎣',name:'Steel Fishing Rod',eff:'+20% Fishing speed'},
+      trinketIds:['grove_fs_trinket'],
+      loot:[
+        {id:'raw_shrimp',name:'Raw Shrimp',icon:'🦐',weight:30,min:2,max:5},
+        {id:'raw_sardine',name:'Raw Sardine',icon:'🐟',weight:24,min:2,max:4},
+        {id:'raw_trout',name:'Raw Trout',icon:'🐠',weight:14,min:1,max:3},
+        {id:'raw_salmon',name:'Raw Salmon',icon:'🐡',weight:8,min:1,max:2},
+        {id:'raw_lobster',name:'Raw Lobster',icon:'🦞',weight:5,min:1,max:1},
+        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
+      ]
+    },
+    cooking: {
+      id:'cooking', name:'Cursed Pantry', icon:'🍳',
+      desc:'Animated pots and ravenous rats infest a forgotten kitchen.',
+      flavour:'Something is bubbling. 5 creatures await.',
+      rooms:[
+        {name:'Pantry Rat',icon:'🐀',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'physical',resist:null},
+        {name:'Hungry Wisp',icon:'🍖',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:'physical'},
+        {name:'Boiling Pot',icon:'🍲',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'physical',resist:'magic'},
+        {name:'Spice Specter',icon:'🌶️',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'magic',resist:null},
+        {name:'Ember Cook',icon:'🔥',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
+      ],
+      reward:{id:'steel_skillet',icon:'🍳',name:'Steel Skillet',eff:'+20% Cooking speed'},
+      trinketIds:['grove_ck_trinket'],
+      loot:[
+        {id:'raw_meat',name:'Raw Meat',icon:'🥩',weight:30,min:2,max:4},
+        {id:'c_shrimp',name:'Shrimp',icon:'🍤',weight:22,min:2,max:4},
+        {id:'c_sardine',name:'Sardine',icon:'🐟',weight:16,min:1,max:3},
+        {id:'c_meat',name:'Cooked Meat',icon:'🍖',weight:10,min:1,max:2},
+        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
+      ]
+    },
+    smithing: {
+      id:'smithing', name:'Molten Forge', icon:'🔨',
+      desc:'Slag golems shamble through an abandoned smithy.',
+      flavour:'Heat shimmers off the anvils. 5 creatures await.',
+      rooms:[
+        {name:'Slag Imp',icon:'🧌',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:'physical'},
+        {name:'Anvil Spirit',icon:'⚒️',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:null},
+        {name:'Cinder Hound',icon:'🐕',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'physical',resist:null},
+        {name:'Bellows Beast',icon:'💨',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:'magic'},
+        {name:'Forge Lord',icon:'🔥',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
+      ],
+      reward:{id:'steel_smith_hammer',icon:'🔨',name:'Steel Smith Hammer',eff:'+20% Smithing speed'},
+      trinketIds:['grove_sm_trinket'],
+      loot:[
+        {id:'copper_ore',name:'Copper Ore',icon:'🟫',weight:24,min:2,max:5},
+        {id:'tin_ore',name:'Tin Ore',icon:'⬜',weight:22,min:2,max:4},
+        {id:'iron_ore',name:'Iron Ore',icon:'🔵',weight:16,min:1,max:3},
+        {id:'coal',name:'Coal',icon:'🖤',weight:14,min:1,max:3},
+        {id:'bronze_bar',name:'Bronze Bar',icon:'🟫',weight:10,min:1,max:2},
+        {id:'iron_bar',name:'Iron Bar',icon:'⬛',weight:5,min:1,max:1},
+        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
+      ]
+    },
+    fletching: {
+      id:'fletching', name:'Splinterwood Hollow', icon:'🏹',
+      desc:'Vengeful tree spirits guard their fallen kin.',
+      flavour:'Branches snap. 5 creatures await.',
+      rooms:[
+        {name:'Twig Sprite',icon:'🌿',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'physical',resist:null},
+        {name:'Bark Knight',icon:'🪵',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:'physical'},
+        {name:'Quill Hawk',icon:'🦅',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'physical',resist:null},
+        {name:'Sharp Beak',icon:'🐦',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'magic',resist:null},
+        {name:'Hollow Druid',icon:'🧙',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
+      ],
+      reward:{id:'steel_fletch_knife',icon:'🔪',name:'Steel Fletching Knife',eff:'+20% Fletching speed'},
+      trinketIds:['grove_fl_trinket'],
+      loot:[
+        {id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:30,min:4,max:10},
+        {id:'feather',name:'Feathers',icon:'🪶',weight:28,min:3,max:8},
+        {id:'oak_log',name:'Oak Logs',icon:'🪵',weight:18,min:1,max:3},
+        {id:'iron_arrow',name:'Iron Arrows',icon:'🪃',weight:10,min:2,max:5},
+        {id:'gold_coins',name:'Gold',icon:'🪙',weight:30,min:5,max:20}
+      ]
+    },
+    crafting: {
+      id:'crafting', name:"Spinner's Lair", icon:'🕸️',
+      desc:'A web-choked tower hides skittering horrors.',
+      flavour:'Silk drapes the walls. 5 creatures await.',
+      rooms:[
+        {name:'Silk Spider',icon:'🕷️',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'physical',resist:null},
+        {name:'Tangle Weaver',icon:'🕸️',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:'physical'},
+        {name:'Loom Spirit',icon:'🧵',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'magic',resist:null},
+        {name:'Stitch Wraith',icon:'🪡',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:'magic'},
+        {name:'Spinner Queen',icon:'👑',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
+      ],
+      reward:{id:'steel_needle',icon:'🪡',name:'Steel Needle',eff:'+20% Crafting speed'},
+      trinketIds:['grove_cr_trinket'],
+      loot:[
+        {id:'cowhide',name:'Cowhide',icon:'🐄',weight:26,min:2,max:5},
+        {id:'leather',name:'Leather',icon:'📜',weight:18,min:1,max:3},
+        {id:'feather',name:'Feathers',icon:'🪶',weight:20,min:2,max:6},
+        {id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:14,min:2,max:5},
+        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
+      ]
+    },
+    magic: {
+      id:'magic', name:'Whispering Vault', icon:'✨',
+      desc:'Animated tomes and wisps drift through an old archive.',
+      flavour:'The air hums with arcane power. 5 creatures await.',
+      rooms:[
+        {name:'Wisp',icon:'✨',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'physical',resist:'magic'},
+        {name:'Animated Tome',icon:'📖',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:null},
+        {name:'Rune Spectre',icon:'🔯',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'physical',resist:'magic'},
+        {name:'Mana Leech',icon:'💧',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:'magic'},
+        {name:'Vault Keeper',icon:'🧙',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
+      ],
+      reward:{id:'apprentice_wand',icon:'🪄',name:'Apprentice Wand',eff:'+20% Magic speed'},
+      trinketIds:['grove_mg_trinket'],
+      loot:[
+        {id:'feather',name:'Feathers',icon:'🪶',weight:30,min:3,max:8},
+        {id:'bones',name:'Bones',icon:'🦴',weight:25,min:2,max:5},
+        {id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:18,min:2,max:5},
+        {id:'gold_ore',name:'Gold Ore',icon:'💛',weight:6,min:1,max:1},
+        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
+      ]
+    },
+    combat: {
+      id:'combat', name:'Bandit Hideout', icon:'⚔️',
+      desc:'Outlaws have set up camp in the old waystation.',
+      flavour:'Steel rasps in the gloom. 5 creatures await.',
+      rooms:[
+        {name:'Sneak Thief',icon:'🥷',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:null},
+        {name:'Cutpurse',icon:'💰',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:null},
+        {name:'Brawler',icon:'👊',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'magic',resist:'physical'},
+        {name:'Outlaw Archer',icon:'🏹',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:null},
+        {name:'Bandit Captain',icon:'🗡️',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
+      ],
+      reward:{id:'steel_shield',icon:'🛡️',name:'Steel Shield',eff:'DEF +5'},
+      trinketIds:['grove_cb_trinket'],
+      loot:[
+        {id:'bones',name:'Bones',icon:'🦴',weight:30,min:2,max:5},
+        {id:'raw_meat',name:'Raw Meat',icon:'🥩',weight:18,min:1,max:3},
+        {id:'leather',name:'Leather',icon:'📜',weight:14,min:1,max:2},
+        {id:'cowhide',name:'Cowhide',icon:'🐄',weight:12,min:1,max:2},
+        {id:'gold_coins',name:'Gold',icon:'🪙',weight:40,min:8,max:25}
+      ]
+    }
+  };
 
-  var GROVE_TRINKETS = [
-    {id:'grove_wc_trinket',weight:1}
-  ];
+  // Currently active dungeon definition (defaults to woodcutting for legacy entry points)
+  var activeDungeon = DUNGEONS.woodcutting;
 
   var DG = {
-    rooms: [
-      {name:'Twisted Sapling',icon:'🌱',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:'physical'},
-      {name:'Thorny Sprout',icon:'🌿',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:null},
-      {name:'Whipping Vine',icon:'🌾',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'magic',resist:'physical'},
-      {name:'Fungal Sapling',icon:'🍄',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:'magic'},
-      {name:'Ancient Seedling',icon:'🌲',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
-    ],
     minFood: 3,
-    specialAxeChance: 0.05,
     levelPotionChance: 0.02,
     trinketChance: 0.08,
     goldPerRoom: [3, 8]
@@ -80,15 +269,16 @@
   function rollDmg(mn,mx){return Math.floor(Math.random()*(mx-mn+1))+mn;}
 
   function rollLoot(){
+    var pool=activeDungeon.loot||[];
     var drops=[],tw=0;
-    GROVE_LOOT.forEach(function(l){tw+=l.weight;});
+    pool.forEach(function(l){tw+=l.weight;});
     var nd=Math.random()<0.4?2:1;
     for(var d=0;d<nd;d++){
       var r=Math.random()*tw,cu=0;
-      for(var i=0;i<GROVE_LOOT.length;i++){
-        cu+=GROVE_LOOT[i].weight;
+      for(var i=0;i<pool.length;i++){
+        cu+=pool[i].weight;
         if(r<=cu){
-          var l=GROVE_LOOT[i];
+          var l=pool[i];
           drops.push({id:l.id,name:l.name,icon:l.icon,qty:rollDmg(l.min,l.max)});
           break;
         }
@@ -105,15 +295,18 @@
     return {ok:true};
   }
 
-  function startDungeon(){
+  function startDungeon(dungeonId){
+    if(dungeonId&&DUNGEONS[dungeonId])activeDungeon=DUNGEONS[dungeonId];
     var check=canEnterDungeon();
     if(!check.ok){showDungeonMessage(check.reason,'#e03030');return;}
     if(typeof stopTask==='function') stopTask();
+    var srcRooms=activeDungeon.rooms||[];
     dungeonState={
+      dungeonId:activeDungeon.id,
       room:0,
       playerHp:G.hp,
       playerMaxHp:G.maxhp,
-      monsters:DG.rooms.map(function(r){return {name:r.name,icon:r.icon,hp:r.hp,maxhp:r.maxhp,dmg:r.dmg.slice(),xp:r.xp};}),
+      monsters:srcRooms.map(function(r){return {name:r.name,icon:r.icon,hp:r.hp,maxhp:r.maxhp,dmg:r.dmg.slice(),xp:r.xp,weak:r.weak,resist:r.resist};}),
       combatLog:[],
       totalXp:0,
       totalGold:0,
@@ -127,8 +320,8 @@
       bgTaskDur:0
     };
     // Allow background skilling - remember what was running
-    dungeonState.combatLog.push('You enter the <b>Enchanted Grove</b>...');
-    dungeonState.combatLog.push('The trees stir with dark energy. 5 creatures await.');
+    dungeonState.combatLog.push('You enter the <b>'+activeDungeon.name+'</b>...');
+    dungeonState.combatLog.push(activeDungeon.flavour||'5 creatures await.');
     renderDungeon();
   }
 
@@ -455,11 +648,13 @@
       if(dungeonState.room+1>=dungeonState.monsters.length){
         dungeonState.room++;
         dungeonState.victory=true;
-        dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The grove falls silent. You are victorious!</span>');
-        dungeonState.combatLog.push('<span style="color:#f0c040">Reward: 🪓 Steel Axe (ATK +7)</span>');
+        var rwd=activeDungeon.reward||{id:'gold_coins',name:'Gold',icon:'🪙',eff:''};
+        var rare=activeDungeon.rareReward;
+        dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The dungeon falls silent. You are victorious!</span>');
+        dungeonState.combatLog.push('<span style="color:#f0c040">Reward: '+rwd.icon+' '+rwd.name+(rwd.eff?' ('+rwd.eff+')':'')+'</span>');
 
-        var gotSpecial=Math.random()<DG.specialAxeChance;
-        if(gotSpecial) dungeonState.combatLog.push('<span style="color:#ff69b4;font-weight:bold">✨ RARE DROP! 🪓 Enchanted Grove Axe (ATK +12) ✨</span>');
+        var gotSpecial=rare?(Math.random()<(rare.chance||0.05)):false;
+        if(gotSpecial) dungeonState.combatLog.push('<span style="color:#ff69b4;font-weight:bold">✨ RARE DROP! '+rare.icon+' '+rare.name+(rare.eff?' ('+rare.eff+')':'')+' ✨</span>');
 
         var gotLevelPotion=Math.random()<DG.levelPotionChance;
         if(gotLevelPotion) dungeonState.combatLog.push('<span style="color:#9b59b6;font-weight:bold">🧪 EXTREMELY RARE! Level Potion dropped!</span>');
@@ -467,17 +662,18 @@
         // Trinket drop
         var gotTrinket=Math.random()<DG.trinketChance;
         var trinketDrop=null;
-        if(gotTrinket){
-          var ti=Math.floor(Math.random()*GROVE_TRINKETS.length);
-          trinketDrop=GROVE_TRINKETS[ti].id;
+        var trinketPool=activeDungeon.trinketIds||[];
+        if(gotTrinket&&trinketPool.length>0){
+          var ti=Math.floor(Math.random()*trinketPool.length);
+          trinketDrop=trinketPool[ti];
           var tInfo=typeof TRINKETS!=='undefined'?TRINKETS[trinketDrop]:null;
           if(tInfo) dungeonState.combatLog.push('<span style="color:#e67e22;font-weight:bold">💎 TRINKET DROP! '+tInfo.icon+' '+tInfo.name+' - '+tInfo.desc+'</span>');
         }
 
         if(typeof G!=='undefined'){
           if(!G.inv) G.inv={};
-          G.inv.steel_axe=(G.inv.steel_axe||0)+1;
-          if(gotSpecial) G.inv.enchanted_axe=(G.inv.enchanted_axe||0)+1;
+          G.inv[rwd.id]=(G.inv[rwd.id]||0)+1;
+          if(gotSpecial&&rare) G.inv[rare.id]=(G.inv[rare.id]||0)+1;
           if(gotLevelPotion) G.inv.level_potion=(G.inv.level_potion||0)+1;
           if(trinketDrop) G.inv[trinketDrop]=(G.inv[trinketDrop]||0)+1;
           G.gold=(G.gold||0)+dungeonState.totalGold;
@@ -489,8 +685,8 @@
           if(typeof updateUI==='function') updateUI();
           if(typeof renderInv==='function') renderInv();
           if(typeof log==='function'){
-            var msg='🪓 <b>Dungeon cleared!</b> Steel Axe + '+dungeonState.totalGold+' gold';
-            if(gotSpecial) msg+=' + <span style="color:#ff69b4">✨ Enchanted Grove Axe!</span>';
+            var msg=rwd.icon+' <b>'+activeDungeon.name+' cleared!</b> '+rwd.name+' + '+dungeonState.totalGold+' gold';
+            if(gotSpecial&&rare) msg+=' + <span style="color:#ff69b4">✨ '+rare.name+'!</span>';
             if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">🧪 Level Potion!</span>';
             if(trinketDrop) msg+=' + Trinket!';
             log(msg+' + loot!');
@@ -603,7 +799,7 @@
     var mHp=mon?Math.max(0,(mon.hp/mon.maxhp)*100):0;
 
     var h='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
-    h+='<div style="text-align:center;margin-bottom:10px;"><div style="color:#f0c040;font-family:Cinzel,serif;font-size:16px;">Enchanted Grove</div><div style="color:#9a7e50;font-size:11px;">Room '+(Math.min(s.room+1,s.monsters.length))+'/'+s.monsters.length+(s.totalGold>0?' | 🪙 '+s.totalGold+' gold':'')+'</div></div>';
+    h+='<div style="text-align:center;margin-bottom:10px;"><div style="color:#f0c040;font-family:Cinzel,serif;font-size:16px;">'+activeDungeon.icon+' '+activeDungeon.name+'</div><div style="color:#9a7e50;font-size:11px;">Room '+(Math.min(s.room+1,s.monsters.length))+'/'+s.monsters.length+(s.totalGold>0?' | 🪙 '+s.totalGold+' gold':'')+'</div></div>';
 
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">';
     h+='<div style="flex:1;text-align:center;"><div style="font-size:26px;">🧍</div><div style="color:#e8d898;font-size:12px;">You</div><div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;"><div style="height:100%;width:'+pHp+'%;background:'+(pHp>30?'#5ac85a':'#e03030')+';transition:width 0.3s;"></div></div><div style="color:#9a7e50;font-size:10px;">'+s.playerHp+'/'+s.playerMaxHp+' HP</div></div>';
@@ -704,8 +900,10 @@
   window._dgFlee=dungeonFlee;
   window._dgLeave=leaveDungeon;
   window._dgStart=startDungeon;
+  window.DUNGEONS=DUNGEONS;
 
-  function showDungeonEntry(){
+  function showDungeonEntry(dungeonId){
+    if(dungeonId&&DUNGEONS[dungeonId])activeDungeon=DUNGEONS[dungeonId];
     createDungeonOverlay();
     var content=document.getElementById('dg-content');
     var check=canEnterDungeon();
@@ -713,10 +911,14 @@
     var wpn=(G.equip&&G.equip.weapon)?ITEMS[G.equip.weapon]:null;
     var arm=(G.equip&&G.equip.armour)?ITEMS[G.equip.armour]:null;
     var fc=getFoodCount();
+    var rwd=activeDungeon.reward||{};
+    var rare=activeDungeon.rareReward;
+    var lootPool=activeDungeon.loot||[];
+    var roomList=activeDungeon.rooms||[];
 
     var h='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
-    h+='<div style="text-align:center;"><div style="font-size:32px;margin-bottom:6px;">🏰</div><div style="color:#f0c040;font-size:18px;font-family:Cinzel,serif;margin-bottom:2px;">Enchanted Grove</div><div style="color:#9a7e50;font-size:11px;margin-bottom:12px;">Level 1 Dungeon • 5 Rooms</div></div>';
-    h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">Corrupted saplings have taken root deep in the forest. Clear all <b>5 creatures</b> to claim the <span style="color:#f0c040;">🪓 Steel Axe</span>.<br><span style="color:#9a7e50;font-size:10px;">⚔ Slash or ⚡ Power Attack! 🍖 Eating heals without taking damage. 🏃 Flee to keep loot.</span></div>';
+    h+='<div style="text-align:center;"><div style="font-size:32px;margin-bottom:6px;">'+activeDungeon.icon+'</div><div style="color:#f0c040;font-size:18px;font-family:Cinzel,serif;margin-bottom:2px;">'+activeDungeon.name+'</div><div style="color:#9a7e50;font-size:11px;margin-bottom:12px;">Level 1 Dungeon • 5 Rooms</div></div>';
+    h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">'+(activeDungeon.desc||'')+' Clear all <b>5 creatures</b> to claim the <span style="color:#f0c040;">'+rwd.icon+' '+rwd.name+'</span>.<br><span style="color:#9a7e50;font-size:10px;">⚔ Slash or ⚡ Power Attack! 🍖 Eating heals without taking damage. 🏃 Flee to keep loot.</span></div>';
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;">';
     h+='<div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">REQUIREMENTS</div>';
@@ -726,24 +928,24 @@
     h+='</div>';
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;"><div style="color:#8bc34a;font-size:11px;margin-bottom:6px;letter-spacing:1px;">POSSIBLE LOOT</div>';
-    GROVE_LOOT.forEach(function(l){
+    lootPool.forEach(function(l){
       h+='<div style="display:flex;justify-content:space-between;color:#9a7e50;font-size:10px;margin-bottom:2px;"><span>'+l.icon+' '+l.name+'</span><span>'+l.min+'-'+l.max+'</span></div>';
     });
     h+='<div style="border-top:1px solid #251e14;margin-top:6px;padding-top:6px;">';
-    h+='<div style="display:flex;justify-content:space-between;color:#f0c040;font-size:10px;margin-bottom:2px;"><span>🪓 Steel Axe (ATK +7)</span><span>Guaranteed</span></div>';
-    h+='<div style="display:flex;justify-content:space-between;color:#ff69b4;font-size:10px;margin-bottom:2px;"><span>✨ Enchanted Grove Axe (ATK +12)</span><span>5%</span></div>';
+    h+='<div style="display:flex;justify-content:space-between;color:#f0c040;font-size:10px;margin-bottom:2px;"><span>'+rwd.icon+' '+rwd.name+(rwd.eff?' ('+rwd.eff+')':'')+'</span><span>Guaranteed</span></div>';
+    if(rare) h+='<div style="display:flex;justify-content:space-between;color:#ff69b4;font-size:10px;margin-bottom:2px;"><span>✨ '+rare.name+(rare.eff?' ('+rare.eff+')':'')+'</span><span>'+Math.round((rare.chance||0.05)*100)+'%</span></div>';
     h+='<div style="display:flex;justify-content:space-between;color:#9b59b6;font-size:10px;margin-bottom:2px;"><span>🧪 Level Potion</span><span>2%</span></div>';
     h+='<div style="display:flex;justify-content:space-between;color:#e67e22;font-size:10px;"><span>💎 Skill Trinket</span><span>8%</span></div>';
     h+='</div></div>';
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;"><div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">ENEMIES</div>';
-    DG.rooms.forEach(function(r){
+    roomList.forEach(function(r){
       var weakStr=r.weak?(' | Weak: '+(r.weak==='magic'?'✨':'⚔')):'';var resistStr=r.resist?(' | Resist: '+(r.resist==='magic'?'✨':'⚔')):'';h+='<div style="display:flex;justify-content:space-between;color:#9a7e50;font-size:10px;margin-bottom:2px;"><span>'+r.icon+' '+r.name+'</span><span>'+r.maxhp+'HP | '+r.dmg[0]+'-'+r.dmg[1]+weakStr+resistStr+'</span></div>';
     });
     h+='</div><div id="dg-msg" style="display:none;text-align:center;font-size:11px;margin-bottom:6px;"></div>';
 
     h+='<div style="display:flex;gap:8px;justify-content:center;">';
-    if(check.ok) h+='<button onclick="window._dgStart()" style="padding:9px 20px;background:#8B4513;border:2px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">⚔ Enter Dungeon</button>';
+    if(check.ok) h+='<button onclick="window._dgStart(\''+activeDungeon.id+'\')" style="padding:9px 20px;background:#8B4513;border:2px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">⚔ Enter Dungeon</button>';
     else h+='<button disabled style="padding:9px 20px;background:#251e14;border:1px solid #3a2c18;color:#5a4830;border-radius:4px;font-family:Cinzel,serif;font-size:13px;cursor:not-allowed;">⚔ Not Ready</button>';
     h+='</div>';
 

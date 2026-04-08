@@ -28,9 +28,23 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .panel{background:var(--bg1);border:1px solid var(--bdr);border-radius:10px;overflow:hidden}
 .panel-hdr{background:linear-gradient(90deg,#1a1208,#231a0c);border-bottom:1px solid var(--bdr);padding:7px 12px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:var(--text2);letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between}
 #skills-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bdr)}
-.sk-card{background:var(--bg2);padding:9px 10px;cursor:pointer;transition:background .15s,transform .1s;position:relative}
+.sk-card{background:transparent;padding:0;cursor:pointer;position:relative;perspective:1000px;min-height:78px}
 .sk-card:active{transform:scale(.97)}
-.sk-card.sk-active{background:#241c0c;box-shadow:inset 0 0 16px rgba(240,192,64,.08)}
+.sk-flip{position:relative;width:100%;height:100%;min-height:78px;transform-style:preserve-3d;transition:transform 0.65s cubic-bezier(0.4,0.2,0.2,1)}
+#skills-grid.dungeons-mode .sk-card:not(.dg-btn-in-grid) .sk-flip{transform:rotateY(180deg)}
+.sk-front,.sk-back{position:absolute;top:0;left:0;width:100%;height:100%;min-height:78px;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--bg2);padding:9px 10px;box-sizing:border-box}
+.sk-back{transform:rotateY(180deg);background:linear-gradient(135deg,#1a1308 0%,#241a0c 100%);border:1px solid var(--bdr);display:flex;flex-direction:column;justify-content:space-between}
+.sk-back .dg-row{display:flex;align-items:center;gap:8px}
+.sk-back .dg-icon{font-size:24px;line-height:1;width:30px;text-align:center}
+.sk-back .dg-name{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);font-weight:700;line-height:1.15}
+.sk-back .dg-skill{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.sk-back .dg-tier{font-size:9px;color:var(--text3);margin-top:4px}
+.sk-back .dg-rwd{font-size:9px;color:var(--text2);margin-top:2px;display:flex;align-items:center;gap:3px}
+.sk-back .dg-rwd .dg-rwd-ico{font-size:12px}
+.sk-card.sk-active .sk-front{background:#241c0c;box-shadow:inset 0 0 16px rgba(240,192,64,.08)}
+.dg-btn-in-grid{background:linear-gradient(180deg,#2a1f0f,#1a1308) !important;border:1px solid var(--gold) !important;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:9px 10px !important;min-height:78px}
+#skills-grid:not(.dungeons-mode) .sk-back{pointer-events:none}
+#skills-grid.dungeons-mode .sk-front{pointer-events:none}
 .sk-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .sk-icon{font-size:20px;width:26px;text-align:center;line-height:1}
 .sk-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text2);letter-spacing:.5px}
@@ -630,14 +644,26 @@ const TRINKETS = {
 };
 
 const TOOL_MAP={
-  woodcutting:['axe','steel_axe','enchanted_axe'],mining:['pick'],fishing:['rod'],cooking:['tinder'],
-  smithing:['hammer'],fletching:['fletch_knife'],crafting:['needle'],magic:['staff'],combat:[]
+  woodcutting:['axe','steel_axe','enchanted_axe'],
+  mining:['pick','steel_pickaxe'],
+  fishing:['rod','steel_rod'],
+  cooking:['tinder','steel_skillet'],
+  smithing:['hammer','steel_smith_hammer'],
+  fletching:['fletch_knife','steel_fletch_knife'],
+  crafting:['needle','steel_needle'],
+  magic:['staff','apprentice_wand'],
+  combat:[]
 };
 // Speed bonus per tool item (fraction faster). Higher = better.
 const TOOL_BONUS={
   axe:0.15,steel_axe:0.20,enchanted_axe:0.25,
-  pick:0.15,rod:0.15,tinder:0.15,
-  hammer:0.15,fletch_knife:0.15,needle:0.15,staff:0.15
+  pick:0.15,steel_pickaxe:0.20,
+  rod:0.15,steel_rod:0.20,
+  tinder:0.15,steel_skillet:0.20,
+  hammer:0.15,steel_smith_hammer:0.20,
+  fletch_knife:0.15,steel_fletch_knife:0.20,
+  needle:0.15,steel_needle:0.20,
+  staff:0.15,apprentice_wand:0.20
 };
 const SHOP=[
   {id:'axe',name:'Iron Axe',icon:'🪓',cost:80,eff:'Woodcut +15% faster',up:'spd_wood'},
@@ -1021,6 +1047,9 @@ function buildSkills(){
   const g=document.getElementById('skills-grid');
   for(const[sk,info]of Object.entries(SKILLS)){
     const d=document.createElement('div');d.className='sk-card';d.id='sk-'+sk;
+    const flip=document.createElement('div');flip.className='sk-flip';
+    // FRONT (existing skill content)
+    const front=document.createElement('div');front.className='sk-front';
     const top=document.createElement('div');top.className='sk-top';
     const ico=document.createElement('span');ico.className='sk-icon';ico.textContent=info.icon;
     const inf=document.createElement('div');
@@ -1041,16 +1070,44 @@ function buildSkills(){
     trinS.onclick=(e)=>{e.stopPropagation();showSlotMenu(sk,'trinket');};
     slots.appendChild(toolS);slots.appendChild(trinS);
     top.appendChild(slots);
-    d.appendChild(top);d.appendChild(trk);d.appendChild(lbl);
-    d.onclick=()=>switchTab(sk);
+    front.appendChild(top);front.appendChild(trk);front.appendChild(lbl);
+    front.onclick=()=>switchTab(sk);
+    // BACK (themed dungeon for this skill)
+    const back=document.createElement('div');back.className='sk-back';
+    const dg=window.DUNGEONS&&window.DUNGEONS[sk];
+    if(dg){
+      const rwd=dg.reward||{};
+      back.innerHTML=
+        '<div class="dg-row"><div class="dg-icon">'+dg.icon+'</div>'+
+        '<div><div class="dg-name">'+dg.name+'</div>'+
+        '<div class="dg-skill">'+info.name+' · Lvl 1</div></div></div>'+
+        '<div><div class="dg-tier">5 Rooms · Tap to enter</div>'+
+        '<div class="dg-rwd"><span class="dg-rwd-ico">'+(rwd.icon||'🏆')+'</span>'+(rwd.name||'Reward')+'</div></div>';
+      back.onclick=(e)=>{e.stopPropagation();if(typeof window._dgShowEntry==='function')window._dgShowEntry(sk);};
+    } else {
+      back.innerHTML='<div class="dg-row"><div class="dg-icon">❓</div><div class="dg-name">Coming soon</div></div>';
+    }
+    flip.appendChild(front);flip.appendChild(back);
+    d.appendChild(flip);
     g.appendChild(d);
   }
-  // Dungeon button in empty grid slot
+  // Dungeons toggle button (does not flip itself)
   const dgBtn=document.createElement('div');
   dgBtn.className='sk-card dg-btn-in-grid';dgBtn.id='sk-dungeon';
-  dgBtn.innerHTML='<div style="font-size:26px">🏰</div><div class="sk-name" style="color:var(--gold)">DUNGEON</div>';
-  dgBtn.onclick=()=>{if(typeof window._dgShowEntry==='function')window._dgShowEntry();};
+  dgBtn.innerHTML='<div style="font-size:26px">🏰</div><div class="sk-name" style="color:var(--gold);font-size:11px;letter-spacing:1px">DUNGEONS</div>';
+  dgBtn.onclick=()=>toggleDungeonsMode();
   g.appendChild(dgBtn);
+}
+
+function toggleDungeonsMode(){
+  const g=document.getElementById('skills-grid');
+  g.classList.toggle('dungeons-mode');
+  const btn=document.getElementById('sk-dungeon');
+  if(!btn)return;
+  const isOn=g.classList.contains('dungeons-mode');
+  btn.innerHTML=isOn
+    ? '<div style="font-size:26px">📜</div><div class="sk-name" style="color:var(--gold);font-size:11px;letter-spacing:1px">SKILLS</div>'
+    : '<div style="font-size:26px">🏰</div><div class="sk-name" style="color:var(--gold);font-size:11px;letter-spacing:1px">DUNGEONS</div>';
 }
 
 function showSlotMenu(sk, slotType){
@@ -1233,6 +1290,25 @@ function useItem(id){
     if(G.hp>=G.maxhp){log('❤️ Already full HP!');return;}
     take(id,1);G.hp=Math.min(G.maxhp,G.hp+(it.hp||3));
     log('🍽️ Ate '+it.name+' and restored '+it.hp+' HP.');if(typeof showStageDmg==='function')showStageDmg(it.hp,'heal');
+  } else if(it.type==='tool'){
+    // Auto-equip to the matching skill's tool slot
+    let matched=false;
+    for(const sk of Object.keys(TOOL_MAP)){
+      if(TOOL_MAP[sk].includes(id)){
+        if(G.tools[sk]===id){
+          give(id,1);delete G.tools[sk];
+          log('Removed '+it.name+' from '+SKILLS[sk].name+' tool slot.');
+        } else {
+          if(G.tools[sk])give(G.tools[sk],1);
+          take(id,1);G.tools[sk]=id;
+          const pct=Math.round((TOOL_BONUS[id]||0)*100);
+          log('🛠 Equipped '+it.icon+' '+it.name+' as '+SKILLS[sk].name+' tool! (+'+pct+'% speed)');
+        }
+        recomputeActiveTaskDur(sk);
+        matched=true;break;
+      }
+    }
+    if(!matched)log(it.icon+' '+it.name+' (no matching skill)');
   } else if(it.type==='weapon'){
     if(G.equip.weapon===id){G.equip.weapon=null;log('Unequipped '+it.name);}
     else{G.equip.weapon=id;log('⚔️ Equipped '+it.name+' (+'+it.atk+' Atk)');}
