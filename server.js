@@ -25,6 +25,12 @@ app.post('/api/logout', (req, res) => { req.session.destroy(() => { res.json({ s
 app.get('/api/me', (req, res) => { if (!req.session.userId) return res.json({ loggedIn: false }); res.json({ loggedIn: true, username: req.session.username }); });
 app.post('/api/save', requireAuth, (req, res) => { const { saveData } = req.body; if (!saveData) return res.status(400).json({ error: 'No save data' }); const existing = db.prepare('SELECT id FROM saves WHERE user_id = ?').get(req.session.userId); if (existing) { db.prepare('UPDATE saves SET save_data = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?').run(JSON.stringify(saveData), req.session.userId); } else { db.prepare('INSERT INTO saves (user_id, save_data) VALUES (?, ?)').run(req.session.userId, JSON.stringify(saveData)); } res.json({ success: true }); });
 app.get('/api/save', requireAuth, (req, res) => { const save = db.prepare('SELECT save_data, updated_at FROM saves WHERE user_id = ?').get(req.session.userId); if (!save) return res.json({ hasSave: false }); res.json({ hasSave: true, saveData: JSON.parse(save.save_data), updatedAt: save.updated_at }); });
+
+app.post('/api/reset', requireAuth, (req, res) => {
+  db.prepare('DELETE FROM saves WHERE user_id = ?').run(req.session.userId);
+  res.json({ success: true, message: 'Progress reset' });
+});
+
 app.get('/auth.js', (req, res) => { res.sendFile(path.join(__dirname, 'auth.js')); });
 app.get('/dungeon.js', (req, res) => { res.sendFile(path.join(__dirname, 'dungeon.js')); });
 app.get('/manifest.json', (req, res) => { res.sendFile(path.join(__dirname, 'manifest.json')); });
