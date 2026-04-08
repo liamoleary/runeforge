@@ -152,6 +152,37 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .lv-sub{font-size:13px;color:var(--text2);margin-top:6px}
 .xp-float{position:fixed;font-size:12px;color:#6ef06e;font-weight:bold;pointer-events:none;z-index:300;animation:xpup 1.4s ease forwards}
 .dmg-flash{animation:dmgflash .5s ease}
+
+.dg-dmg-float{position:absolute;font-family:Cinzel,serif;font-weight:bold;pointer-events:none;z-index:10;animation:dgdmgfloat 1.2s ease forwards}
+@keyframes dgdmgfloat{0%{transform:translateY(0) scale(1);opacity:1}50%{transform:translateY(-20px) scale(1.3);opacity:1}100%{transform:translateY(-40px) scale(0.8);opacity:0}}
+.dg-effectiveness{font-size:9px;font-style:italic;margin-top:2px}
+.slot-menu-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:600;display:flex;justify-content:center;align-items:center}
+.slot-menu{background:#13100a;border:2px solid var(--bdr2);border-radius:8px;padding:16px;width:300px;max-width:90vw;max-height:80vh;overflow-y:auto}
+.slot-menu h3{color:var(--gold);font-family:Cinzel,serif;font-size:14px;margin-bottom:10px;text-align:center}
+.slot-menu-item{background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;padding:8px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s}
+.slot-menu-item:hover{border-color:var(--gold);background:var(--bg3)}
+.slot-menu-item .smi-icon{font-size:20px}
+.slot-menu-item .smi-info{flex:1}
+.slot-menu-item .smi-name{font-family:Cinzel,serif;font-size:11px;color:var(--text)}
+.slot-menu-item .smi-desc{font-size:9px;color:var(--text3)}
+.slot-menu-close{text-align:center;margin-top:8px}
+.slot-menu-close button{background:var(--bg2);border:1px solid var(--bdr);color:var(--text2);padding:6px 16px;border-radius:4px;cursor:pointer;font-family:Cinzel,serif}
+
+.dg-dmg-float{position:absolute;font-family:'Cinzel',serif;font-weight:bold;pointer-events:none;z-index:10;animation:dgdmgfloat 1.2s ease forwards;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+@keyframes dgdmgfloat{0%{transform:translateY(0) scale(1);opacity:1}50%{transform:translateY(-20px) scale(1.3)}100%{transform:translateY(-40px);opacity:0}}
+.slot-menu-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:600;display:flex;justify-content:center;align-items:center}
+.slot-menu{background:#13100a;border:2px solid var(--bdr2);border-radius:8px;padding:16px;width:300px;max-width:90vw;max-height:80vh;overflow-y:auto}
+.slot-menu h3{color:var(--gold);font-family:'Cinzel',serif;font-size:14px;margin-bottom:10px;text-align:center}
+.slot-menu-item{background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;padding:8px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s}
+.slot-menu-item:hover,.slot-menu-item:active{border-color:var(--gold);background:var(--bg3)}
+.slot-menu-item .smi-icon{font-size:20px;width:28px;text-align:center}
+.slot-menu-item .smi-name{font-family:'Cinzel',serif;font-size:11px;color:var(--text)}
+.slot-menu-item .smi-desc{font-size:9px;color:var(--text3)}
+.slot-menu-item.equipped{border-color:var(--green);background:rgba(90,200,90,.08)}
+.slot-menu-close{text-align:center;margin-top:10px}
+.slot-menu-close button{background:var(--bg2);border:1px solid var(--bdr);color:var(--text2);padding:6px 16px;border-radius:4px;cursor:pointer;font-family:'Cinzel',serif;font-size:12px}
+.dg-btn-in-grid{background:linear-gradient(180deg,#2a1f0f,#1a1308);border:1px solid var(--gold);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .15s}
+.dg-btn-in-grid:active{transform:scale(.97)}
 </style>
 </head>
 <body>
@@ -171,7 +202,6 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
       <div id="task-prog-wrap"><div id="task-prog"></div></div>
       <div id="task-sub"><span id="task-xp-lbl"></span><span id="task-dur-lbl"></span></div>
     </div>
-    <div id="tabs"></div>
     <div id="pages"></div>
   </div>
   <div class="panel">
@@ -338,6 +368,10 @@ const TRINKETS = {
   grove_mg_trinket:{name:'Arcane Shard',icon:'✨',skill:'magic',bonus:0.05,desc:'+5% Magic XP'},
 };
 
+const TOOL_MAP={
+  woodcutting:['axe'],mining:['pick'],fishing:['rod'],cooking:['tinder'],
+  smithing:['hammer'],fletching:['fletch_knife'],crafting:['needle'],magic:['staff'],combat:[]
+};
 const SHOP=[
   {id:'axe',name:'Iron Axe',icon:'🪓',cost:80,eff:'Woodcut +15% faster',up:'spd_wood'},
   {id:'pick',name:'Mithril Pick',icon:'⛏️',cost:120,eff:'Mining +15% faster',up:'spd_mine'},
@@ -356,7 +390,7 @@ let G = {
   tab:'woodcutting',
   task:null,prog:0,dur:0,
   mhp:0,mmhp:0,mhit:0,
-  powerCharged:false,
+  critStacks:0,
   xpEarned:{},
   startedWithSword:false,
 };
@@ -503,7 +537,7 @@ function completeTick(){
     const atk=getAtk();
     let dmgDone=atk+Math.floor(Math.random()*3);
     // Power attack: skip turn to charge, next hit is 2x
-    if(G.powerCharged){dmgDone=Math.floor(dmgDone*2);G.powerCharged=false;log('<span class="lc">⚡ POWER STRIKE! '+dmgDone+' damage!</span>');}
+    if(G.critStacks>0){var critRoll=Math.random(),critChance=Math.min(0.9,G.critStacks*0.3);if(critRoll<critChance){dmgDone=Math.floor(dmgDone*2.5);log('<span class="lc" style="color:#ffd966">⚡ CRITICAL HIT! '+dmgDone+' damage!</span>');G.critStacks=0;}else{log('<span class="lc">No crit this time ('+Math.round(critChance*100)+'% chance).</span>');G.critStacks=0;}}
     G.mhp-=dmgDone;
     if(G.mhp<=0){
       addXP(sk,a.xp);
@@ -551,7 +585,7 @@ function startTask(id){
     }
   }
   if(G.task===id){stopTask();return;}
-  G.task=id;G.prog=0;G.mhit=0;G.powerCharged=false;
+  G.task=id;G.prog=0;G.mhit=0;G.critStacks=0;
   let dur=a.dur;
   const spdKey='spd_'+sk.slice(0,4);
   const spd=G.upgrades[spdKey]?0.85:1;
@@ -566,7 +600,7 @@ function startTask(id){
   log('▶ Started: '+a.name);
 }
 function stopTask(){
-  G.task=null;G.prog=0;G.powerCharged=false;
+  G.task=null;G.prog=0;G.critStacks=0;
   document.getElementById('task-title').textContent='Idle — choose a skill and action below';
   document.getElementById('task-prog').style.width='0%';
   document.getElementById('task-xp-lbl').textContent='';
@@ -678,50 +712,79 @@ function buildSkills(){
     fil.style.background=info.color;fil.style.width='0%';
     trk.appendChild(fil);
     const lbl=document.createElement('div');lbl.className='xp-label';lbl.textContent='0/83';
-    // Slots row
     const slots=document.createElement('div');slots.className='sk-slots';
-    const toolS=document.createElement('span');toolS.className='sk-slot tool-slot';toolS.textContent='○';toolS.title='Tool slot (empty)';
-    const trinS=document.createElement('span');trinS.className='sk-slot trinket-slot';trinS.textContent='○';trinS.title='Trinket slot (empty)';
-    trinS.onclick=(e)=>{e.stopPropagation();showTrinketMenu(sk);};
+    const toolS=document.createElement('span');toolS.className='sk-slot tool-slot';toolS.textContent='○';toolS.title='Tool slot';
+    toolS.onclick=(e)=>{e.stopPropagation();showSlotMenu(sk,'tool');};
+    const trinS=document.createElement('span');trinS.className='sk-slot trinket-slot';trinS.textContent='○';trinS.title='Trinket slot';
+    trinS.onclick=(e)=>{e.stopPropagation();showSlotMenu(sk,'trinket');};
     slots.appendChild(toolS);slots.appendChild(trinS);
     d.appendChild(top);d.appendChild(trk);d.appendChild(lbl);d.appendChild(slots);
     d.onclick=()=>switchTab(sk);
     g.appendChild(d);
   }
+  // Dungeon button in empty grid slot
+  const dgBtn=document.createElement('div');
+  dgBtn.className='sk-card dg-btn-in-grid';dgBtn.id='sk-dungeon';
+  dgBtn.innerHTML='<div style="font-size:26px">🏰</div><div class="sk-name" style="color:var(--gold)">DUNGEON</div>';
+  dgBtn.onclick=()=>{if(typeof showDungeonEntry==='function')showDungeonEntry();};
+  g.appendChild(dgBtn);
 }
 
-function showTrinketMenu(sk){
-  // Find trinkets in inventory for this skill
-  const available=Object.entries(G.inv).filter(([id,q])=>q>0&&TRINKETS[id]&&TRINKETS[id].skill===sk);
-  const current=G.trinkets[sk];
-  let msg='';
-  if(current&&TRINKETS[current]){
-    msg='Equipped: '+TRINKETS[current].icon+' '+TRINKETS[current].name+'\n';
-    if(confirm(msg+'Unequip trinket?')){
-      give(current,1);
-      delete G.trinkets[sk];
-      log('Removed trinket from '+SKILLS[sk].name+'.');
+function showSlotMenu(sk, slotType){
+  // Remove any existing menu
+  const old=document.getElementById('slot-menu-overlay');if(old)old.remove();
+  const ov=document.createElement('div');ov.id='slot-menu-overlay';ov.className='slot-menu-overlay';
+  const menu=document.createElement('div');menu.className='slot-menu';
+  let title='',items=[];
+  if(slotType==='tool'){
+    title=SKILLS[sk].icon+' '+SKILLS[sk].name+' - Tool Slot';
+    const toolIds=TOOL_MAP[sk]||[];
+    const upKey='spd_'+sk.slice(0,4);
+    if(G.upgrades[upKey]){
+      // Already have tool - show equipped
+      const shopItem=SHOP.find(s=>toolIds.includes(s.id));
+      items.push({icon:shopItem?shopItem.icon:'⚒',name:shopItem?shopItem.name:'Tool',desc:'Equipped: '+shopItem?.eff,equipped:true,action:()=>{/*cant unequip shop tools*/closeSlotMenu();}});
+    } else {
+      items.push({icon:'❌',name:'No tool',desc:'Buy one from the General Store',equipped:false,action:()=>closeSlotMenu()});
     }
-    return;
+  } else {
+    title=SKILLS[sk].icon+' '+SKILLS[sk].name+' - Trinket Slot';
+    const current=G.trinkets[sk];
+    if(current&&TRINKETS[current]){
+      const t=TRINKETS[current];
+      items.push({icon:t.icon,name:t.name+' (equipped)',desc:t.desc,equipped:true,action:()=>{
+        give(current,1);delete G.trinkets[sk];log('Removed trinket from '+SKILLS[sk].name+'.');closeSlotMenu();
+      }});
+    }
+    // Show available trinkets for this skill from inventory
+    Object.entries(G.inv).filter(([id,q])=>q>0&&TRINKETS[id]&&TRINKETS[id].skill===sk).forEach(([id])=>{
+      if(id===current)return;
+      const t=TRINKETS[id];
+      items.push({icon:t.icon,name:t.name,desc:t.desc,equipped:false,action:()=>{
+        if(G.trinkets[sk]){give(G.trinkets[sk],1);}
+        take(id,1);G.trinkets[sk]=id;
+        log('✨ Equipped '+t.icon+' '+t.name+' to '+SKILLS[sk].name+'!');closeSlotMenu();
+      }});
+    });
+    if(items.length===0) items.push({icon:'❌',name:'No trinkets available',desc:'Find trinkets in dungeons for '+SKILLS[sk].name,equipped:false,action:()=>closeSlotMenu()});
   }
-  if(available.length===0){log('❌ No trinkets for '+SKILLS[sk].name+' in inventory.');return;}
-  const[tid]=available[0];
-  const t=TRINKETS[tid];
-  if(confirm('Equip '+t.icon+' '+t.name+' to '+SKILLS[sk].name+'?\n'+t.desc)){
-    take(tid,1);
-    G.trinkets[sk]=tid;
-    log('✨ Equipped '+t.icon+' '+t.name+' to '+SKILLS[sk].name+'!');
-  }
+  let h='<h3>'+title+'</h3>';
+  items.forEach((it,i)=>{
+    h+='<div class="slot-menu-item'+(it.equipped?' equipped':'')+'" data-idx="'+i+'">'
+      +'<span class="smi-icon">'+it.icon+'</span><div><div class="smi-name">'+it.name+'</div><div class="smi-desc">'+it.desc+'</div></div></div>';
+  });
+  h+='<div class="slot-menu-close"><button onclick="closeSlotMenu()">Close</button></div>';
+  menu.innerHTML=h;ov.appendChild(menu);document.body.appendChild(ov);
+  // Add click handlers
+  menu.querySelectorAll('.slot-menu-item').forEach((el,i)=>{el.onclick=()=>items[i].action();});
+  ov.onclick=(e)=>{if(e.target===ov)closeSlotMenu();};
 }
+function closeSlotMenu(){const ov=document.getElementById('slot-menu-overlay');if(ov)ov.remove();updateUI();}
+function showTrinketMenu(sk){showSlotMenu(sk,'trinket');}
 
 function buildTabs(){
-  const tabs=document.getElementById('tabs'),pages=document.getElementById('pages');
+  const pages=document.getElementById('pages');
   for(const[sk,info]of Object.entries(SKILLS)){
-    const t=document.createElement('div');
-    t.className='tab'+(sk===G.tab?' active':'');t.id='tab-'+sk;
-    const tico=document.createElement('span');tico.className='tab-icon';tico.textContent=info.icon;
-    t.appendChild(tico);t.appendChild(document.createTextNode(info.name.slice(0,5)));
-    t.onclick=()=>switchTab(sk);tabs.appendChild(t);
     const p=document.createElement('div');
     p.className='act-page'+(sk===G.tab?' active':'');p.id='page-'+sk;
     p.innerHTML=buildActPage(sk);
@@ -750,9 +813,9 @@ function buildActPage(sk){
 
 function switchTab(sk){
   G.tab=sk;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  // tabs removed from UI
   document.querySelectorAll('.act-page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('tab-'+sk)?.classList.add('active');
+  // tabs removed
   document.getElementById('page-'+sk)?.classList.add('active');
   refreshButtons(sk);
 }
