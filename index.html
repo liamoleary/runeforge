@@ -34,11 +34,19 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 #skills-grid.dungeons-mode .sk-card:not(.dg-btn-in-grid) .sk-flip{transform:rotateY(180deg)}
 .sk-front,.sk-back{position:absolute;top:0;left:0;width:100%;height:100%;min-height:86px;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--bg2);padding:9px 10px;box-sizing:border-box;overflow:hidden}
 .sk-back{transform:rotateY(180deg);background:linear-gradient(135deg,#1a1308 0%,#241a0c 100%);border:1px solid var(--bdr);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:7px 6px;gap:1px}
+.sk-back.locked{background:linear-gradient(135deg,#0e0a04 0%,#15110a 100%);border-color:#1f1810}
+.sk-back.locked .dg-icon,.sk-back.locked .dg-name,.sk-back.locked .dg-tier,.sk-back.locked .dg-rwd{display:none}
 .sk-back .dg-icon{font-size:22px;line-height:1;display:block;height:24px}
 .sk-back .dg-name{font-family:'Cinzel',serif;font-size:11px;color:var(--gold);font-weight:700;line-height:1.1;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;max-width:100%}
 .sk-back .dg-tier{font-size:8px;color:var(--text3);margin-top:3px;line-height:1.1;letter-spacing:.3px}
 .sk-back .dg-rwd{font-size:8px;color:var(--text2);margin-top:1px;display:flex;align-items:center;justify-content:center;gap:2px;line-height:1.1;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .sk-back .dg-rwd .dg-rwd-ico{font-size:11px;line-height:1}
+.sk-back .dg-lock-icon{display:none;font-size:30px;line-height:1}
+.sk-back.locked .dg-lock-icon{display:block;filter:drop-shadow(0 0 6px rgba(0,0,0,0.6))}
+.sk-back .dg-lock-text{display:none;font-family:'Cinzel',serif;font-size:9px;color:#5a4830;letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+.sk-back.locked .dg-lock-text{display:block}
+.sk-back .dg-lock-hint{display:none;font-size:9px;color:#3a2c18;margin-top:2px;line-height:1.2;padding:0 4px}
+.sk-back.locked .dg-lock-hint{display:block}
 .sk-card.sk-active .sk-front{background:#241c0c;box-shadow:inset 0 0 16px rgba(240,192,64,.08)}
 .dg-btn-in-grid{background:linear-gradient(180deg,#2a1f0f,#1a1308) !important;border:1px solid var(--gold) !important;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:9px 10px !important;min-height:86px}
 #skills-grid:not(.dungeons-mode) .sk-back{pointer-events:none}
@@ -665,7 +673,7 @@ const SHOP=[
 let G = {
   skills:{},inv:{},equip:{weapon:null,armour:null},
   gold:0,hp:10,maxhp:10,
-  upgrades:{},tools:{},dungeonRewards:{},
+  upgrades:{},tools:{},dungeonRewards:{},dungeonsDiscovered:{},
   tab:'woodcutting',
   task:null,prog:0,dur:0,
   mhp:0,mmhp:0,mhit:0,
@@ -691,6 +699,7 @@ function load(){
   initSkills();initXpTracking();
   if(!G.tools)G.tools={};
   if(!G.dungeonRewards)G.dungeonRewards={};
+  if(!G.dungeonsDiscovered)G.dungeonsDiscovered={};
   if(!G.xpEarned)G.xpEarned={};
   if(!G.startedWithSword)G.startedWithSword=false;
   // Trinket removal cleanup: drop legacy state and any trinket items in inventory
@@ -704,6 +713,16 @@ function load(){
       const rwd=window.DUNGEONS[dgId].reward;
       if(rwd&&rwd.id&&G.inv[rwd.id]&&!G.dungeonRewards[dgId]){
         G.dungeonRewards[dgId]=true;
+      }
+    }
+  }
+  // Backfill dungeonsDiscovered: any skill already at the unlock level is silently marked
+  // discovered so the popup doesn't pop retroactively for existing players.
+  const unlockLvl=window.DUNGEON_UNLOCK_LEVEL||10;
+  if(window.DUNGEONS){
+    for(const dgId of Object.keys(window.DUNGEONS)){
+      if(!G.dungeonsDiscovered[dgId]&&slvl(dgId)>=unlockLvl){
+        G.dungeonsDiscovered[dgId]=true;
       }
     }
   }
@@ -774,6 +793,13 @@ function addXP(sk,amt){
     log('<span class="ll">⭐ LEVEL UP! '+SKILLS[sk].name+' is now level '+nl+'!</span>');
     if(sk==='combat'){G.maxhp=10+Math.floor(nl*1.6);G.hp=Math.min(G.hp+3,G.maxhp);}
     sendLevelNotification(sk,nl);
+    // Dungeon discovery: first time you cross the unlock threshold for a skill,
+    // pop the dungeon discovery modal so the player knows it's available.
+    const unlockLvl=window.DUNGEON_UNLOCK_LEVEL||10;
+    if(nl>=unlockLvl&&ol<unlockLvl&&window.DUNGEONS&&window.DUNGEONS[sk]&&!G.dungeonsDiscovered[sk]){
+      G.dungeonsDiscovered[sk]=true;
+      if(typeof window._dgShowDiscovery==='function')setTimeout(()=>window._dgShowDiscovery(sk),400);
+    }
   }
 }
 
@@ -976,6 +1002,13 @@ function updateUI(){
         toolSlot.title='Tool slot (empty)';
       }
     }
+    // Refresh dungeon back-card lock state when level changes
+    const backEl=el.querySelector('.sk-back');
+    if(backEl&&window.DUNGEONS&&window.DUNGEONS[sk]){
+      const unlockLvl2=window.DUNGEON_UNLOCK_LEVEL||10;
+      if(lv<unlockLvl2)backEl.classList.add('locked');
+      else backEl.classList.remove('locked');
+    }
   }
   const hppc=(G.hp/G.maxhp)*100;
   document.getElementById('hm').style.width=hppc+'%';
@@ -1052,14 +1085,28 @@ function buildSkills(){
     // BACK (themed dungeon for this skill)
     const back=document.createElement('div');back.className='sk-back';
     const dg=window.DUNGEONS&&window.DUNGEONS[sk];
+    const unlockLvl=window.DUNGEON_UNLOCK_LEVEL||10;
     if(dg){
       const rwd=dg.reward||{};
+      // Both locked and unlocked variants are pre-rendered; CSS hides one set via the .locked class.
       back.innerHTML=
+        '<div class="dg-lock-icon">🔒</div>'+
+        '<div class="dg-lock-text">Locked</div>'+
+        '<div class="dg-lock-hint">Reach Lvl '+unlockLvl+' '+info.name+'</div>'+
         '<div class="dg-icon">'+dg.icon+'</div>'+
         '<div class="dg-name">'+dg.name+'</div>'+
         '<div class="dg-tier">Lvl 1 · 5 Rooms</div>'+
         '<div class="dg-rwd"><span class="dg-rwd-ico">'+(rwd.icon||'🏆')+'</span>'+(rwd.name||'Reward')+'</div>';
-      back.onclick=(e)=>{e.stopPropagation();if(typeof window._dgShowEntry==='function')window._dgShowEntry(sk);};
+      back.onclick=(e)=>{
+        e.stopPropagation();
+        if(slvl(sk)<unlockLvl){
+          log('🔒 '+dg.name+' is locked. Reach Lvl '+unlockLvl+' '+info.name+' to discover it.');
+          return;
+        }
+        if(typeof window._dgShowEntry==='function')window._dgShowEntry(sk);
+      };
+      // Initial lock state — updateUI keeps this in sync with skill level
+      if(slvl(sk)<unlockLvl)back.classList.add('locked');
     } else {
       back.innerHTML='<div class="dg-icon">❓</div><div class="dg-name">Coming soon</div>';
     }
