@@ -1370,9 +1370,27 @@
   }
 
   function leaveDungeon(){
+    // Safety net: if the player exits mid-combat (via X button or clicking outside
+    // the overlay) without explicitly fleeing, still give them any loot they
+    // collected in completed rooms so it is never silently discarded.
+    if(dungeonState && !dungeonState.victory && !dungeonState.fled && dungeonState.playerHp>0){
+      if(typeof G!=='undefined'){
+        if(!G.inv) G.inv={};
+        G.gold=(G.gold||0)+dungeonState.totalGold;
+        dungeonState.lootCollected.forEach(function(d){
+          if(d.id==='gold_coins'){G.gold=(G.gold||0)+d.qty;}
+          else{G.inv[d.id]=(G.inv[d.id]||0)+d.qty;}
+        });
+        if(typeof log==='function'&&(dungeonState.totalGold>0||dungeonState.lootCollected.length>0)){
+          var lootMsg=dungeonState.lootCollected.length>0?' + loot':'';
+          log('🚪 Left dungeon early — kept '+dungeonState.totalGold+' gold'+lootMsg+'.');
+        }
+      }
+    }
     dungeonState=null;
     var ov=document.getElementById('dungeon-overlay');
     if(ov) ov.style.display='none';
+    if(typeof save==='function') save();
     if(typeof updateUI==='function') updateUI();
   }
 
