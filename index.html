@@ -86,13 +86,11 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .act-btn.going{border-color:var(--gold);background:#251a06;box-shadow:0 0 10px rgba(240,192,64,.18)}
 .act-btn.cant-afford{border-color:#5a1a1a;background:rgba(60,10,10,.3)}
 .act-btn.cant-afford .ab-meta{color:#e03030}
+.act-btn.cant-afford::after{content:'tap for details';display:block;font-size:8px;color:#5a2020;font-family:'Cinzel',serif;letter-spacing:.5px;margin-top:2px}
 .act-btn .ab-icon{font-size:17px}
 .act-btn .ab-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text2)}
 .act-btn .ab-meta{font-size:9px;color:var(--text3)}
 .act-btn .ab-req{font-size:9px;color:#c08020}
-.act-btn .ab-stats{font-size:9px;color:#5ac85a;font-weight:600;line-height:1.3}
-.act-btn .ab-shard{font-size:9px;font-weight:700;line-height:1.3}
-.act-btn .ab-mats{font-size:9px;color:var(--text3);line-height:1.3}
 #char-panel{}
 #char-stats{display:flex;gap:8px;padding:10px 12px}
 .stat-box{flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;padding:8px;text-align:center}
@@ -1846,54 +1844,106 @@ function buildTabs(){
 const SHARD_RARITY_CLR = {mk1:'#0070dd', mk2:'#a335ee', mk3:'#ff8000'};
 
 function buildActPage(sk){
-  const acts=ACTIONS[sk];
+  const acts=[...ACTIONS[sk]].sort((a,b)=>a.req-b.req);
   let html='<div class="act-grid">';
   for(const a of acts){
-    // Detect gear-forging recipes: need[0] is a dungeon shard
-    const shardNeed = a.need && a.need[0] && /_shard_mk(\d)$/.test(a.need[0].id) ? a.need[0] : null;
-    const isGearRecipe = !!shardNeed;
+    // Compact meta line — ingredients as icon×n, or duration for gathering
+    let meta='';
+    if(a.need) meta=a.need.map(c=>(ITEMS[c.id]?.icon||'?')+'×'+c.n).join(' ');
+    else if(a.mhp) meta='❤️×'+a.mhp+' hp';
+    else meta='~'+(a.dur/1000).toFixed(1)+'s';
 
-    let shardHtml='', statsHtml='', metaHtml='';
-
-    if(isGearRecipe){
-      // Shard line — coloured by mark rarity
-      const mkMatch = shardNeed.id.match(/_shard_mk(\d)$/);
-      const mkKey = mkMatch ? 'mk'+mkMatch[1] : 'mk1';
-      const shardClr = SHARD_RARITY_CLR[mkKey] || '#f0c040';
-      const shardIcon = (ITEMS[shardNeed.id]?.icon) || '💎';
-      shardHtml = '<span class="ab-shard" style="color:'+shardClr+';">'+shardIcon+' ×'+shardNeed.n+' shard</span>';
-
-      // Other materials line
-      const otherMats = a.need.slice(1).map(c=>(ITEMS[c.id]?.icon||'')+'×'+c.n).join(' ');
-      metaHtml = '<span class="ab-mats">'+otherMats+'</span>';
-
-      // Output item stats
-      const prod = ITEMS[a.prod[0].id];
-      if(prod){
-        const parts=[];
-        if(prod.def)   parts.push('DEF +'+prod.def);
-        if(prod.atk)   parts.push('ATK +'+prod.atk);
-        if(prod.hp)    parts.push('HP +'+prod.hp);
-        if(prod.dodge) parts.push('DODGE +'+prod.dodge+'%');
-        if(parts.length) statsHtml='<span class="ab-stats">'+parts.join(' · ')+'</span>';
-      }
-    } else {
-      const rawMeta = a.need ? a.need.map(c=>(ITEMS[c.id]?.icon||'')+'x'+c.n).join(' ')
-                    : a.mhp  ? '❤️x'+a.mhp+' hp'
-                    :          '~'+(a.dur/1000).toFixed(1)+'s';
-      metaHtml = '<span class="ab-meta">'+rawMeta+'</span>';
-    }
-
-    html+='<button class="act-btn" data-id="'+a.id+'" data-req="'+a.req+'" onclick="startTask(\''+a.id+'\')">'
+    html+='<button class="act-btn" data-id="'+a.id+'" data-req="'+a.req+'" onclick="actBtnTap(\''+a.id+'\',this)">'
       +'<span class="ab-icon">'+a.icon+'</span>'
       +'<span class="ab-name">'+a.name+'</span>'
       +'<span class="ab-req">Lv.'+a.req+' · +'+a.xp+'xp</span>'
-      +shardHtml
-      +statsHtml
-      +metaHtml
+      +'<span class="ab-meta">'+meta+'</span>'
       +'</button>';
   }
   return html+'</div>';
+}
+
+// Tap handler — show recipe detail when cant-afford, else start task
+function actBtnTap(id, btn){
+  if(btn.classList.contains('locked')) return;
+  if(btn.classList.contains('cant-afford')){
+    showRecipeDetail(id);
+  } else {
+    startTask(id);
+  }
+}
+
+// Recipe detail modal — shows full ingredient breakdown with have/need counts
+function showRecipeDetail(id){
+  const a=findAction(id);
+  if(!a||!a.need) return;
+  const prod=a.prod&&a.prod[0]&&ITEMS[a.prod[0].id];
+  if(document.getElementById('recipe-detail-ov')) return;
+
+  // Build stats string for gear items
+  let statsHtml='';
+  if(prod&&(prod.def||prod.atk||prod.hp||prod.dodge)){
+    const parts=[];
+    if(prod.def)   parts.push('<span style="color:#88ddff;">DEF +'+prod.def+'</span>');
+    if(prod.atk)   parts.push('<span style="color:#f0c040;">ATK +'+prod.atk+'</span>');
+    if(prod.hp)    parts.push('<span style="color:#5ac85a;">HP +'+prod.hp+'</span>');
+    if(prod.dodge) parts.push('<span style="color:#9b59b6;">DODGE +'+prod.dodge+'%</span>');
+    statsHtml='<div style="font-size:12px;margin:6px 0 10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">'+parts.join('')+'</div>';
+  }
+
+  // Build ingredient rows
+  let rowsHtml='';
+  let canCraft=true;
+  for(const c of a.need){
+    const item=ITEMS[c.id]||{name:c.id,icon:'?'};
+    const have=G.inv[c.id]||0;
+    const ok=have>=c.n;
+    if(!ok) canCraft=false;
+    const haveClr=ok?'#5ac85a':'#e03030';
+    const needExtra=ok?'':' <span style="color:#e03030;">(-'+(c.n-have)+')</span>';
+    // Highlight shard entries
+    const isShard=/_shard_mk\d$/.test(c.id);
+    const mkMatch=isShard&&c.id.match(/_shard_mk(\d)$/);
+    const shardClr=isShard?(SHARD_RARITY_CLR['mk'+(mkMatch&&mkMatch[1])]||'#f0c040'):'';
+    const nameStyle=isShard?'font-weight:700;color:'+shardClr+';':'color:#e8d898;';
+    rowsHtml+='<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 8px;border-bottom:1px solid #1c1710;">'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+        +'<span style="font-size:18px;width:22px;text-align:center;">'+item.icon+'</span>'
+        +'<span style="'+nameStyle+'font-size:12px;">'+item.name+'</span>'
+      +'</div>'
+      +'<div style="text-align:right;font-size:11px;white-space:nowrap;">'
+        +'<span style="color:'+haveClr+';font-weight:700;">'+have+'/'+c.n+'</span>'
+        +needExtra
+      +'</div>'
+    +'</div>';
+  }
+
+  const ov=document.createElement('div');
+  ov.id='recipe-detail-ov';
+  ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
+  ov.innerHTML=
+    '<div style="background:#13100a;border:2px solid #3a2c18;border-radius:10px;max-width:380px;width:100%;max-height:85vh;overflow-y:auto;font-family:Cinzel,serif;">'
+      +'<div style="padding:14px 16px 10px;border-bottom:1px solid #3a2c18;display:flex;align-items:center;gap:10px;">'
+        +'<span style="font-size:28px;">'+(prod?prod.icon:a.icon)+'</span>'
+        +'<div style="flex:1;">'
+          +'<div style="color:#f0c040;font-size:14px;font-weight:700;">'+a.name+'</div>'
+          +'<div style="color:#9a7e50;font-size:10px;margin-top:1px;">Lv.'+a.req+' · +'+a.xp+' xp · '+(a.dur/1000).toFixed(1)+'s</div>'
+        +'</div>'
+        +'<div onclick="document.getElementById(\'recipe-detail-ov\').remove()" style="color:#9a7e50;font-size:22px;cursor:pointer;line-height:1;padding:0 4px;">&times;</div>'
+      +'</div>'
+      +(statsHtml?'<div style="padding:0 16px;">'+statsHtml+'</div>':'')
+      +'<div style="padding:4px 0 8px;">'
+        +'<div style="padding:4px 16px 6px;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:1px;">Ingredients needed</div>'
+        +rowsHtml
+      +'</div>'
+      +'<div style="padding:10px 16px;">'
+        +(canCraft
+          ?'<button onclick="document.getElementById(\'recipe-detail-ov\').remove();startTask(\''+id+'\')" style="width:100%;padding:10px;background:#2a1808;border:2px solid #f0c040;color:#f0c040;font-family:Cinzel,serif;font-size:13px;font-weight:700;border-radius:6px;cursor:pointer;">⚒ Craft Now</button>'
+          :'<div style="text-align:center;color:#5a4830;font-size:11px;">Gather the missing ingredients above</div>')
+      +'</div>'
+    +'</div>';
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
 }
 
 function switchTab(sk){
