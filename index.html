@@ -569,13 +569,13 @@ body.shake-hit #stage{animation:screenShake .35s ease}
       <div class="stat-box"><div class="sb-lbl">Dodge</div><div class="sb-val" id="dodge-val">5%</div><div class="sb-bar"><div class="sb-bar-fill" id="dodge-fill" style="background:#b866e0"></div></div></div>
     </div>
     <div id="equip-row">
-      <div class="eq-slot" id="eq-helmet" onclick="unequipSlot('helmet')"><span class="eq-icon">⛑️</span><span class="eq-lbl">Helmet</span></div>
-      <div class="eq-slot" id="eq-chest" onclick="unequipSlot('chest')"><span class="eq-icon">🛡️</span><span class="eq-lbl">Chest</span></div>
-      <div class="eq-slot" id="eq-boots" onclick="unequipSlot('boots')"><span class="eq-icon">🥾</span><span class="eq-lbl">Boots</span></div>
-      <div class="eq-slot" id="eq-jewelry" onclick="unequipSlot('jewelry')"><span class="eq-icon">💍</span><span class="eq-lbl">Jewelry</span></div>
-      <div class="eq-slot" id="eq-weaponL" onclick="unequipSlot('weaponL')"><span class="eq-icon">🤚</span><span class="eq-lbl">Left Hand</span></div>
-      <div class="eq-slot" id="eq-weaponR" onclick="unequipSlot('weaponR')"><span class="eq-icon">🗡️</span><span class="eq-lbl">Right Hand</span></div>
-      <div class="eq-slot eq-food" id="eq-fd" onclick="eatFood()"><span class="eq-icon">🍖</span><span class="eq-lbl">Food</span></div>
+      <div class="eq-slot" id="eq-helmet" onclick="showSlotMenu('helmet','equip')"><span class="eq-icon">⛑️</span><span class="eq-lbl">Helmet</span></div>
+      <div class="eq-slot" id="eq-chest" onclick="showSlotMenu('chest','equip')"><span class="eq-icon">🛡️</span><span class="eq-lbl">Chest</span></div>
+      <div class="eq-slot" id="eq-boots" onclick="showSlotMenu('boots','equip')"><span class="eq-icon">🥾</span><span class="eq-lbl">Boots</span></div>
+      <div class="eq-slot" id="eq-jewelry" onclick="showSlotMenu('jewelry','equip')"><span class="eq-icon">💍</span><span class="eq-lbl">Jewelry</span></div>
+      <div class="eq-slot" id="eq-weaponL" onclick="showSlotMenu('weaponL','equip')"><span class="eq-icon">🤚</span><span class="eq-lbl">Left Hand</span></div>
+      <div class="eq-slot" id="eq-weaponR" onclick="showSlotMenu('weaponR','equip')"><span class="eq-icon">🗡️</span><span class="eq-lbl">Right Hand</span></div>
+      <div class="eq-slot eq-food" id="eq-fd" onclick="showSlotMenu(null,'food')"><span class="eq-icon">🍖</span><span class="eq-lbl">Food</span></div>
       <div class="eq-slot" id="eq-empty" style="opacity:.25;cursor:default"><span class="eq-icon">·</span><span class="eq-lbl">—</span></div>
     </div>
     <div id="spell-row">
@@ -1593,6 +1593,95 @@ function showSlotMenu(sk, slotType){
       }});
     });
     if(items.length===0) items.push({icon:'❌',name:'No tool',desc:'Buy one from the General Store, or find one in the dungeon',equipped:false,action:()=>closeSlotMenu()});
+  }
+  else if(slotType==='equip'){
+    // Generic equipment-slot picker. `sk` here is the equip slot name:
+    //   helmet, chest, boots, jewelry, weaponR, weaponL
+    // The picker lists every inventory item compatible with that slot plus the
+    // currently-equipped item (so you can tap it to unequip).
+    const slotLabels={
+      helmet:{label:'Helmet',icon:'⛑️',match:it=>it.slot==='helmet'},
+      chest:{label:'Chest',icon:'🛡️',match:it=>it.slot==='chest'},
+      boots:{label:'Boots',icon:'🥾',match:it=>it.slot==='boots'},
+      jewelry:{label:'Jewelry',icon:'💍',match:it=>it.slot==='jewelry'},
+      // Right hand: main weapons (slot:'hand'). Left hand: weapons OR shields/offhands.
+      weaponR:{label:'Right Hand',icon:'🗡️',match:it=>it.slot==='hand'},
+      weaponL:{label:'Left Hand',icon:'🤚',match:it=>it.slot==='hand'||it.slot==='offhand'},
+    };
+    const meta=slotLabels[sk];
+    if(!meta){closeSlotMenu();return;}
+    title=meta.icon+' '+meta.label;
+    const currentId=G.equip[sk];
+    const statLine=it=>{
+      const bits=[];
+      if(it.atk)bits.push('+'+it.atk+' Atk');
+      if(it.def)bits.push('+'+it.def+' Def');
+      if(it.hp)bits.push('+'+it.hp+' HP');
+      if(it.dodge)bits.push('+'+it.dodge+'% Dodge');
+      return bits.length?bits.join(' · '):'—';
+    };
+    // Currently equipped item — tap to unequip.
+    if(currentId&&ITEMS[currentId]){
+      const it=ITEMS[currentId];
+      items.push({icon:it.icon,name:it.name+' (equipped)',desc:statLine(it)+' · tap to unequip',equipped:true,action:()=>{
+        unequipSlot(sk);
+        closeSlotMenu();
+      }});
+    }
+    // All other compatible items in inventory, sorted by total stat value so the
+    // strongest option is at the top.
+    const candidates=[];
+    for(const [id,qty] of Object.entries(G.inv)){
+      if(!qty||qty<=0) continue;
+      if(id===currentId) continue;
+      const it=ITEMS[id];
+      if(!it||!meta.match(it)) continue;
+      const statTotal=(it.atk||0)+(it.def||0)+(it.hp||0)*0.3+(it.dodge||0)*0.4;
+      candidates.push({id,it,statTotal});
+    }
+    candidates.sort((a,b)=>b.statTotal-a.statTotal);
+    candidates.forEach(({id,it})=>{
+      items.push({icon:it.icon,name:it.name,desc:statLine(it),equipped:false,action:()=>{
+        // Use the existing equipBySlot for weapon hand logic, but force the
+        // left-hand weapon case so tapping "Left Hand" on a sword actually
+        // equips it to the left, not the right.
+        if(sk==='weaponR'&&it.slot==='hand'){
+          if(G.equip.weaponR===id){G.equip.weaponR=null;}
+          else{G.equip.weaponR=id;}
+        } else if(sk==='weaponL'&&(it.slot==='hand'||it.slot==='offhand')){
+          if(G.equip.weaponL===id){G.equip.weaponL=null;}
+          else{G.equip.weaponL=id;}
+        } else if(G.equip[sk]===id){
+          G.equip[sk]=null;
+        } else {
+          G.equip[sk]=id;
+        }
+        recomputeMaxHp();
+        log((it.icon||'')+' Equipped '+it.name+' to '+meta.label+'.');
+        closeSlotMenu();
+      }});
+    });
+    if(!items.length||(items.length===1&&items[0].equipped===true&&candidates.length===0)){
+      // Only the equipped item (or nothing) is in the list — hint to the player.
+      items.push({icon:'❌',name:'No compatible items',desc:'Craft '+meta.label.toLowerCase()+' gear or loot it from dungeons.',equipped:false,action:()=>closeSlotMenu()});
+    }
+  }
+  else if(slotType==='food'){
+    title='🍖 Food — choose what to eat';
+    const foods=Object.entries(G.inv)
+      .filter(([id,q])=>q>0&&ITEMS[id]?.type==='food')
+      .map(([id,q])=>({id,qty:q,it:ITEMS[id]}))
+      .sort((a,b)=>(b.it.hp||0)-(a.it.hp||0));
+    foods.forEach(({id,qty,it})=>{
+      items.push({icon:it.icon,name:it.name+' ×'+qty,desc:'Heals '+(it.hp||0)+' HP · tap to eat now',equipped:false,action:()=>{
+        if(G.hp>=G.maxhp){log('❤️ Already full HP!');closeSlotMenu();return;}
+        useItem(id);
+        closeSlotMenu();
+      }});
+    });
+    if(!foods.length){
+      items.push({icon:'❌',name:'No food',desc:'Cook food with the Cooking skill — it auto-comes with you into battle.',equipped:false,action:()=>closeSlotMenu()});
+    }
   }
   let h='<h3>'+title+'</h3>';
   items.forEach((it,i)=>{
