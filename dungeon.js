@@ -261,6 +261,21 @@
   }
   // Mark I → rare, Mark II → epic, Mark III → legendary.
   var GEAR_MARK_RARITIES = ['rare','epic','legendary'];
+
+  // Per-skill shard themes — each skill's dungeon drops a themed crafting component
+  // instead of finished gear. The shard is combined with skill materials to forge the item.
+  var SHARD_THEMES = {
+    woodcutting: {prefix:'grove',      icon:'🌿', name:'Grove'},
+    mining:      {prefix:'deepstone',  icon:'💎', name:'Deepstone'},
+    fishing:     {prefix:'reef',       icon:'🪸', name:'Reef'},
+    cooking:     {prefix:'ember',      icon:'🔥', name:'Ember'},
+    smithing:    {prefix:'forge',      icon:'⚒️', name:'Forge'},
+    fletching:   {prefix:'hollow',     icon:'🏹', name:'Hollow'},
+    crafting:    {prefix:'silkweave',  icon:'🕸️', name:'Silkweave'},
+    magic:       {prefix:'arcane',     icon:'🔮', name:'Arcane'},
+  };
+  var SHARD_MARK_NAMES = ['Basic','Refined','Masterwork'];
+
   function registerGearItem(id, name, icon, slot, stats, markIdx){
     if (typeof ITEMS === 'undefined' || ITEMS[id]) return;
     var item = {
@@ -324,22 +339,46 @@
       var gearItemId = sk + '_' + slot + '_mk' + (markIdx + 1);
       var gearName = gearBase.name + ' ' + GEAR_MARKS[markIdx];
       var stats = computeGearStats(slot, markIdx, sk);
+      // Keep gear item registered so crafting recipes can reference it.
       registerGearItem(gearItemId, gearName, gearBase.icon, slot, stats, markIdx);
 
-      var chance = dropChanceForTier(tier);
+      // Dungeons now drop a crafting shard rather than finished gear.
+      // All 4 tiers within a mark share the same shard (mk1 for tiers 1-4, etc.).
+      // Players combine the shard with skill materials (in the matching skill tab)
+      // to forge the themed gear piece for that specific tier.
+      var shardTheme = SHARD_THEMES[sk] || {prefix: sk, icon: '💎', name: sk};
+      var shardId   = shardTheme.prefix + '_shard_mk' + (markIdx + 1);
+      var shardName = SHARD_MARK_NAMES[markIdx] + ' ' + shardTheme.name + ' Shard';
+      // Shard drop rate: generous early (60% at T1) and scales down (≈12% at T12).
+      // More forgiving than old gear drops because players still need to gather materials.
+      var shardChance = Math.min(80, Math.round(60 * Math.pow(0.88, tier - 1)));
+      // Craft hint shown in UI: what this shard forges and where.
+      var skCap = sk.charAt(0).toUpperCase() + sk.slice(1);
+      var craftHint = skCap + ' tab \u2192 ' + gearName;
 
       out[id] = {
         id: id,
         skill: sk,
         tier: tier,
-        name: theme.name + ' · Tier ' + tier,
+        name: theme.name + ' \u00b7 Tier ' + tier,
         shortName: theme.name,
         icon: theme.icon,
         desc: theme.desc,
         flavour: theme.flavour,
         discovery: theme.discovery,
         rooms: rooms,
-        reward: {id: gearItemId, icon: gearBase.icon, name: gearName, eff: gearEffLabel(stats), chance: chance},
+        reward: {
+          id: shardId,
+          icon: shardTheme.icon,
+          name: shardName,
+          eff: craftHint,
+          chance: shardChance,
+          // Craft target — the gear piece unlocked by this tier's recipe
+          craftItem: gearItemId,
+          craftIcon: gearBase.icon,
+          craftName: gearName,
+          craftEff:  gearEffLabel(stats)
+        },
         loot: theme.loot
       };
       DUNGEON_UNLOCK_LEVELS[id] = unlockLvl;
@@ -880,13 +919,18 @@
 
     var modal=document.createElement('div');
     modal.style.cssText='position:relative;background:linear-gradient(135deg,#1a1308 0%,#2a1f0c 100%);border:3px solid #f0c040;border-radius:14px;padding:28px 30px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 0 50px rgba(240,192,64,0.55),0 0 100px rgba(240,192,64,0.25);animation:dgVictoryPop 0.7s cubic-bezier(0.2,1.3,0.6,1) forwards;font-family:Cinzel,serif;z-index:2;';
+    var craftLinePopup = reward.craftName
+      ? '<div style="margin-top:6px;font-size:12px;color:#9a7e50;font-family:Arial,sans-serif;">\u2192 forge <span style="color:#f0c040;">'+reward.craftIcon+' '+reward.craftName+'</span><br><span style="color:#5a4830;font-size:11px;">'+(reward.craftEff||'')+'</span></div>'
+      : '';
     modal.innerHTML=
       '<div style="color:#f0c040;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;font-weight:700;">⚔ First Victory ⚔</div>'+
-      '<div style="color:#e8d898;font-size:18px;margin-bottom:18px;">'+dungeon.name+'</div>'+
-      '<div style="font-size:78px;line-height:1;margin-bottom:12px;display:inline-block;animation:dgRewardSpin 0.9s ease-out forwards,dgRewardGlow 2.2s ease-in-out 0.9s infinite;">'+reward.icon+'</div>'+
-      '<div style="color:#f0c040;font-size:22px;font-weight:700;margin-bottom:4px;text-shadow:0 0 12px rgba(240,192,64,0.6);">'+reward.name+'</div>'+
-      '<div style="color:#9a7e50;font-size:13px;margin-bottom:22px;font-family:Arial,sans-serif;">'+(reward.eff||'')+'</div>'+
-      '<button id="dg-victory-claim" style="background:linear-gradient(180deg,#f0c040,#c08020);border:2px solid #f0c040;color:#0b0905;padding:11px 28px;font-family:Cinzel,serif;font-size:14px;font-weight:700;border-radius:6px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;box-shadow:0 0 18px rgba(240,192,64,0.55);">Claim</button>';
+      '<div style="color:#e8d898;font-size:18px;margin-bottom:14px;">'+dungeon.name+'</div>'+
+      '<div style="font-size:72px;line-height:1;margin-bottom:8px;display:inline-block;animation:dgRewardSpin 0.9s ease-out forwards,dgRewardGlow 2.2s ease-in-out 0.9s infinite;">'+reward.icon+'</div>'+
+      '<div style="color:#0070dd;font-size:20px;font-weight:700;margin-bottom:2px;text-shadow:0 0 12px rgba(0,112,221,0.5);">'+reward.name+'</div>'+
+      '<div style="color:#9a7e50;font-size:11px;margin-bottom:4px;font-family:Arial,sans-serif;">Crafting component obtained</div>'+
+      craftLinePopup+
+      '<div style="margin-top:18px;"></div>'+
+      '<button id="dg-victory-claim" style="background:linear-gradient(180deg,#f0c040,#c08020);border:2px solid #f0c040;color:#0b0905;padding:11px 28px;font-family:Cinzel,serif;font-size:14px;font-weight:700;border-radius:6px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;box-shadow:0 0 18px rgba(240,192,64,0.55);">Craft It!</button>';
 
     ov.appendChild(modal);
     document.body.appendChild(ov);
@@ -1258,17 +1302,18 @@
         var firstClear=(typeof G!=='undefined')&&!G.dungeonRewards[activeDungeon.id];
         dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The dungeon falls silent. You are victorious!</span>');
 
-        // Roll for the themed gear drop. Nothing is ever guaranteed — early tiers are
+        // Roll for the crafting shard drop. Nothing is ever guaranteed — early tiers are
         // generous, later tiers are rare. The Hunter's Eye buff (loot_dungeon) bumps
         // the chance multiplicatively if active.
-        var dropChance = (rwd.chance!=null) ? rwd.chance : 50;
+        var dropChance = (rwd.chance!=null) ? rwd.chance : 60;
         var lootBuff = (typeof window.getBuffLootMult === 'function') ? window.getBuffLootMult() : 1;
         if (lootBuff > 1) dropChance = Math.min(95, Math.round(dropChance * lootBuff));
         var gotDrop = (Math.random()*100) < dropChance;
         if(gotDrop){
-          dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">🎁 LOOT! '+rwd.icon+' '+rwd.name+(rwd.eff?' <span style="color:#9a7e50">('+rwd.eff+')</span>':'')+'</span>');
+          var craftMsg = rwd.craftName ? ' <span style="color:#9a7e50;font-size:10px;">(\u2192 forge '+rwd.craftIcon+' '+rwd.craftName+' in the skill tab)</span>' : '';
+          dungeonState.combatLog.push('<span style="color:#0070dd;font-weight:bold">🎁 '+rwd.icon+' '+rwd.name+' obtained!</span>'+craftMsg);
         } else {
-          dungeonState.combatLog.push('<span style="color:#9a7e50">No themed drop this run ('+dropChance+'% chance · '+rwd.icon+' '+rwd.name+'). Try again!</span>');
+          dungeonState.combatLog.push('<span style="color:#9a7e50">No shard this run ('+dropChance+'% · '+rwd.icon+' '+rwd.name+'). Run it again!</span>');
         }
 
         var gotLevelPotion=Math.random()<DG.levelPotionChance;
@@ -1293,7 +1338,7 @@
           if(typeof renderInv==='function') renderInv();
           if(typeof log==='function'){
             var msg='<b>'+activeDungeon.name+' cleared!</b> +'+dungeonState.totalGold+' gold';
-            if(gotDrop) msg+=' + <span style="color:#f0c040">'+rwd.icon+' '+rwd.name+'</span>';
+            if(gotDrop) msg+=' + <span style="color:#0070dd">'+rwd.icon+' '+rwd.name+'</span>'+(rwd.craftName?' <span style="color:#9a7e50;font-size:10px;">(\u2192 '+rwd.craftName+')</span>':'');
             if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">🧪 Level Potion!</span>';
             log(msg+' + loot!');
           }
@@ -1664,13 +1709,19 @@
       var row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid '+(unlocked?'#3a2c18':'#1c1710')+';border-radius:7px;background:'+(unlocked?'#1a1308':'#0d0905')+';cursor:'+(unlocked?'pointer':'default')+';opacity:'+(unlocked?'1':'0.6')+';transition:all .15s;';
       var rewardLine = '<div style="color:#e8d898;font-size:10px;margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span style="font-size:14px;">'+rw.icon+'</span><span style="color:'+rwClr+';font-weight:700;">'+(rw.name||'Reward')+'</span>'+(owned>0?'<span style="color:#5ac85a;font-size:9px;">×'+owned+'</span>':'')+'</div>';
-      var statsLine = rw.eff ? '<div style="color:#9a7e50;font-size:9px;margin-top:2px;">'+rw.eff+'</div>' : '';
+      // Craft path — show what gear piece the shard can be forged into
+      var craftOwnedTP = (rw.craftItem && typeof G!=='undefined'&&G.inv&&G.inv[rw.craftItem]) ? G.inv[rw.craftItem] : 0;
+      var craftLine = rw.craftName
+        ? '<div style="font-size:9px;color:#9a7e50;margin-top:2px;display:flex;align-items:center;gap:3px;flex-wrap:wrap;"><span>\u2b3b</span><span style="font-size:12px;">'+rw.craftIcon+'</span><span style="color:#f0c040;">'+rw.craftName+'</span>'+(craftOwnedTP>0?'<span style="color:#5ac85a;font-size:9px;">×'+craftOwnedTP+'</span>':'')+'</div>'
+        : '';
+      var statsLine = rw.craftEff ? '<div style="color:#5a4830;font-size:9px;margin-top:1px;">'+rw.craftEff+'</div>' : '';
       var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:3px;display:flex;justify-content:space-between;gap:6px;"><span style="color:#88ddff;">💎 '+dropPct+'% drop</span><span style="color:'+(unlocked?'#5ac85a':'#9a7e50')+';">'+(unlocked?'✓ Lvl '+req:'🔒 Lvl '+req)+'</span></div>';
       row.innerHTML =
         '<div style="min-width:34px;height:34px;border-radius:5px;background:#0b0604;border:1px solid #3a2c18;display:flex;align-items:center;justify-content:center;font-size:16px;color:#f0c040;font-weight:700;">'+t+'</div>' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="color:#e8d898;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(unlocked?'':'🔒 ')+'Tier '+t+(claimed?' <span style="color:#5ac85a;font-size:10px;">cleared</span>':'')+'</div>' +
           rewardLine +
+          craftLine +
           statsLine +
           chanceLine +
         '</div>';
@@ -1745,7 +1796,8 @@
     var h='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
     var tierLbl = activeDungeon.tier ? ('Tier '+activeDungeon.tier+' · ') : '';
     h+='<div style="text-align:center;"><div style="font-size:32px;margin-bottom:6px;">'+activeDungeon.icon+'</div><div style="color:#f0c040;font-size:18px;font-family:Cinzel,serif;margin-bottom:2px;">'+activeDungeon.name+'</div><div style="color:#9a7e50;font-size:11px;margin-bottom:12px;">'+tierLbl+'5 Rooms · Unlock Lvl '+unlockLvl+'</div></div>';
-    h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">'+(activeDungeon.desc||'')+' Clear all <b>5 creatures</b> to claim the <span style="color:#f0c040;">'+rwd.icon+' '+rwd.name+'</span>.<br><span style="color:#9a7e50;font-size:10px;">⚔ Slash or ⚡ Power Attack! 🍖 Eating leaves you open — dodge gear helps. 🏃 Flee to keep loot.</span></div>';
+    var craftArrow = rwd.craftName ? (' \u2192 forge <span style="color:#f0c040;">'+rwd.craftIcon+' '+rwd.craftName+'</span> in the '+activeDungeon.skill.charAt(0).toUpperCase()+activeDungeon.skill.slice(1)+' tab') : '';
+    h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">'+(activeDungeon.desc||'')+' Clear all <b>5 creatures</b> to earn <span style="color:#0070dd;">'+rwd.icon+' '+rwd.name+'</span>'+craftArrow+'.<br><span style="color:#9a7e50;font-size:10px;">⚔ Slash or ⚡ Power Attack! 🍖 Eating leaves you open — dodge gear helps. 🏃 Flee to keep loot.</span></div>';
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;">';
     h+='<div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">REQUIREMENTS</div>';
@@ -1798,7 +1850,11 @@
     var rwdRarityClr = '#f0c040';
     try { if(typeof window.RARITY==='object'&&window.getItemRarity) rwdRarityClr = window.RARITY[window.getItemRarity(rwd.id)].color; } catch(e){}
     var rwdOwned = (typeof G!=='undefined'&&G.inv&&G.inv[rwd.id]) ? G.inv[rwd.id] : 0;
-    h+='<div style="display:flex;justify-content:space-between;color:'+rwdRarityClr+';font-size:10px;margin-bottom:2px;font-weight:700;"><span>'+rwd.icon+' '+rwd.name+(rwd.eff?' <span style="color:#9a7e50;font-weight:400;">('+rwd.eff+')</span>':'')+(rwdOwned>0?' <span style="color:#5ac85a;font-weight:400;">×'+rwdOwned+'</span>':'')+'</span><span style="color:#88ddff;">💎 '+rwdChance+'%</span></div>';
+    h+='<div style="display:flex;justify-content:space-between;color:'+rwdRarityClr+';font-size:10px;margin-bottom:2px;font-weight:700;"><span>'+rwd.icon+' '+rwd.name+(rwdOwned>0?' <span style="color:#5ac85a;font-weight:400;">×'+rwdOwned+'</span>':'')+'</span><span style="color:#88ddff;">💎 '+rwdChance+'%</span></div>';
+    if(rwd.craftName){
+      var craftOwnedEntry=(typeof G!=='undefined'&&G.inv&&G.inv[rwd.craftItem])?G.inv[rwd.craftItem]:0;
+      h+='<div style="font-size:9px;color:#9a7e50;margin-bottom:2px;padding-left:6px;">⬌ Combine in skill tab \u2192 <span style="color:#f0c040;">'+rwd.craftIcon+' '+rwd.craftName+'</span>'+(rwd.craftEff?' <span style="color:#5a4830;">('+rwd.craftEff+')</span>':'')+(craftOwnedEntry>0?' <span style="color:#5ac85a;">×'+craftOwnedEntry+'</span>':'')+'</div>';
+    }
     h+='<div style="display:flex;justify-content:space-between;color:#9b59b6;font-size:10px;"><span>🧪 Level Potion</span><span>2%</span></div>';
     h+='</div></div>';
 
