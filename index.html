@@ -104,11 +104,18 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 #spell-row-grid::-webkit-scrollbar{display:none}
 .sp-slot{flex:0 0 auto;min-width:46px;background:var(--bg2);border:2px solid var(--bdr);border-radius:6px;padding:4px 4px 3px;cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:1px;position:relative}
 .sp-slot:active{transform:scale(.93)}
-.sp-slot[data-rarity="common"]{border-color:#ffffff;box-shadow:0 0 4px rgba(255,255,255,.3) inset}
-.sp-slot[data-rarity="uncommon"]{border-color:#1eff00;box-shadow:0 0 6px rgba(30,255,0,.35) inset}
-.sp-slot[data-rarity="rare"]{border-color:#0070dd;box-shadow:0 0 7px rgba(0,112,221,.4) inset}
-.sp-slot[data-rarity="epic"]{border-color:#a335ee;box-shadow:0 0 8px rgba(163,53,238,.5) inset}
-.sp-slot[data-rarity="legendary"]{border-color:#ff8000;box-shadow:0 0 9px rgba(255,128,0,.55) inset;animation:lgEquipPulse 2.4s ease-in-out infinite}
+.sp-slot.empty{background:#110d07;border:2px dashed #2b2112;opacity:.55;cursor:default}
+.sp-slot.empty:active{transform:none}
+.sp-slot.empty .sp-ico{opacity:.3;filter:grayscale(1)}
+.sp-slot.empty .sp-dmg{color:#3a2c18}
+.sp-slot.locked{opacity:.38}
+.sp-slot.locked .sp-ico{filter:grayscale(1) brightness(.55)}
+.sp-lock{position:absolute;top:1px;left:3px;font-size:8px;color:#5a4830;font-weight:bold;text-shadow:0 0 2px #000}
+.sp-slot[data-rarity="common"]:not(.empty){border-color:#ffffff;box-shadow:0 0 4px rgba(255,255,255,.3) inset}
+.sp-slot[data-rarity="uncommon"]:not(.empty){border-color:#1eff00;box-shadow:0 0 6px rgba(30,255,0,.35) inset}
+.sp-slot[data-rarity="rare"]:not(.empty){border-color:#0070dd;box-shadow:0 0 7px rgba(0,112,221,.4) inset}
+.sp-slot[data-rarity="epic"]:not(.empty){border-color:#a335ee;box-shadow:0 0 8px rgba(163,53,238,.5) inset}
+.sp-slot[data-rarity="legendary"]:not(.empty){border-color:#ff8000;box-shadow:0 0 9px rgba(255,128,0,.55) inset;animation:lgEquipPulse 2.4s ease-in-out infinite}
 .sp-ico{font-size:18px;line-height:1;filter:drop-shadow(0 0 3px rgba(0,0,0,.6))}
 .sp-dmg{font-size:8px;color:var(--text2);font-family:'Cinzel',serif;line-height:1}
 .sp-qty{position:absolute;bottom:1px;right:3px;font-size:9px;color:var(--gold);font-weight:bold;text-shadow:0 0 2px #000}
@@ -1344,6 +1351,17 @@ function renderInv(){
 // Canonical ordering for the spell bar (matches magic level progression).
 const SPELL_ORDER=['scroll_wind','scroll_water','scroll_fire','scroll_earth','scroll_shock','scroll_inferno','scroll_tempest','scroll_meteor'];
 
+// Cache mapping each scroll id → the magic action that crafts it (for req level lookup).
+function findScrollAction(scrollId){
+  if(!ACTIONS||!ACTIONS.magic) return null;
+  for(const a of ACTIONS.magic){
+    if(a.prod){
+      for(const p of a.prod){ if(p.id===scrollId) return a; }
+    }
+  }
+  return null;
+}
+
 function getOwnedScrolls(){
   const out=[];
   if(!G.inv) return out;
@@ -1365,25 +1383,47 @@ function renderSpellBar(){
   const count=document.getElementById('spell-row-count');
   if(!grid) return;
   grid.innerHTML='';
-  const owned=getOwnedScrolls();
-  const total=owned.reduce((s,o)=>s+o.qty,0);
-  if(count) count.textContent=total>0?(owned.length+' type'+(owned.length>1?'s':'')+' · '+total+' total'):'empty';
-  if(!owned.length){
-    const e=document.createElement('div');e.className='sp-empty';
-    e.textContent='No scrolls — craft some in Magic to cast spells in battle.';
-    grid.appendChild(e);
-    return;
-  }
-  for(const o of owned){
+  const magicLvl=(typeof slvl==='function')?slvl('magic'):1;
+  let ownedTypes=0,totalQty=0;
+  // Always render all canonical slots so players see the whole spell tree.
+  for(const id of SPELL_ORDER){
+    const it=ITEMS[id];
+    if(!it) continue;
+    const qty=(G.inv&&G.inv[id])||0;
+    const act=findScrollAction(id);
+    const reqLvl=act?act.req:1;
+    const unlocked=magicLvl>=reqLvl;
     const d=document.createElement('div');
     d.className='sp-slot';
-    d.dataset.rarity=getItemRarity(o.id);
-    d.title=o.item.name+' · '+(o.item.spellDmg||0)+' dmg · '+o.qty+' owned';
-    d.innerHTML='<span class="sp-ico">'+o.item.icon+'</span><span class="sp-dmg">'+(o.item.spellDmg||0)+'</span><span class="sp-qty">'+(o.qty>=1000?(o.qty/1000).toFixed(1)+'k':o.qty)+'</span>';
-    d.onclick=(function(id,it){return function(){
-      log('📜 '+it.icon+' '+it.name+' (<b>'+it.spellDmg+' dmg</b>) — cast it with the spell bar inside a dungeon.');
-    };})(o.id,o.item);
+    if(qty>0){
+      ownedTypes++;
+      totalQty+=qty;
+      d.dataset.rarity=getItemRarity(id);
+      d.title=it.name+' · '+(it.spellDmg||0)+' dmg · '+qty+' owned';
+      d.innerHTML='<span class="sp-ico">'+it.icon+'</span><span class="sp-dmg">'+(it.spellDmg||0)+'</span><span class="sp-qty">'+(qty>=1000?(qty/1000).toFixed(1)+'k':qty)+'</span>';
+      d.onclick=(function(sid,sit){return function(){
+        log('📜 '+sit.icon+' '+sit.name+' (<b>'+sit.spellDmg+' dmg</b>) — cast it with the spell bar inside a dungeon.');
+      };})(id,it);
+    } else {
+      d.classList.add('empty');
+      if(!unlocked) d.classList.add('locked');
+      d.dataset.rarity=getItemRarity(id);
+      d.title=unlocked
+        ? it.name+' · '+(it.spellDmg||0)+' dmg · EMPTY — craft in Magic to fill this slot'
+        : it.name+' · Unlocks at Magic Lv.'+reqLvl;
+      const lockBadge=unlocked?'':'<span class="sp-lock">🔒'+reqLvl+'</span>';
+      d.innerHTML=lockBadge+'<span class="sp-ico">'+it.icon+'</span><span class="sp-dmg">'+(it.spellDmg||0)+'</span>';
+      d.onclick=(function(sit,u,r){return function(){
+        if(u) log('📜 Empty '+sit.name+' slot — craft one in Magic to cast it in battle.');
+        else log('🔒 '+sit.name+' unlocks at Magic Lv.'+r+'.');
+      };})(it,unlocked,reqLvl);
+    }
     grid.appendChild(d);
+  }
+  if(count){
+    count.textContent=totalQty>0
+      ? (ownedTypes+'/'+SPELL_ORDER.length+' · '+totalQty+' total')
+      : '0/'+SPELL_ORDER.length;
   }
 }
 

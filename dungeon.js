@@ -1426,45 +1426,61 @@
     }
     h+='</div>';
 
-    // === Spell bar — visible during active combat only ===
+    // === Spell bar — always renders all canonical scroll slots in combat so the
+    // player can see which scrolls they own, which are empty, and which are still
+    // locked behind their current Magic level.
     if(!done){
-      var ownedScrolls=[];
       var SCROLL_ORDER=['scroll_wind','scroll_water','scroll_fire','scroll_earth','scroll_shock','scroll_inferno','scroll_tempest','scroll_meteor'];
-      if(typeof G!=='undefined'&&G.inv&&typeof ITEMS!=='undefined'){
-        for(var si=0;si<SCROLL_ORDER.length;si++){
-          var scid=SCROLL_ORDER[si];
-          var scq=(G.inv[scid]||0);
-          if(scq>0&&ITEMS[scid]) ownedScrolls.push({id:scid,qty:scq,item:ITEMS[scid]});
-        }
-        // catch any unrecognised scroll types too
-        for(var scid2 in G.inv){
-          if(SCROLL_ORDER.indexOf(scid2)!==-1) continue;
-          if(ITEMS[scid2]&&ITEMS[scid2].type==='scroll'&&(G.inv[scid2]||0)>0)
-            ownedScrolls.push({id:scid2,qty:G.inv[scid2],item:ITEMS[scid2]});
-        }
-      }
-      // Rarity → border colour map (mirrors CSS rarity palette).
       var rarClr={common:'#ffffff',uncommon:'#1eff00',rare:'#0070dd',epic:'#a335ee',legendary:'#ff8000',artifact:'#e6cc80'};
-      h+='<div style="margin-bottom:8px;">';
-      h+='<div style="font-family:Cinzel,serif;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;text-align:center;">✨ Spell Scrolls</div>';
-      if(ownedScrolls.length){
-        h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">';
-        for(var so=0;so<ownedScrolls.length;so++){
-          var osc=ownedScrolls[so];
-          var bclr=rarClr[osc.item.rarity||'common']||'#888';
-          var dmgTip=osc.item.spellDmg||0;
-          h+='<button onclick="window._dgAttack(\'magic\',\''+osc.id+'\')" '
-           +'style="position:relative;background:#1a0e2a;border:2px solid '+bclr+';border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;box-shadow:0 0 8px '+bclr+'44;" '
-           +'title="'+osc.item.name+' · '+dmgTip+' dmg · '+osc.qty+' owned">'
-           +'<div style="font-size:20px;line-height:1;filter:drop-shadow(0 0 6px '+bclr+');">'+osc.item.icon+'</div>'
-           +'<div style="font-size:8px;color:'+bclr+';font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">'+dmgTip+'</div>'
-           +'<span style="position:absolute;bottom:1px;right:3px;font-size:8px;color:#f0c040;font-weight:bold;">'+(osc.qty>=100?'99+':osc.qty)+'</span>'
-           +'</button>';
+      var magicLvl=(typeof slvl==='function')?slvl('magic'):1;
+      // Resolve each scroll's crafting-level requirement from ACTIONS.magic once.
+      function scrollReqLevel(sid){
+        if(typeof ACTIONS==='undefined'||!ACTIONS.magic) return 1;
+        for(var ai=0;ai<ACTIONS.magic.length;ai++){
+          var a=ACTIONS.magic[ai];
+          if(a.prod){for(var pi=0;pi<a.prod.length;pi++){if(a.prod[pi].id===sid)return a.req||1;}}
         }
-        h+='</div>';
-      } else {
-        h+='<div style="font-size:9px;color:#3a2c18;font-style:italic;text-align:center;padding:4px 0;">No scrolls — craft in Magic skill</div>';
+        return 1;
       }
+      var ownedTypes=0,totalScrolls=0;
+      var slotsHtml='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">';
+      for(var si=0;si<SCROLL_ORDER.length;si++){
+        var scid=SCROLL_ORDER[si];
+        var sit=(typeof ITEMS!=='undefined')?ITEMS[scid]:null;
+        if(!sit) continue;
+        var scq=(G&&G.inv&&G.inv[scid])||0;
+        var bclr=rarClr[sit.rarity||'common']||'#888';
+        var dmgTip=sit.spellDmg||0;
+        var reqLvl=scrollReqLevel(scid);
+        if(scq>0){
+          ownedTypes++;
+          totalScrolls+=scq;
+          slotsHtml+='<button onclick="window._dgAttack(\'magic\',\''+scid+'\')" '
+           +'style="position:relative;background:#1a0e2a;border:2px solid '+bclr+';border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;box-shadow:0 0 8px '+bclr+'44;" '
+           +'title="'+sit.name+' · '+dmgTip+' dmg · '+scq+' owned">'
+           +'<div style="font-size:20px;line-height:1;filter:drop-shadow(0 0 6px '+bclr+');">'+sit.icon+'</div>'
+           +'<div style="font-size:8px;color:'+bclr+';font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">'+dmgTip+'</div>'
+           +'<span style="position:absolute;bottom:1px;right:3px;font-size:8px;color:#f0c040;font-weight:bold;">'+(scq>=100?'99+':scq)+'</span>'
+           +'</button>';
+        } else {
+          // Empty slot: dashed border, greyscale icon, locked badge if below req level.
+          var unlocked=magicLvl>=reqLvl;
+          var slotOpacity=unlocked?'0.5':'0.32';
+          var titleTxt=unlocked
+            ? sit.name+' · '+dmgTip+' dmg · EMPTY — craft one in Magic to fill this slot'
+            : sit.name+' · Unlocks at Magic Lv.'+reqLvl;
+          slotsHtml+='<div title="'+titleTxt+'" '
+           +'style="position:relative;background:#110d07;border:2px dashed #2b2112;border-radius:6px;padding:5px 7px 4px;min-width:44px;text-align:center;cursor:default;opacity:'+slotOpacity+';">'
+           +(unlocked?'':'<span style="position:absolute;top:1px;left:3px;font-size:8px;color:#5a4830;font-weight:bold;text-shadow:0 0 2px #000;">🔒'+reqLvl+'</span>')
+           +'<div style="font-size:20px;line-height:1;filter:grayscale(1) brightness(0.55);">'+sit.icon+'</div>'
+           +'<div style="font-size:8px;color:#3a2c18;font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">'+dmgTip+'</div>'
+           +'</div>';
+        }
+      }
+      slotsHtml+='</div>';
+      h+='<div style="margin-bottom:8px;">';
+      h+='<div style="font-family:Cinzel,serif;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;text-align:center;">✨ Spell Scrolls <span style="color:#3a2c18;">('+ownedTypes+'/'+SCROLL_ORDER.length+(totalScrolls>0?' · '+totalScrolls+' total':'')+')</span></div>';
+      h+=slotsHtml;
       h+='</div>';
     }
 
