@@ -158,6 +158,12 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .sh-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text)}
 .sh-price{font-size:12px;color:var(--gold)}
 .sh-eff{font-size:9px;color:var(--text3);margin-top:2px}
+.sh-active{font-size:9px;color:#5ac85a;margin-top:3px;font-weight:700;letter-spacing:.3px}
+.sh-item.owned{border-color:#5ac85a;opacity:1}
+#active-buffs{display:flex;flex-wrap:wrap;gap:4px;padding:0 10px 6px}
+.buff-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(94,200,90,.1);border:1px solid #5ac85a;border-radius:14px;padding:3px 8px;font-size:10px;color:#9adda0;font-family:'Cinzel',serif}
+.buff-pill .buff-ico{font-size:13px;line-height:1}
+.buff-pill .buff-time{color:#5ac85a;font-weight:700}
 #log-inner{padding:6px 10px;max-height:140px;overflow-y:auto}
 #log-inner::-webkit-scrollbar{width:3px}
 #log-inner::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
@@ -529,6 +535,7 @@ body.shake-hit #stage{animation:screenShake .35s ease}
       <div id="task-prog-wrap"><div id="task-prog"></div></div>
       <div id="task-sub"><span id="task-xp-lbl"></span><span id="task-dur-lbl"></span></div>
     </div>
+    <div id="active-buffs"></div>
     <div id="pages"></div>
   </div>
   <div class="panel">
@@ -632,6 +639,16 @@ const ACTIONS = {
     {id:'sm7',name:'Iron Helm',icon:'⛑️',req:22,xp:45,dur:6500,prod:[{id:'iron_helm',n:1}],need:[{id:'iron_bar',n:3}]},
     {id:'sm8',name:'Bronze Boots',icon:'🥾',req:5,xp:24,dur:5500,prod:[{id:'bronze_boots',n:1}],need:[{id:'bronze_bar',n:2}]},
     {id:'sm9',name:'Iron Boots',icon:'🥾',req:25,xp:50,dur:6500,prod:[{id:'iron_boots',n:1}],need:[{id:'iron_bar',n:3}]},
+    // Skill-tool craft recipes — these tools used to be shop upgrades. They're now
+    // smithed (or for the wand, enchanted via magic) and slot into the per-skill
+    // tool slot for a passive speed boost.
+    {id:'sm10',name:'Steel Axe',icon:'🪓',req:30,xp:90,dur:8000,prod:[{id:'steel_axe',n:1}],need:[{id:'iron_bar',n:4},{id:'coal',n:2}]},
+    {id:'sm11',name:'Steel Pickaxe',icon:'⛏️',req:32,xp:90,dur:8000,prod:[{id:'steel_pickaxe',n:1}],need:[{id:'iron_bar',n:4},{id:'coal',n:2}]},
+    {id:'sm12',name:'Steel Fishing Rod',icon:'🎣',req:34,xp:90,dur:8000,prod:[{id:'steel_rod',n:1}],need:[{id:'iron_bar',n:3},{id:'coal',n:2}]},
+    {id:'sm13',name:'Steel Skillet',icon:'🍳',req:34,xp:90,dur:8000,prod:[{id:'steel_skillet',n:1}],need:[{id:'iron_bar',n:3},{id:'coal',n:2}]},
+    {id:'sm14',name:'Steel Smith Hammer',icon:'🔨',req:36,xp:100,dur:8500,prod:[{id:'steel_smith_hammer',n:1}],need:[{id:'iron_bar',n:5},{id:'coal',n:3}]},
+    {id:'sm15',name:'Steel Fletching Knife',icon:'🔪',req:36,xp:90,dur:8000,prod:[{id:'steel_fletch_knife',n:1}],need:[{id:'iron_bar',n:3},{id:'coal',n:2}]},
+    {id:'sm16',name:'Steel Needle',icon:'🪡',req:36,xp:90,dur:8000,prod:[{id:'steel_needle',n:1}],need:[{id:'iron_bar',n:3},{id:'coal',n:2}]},
   ],
   cooking:[
     {id:'ck0',name:'Cook Shrimp',icon:'🍤',req:1,xp:30,dur:2500,prod:[{id:'c_shrimp',n:1}],need:[{id:'raw_shrimp',n:1}]},
@@ -660,6 +677,7 @@ const ACTIONS = {
     {id:'mg0',name:'Wind Strike',icon:'🌬️',req:1,xp:12,dur:3000,need:[{id:'feather',n:1}],isCombatSpell:true,spellDmg:2},
     {id:'mg1',name:'Fire Bolt',icon:'🔥',req:13,xp:30,dur:3500,need:[{id:'feather',n:2}],isCombatSpell:true,spellDmg:5},
     {id:'mg2',name:'Enchant Ring',icon:'💍',req:7,xp:20,dur:4000,prod:[{id:'enchanted_ring',n:1}],need:[{id:'gold_ring',n:1},{id:'feather',n:3}]},
+    {id:'mg3',name:'Apprentice Wand',icon:'🪄',req:25,xp:80,dur:8000,prod:[{id:'apprentice_wand',n:1}],need:[{id:'oak_log',n:3},{id:'feather',n:5},{id:'gold_ore',n:1}]},
   ],
 };
 const ITEMS = {
@@ -735,15 +753,22 @@ const TOOL_BONUS={
   needle:0.15,steel_needle:0.20,
   staff:0.15,apprentice_wand:0.20
 };
+// Shop now sells temporary buff potions instead of permanent tool upgrades.
+// Tools come from crafting / dungeon drops; the shop is for short-term boosts.
+// `dur` is in seconds. `effect` is a buff key (see BUFF_DEFS).
 const SHOP=[
-  {id:'axe',name:'Iron Axe',icon:'🪓',cost:80,eff:'Woodcut +15% faster',up:'spd_wood'},
-  {id:'pick',name:'Mithril Pick',icon:'⛏️',cost:120,eff:'Mining +15% faster',up:'spd_mine'},
-  {id:'rod',name:'Fly Rod',icon:'🎣',cost:60,eff:'Fishing +15% faster',up:'spd_fish'},
-  {id:'tinder',name:'Tinderbox',icon:'🔥',cost:25,eff:'Cooking +15% faster',up:'spd_cook'},
-  {id:'hammer',name:'Smith Hammer',icon:'🔨',cost:90,eff:'Smithing +15% faster',up:'spd_smith'},
-  {id:'fletch_knife',name:'Fletching Knife',icon:'🔪',cost:70,eff:'Fletching +15% faster',up:'spd_flet'},
-  {id:'needle',name:'Craft Needle',icon:'🪡',cost:50,eff:'Crafting +15% faster',up:'spd_craf'},
-  {id:'staff',name:'Apprentice Staff',icon:'🪄',cost:100,eff:'Magic +15% faster',up:'spd_magi'},
+  {id:'buff_speed_all_1',name:'Quick Hands Brew',icon:'🧪',cost:60,eff:'+30% speed (all skills) · 60s',buff:'spd_all',mult:1.30,dur:60},
+  {id:'buff_speed_all_2',name:'Tireless Tonic',icon:'⚗️',cost:200,eff:'+50% speed (all skills) · 60s',buff:'spd_all',mult:1.50,dur:60},
+  {id:'buff_xp_all',name:'Sage Elixir',icon:'📜',cost:180,eff:'+25% XP (all skills) · 90s',buff:'xp_all',mult:1.25,dur:90},
+  {id:'buff_speed_wood',name:'Lumberjack Draught',icon:'🪓',cost:80,eff:'+50% Woodcutting speed · 60s',buff:'spd_woodcutting',mult:1.50,dur:60},
+  {id:'buff_speed_mine',name:'Stoneward Brew',icon:'⛏️',cost:80,eff:'+50% Mining speed · 60s',buff:'spd_mining',mult:1.50,dur:60},
+  {id:'buff_speed_fish',name:'Tideborne Tonic',icon:'🎣',cost:80,eff:'+50% Fishing speed · 60s',buff:'spd_fishing',mult:1.50,dur:60},
+  {id:'buff_speed_cook',name:'Hearth Cordial',icon:'🍳',cost:80,eff:'+50% Cooking speed · 60s',buff:'spd_cooking',mult:1.50,dur:60},
+  {id:'buff_speed_smith',name:'Forge Heat',icon:'🔥',cost:90,eff:'+50% Smithing speed · 60s',buff:'spd_smithing',mult:1.50,dur:60},
+  {id:'buff_speed_flet',name:'Steady Aim Tonic',icon:'🏹',cost:90,eff:'+50% Fletching speed · 60s',buff:'spd_fletching',mult:1.50,dur:60},
+  {id:'buff_speed_craft',name:'Spinner Silk',icon:'🧵',cost:90,eff:'+50% Crafting speed · 60s',buff:'spd_crafting',mult:1.50,dur:60},
+  {id:'buff_speed_magic',name:'Arcane Catalyst',icon:'✨',cost:120,eff:'+50% Magic speed · 60s',buff:'spd_magic',mult:1.50,dur:60},
+  {id:'buff_loot_dungeon',name:"Hunter's Eye",icon:'🦅',cost:300,eff:'+25% dungeon drop chance · 120s',buff:'loot_dungeon',mult:1.25,dur:120},
 ];
 // STATE
 const EQUIP_SLOTS = ['weaponR','weaponL','helmet','chest','boots','jewelry'];
@@ -752,6 +777,7 @@ let G = {
   skills:{},inv:{},equip:freshEquip(),
   gold:0,hp:30,maxhp:30,baseHp:30,
   upgrades:{},tools:{},dungeonRewards:{},dungeonsDiscovered:{},
+  buffs:{},
   tab:'woodcutting',
   task:null,prog:0,dur:0,
   mhp:0,mmhp:0,mhit:0,
@@ -811,6 +837,20 @@ function load(){
       }
     }
   }
+  // Shop refactor: the old `spd_*` permanent shop upgrades are gone — temporary
+  // buff potions now live in their place. Drop legacy upgrade flags so the player
+  // doesn't keep an invisible permanent +15% bonus.
+  if(G.upgrades){
+    for(const k of Object.keys(G.upgrades)){
+      if(k.indexOf('spd_')===0) delete G.upgrades[k];
+    }
+  }
+  if(!G.buffs) G.buffs={};
+  // Drop expired buffs on load so a long-offline player doesn't see ghost timers.
+  const _now=Date.now();
+  for(const k of Object.keys(G.buffs)){
+    if(!G.buffs[k]||(G.buffs[k].expires||0)<=_now) delete G.buffs[k];
+  }
   // Trinket removal cleanup: drop legacy state and any trinket items in inventory
   if(G.trinkets)delete G.trinkets;
   const oldTrinketIds=['grove_wc_trinket','grove_mn_trinket','grove_fs_trinket','grove_ck_trinket','grove_sm_trinket','grove_cb_trinket','grove_fl_trinket','grove_cr_trinket','grove_mg_trinket'];
@@ -848,14 +888,88 @@ function xpPct(sk){
   if(l>=99)return 100;
   return Math.round(((x-XP[l])/(XP[nl]-XP[l]))*100);
 }
-function getToolSpeedMult(sk){
-  // Lower = faster. Best (smallest) wins between shop upgrade and equipped tool.
+// Buff helpers — temporary shop potions / consumables that grant time-limited boosts.
+function getActiveBuff(key){
+  const b=G.buffs&&G.buffs[key];
+  if(!b) return null;
+  if((b.expires||0)<=Date.now()){delete G.buffs[key];return null;}
+  return b;
+}
+// Returns a multiplier > 1 if a speed buff for this skill is active. The all-skills
+// buff stacks multiplicatively with the per-skill buff.
+function getBuffSpeedMult(sk){
   let mult=1;
-  const upKey='spd_'+sk.slice(0,4);
-  if(G.upgrades[upKey])mult=0.85;
-  const tid=G.tools[sk];
-  if(tid&&TOOL_BONUS[tid])mult=Math.min(mult,1-TOOL_BONUS[tid]);
+  const all=getActiveBuff('spd_all');
+  if(all) mult*=(all.mult||1);
+  const own=getActiveBuff('spd_'+sk);
+  if(own) mult*=(own.mult||1);
   return mult;
+}
+function getBuffXpMult(sk){
+  let mult=1;
+  const all=getActiveBuff('xp_all');
+  if(all) mult*=(all.mult||1);
+  const own=getActiveBuff('xp_'+sk);
+  if(own) mult*=(own.mult||1);
+  return mult;
+}
+function getBuffLootMult(){
+  const b=getActiveBuff('loot_dungeon');
+  return b?(b.mult||1):1;
+}
+window.getBuffLootMult=getBuffLootMult;
+function applyBuff(buffKey, mult, durationSec){
+  if(!G.buffs) G.buffs={};
+  const now=Date.now();
+  const cur=G.buffs[buffKey];
+  // If a buff of the same key is already active with the same or higher mult,
+  // extend its duration. Otherwise replace.
+  if(cur && (cur.expires||0)>now && (cur.mult||1)>=mult){
+    cur.expires = (cur.expires||now) + durationSec*1000;
+  } else {
+    G.buffs[buffKey] = {mult:mult, expires: now + durationSec*1000};
+  }
+}
+
+function getToolSpeedMult(sk){
+  // Lower = faster. Equipped tool gives a passive % boost; shop buffs stack on top.
+  let mult=1;
+  const tid=G.tools[sk];
+  if(tid&&TOOL_BONUS[tid])mult=1-TOOL_BONUS[tid];
+  // Apply temporary speed buff (mult>1 means faster, so divide our multiplier).
+  const speedBuff=getBuffSpeedMult(sk);
+  if(speedBuff>1) mult=mult/speedBuff;
+  return Math.max(0.05,mult);
+}
+
+// Renders the row of active buff pills above the action pages.
+const _BUFF_LABELS = {
+  spd_all:'⚡ All Speed',
+  xp_all:'📜 XP Boost',
+  loot_dungeon:'🦅 Lucky Loot',
+  spd_woodcutting:'🪓 Wood Speed',
+  spd_mining:'⛏️ Mine Speed',
+  spd_fishing:'🎣 Fish Speed',
+  spd_cooking:'🍳 Cook Speed',
+  spd_smithing:'🔨 Smith Speed',
+  spd_fletching:'🏹 Fletch Speed',
+  spd_crafting:'🧵 Craft Speed',
+  spd_magic:'✨ Magic Speed',
+};
+function renderActiveBuffs(){
+  const el=document.getElementById('active-buffs');if(!el)return;
+  if(!G.buffs){el.innerHTML='';return;}
+  const now=Date.now();
+  const pills=[];
+  for(const k of Object.keys(G.buffs)){
+    const b=G.buffs[k];
+    if(!b||(b.expires||0)<=now){delete G.buffs[k];continue;}
+    const left=Math.max(0,Math.ceil((b.expires-now)/1000));
+    const label=_BUFF_LABELS[k]||k;
+    const pct=Math.round(((b.mult||1)-1)*100);
+    pills.push('<div class="buff-pill"><span class="buff-ico">'+(label.split(' ')[0])+'</span>'+label.split(' ').slice(1).join(' ')+' +'+pct+'% <span class="buff-time">'+left+'s</span></div>');
+  }
+  el.innerHTML=pills.join('');
 }
 function getActiveToolBadge(sk){
   // Returns HTML for the active task bar showing equipped tool + bonus, or ''
@@ -895,6 +1009,9 @@ function recomputeActiveTaskDur(forSk){
   updateActiveTaskBar();
 }
 function addXP(sk,amt){
+  // Apply any active XP buff before banking the gain.
+  const xpMult=getBuffXpMult(sk);
+  if(xpMult>1) amt=Math.round(amt*xpMult);
   const ol=slvl(sk);
   G.skills[sk].xp=(G.skills[sk].xp||0)+amt;
   if(!G.xpEarned)G.xpEarned={};
@@ -1169,11 +1286,12 @@ function updateUI(){
   document.getElementById('def-fill').style.width=Math.min(100,def*10)+'%';
   document.getElementById('dodge-fill').style.width=Math.min(100,(dodge/MAX_DODGE)*100)+'%';
   document.getElementById('gld').textContent='🪙 '+G.gold;
-  renderInv();renderEquip();
+  renderInv();renderEquip();renderActiveBuffs();
     updateCombatStatsPanel();updateStageMonsterHP();
   const cnt=Object.values(G.inv).filter(v=>v>0).length;
   document.getElementById('inv-count').textContent=cnt+'/28';
   if(_shopTab==='sell')renderShopSell();
+  else if(_shopTab==='buy')buildShop();
 }
 
 function isEquippedAnywhere(id){
@@ -1442,10 +1560,20 @@ function refreshButtons(sk){
 function buildShop(){
   const g=document.getElementById('shop-grid');
   g.innerHTML='';
+  const now=Date.now();
   SHOP.forEach(s=>{
     const d=document.createElement('div');
-    d.className='sh-item'+(s.up&&G.upgrades[s.up]?' owned':'');
-    d.innerHTML='<div class="sh-top"><span class="sh-icon">'+s.icon+'</span><span class="sh-name">'+s.name+'</span></div><div class="sh-price">🪙 '+s.cost+'</div><div class="sh-eff">'+s.eff+'</div>';
+    d.className='sh-item';
+    let badge='';
+    if(s.buff){
+      const active=G.buffs&&G.buffs[s.buff];
+      if(active && (active.expires||0)>now){
+        const left=Math.max(0,Math.ceil(((active.expires)-now)/1000));
+        badge='<div class="sh-active">⏱ '+left+'s active</div>';
+        d.classList.add('owned');
+      }
+    }
+    d.innerHTML='<div class="sh-top"><span class="sh-icon">'+s.icon+'</span><span class="sh-name">'+s.name+'</span></div><div class="sh-price">🪙 '+s.cost+'</div><div class="sh-eff">'+s.eff+'</div>'+badge;
     d.onclick=()=>buy(s);g.appendChild(d);
   });
 }
@@ -1667,10 +1795,16 @@ function sellStack(id){
 
 function buy(s){
   if(G.gold<s.cost){log('❌ Need '+s.cost+' gp (have '+G.gold+').');return;}
-  if(s.up&&G.upgrades[s.up]){log('Already owned!');return;}
   G.gold-=s.cost;
-  if(s.up){G.upgrades[s.up]=true;log('✅ Purchased '+s.name+'! '+s.eff);}
+  if(s.buff){
+    applyBuff(s.buff, s.mult, s.dur);
+    log('🧪 Drank '+s.icon+' <b>'+s.name+'</b> — '+s.eff);
+  } else if(s.up){
+    G.upgrades[s.up]=true;
+    log('✅ Purchased '+s.name+'! '+s.eff);
+  }
   document.getElementById('shop-grid').innerHTML='';buildShop();
+  updateUI();
 }
 // CHARACTER ANIMATION
 function anim(){
