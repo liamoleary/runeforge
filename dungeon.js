@@ -292,6 +292,26 @@
     ITEMS[id] = item;
   }
 
+  // Register a weaker "dropped" version of a gear piece — ~60% of crafted stats,
+  // rarity one step below crafted (uncommon/rare/epic instead of rare/epic/legendary).
+  var DROP_GEAR_RARITIES = ['uncommon','rare','epic'];
+  function registerDropGearItem(id, name, icon, slot, stats, markIdx){
+    if (typeof ITEMS === 'undefined' || ITEMS[id]) return;
+    var item = {
+      name:name, icon:icon,
+      sell:Math.round(((slot==='jewelry' ? 600 : 400) + 400 * (markIdx||0)) * 0.4),
+      type:(slot==='jewelry' ? 'accessory' : 'armour'),
+      slot:slot,
+      rarity: DROP_GEAR_RARITIES[markIdx||0] || 'uncommon',
+      dropped: true
+    };
+    if (stats.atk) item.atk = Math.max(1, Math.round(stats.atk * 0.6));
+    if (stats.def) item.def = Math.max(1, Math.round(stats.def * 0.6));
+    if (stats.hp)  item.hp  = Math.max(1, Math.round(stats.hp  * 0.6));
+    if (stats.dodge) item.dodge = Math.max(1, Math.round(stats.dodge * 0.6));
+    ITEMS[id] = item;
+  }
+
   function generateSkillDungeons(sk, theme){
     var out = {};
     for (var tier = 1; tier <= 12; tier++){
@@ -342,19 +362,29 @@
       // Keep gear item registered so crafting recipes can reference it.
       registerGearItem(gearItemId, gearName, gearBase.icon, slot, stats, markIdx);
 
-      // Dungeons now drop a crafting shard rather than finished gear.
-      // All 4 tiers within a mark share the same shard (mk1 for tiers 1-4, etc.).
-      // Players combine the shard with skill materials (in the matching skill tab)
-      // to forge the themed gear piece for that specific tier.
+      // Dungeons drop both a crafting shard AND (rarely) a weaker piece of gear.
+      // Shards are the primary crafting ingredient — required to forge the full-strength item.
+      // Gear drops are a lucky bonus: weaker stats (~60%) and lower rarity than crafted.
       var shardTheme = SHARD_THEMES[sk] || {prefix: sk, icon: '💎', name: sk};
       var shardId   = shardTheme.prefix + '_shard_mk' + (markIdx + 1);
       var shardName = SHARD_MARK_NAMES[markIdx] + ' ' + shardTheme.name + ' Shard';
-      // Shard drop rate: generous early (60% at T1) and scales down (≈12% at T12).
-      // More forgiving than old gear drops because players still need to gather materials.
-      var shardChance = Math.min(80, Math.round(60 * Math.pow(0.88, tier - 1)));
+      // Shard drop rate scales UP with tier: T1≈10%, T12≈70%.
+      // Early tiers are rare to keep crafting as the goal; high tiers reward persistence.
+      var shardChance = Math.round(10 + 60 * (tier - 1) / 11);
       // Craft hint shown in UI: what this shard forges and where.
       var skCap = sk.charAt(0).toUpperCase() + sk.slice(1);
       var craftHint = skCap + ' tab \u2192 ' + gearName;
+
+      // Weak gear drop — flat 12% chance, one-rarity-below crafted, ~60% stats.
+      var dropGearId = gearItemId + '_drop';
+      var dropGearName = gearName + ' (Rough)';
+      var dropGearRarities = ['uncommon','rare','epic'];
+      registerDropGearItem(dropGearId, dropGearName, gearBase.icon, slot, stats, markIdx);
+      var dropStats = {};
+      if (stats.atk) dropStats.atk = Math.max(1, Math.round(stats.atk * 0.6));
+      if (stats.def) dropStats.def = Math.max(1, Math.round(stats.def * 0.6));
+      if (stats.hp)  dropStats.hp  = Math.max(1, Math.round(stats.hp  * 0.6));
+      if (stats.dodge) dropStats.dodge = Math.max(1, Math.round(stats.dodge * 0.6));
 
       out[id] = {
         id: id,
@@ -377,7 +407,14 @@
           craftItem: gearItemId,
           craftIcon: gearBase.icon,
           craftName: gearName,
-          craftEff:  gearEffLabel(stats)
+          craftEff:  gearEffLabel(stats),
+          // Lucky gear drop fields (weaker than crafted)
+          dropId:     dropGearId,
+          dropName:   dropGearName,
+          dropIcon:   gearBase.icon,
+          dropChance: 12,
+          dropEff:    gearEffLabel(dropStats),
+          dropRarity: dropGearRarities[markIdx] || 'uncommon'
         },
         loot: theme.loot
       };
@@ -1302,9 +1339,8 @@
         var firstClear=(typeof G!=='undefined')&&!G.dungeonRewards[activeDungeon.id];
         dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The dungeon falls silent. You are victorious!</span>');
 
-        // Roll for the crafting shard drop. Nothing is ever guaranteed — early tiers are
-        // generous, later tiers are rare. The Hunter's Eye buff (loot_dungeon) bumps
-        // the chance multiplicatively if active.
+        // Roll 1: crafting shard. Chance scales UP with tier (T1≈10%, T12≈70%).
+        // Hunter's Eye buff (loot_dungeon) bumps the chance multiplicatively if active.
         var dropChance = (rwd.chance!=null) ? rwd.chance : 60;
         var lootBuff = (typeof window.getBuffLootMult === 'function') ? window.getBuffLootMult() : 1;
         if (lootBuff > 1) dropChance = Math.min(95, Math.round(dropChance * lootBuff));
@@ -1313,7 +1349,14 @@
           var craftMsg = rwd.craftName ? ' <span style="color:#9a7e50;font-size:10px;">(\u2192 forge '+rwd.craftIcon+' '+rwd.craftName+' in the skill tab)</span>' : '';
           dungeonState.combatLog.push('<span style="color:#0070dd;font-weight:bold">🎁 '+rwd.icon+' '+rwd.name+' obtained!</span>'+craftMsg);
         } else {
-          dungeonState.combatLog.push('<span style="color:#9a7e50">No shard this run ('+dropChance+'% · '+rwd.icon+' '+rwd.name+'). Run it again!</span>');
+          dungeonState.combatLog.push('<span style="color:#9a7e50">No shard this run ('+dropChance+'% · '+rwd.icon+' '+rwd.name+'). Keep going!</span>');
+        }
+
+        // Roll 2: lucky rough gear drop. Flat 12% — weaker than crafted, stepping stone only.
+        var gearDropChance = rwd.dropChance || 0;
+        var gotGearDrop = gearDropChance > 0 && (Math.random()*100) < gearDropChance;
+        if(gotGearDrop){
+          dungeonState.combatLog.push('<span style="color:#a335ee;font-weight:bold">⚡ Lucky! '+rwd.dropIcon+' '+rwd.dropName+' dropped!</span> <span style="color:#9a7e50;font-size:10px;">(crafted version is stronger)</span>');
         }
 
         var gotLevelPotion=Math.random()<DG.levelPotionChance;
@@ -1323,6 +1366,9 @@
           if(!G.inv) G.inv={};
           if(gotDrop){
             G.inv[rwd.id]=(G.inv[rwd.id]||0)+1;
+          }
+          if(gotGearDrop && rwd.dropId){
+            G.inv[rwd.dropId]=(G.inv[rwd.dropId]||0)+1;
           }
           if(firstClear){
             G.dungeonRewards[activeDungeon.id]=true;
@@ -1339,6 +1385,7 @@
           if(typeof log==='function'){
             var msg='<b>'+activeDungeon.name+' cleared!</b> +'+dungeonState.totalGold+' gold';
             if(gotDrop) msg+=' + <span style="color:#0070dd">'+rwd.icon+' '+rwd.name+'</span>'+(rwd.craftName?' <span style="color:#9a7e50;font-size:10px;">(\u2192 '+rwd.craftName+')</span>':'');
+            if(gotGearDrop) msg+=' + <span style="color:#a335ee">⚡ '+rwd.dropIcon+' '+rwd.dropName+'</span>';
             if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">🧪 Level Potion!</span>';
             log(msg+' + loot!');
           }
@@ -1715,7 +1762,14 @@
         ? '<div style="font-size:9px;color:#9a7e50;margin-top:2px;display:flex;align-items:center;gap:3px;flex-wrap:wrap;"><span>\u2b3b</span><span style="font-size:12px;">'+rw.craftIcon+'</span><span style="color:#f0c040;">'+rw.craftName+'</span>'+(craftOwnedTP>0?'<span style="color:#5ac85a;font-size:9px;">×'+craftOwnedTP+'</span>':'')+'</div>'
         : '';
       var statsLine = rw.craftEff ? '<div style="color:#5a4830;font-size:9px;margin-top:1px;">'+rw.craftEff+'</div>' : '';
-      var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:3px;display:flex;justify-content:space-between;gap:6px;"><span style="color:#88ddff;">💎 '+dropPct+'% drop</span><span style="color:'+(unlocked?'#5ac85a':'#9a7e50')+';">'+(unlocked?'✓ Lvl '+req:'🔒 Lvl '+req)+'</span></div>';
+      var gearDropLine = '';
+      if(rw.dropId){
+        var tpDropPalette={uncommon:'#1eff00',rare:'#0070dd',epic:'#a335ee',legendary:'#ff8000'};
+        var tpDropClr=tpDropPalette[rw.dropRarity||'uncommon']||'#1eff00';
+        var tpDropOwned=(typeof G!=='undefined'&&G.inv&&G.inv[rw.dropId])?G.inv[rw.dropId]:0;
+        gearDropLine='<div style="font-size:9px;color:'+tpDropClr+';margin-top:2px;display:flex;align-items:center;gap:3px;flex-wrap:wrap;"><span>⚡</span><span style="font-size:12px;">'+rw.dropIcon+'</span><span>'+rw.dropName+'</span>'+(tpDropOwned>0?'<span style="color:#5ac85a;font-size:9px;">×'+tpDropOwned+'</span>':'')+'<span style="color:#ffd966;margin-left:auto;">'+(rw.dropChance||12)+'%</span></div>';
+      }
+      var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:3px;display:flex;justify-content:space-between;gap:6px;"><span style="color:#88ddff;">💎 '+dropPct+'% shard</span><span style="color:'+(unlocked?'#5ac85a':'#9a7e50')+';">'+(unlocked?'✓ Lvl '+req:'🔒 Lvl '+req)+'</span></div>';
       row.innerHTML =
         '<div style="min-width:34px;height:34px;border-radius:5px;background:#0b0604;border:1px solid #3a2c18;display:flex;align-items:center;justify-content:center;font-size:16px;color:#f0c040;font-weight:700;">'+t+'</div>' +
         '<div style="flex:1;min-width:0;">' +
@@ -1723,6 +1777,7 @@
           rewardLine +
           craftLine +
           statsLine +
+          gearDropLine +
           chanceLine +
         '</div>';
       if(unlocked){
@@ -1854,6 +1909,13 @@
     if(rwd.craftName){
       var craftOwnedEntry=(typeof G!=='undefined'&&G.inv&&G.inv[rwd.craftItem])?G.inv[rwd.craftItem]:0;
       h+='<div style="font-size:9px;color:#9a7e50;margin-bottom:2px;padding-left:6px;">⬌ Combine in skill tab \u2192 <span style="color:#f0c040;">'+rwd.craftIcon+' '+rwd.craftName+'</span>'+(rwd.craftEff?' <span style="color:#5a4830;">('+rwd.craftEff+')</span>':'')+(craftOwnedEntry>0?' <span style="color:#5ac85a;">×'+craftOwnedEntry+'</span>':'')+'</div>';
+    }
+    if(rwd.dropId){
+      var dropRarityPalette={common:'#ffffff',uncommon:'#1eff00',rare:'#0070dd',epic:'#a335ee',legendary:'#ff8000'};
+      var dropClr=dropRarityPalette[rwd.dropRarity||'uncommon']||'#1eff00';
+      var dropOwnedEntry=(typeof G!=='undefined'&&G.inv&&G.inv[rwd.dropId])?G.inv[rwd.dropId]:0;
+      h+='<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px;"><span style="color:'+dropClr+';">'+rwd.dropIcon+' '+rwd.dropName+(dropOwnedEntry>0?' <span style="color:#5ac85a;font-weight:400;">×'+dropOwnedEntry+'</span>':'')+'</span><span style="color:#ffd966;">⚡ '+(rwd.dropChance||12)+'%</span></div>';
+      if(rwd.dropEff) h+='<div style="font-size:9px;color:#5a4830;margin-bottom:2px;padding-left:6px;">'+rwd.dropEff+' <span style="color:#9a7e50;">(rough — craft for full stats)</span></div>';
     }
     h+='<div style="display:flex;justify-content:space-between;color:#9b59b6;font-size:10px;"><span>🧪 Level Potion</span><span>2%</span></div>';
     h+='</div></div>';
