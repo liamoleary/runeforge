@@ -170,6 +170,7 @@
             G.skills={};G.inv={};G.equip=freshEq;
             G.gold=0;G.hp=baseHp;G.maxhp=baseHp;G.baseHp=baseHp;
             G.upgrades={};G.tools={};G.dungeonRewards={};G.dungeonsDiscovered={};
+            G.buffs={};
             G.tab='woodcutting';G.task=null;G.prog=0;G.dur=0;
             G.critStacks=0;G.xpEarned={};G.startedWithSword=false;
             G.hasSeenIntro=false;
