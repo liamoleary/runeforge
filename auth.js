@@ -164,7 +164,10 @@
           localStorage.removeItem('rforge');
           if(typeof G!=='undefined'){
             var baseHp = (typeof BASE_MAXHP==='number') ? BASE_MAXHP : 30;
-            G.skills={};G.inv={};G.equip={weapon:null,armour:null};
+            var freshEq = (typeof freshEquip==='function')
+              ? freshEquip()
+              : {weaponR:null,weaponL:null,helmet:null,chest:null,boots:null,jewelry:null};
+            G.skills={};G.inv={};G.equip=freshEq;
             G.gold=0;G.hp=baseHp;G.maxhp=baseHp;G.baseHp=baseHp;
             G.upgrades={};G.tools={};G.dungeonRewards={};G.dungeonsDiscovered={};
             G.tab='woodcutting';G.task=null;G.prog=0;G.dur=0;

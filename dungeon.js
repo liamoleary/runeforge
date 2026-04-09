@@ -21,8 +21,8 @@
 
 
   if(typeof ITEMS !== 'undefined'){
-    if(!ITEMS.steel_axe) ITEMS.steel_axe = {name:'Steel Axe',icon:'🪓',sell:250,type:'weapon',atk:7};
-    if(!ITEMS.enchanted_axe) ITEMS.enchanted_axe = {name:'Enchanted Grove Axe',icon:'🪓',sell:1200,type:'weapon',atk:12,special:true};
+    if(!ITEMS.steel_axe) ITEMS.steel_axe = {name:'Steel Axe',icon:'🪓',sell:250,type:'weapon',atk:7,slot:'hand'};
+    if(!ITEMS.enchanted_axe) ITEMS.enchanted_axe = {name:'Enchanted Grove Axe',icon:'🪓',sell:1200,type:'weapon',atk:12,slot:'hand',special:true};
     if(!ITEMS.steel_pickaxe) ITEMS.steel_pickaxe = {name:'Steel Pickaxe',icon:'⛏️',sell:250,type:'tool'};
     if(!ITEMS.steel_rod) ITEMS.steel_rod = {name:'Steel Fishing Rod',icon:'🎣',sell:250,type:'tool'};
     if(!ITEMS.steel_skillet) ITEMS.steel_skillet = {name:'Steel Skillet',icon:'🍳',sell:250,type:'tool'};
@@ -30,13 +30,55 @@
     if(!ITEMS.steel_fletch_knife) ITEMS.steel_fletch_knife = {name:'Steel Fletching Knife',icon:'🔪',sell:250,type:'tool'};
     if(!ITEMS.steel_needle) ITEMS.steel_needle = {name:'Steel Needle',icon:'🪡',sell:250,type:'tool'};
     if(!ITEMS.apprentice_wand) ITEMS.apprentice_wand = {name:'Apprentice Wand',icon:'🪄',sell:250,type:'tool'};
-    if(!ITEMS.steel_shield) ITEMS.steel_shield = {name:'Steel Shield',icon:'🛡️',sell:250,type:'armour',def:5};
+    if(!ITEMS.steel_shield) ITEMS.steel_shield = {name:'Steel Shield',icon:'🛡️',sell:250,type:'armour',def:5,hp:12,slot:'offhand'};
+    // Themed dungeon-boss armour drops — each dungeon's final boss has a small chance to drop these.
+    if(!ITEMS.grove_crown)    ITEMS.grove_crown    = {name:'Grove Crown',       icon:'👑',sell:400, type:'armour',   def:3, hp:14, slot:'helmet'};
+    if(!ITEMS.reef_boots)     ITEMS.reef_boots     = {name:'Reef Tidal Boots',  icon:'🥾',sell:600, type:'armour',   def:3, hp:18, slot:'boots'};
+    if(!ITEMS.cave_plate)     ITEMS.cave_plate     = {name:'Stonehide Plate',   icon:'🪨',sell:900, type:'armour',   def:7, hp:30, slot:'chest'};
+    if(!ITEMS.hearth_amulet)  ITEMS.hearth_amulet  = {name:'Hearth Amulet',     icon:'🔥',sell:1200,type:'accessory',        hp:28, atk:2, slot:'jewelry'};
+    if(!ITEMS.forge_helm)     ITEMS.forge_helm     = {name:'Molten Warhelm',    icon:'⛑️',sell:1600,type:'armour',   def:6, hp:32, slot:'helmet'};
+    if(!ITEMS.hollow_bow)     ITEMS.hollow_bow     = {name:'Hollow Longbow',    icon:'🏹',sell:2200,type:'weapon',   atk:18,         slot:'hand'};
+    if(!ITEMS.spinner_cloak)  ITEMS.spinner_cloak  = {name:'Spinner Weave Cloak',icon:'🕸️',sell:2800,type:'armour',  def:9, hp:42, slot:'chest'};
+    if(!ITEMS.vault_ring)     ITEMS.vault_ring     = {name:'Vault Keeper Ring', icon:'💍',sell:3400,type:'accessory',        hp:24, atk:6, slot:'jewelry'};
   }
 
   var dungeonState = null;
 
-  // Skill level required to unlock all dungeons.
+  // Per-skill dungeon unlock levels. Dungeons get progressively harder and drop
+  // better gear as players climb. Exposed on window so index.html can read them.
+  var DUNGEON_UNLOCK_LEVELS = {
+    woodcutting: 3,
+    fishing:     8,
+    mining:      15,
+    cooking:     25,
+    smithing:    35,
+    fletching:   50,
+    crafting:    65,
+    magic:       80
+  };
+  // Legacy single-level export for any code that still reads it.
   var DUNGEON_UNLOCK_LEVEL = 3;
+
+  // Scale monster stats by the dungeon's unlock tier so later dungeons actually
+  // challenge a high-level player. Scale curve: roughly 1x at level 3 up to ~7x
+  // by level 80, tuned against the expected weapon power at that level.
+  function scaleDungeonMonsters(dungeon){
+    var lvl = DUNGEON_UNLOCK_LEVELS[dungeon.id] || 3;
+    var scale = 1 + (lvl - 3) * 0.085;
+    if (scale <= 1.01) return dungeon;
+    var scaled = Object.assign({}, dungeon);
+    scaled._scaled = true;
+    scaled.rooms = dungeon.rooms.map(function(r){
+      var nhp = Math.max(1, Math.round(r.hp * scale));
+      return Object.assign({}, r, {
+        hp: nhp,
+        maxhp: nhp,
+        dmg: [Math.max(1, Math.round(r.dmg[0] * Math.sqrt(scale))), Math.max(2, Math.round(r.dmg[1] * Math.sqrt(scale)))],
+        xp: Math.round(r.xp * scale)
+      });
+    });
+    return scaled;
+  }
 
   // Themed level-1 dungeon definitions, one per skill.
   var DUNGEONS = {
@@ -53,7 +95,7 @@
         {name:'Ancient Seedling',icon:'🌲',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_axe',icon:'🪓',name:'Steel Axe',eff:'ATK +7'},
-      rareReward:{id:'enchanted_axe',icon:'🪓',name:'Enchanted Grove Axe',eff:'ATK +12',chance:0.05},
+      rareReward:{id:'grove_crown',icon:'👑',name:'Grove Crown',eff:'Helmet · DEF +3 · HP +14',chance:0.08},
       loot:[
         {id:'logs',name:'Logs',icon:'🪵',weight:30,min:2,max:5},
         {id:'oak_log',name:'Oak Logs',icon:'🪵',weight:22,min:1,max:3},
@@ -76,6 +118,7 @@
         {name:'Stone Warden',icon:'🗿',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_pickaxe',icon:'⛏️',name:'Steel Pickaxe',eff:'+20% Mining speed'},
+      rareReward:{id:'cave_plate',icon:'🪨',name:'Stonehide Plate',eff:'Chest · DEF +7 · HP +30',chance:0.08},
       loot:[
         {id:'copper_ore',name:'Copper Ore',icon:'🟫',weight:30,min:2,max:5},
         {id:'tin_ore',name:'Tin Ore',icon:'⬜',weight:25,min:2,max:4},
@@ -98,6 +141,7 @@
         {name:'Coral Tyrant',icon:'🪸',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_rod',icon:'🎣',name:'Steel Fishing Rod',eff:'+20% Fishing speed'},
+      rareReward:{id:'reef_boots',icon:'🥾',name:'Reef Tidal Boots',eff:'Boots · DEF +3 · HP +18',chance:0.08},
       loot:[
         {id:'raw_shrimp',name:'Raw Shrimp',icon:'🦐',weight:30,min:2,max:5},
         {id:'raw_sardine',name:'Raw Sardine',icon:'🐟',weight:24,min:2,max:4},
@@ -120,6 +164,7 @@
         {name:'Ember Cook',icon:'🔥',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_skillet',icon:'🍳',name:'Steel Skillet',eff:'+20% Cooking speed'},
+      rareReward:{id:'hearth_amulet',icon:'🔥',name:'Hearth Amulet',eff:'Jewelry · ATK +2 · HP +28',chance:0.08},
       loot:[
         {id:'raw_meat',name:'Raw Meat',icon:'🥩',weight:30,min:2,max:4},
         {id:'c_shrimp',name:'Shrimp',icon:'🍤',weight:22,min:2,max:4},
@@ -141,6 +186,7 @@
         {name:'Forge Lord',icon:'🔥',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_smith_hammer',icon:'🔨',name:'Steel Smith Hammer',eff:'+20% Smithing speed'},
+      rareReward:{id:'forge_helm',icon:'⛑️',name:'Molten Warhelm',eff:'Helmet · DEF +6 · HP +32',chance:0.08},
       loot:[
         {id:'copper_ore',name:'Copper Ore',icon:'🟫',weight:24,min:2,max:5},
         {id:'tin_ore',name:'Tin Ore',icon:'⬜',weight:22,min:2,max:4},
@@ -164,6 +210,7 @@
         {name:'Hollow Druid',icon:'🧙',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_fletch_knife',icon:'🔪',name:'Steel Fletching Knife',eff:'+20% Fletching speed'},
+      rareReward:{id:'hollow_bow',icon:'🏹',name:'Hollow Longbow',eff:'Weapon · ATK +18',chance:0.08},
       loot:[
         {id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:30,min:4,max:10},
         {id:'feather',name:'Feathers',icon:'🪶',weight:28,min:3,max:8},
@@ -185,6 +232,7 @@
         {name:'Spinner Queen',icon:'👑',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'steel_needle',icon:'🪡',name:'Steel Needle',eff:'+20% Crafting speed'},
+      rareReward:{id:'spinner_cloak',icon:'🕸️',name:'Spinner Weave Cloak',eff:'Chest · DEF +9 · HP +42',chance:0.08},
       loot:[
         {id:'cowhide',name:'Cowhide',icon:'🐄',weight:26,min:2,max:5},
         {id:'leather',name:'Leather',icon:'📜',weight:18,min:1,max:3},
@@ -206,6 +254,7 @@
         {name:'Vault Keeper',icon:'🧙',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
       ],
       reward:{id:'apprentice_wand',icon:'🪄',name:'Apprentice Wand',eff:'+20% Magic speed'},
+      rareReward:{id:'vault_ring',icon:'💍',name:'Vault Keeper Ring',eff:'Jewelry · ATK +6 · HP +24',chance:0.08},
       loot:[
         {id:'feather',name:'Feathers',icon:'🪶',weight:30,min:3,max:8},
         {id:'bones',name:'Bones',icon:'🦴',weight:25,min:2,max:5},
@@ -241,16 +290,30 @@
     return f;
   }
 
+  var ATK_SLOTS = ['weaponR','weaponL','jewelry'];
+  var DEF_SLOTS = ['weaponR','weaponL','helmet','chest','boots','jewelry'];
+
   function getPlayerAtk(){
-    // Combat skill is gone — attack comes purely from the equipped weapon.
+    // Combat skill is gone — attack comes purely from equipped gear.
     var b=1;
-    if(typeof G!=='undefined'&&G.equip&&G.equip.weapon&&ITEMS[G.equip.weapon]) b+=ITEMS[G.equip.weapon].atk||0;
+    if(typeof G==='undefined'||!G.equip) return b;
+    for (var i=0;i<ATK_SLOTS.length;i++){
+      var id=G.equip[ATK_SLOTS[i]];
+      if(id&&ITEMS[id]) b+=ITEMS[id].atk||0;
+    }
+    // Legacy fallback for saves that still use the old single-weapon field
+    if(G.equip.weapon&&ITEMS[G.equip.weapon]) b+=ITEMS[G.equip.weapon].atk||0;
     return b;
   }
 
   function getPlayerDef(){
     var b=0;
-    if(typeof G!=='undefined'&&G.equip&&G.equip.armour&&ITEMS[G.equip.armour]) b+=ITEMS[G.equip.armour].def||0;
+    if(typeof G==='undefined'||!G.equip) return b;
+    for (var i=0;i<DEF_SLOTS.length;i++){
+      var id=G.equip[DEF_SLOTS[i]];
+      if(id&&ITEMS[id]) b+=ITEMS[id].def||0;
+    }
+    if(G.equip.armour&&ITEMS[G.equip.armour]) b+=ITEMS[G.equip.armour].def||0;
     return b;
   }
 
@@ -1016,24 +1079,32 @@
   window._dgLeave=leaveDungeon;
   window._dgStart=startDungeon;
   window._dgShowDiscovery=showDungeonDiscoveryPopup;
+  // Apply the tier scaling once up front so all downstream code reads scaled HP/dmg.
+  Object.keys(DUNGEONS).forEach(function(k){ DUNGEONS[k] = scaleDungeonMonsters(DUNGEONS[k]); });
   window.DUNGEONS=DUNGEONS;
   window.DUNGEON_UNLOCK_LEVEL=DUNGEON_UNLOCK_LEVEL;
+  window.DUNGEON_UNLOCK_LEVELS=DUNGEON_UNLOCK_LEVELS;
+
+  function getUnlockLevelFor(sk){
+    return (DUNGEON_UNLOCK_LEVELS && DUNGEON_UNLOCK_LEVELS[sk]) || DUNGEON_UNLOCK_LEVEL;
+  }
 
   function showDungeonEntry(dungeonId){
     if(dungeonId&&DUNGEONS[dungeonId])activeDungeon=DUNGEONS[dungeonId];
     createDungeonOverlay();
     var content=document.getElementById('dg-content');
-    // Lock check: skill must reach DUNGEON_UNLOCK_LEVEL before the dungeon opens
+    // Lock check: skill must reach the dungeon's unlock level before the dungeon opens
     var skLvl=(typeof slvl==='function')?slvl(activeDungeon.id):0;
-    if(skLvl<DUNGEON_UNLOCK_LEVEL){
+    var unlockLvl=getUnlockLevelFor(activeDungeon.id);
+    if(skLvl<unlockLvl){
       var skName2=(typeof SKILLS!=='undefined'&&SKILLS[activeDungeon.id])?SKILLS[activeDungeon.id].name:activeDungeon.id;
       var hLock='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
       hLock+='<div style="text-align:center;padding:20px 8px;">';
       hLock+='<div style="font-size:48px;margin-bottom:10px;filter:grayscale(1);opacity:0.5;">'+activeDungeon.icon+'</div>';
       hLock+='<div style="font-size:38px;margin-bottom:8px;">🔒</div>';
       hLock+='<div style="color:#f0c040;font-family:Cinzel,serif;font-size:16px;margin-bottom:6px;">Dungeon Locked</div>';
-      hLock+='<div style="color:#9a7e50;font-size:12px;margin-bottom:14px;line-height:1.4;">Reach <b style="color:#e8d898;">Level '+DUNGEON_UNLOCK_LEVEL+'</b> in <b style="color:#e8d898;">'+skName2+'</b> to discover this dungeon.</div>';
-      hLock+='<div style="color:#5a4830;font-size:10px;line-height:1.4;">Current: Lvl '+skLvl+' / '+DUNGEON_UNLOCK_LEVEL+'</div>';
+      hLock+='<div style="color:#9a7e50;font-size:12px;margin-bottom:14px;line-height:1.4;">Reach <b style="color:#e8d898;">Level '+unlockLvl+'</b> in <b style="color:#e8d898;">'+skName2+'</b> to discover this dungeon.</div>';
+      hLock+='<div style="color:#5a4830;font-size:10px;line-height:1.4;">Current: Lvl '+skLvl+' / '+unlockLvl+'</div>';
       hLock+='</div>';
       var bodyL=document.getElementById('dg-body');
       if(!bodyL){var nbL=document.createElement('div');nbL.id='dg-body';content.appendChild(nbL);bodyL=nbL;}
@@ -1042,8 +1113,11 @@
       return;
     }
     var check=canEnterDungeon();
-    var wpn=(G.equip&&G.equip.weapon)?ITEMS[G.equip.weapon]:null;
-    var arm=(G.equip&&G.equip.armour)?ITEMS[G.equip.armour]:null;
+    // Prefer the new multi-slot layout; fall back to the legacy single-weapon/armour fields.
+    var mainW=(G.equip&&(G.equip.weaponR||G.equip.weaponL||G.equip.weapon));
+    var wpn=(mainW&&ITEMS[mainW])?ITEMS[mainW]:null;
+    var mainA=(G.equip&&(G.equip.chest||G.equip.armour));
+    var arm=(mainA&&ITEMS[mainA])?ITEMS[mainA]:null;
     var fc=getFoodCount();
     var rwd=activeDungeon.reward||{};
     var rare=activeDungeon.rareReward;

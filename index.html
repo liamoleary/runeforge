@@ -97,13 +97,14 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .stat-box .sb-val{font-size:18px;font-weight:700;color:var(--text);line-height:1.2}
 .stat-box .sb-bar{background:#0a0804;height:5px;border-radius:3px;overflow:hidden;margin-top:4px}
 .stat-box .sb-bar-fill{height:100%;border-radius:3px;transition:width .3s}
-#equip-row{display:flex;gap:6px;padding:0 10px 10px}
-.eq-slot{flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;padding:8px 4px;text-align:center;cursor:pointer;transition:all .2s;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+#equip-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:0 10px 10px}
+.eq-slot{background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;padding:6px 3px;text-align:center;cursor:pointer;transition:all .2s;min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
 .eq-slot:active{transform:scale(.95)}
 .eq-slot.on{border-color:var(--bdr2);background:#1e1508}
-.eq-slot .eq-icon{font-size:18px}
-.eq-slot .eq-lbl{font-size:8px;color:var(--text3)}
-.eq-slot .eq-name{font-size:9px;color:var(--text2)}
+.eq-slot.on.eq-food{border-color:#c8653a;background:#1e1308}
+.eq-slot .eq-icon{font-size:17px;line-height:1}
+.eq-slot .eq-lbl{font-size:7px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
+.eq-slot .eq-name{font-size:8px;color:var(--text2);line-height:1.1;max-width:62px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #inv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px}
 .iv-slot{background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;aspect-ratio:1;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;padding:4px;position:relative}
 .iv-slot:active{transform:scale(.95)}
@@ -185,7 +186,7 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 @keyframes sway{0%,100%{transform:rotate(0deg)}50%{transform:rotate(2.5deg)}}
 @keyframes flicker{0%,100%{transform:scaleY(1) scaleX(1)}25%{transform:scaleY(1.12) scaleX(.93)}75%{transform:scaleY(.9) scaleX(1.08)}}
 @keyframes ripple{0%,100%{opacity:.7}50%{opacity:1}}
-@keyframes lvlup{0%{transform:translate(-50%,-50%) scale(0);opacity:0}25%{transform:translate(-50%,-50%) scale(1.15);opacity:1}70%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-50%) scale(.9);opacity:0}}
+@keyframes lvlup{0%{transform:translate(-50%,-50%) scale(0);opacity:0}10%{transform:translate(-50%,-50%) scale(1.15);opacity:1}18%{transform:translate(-50%,-50%) scale(1);opacity:1}88%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-50%) scale(.95);opacity:0}}
 @keyframes xpup{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-38px);opacity:0}}
 @keyframes dmgflash{0%,100%{background:var(--bg1)}50%{background:#3a0808}}
 @keyframes fwShoot{
@@ -203,7 +204,10 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
   0%,100%{box-shadow:0 0 40px rgba(240,192,64,.5),0 0 80px rgba(240,192,64,.2)}
   50%{box-shadow:0 0 55px rgba(240,192,64,.8),0 0 120px rgba(240,192,64,.35)}
 }
-.lv-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);opacity:0;background:linear-gradient(135deg,#1a1002,#362200);border:2px solid var(--gold);border-radius:14px;padding:22px 32px;text-align:center;z-index:500;box-shadow:0 0 40px rgba(240,192,64,.5);animation:lvlup 2.6s ease forwards,fwPulse 1.2s ease-in-out infinite;pointer-events:none}
+.lv-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);opacity:0;background:linear-gradient(135deg,#1a1002,#362200);border:2px solid var(--gold);border-radius:14px;padding:22px 32px;text-align:center;z-index:500;box-shadow:0 0 40px rgba(240,192,64,.5);animation:lvlup 5s ease forwards,fwPulse 1.4s ease-in-out infinite;pointer-events:none;max-width:86vw}
+.lv-popup.lv-unlock{background:linear-gradient(135deg,#2a1605,#4a2a08);border-color:#ff9030;box-shadow:0 0 50px rgba(255,144,48,.55)}
+.lv-popup.lv-unlock .lv-title{color:#ffb060;text-shadow:0 0 18px rgba(255,144,48,.8)}
+.lv-unlock-sub{margin-top:8px;padding:6px 10px;border-radius:6px;background:rgba(255,144,48,.12);border:1px solid rgba(255,144,48,.4);font-size:11px;color:#ffcf90;font-family:'Cinzel',serif;letter-spacing:.5px}
 .lv-title{font-family:'Cinzel',serif;font-size:22px;color:var(--gold);text-shadow:0 0 14px rgba(240,192,64,.7)}
 .lv-sub{font-size:13px;color:var(--text2);margin-top:6px}
 .lv-rewards{margin-top:10px;padding-top:8px;border-top:1px solid rgba(240,192,64,.3);font-size:12px;color:#e8d898;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
@@ -520,9 +524,14 @@ body.shake-hit #stage{animation:screenShake .35s ease}
       <div class="stat-box"><div class="sb-lbl">Defence</div><div class="sb-val" id="def-val">0</div><div class="sb-bar"><div class="sb-bar-fill" id="def-fill" style="background:#4488dd"></div></div></div>
     </div>
     <div id="equip-row">
-      <div class="eq-slot" id="eq-wp" onclick="unequipSlot('weapon')"><span class="eq-icon">🗡️</span><span class="eq-lbl">Weapon</span></div>
-      <div class="eq-slot" id="eq-am" onclick="unequipSlot('armour')"><span class="eq-icon">🛡️</span><span class="eq-lbl">Armour</span></div>
-      <div class="eq-slot" id="eq-fd" onclick="eatFood()"><span class="eq-icon">🍖</span><span class="eq-lbl">Food</span></div>
+      <div class="eq-slot" id="eq-helmet" onclick="unequipSlot('helmet')"><span class="eq-icon">⛑️</span><span class="eq-lbl">Helmet</span></div>
+      <div class="eq-slot" id="eq-chest" onclick="unequipSlot('chest')"><span class="eq-icon">🛡️</span><span class="eq-lbl">Chest</span></div>
+      <div class="eq-slot" id="eq-boots" onclick="unequipSlot('boots')"><span class="eq-icon">🥾</span><span class="eq-lbl">Boots</span></div>
+      <div class="eq-slot" id="eq-jewelry" onclick="unequipSlot('jewelry')"><span class="eq-icon">💍</span><span class="eq-lbl">Jewelry</span></div>
+      <div class="eq-slot" id="eq-weaponL" onclick="unequipSlot('weaponL')"><span class="eq-icon">🤚</span><span class="eq-lbl">Left Hand</span></div>
+      <div class="eq-slot" id="eq-weaponR" onclick="unequipSlot('weaponR')"><span class="eq-icon">🗡️</span><span class="eq-lbl">Right Hand</span></div>
+      <div class="eq-slot eq-food" id="eq-fd" onclick="eatFood()"><span class="eq-icon">🍖</span><span class="eq-lbl">Food</span></div>
+      <div class="eq-slot" id="eq-empty" style="opacity:.25;cursor:default"><span class="eq-icon">·</span><span class="eq-lbl">—</span></div>
     </div>
   </div>
   <div class="panel"><div class="panel-hdr"><span>Inventory</span><span id="inv-count">0/28</span></div><div id="inv-grid"></div>
@@ -603,6 +612,10 @@ const ACTIONS = {
     {id:'sm3',name:'Iron Sword',icon:'⚔️',req:19,xp:25,dur:5500,prod:[{id:'iron_sword',n:1}],need:[{id:'iron_bar',n:1}]},
     {id:'sm4',name:'Bronze Shield',icon:'🛡️',req:7,xp:38,dur:6500,prod:[{id:'bronze_shield',n:1}],need:[{id:'bronze_bar',n:3}]},
     {id:'sm5',name:'Iron Platebody',icon:'🛡️',req:33,xp:75,dur:8000,prod:[{id:'iron_platebody',n:1}],need:[{id:'iron_bar',n:5}]},
+    {id:'sm6',name:'Bronze Helm',icon:'⛑️',req:4,xp:22,dur:5500,prod:[{id:'bronze_helm',n:1}],need:[{id:'bronze_bar',n:2}]},
+    {id:'sm7',name:'Iron Helm',icon:'⛑️',req:22,xp:45,dur:6500,prod:[{id:'iron_helm',n:1}],need:[{id:'iron_bar',n:3}]},
+    {id:'sm8',name:'Bronze Boots',icon:'🥾',req:5,xp:24,dur:5500,prod:[{id:'bronze_boots',n:1}],need:[{id:'bronze_bar',n:2}]},
+    {id:'sm9',name:'Iron Boots',icon:'🥾',req:25,xp:50,dur:6500,prod:[{id:'iron_boots',n:1}],need:[{id:'iron_bar',n:3}]},
   ],
   cooking:[
     {id:'ck0',name:'Cook Shrimp',icon:'🍤',req:1,xp:30,dur:2500,prod:[{id:'c_shrimp',n:1}],need:[{id:'raw_shrimp',n:1}]},
@@ -624,6 +637,8 @@ const ACTIONS = {
     {id:'cr1',name:'Leather Body',icon:'👕',req:14,xp:25,dur:4000,prod:[{id:'leather_body',n:1}],need:[{id:'leather',n:3}]},
     {id:'cr2',name:'Gold Ring',icon:'💍',req:5,xp:15,dur:3500,prod:[{id:'gold_ring',n:1}],need:[{id:'gold_ore',n:1}]},
     {id:'cr3',name:'Gold Necklace',icon:'📿',req:20,xp:35,dur:4500,prod:[{id:'gold_necklace',n:1}],need:[{id:'gold_ore',n:2}]},
+    {id:'cr4',name:'Leather Cap',icon:'🧢',req:8,xp:18,dur:3800,prod:[{id:'leather_cap',n:1}],need:[{id:'leather',n:2}]},
+    {id:'cr5',name:'Leather Boots',icon:'🥾',req:10,xp:20,dur:3800,prod:[{id:'leather_boots',n:1}],need:[{id:'leather',n:2}]},
   ],
   magic:[
     {id:'mg0',name:'Wind Strike',icon:'🌬️',req:1,xp:12,dur:3000,need:[{id:'feather',n:1}],isCombatSpell:true,spellDmg:2},
@@ -661,18 +676,25 @@ const ITEMS = {
   leather:{name:'Leather',icon:'📜',sell:8,type:'res'},
   arrow_shaft:{name:'Arrow Shafts',icon:'↑',sell:0,type:'res'},
   iron_arrow:{name:'Iron Arrows',icon:'🪃',sell:2,type:'res'},
-  shortbow:{name:'Shortbow',icon:'🏹',sell:20,type:'weapon',atk:3},
-  oak_bow:{name:'Oak Shortbow',icon:'🏹',sell:45,type:'weapon',atk:6},
-  willow_bow:{name:'Willow Bow',icon:'🏹',sell:90,type:'weapon',atk:10},
-  bronze_sword:{name:'Bronze Sword',icon:'🗡️',sell:25,type:'weapon',atk:2},
-  iron_sword:{name:'Iron Sword',icon:'⚔️',sell:75,type:'weapon',atk:5},
-  bronze_shield:{name:'Bronze Shield',icon:'🛡️',sell:60,type:'armour',def:2,hp:6},
-  iron_platebody:{name:'Iron Platebody',icon:'🛡️',sell:180,type:'armour',def:5,hp:20},
-  leather_body:{name:'Leather Body',icon:'👕',sell:25,type:'armour',def:1,hp:8},
-  gold_ring:{name:'Gold Ring',icon:'💍',sell:60,type:'accessory'},
-  gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory'},
+  shortbow:{name:'Shortbow',icon:'🏹',sell:20,type:'weapon',atk:3,slot:'hand'},
+  oak_bow:{name:'Oak Shortbow',icon:'🏹',sell:45,type:'weapon',atk:6,slot:'hand'},
+  willow_bow:{name:'Willow Bow',icon:'🏹',sell:90,type:'weapon',atk:10,slot:'hand'},
+  bronze_sword:{name:'Bronze Sword',icon:'🗡️',sell:25,type:'weapon',atk:2,slot:'hand'},
+  iron_sword:{name:'Iron Sword',icon:'⚔️',sell:75,type:'weapon',atk:5,slot:'hand'},
+  bronze_shield:{name:'Bronze Shield',icon:'🛡️',sell:60,type:'armour',def:2,hp:6,slot:'offhand'},
+  iron_platebody:{name:'Iron Platebody',icon:'🛡️',sell:180,type:'armour',def:5,hp:20,slot:'chest'},
+  leather_body:{name:'Leather Body',icon:'👕',sell:25,type:'armour',def:1,hp:8,slot:'chest'},
+  // Craftable helmets + boots
+  bronze_helm:{name:'Bronze Helm',icon:'⛑️',sell:40,type:'armour',def:1,hp:5,slot:'helmet'},
+  iron_helm:{name:'Iron Helm',icon:'⛑️',sell:120,type:'armour',def:3,hp:12,slot:'helmet'},
+  leather_cap:{name:'Leather Cap',icon:'🧢',sell:15,type:'armour',def:1,hp:3,slot:'helmet'},
+  bronze_boots:{name:'Bronze Boots',icon:'🥾',sell:35,type:'armour',def:1,hp:4,slot:'boots'},
+  iron_boots:{name:'Iron Boots',icon:'🥾',sell:100,type:'armour',def:2,hp:8,slot:'boots'},
+  leather_boots:{name:'Leather Boots',icon:'🥾',sell:14,type:'armour',def:1,hp:3,slot:'boots'},
+  gold_ring:{name:'Gold Ring',icon:'💍',sell:60,type:'accessory',hp:4,slot:'jewelry'},
+  gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory',hp:8,slot:'jewelry'},
   gold_coins:{name:'Gold Coins',icon:'🪙',sell:1,type:'currency'},
-  enchanted_ring:{name:'Enchanted Ring',icon:'💍',sell:150,type:'accessory',special:true},
+  enchanted_ring:{name:'Enchanted Ring',icon:'💍',sell:150,type:'accessory',hp:12,atk:1,slot:'jewelry',special:true},
   level_potion:{name:'Level Potion',icon:'🧪',sell:0,type:'potion',special:true},
 };
 
@@ -708,9 +730,11 @@ const SHOP=[
   {id:'staff',name:'Apprentice Staff',icon:'🪄',cost:100,eff:'Magic +15% faster',up:'spd_magi'},
 ];
 // STATE
+const EQUIP_SLOTS = ['weaponR','weaponL','helmet','chest','boots','jewelry'];
+function freshEquip(){return{weaponR:null,weaponL:null,helmet:null,chest:null,boots:null,jewelry:null};}
 let G = {
-  skills:{},inv:{},equip:{weapon:null,armour:null},
-  gold:0,hp:10,maxhp:10,
+  skills:{},inv:{},equip:freshEquip(),
+  gold:0,hp:30,maxhp:30,baseHp:30,
   upgrades:{},tools:{},dungeonRewards:{},dungeonsDiscovered:{},
   tab:'woodcutting',
   task:null,prog:0,dur:0,
@@ -745,6 +769,23 @@ function load(){
   if(G.xpEarned&&G.xpEarned.combat) delete G.xpEarned.combat;
   if(G.tab==='combat') G.tab='woodcutting';
   if(typeof G.task==='string'&&G.task.indexOf('cb')===0){G.task=null;G.prog=0;}
+  // Equipment slot expansion: migrate legacy single weapon/armour to new multi-slot layout.
+  if(!G.equip) G.equip=freshEquip();
+  if('weapon' in G.equip && !('weaponR' in G.equip)){
+    G.equip.weaponR=G.equip.weapon||null;
+    delete G.equip.weapon;
+  }
+  if('armour' in G.equip && !('chest' in G.equip)){
+    // Shields drop into the off-hand; body armour goes to chest.
+    const legacy=G.equip.armour;
+    if(legacy && ITEMS[legacy]){
+      const s=ITEMS[legacy].slot;
+      if(s==='offhand') G.equip.weaponL=legacy;
+      else G.equip.chest=legacy;
+    }
+    delete G.equip.armour;
+  }
+  for(const slot of EQUIP_SLOTS) if(!(slot in G.equip)) G.equip[slot]=null;
   // Trinket removal cleanup: drop legacy state and any trinket items in inventory
   if(G.trinkets)delete G.trinkets;
   const oldTrinketIds=['grove_wc_trinket','grove_mn_trinket','grove_fs_trinket','grove_ck_trinket','grove_sm_trinket','grove_cb_trinket','grove_fl_trinket','grove_cr_trinket','grove_mg_trinket'];
@@ -761,10 +802,10 @@ function load(){
   }
   // Backfill dungeonsDiscovered: any skill already at the unlock level is silently marked
   // discovered so the popup doesn't pop retroactively for existing players.
-  const unlockLvl=window.DUNGEON_UNLOCK_LEVEL||3;
   if(window.DUNGEONS){
     for(const dgId of Object.keys(window.DUNGEONS)){
-      if(!G.dungeonsDiscovered[dgId]&&slvl(dgId)>=unlockLvl){
+      const dgUnlock=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[dgId])||(window.DUNGEON_UNLOCK_LEVEL||3);
+      if(!G.dungeonsDiscovered[dgId]&&slvl(dgId)>=dgUnlock){
         G.dungeonsDiscovered[dgId]=true;
       }
     }
@@ -833,15 +874,22 @@ function addXP(sk,amt){
   G.xpEarned[sk]=(G.xpEarned[sk]||0)+amt;
   const nl=slvl(sk);
   if(nl>ol){
-    showLvlUp(sk,nl);
+    // Unlock-level ups are special: the reward is the dungeon itself, so skip item loot.
+    const unlockLvl=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[sk])||(window.DUNGEON_UNLOCK_LEVEL||3);
+    const isUnlockLvl=(nl===unlockLvl)&&(window.DUNGEONS&&window.DUNGEONS[sk]);
+    let rewards=[];
+    if(!isUnlockLvl){
+      rewards=grantLvlUpRewards(nl);
+    }
+    showLvlUp(sk,nl,rewards,isUnlockLvl);
     log('<span class="ll">⭐ LEVEL UP! '+SKILLS[sk].name+' is now level '+nl+'!</span>');
-    // Rewards were already granted by showLvlUp; log them so players see the haul in chat too.
-    const earned=lvlUpRewards(nl).map(r=>(ITEMS[r.id]?.icon||'')+' +'+r.n+' '+(ITEMS[r.id]?.name||r.id)).join(' · ');
-    if(earned) log('<span class="lg">🎁 '+earned+'</span>');
+    if(rewards.length){
+      const earned=rewards.map(r=>(ITEMS[r.id]?.icon||'')+' +'+r.n+' '+(ITEMS[r.id]?.name||r.id)).join(' · ');
+      log('<span class="lg">🎁 '+earned+'</span>');
+    }
     sendLevelNotification(sk,nl);
     // Dungeon discovery: first time you cross the unlock threshold for a skill,
     // pop the dungeon discovery modal so the player knows it's available.
-    const unlockLvl=window.DUNGEON_UNLOCK_LEVEL||3;
     if(nl>=unlockLvl&&ol<unlockLvl&&window.DUNGEONS&&window.DUNGEONS[sk]&&!G.dungeonsDiscovered[sk]){
       G.dungeonsDiscovered[sk]=true;
       if(typeof window._dgShowDiscovery==='function')setTimeout(()=>window._dgShowDiscovery(sk),400);
@@ -874,18 +922,26 @@ function take(id,n=1){if(!has(id,n))return false;G.inv[id]-=n;if(G.inv[id]<=0)de
 const BASE_MAXHP=30;
 function getAtk(){
   let a=1;
-  if(G.equip.weapon&&ITEMS[G.equip.weapon])a+=(ITEMS[G.equip.weapon].atk||0);
+  for(const slot of EQUIP_SLOTS){
+    const id=G.equip[slot];
+    if(id&&ITEMS[id]) a+=(ITEMS[id].atk||0);
+  }
   return a;
 }
 function getDef(){
   let d=0;
-  if(G.equip.armour&&ITEMS[G.equip.armour])d+=(ITEMS[G.equip.armour].def||0);
+  for(const slot of EQUIP_SLOTS){
+    const id=G.equip[slot];
+    if(id&&ITEMS[id]) d+=(ITEMS[id].def||0);
+  }
   return d;
 }
 function getHpBonus(){
   let h=0;
-  if(G.equip.armour&&ITEMS[G.equip.armour])h+=(ITEMS[G.equip.armour].hp||0);
-  if(G.equip.weapon&&ITEMS[G.equip.weapon])h+=(ITEMS[G.equip.weapon].hp||0);
+  for(const slot of EQUIP_SLOTS){
+    const id=G.equip[slot];
+    if(id&&ITEMS[id]) h+=(ITEMS[id].hp||0);
+  }
   return h;
 }
 // Recompute G.maxhp whenever gear changes. Keeps any previously-earned HP ceiling
@@ -1025,7 +1081,7 @@ function updateUI(){
     // Refresh dungeon back-card lock state when level changes
     const backEl=el.querySelector('.sk-back');
     if(backEl&&window.DUNGEONS&&window.DUNGEONS[sk]){
-      const unlockLvl2=window.DUNGEON_UNLOCK_LEVEL||3;
+      const unlockLvl2=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[sk])||(window.DUNGEON_UNLOCK_LEVEL||3);
       if(lv<unlockLvl2)backEl.classList.add('locked');
       else backEl.classList.remove('locked');
     }
@@ -1064,13 +1120,28 @@ function renderInv(){
   }
 }
 
+const EQUIP_SLOT_META={
+  weaponR:{icon:'🗡️',label:'Right Hand'},
+  weaponL:{icon:'🤚',label:'Left Hand'},
+  helmet:{icon:'⛑️',label:'Helmet'},
+  chest:{icon:'🛡️',label:'Chest'},
+  boots:{icon:'🥾',label:'Boots'},
+  jewelry:{icon:'💍',label:'Jewelry'},
+};
 function renderEquip(){
-  const wp=G.equip.weapon,am=G.equip.armour;
-  const wel=document.getElementById('eq-wp'),ael=document.getElementById('eq-am'),fel=document.getElementById('eq-fd');
-  if(wp&&ITEMS[wp]){wel.innerHTML='<span class="eq-icon">'+ITEMS[wp].icon+'</span><span class="eq-name">'+ITEMS[wp].name+'</span>';wel.classList.add('on');}
-  else{wel.innerHTML='<span class="eq-icon">🗡️</span><span class="eq-lbl">Weapon</span>';wel.classList.remove('on');}
-  if(am&&ITEMS[am]){ael.innerHTML='<span class="eq-icon">'+ITEMS[am].icon+'</span><span class="eq-name">'+ITEMS[am].name+'</span>';ael.classList.add('on');}
-  else{ael.innerHTML='<span class="eq-icon">🛡️</span><span class="eq-lbl">Armour</span>';ael.classList.remove('on');}
+  for(const slot of EQUIP_SLOTS){
+    const el=document.getElementById('eq-'+slot);if(!el)continue;
+    const id=G.equip[slot];
+    const meta=EQUIP_SLOT_META[slot];
+    if(id&&ITEMS[id]){
+      el.innerHTML='<span class="eq-icon">'+ITEMS[id].icon+'</span><span class="eq-name">'+ITEMS[id].name+'</span>';
+      el.classList.add('on');
+    } else {
+      el.innerHTML='<span class="eq-icon">'+meta.icon+'</span><span class="eq-lbl">'+meta.label+'</span>';
+      el.classList.remove('on');
+    }
+  }
+  const fel=document.getElementById('eq-fd');
   const foods=Object.entries(G.inv).filter(([id,q])=>ITEMS[id]?.type==='food'&&q>0).sort((a,b)=>(ITEMS[b[0]].hp||0)-(ITEMS[a[0]].hp||0));
   if(foods.length){const[fid,fq]=foods[0];fel.innerHTML='<span class="eq-icon">'+ITEMS[fid].icon+'</span><span class="eq-name">'+ITEMS[fid].name+'('+fq+')</span>';fel.classList.add('on');}
   else{fel.innerHTML='<span class="eq-icon">🍖</span><span class="eq-lbl">Food</span>';fel.classList.remove('on');}
@@ -1118,7 +1189,7 @@ function buildSkills(){
     // BACK (themed dungeon for this skill)
     const back=document.createElement('div');back.className='sk-back';
     const dg=window.DUNGEONS&&window.DUNGEONS[sk];
-    const unlockLvl=window.DUNGEON_UNLOCK_LEVEL||3;
+    const unlockLvl=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[sk])||(window.DUNGEON_UNLOCK_LEVEL||3);
     if(dg){
       const rwd=dg.reward||{};
       // Both locked and unlocked variants are pre-rendered; CSS hides one set via the .locked class.
@@ -1355,7 +1426,10 @@ function useItem(id){
       const nextLvl=curLvl+1;
       if(nextLvl<=99){
         G.skills[sk].xp=XP[nextLvl];
-        showLvlUp(sk,nextLvl);
+        const unlockLvl=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[sk])||(window.DUNGEON_UNLOCK_LEVEL||3);
+        const isUnlockLvl=(nextLvl===unlockLvl)&&(window.DUNGEONS&&window.DUNGEONS[sk]);
+        const potionRewards=isUnlockLvl?[]:grantLvlUpRewards(nextLvl);
+        showLvlUp(sk,nextLvl,potionRewards,isUnlockLvl);
         log('<span class="ll">🧪 Level Potion used! '+SKILLS[sk].name+' is now level '+nextLvl+'!</span>');
         sendLevelNotification(sk,nextLvl);
       }
@@ -1385,24 +1459,55 @@ function useItem(id){
       }
     }
     if(!matched)log(it.icon+' '+it.name+' (no matching skill)');
-  } else if(it.type==='weapon'){
-    if(G.equip.weapon===id){G.equip.weapon=null;log('Unequipped '+it.name);}
-    else{G.equip.weapon=id;log('⚔️ Equipped '+it.name+' (+'+it.atk+' Atk)');}
-    recomputeMaxHp();
-  } else if(it.type==='armour'){
-    if(G.equip.armour===id){G.equip.armour=null;log('Unequipped '+it.name);}
-    else{
-      const bonus=it.hp?', +'+it.hp+' HP':'';
-      G.equip.armour=id;
-      log('🛡️ Equipped '+it.name+' (+'+it.def+' Def'+bonus+')');
-    }
+  } else if(it.slot){
+    equipBySlot(id,it);
     recomputeMaxHp();
   } else {
     log(it.icon+' '+it.name+' ×'+(G.inv[id]||0));
   }
 }
 
-function unequipSlot(slot){G.equip[slot]=null;log('Unequipped '+slot+'.');recomputeMaxHp();}
+function unequipSlot(slot){
+  if(!(slot in G.equip))return;
+  if(!G.equip[slot])return;
+  const it=ITEMS[G.equip[slot]];
+  G.equip[slot]=null;
+  log('Unequipped '+(it?it.name:slot)+'.');
+  recomputeMaxHp();
+}
+
+// Route an item into the right equip slot based on its `slot` metadata.
+// Hand items toggle between left/right; offhand and body pieces go to their fixed slots.
+function equipBySlot(id,it){
+  const slot=it.slot;
+  const statBits=[];
+  if(it.atk) statBits.push('+'+it.atk+' Atk');
+  if(it.def) statBits.push('+'+it.def+' Def');
+  if(it.hp)  statBits.push('+'+it.hp+' HP');
+  const statStr=statBits.length?' ('+statBits.join(', ')+')':'';
+  if(slot==='hand'){
+    // Already equipped in either hand → toggle it off
+    if(G.equip.weaponR===id){G.equip.weaponR=null;log('Unequipped '+it.name);return;}
+    if(G.equip.weaponL===id){G.equip.weaponL=null;log('Unequipped '+it.name);return;}
+    // Prefer empty right hand, then empty left hand, otherwise replace right hand
+    if(!G.equip.weaponR){G.equip.weaponR=id;log('⚔️ Right hand: '+it.name+statStr);return;}
+    if(!G.equip.weaponL){G.equip.weaponL=id;log('🤚 Left hand: '+it.name+statStr);return;}
+    G.equip.weaponR=id;log('⚔️ Right hand swapped: '+it.name+statStr);return;
+  }
+  if(slot==='offhand'){
+    if(G.equip.weaponL===id){G.equip.weaponL=null;log('Unequipped '+it.name);return;}
+    G.equip.weaponL=id;log('🛡️ Left hand: '+it.name+statStr);return;
+  }
+  // Single-slot gear (helmet, chest, boots, jewelry)
+  if(slot==='helmet'||slot==='chest'||slot==='boots'||slot==='jewelry'){
+    if(G.equip[slot]===id){G.equip[slot]=null;log('Unequipped '+it.name);return;}
+    G.equip[slot]=id;
+    const icons={helmet:'⛑️',chest:'🛡️',boots:'🥾',jewelry:'💍'};
+    log(icons[slot]+' '+it.name+statStr);
+    return;
+  }
+  log(it.icon+' '+it.name+' (unknown slot)');
+}
 
 function eatFood(){
   const f=Object.entries(G.inv).filter(([id,q])=>ITEMS[id]?.type==='food'&&q>0).sort((a,b)=>(ITEMS[b[0]].hp||0)-(ITEMS[a[0]].hp||0));
@@ -1634,13 +1739,19 @@ function spawnFireworks(){
   }
 }
 
-function showLvlUp(sk,lv){
-  const d=document.createElement('div');d.className='lv-popup';
-  const t=document.createElement('div');t.className='lv-title';t.textContent='⭐ LEVEL UP!';
+function showLvlUp(sk,lv,rewards,isUnlock){
+  const d=document.createElement('div');
+  d.className='lv-popup'+(isUnlock?' lv-unlock':'');
+  const t=document.createElement('div');t.className='lv-title';
+  t.textContent=isUnlock?'🏰 DUNGEON UNLOCKED!':'⭐ LEVEL UP!';
   const s=document.createElement('div');s.className='lv-sub';s.textContent=SKILLS[sk].icon+' '+SKILLS[sk].name+' — Level '+lv;
   d.appendChild(t);d.appendChild(s);
-  const rewards=grantLvlUpRewards(lv);
-  if(rewards.length){
+  if(isUnlock){
+    const u=document.createElement('div');u.className='lv-unlock-sub';
+    const dgName=(window.DUNGEONS&&window.DUNGEONS[sk]&&window.DUNGEONS[sk].name)||'A new dungeon';
+    u.textContent=dgName+' is now open!';
+    d.appendChild(u);
+  } else if(rewards&&rewards.length){
     const r=document.createElement('div');r.className='lv-rewards';
     for(const rw of rewards){
       const it=ITEMS[rw.id];if(!it)continue;
@@ -1650,7 +1761,7 @@ function showLvlUp(sk,lv){
     }
     d.appendChild(r);
   }
-  document.body.appendChild(d);setTimeout(()=>d.remove(),2700);
+  document.body.appendChild(d);setTimeout(()=>d.remove(),5100);
   spawnFireworks();
 }
 function showXPFloat(xp,sk){
