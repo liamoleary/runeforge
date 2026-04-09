@@ -740,7 +740,7 @@ function load(){
   }
   // Backfill dungeonsDiscovered: any skill already at the unlock level is silently marked
   // discovered so the popup doesn't pop retroactively for existing players.
-  const unlockLvl=window.DUNGEON_UNLOCK_LEVEL||10;
+  const unlockLvl=window.DUNGEON_UNLOCK_LEVEL||3;
   if(window.DUNGEONS){
     for(const dgId of Object.keys(window.DUNGEONS)){
       if(!G.dungeonsDiscovered[dgId]&&slvl(dgId)>=unlockLvl){
@@ -817,7 +817,7 @@ function addXP(sk,amt){
     sendLevelNotification(sk,nl);
     // Dungeon discovery: first time you cross the unlock threshold for a skill,
     // pop the dungeon discovery modal so the player knows it's available.
-    const unlockLvl=window.DUNGEON_UNLOCK_LEVEL||10;
+    const unlockLvl=window.DUNGEON_UNLOCK_LEVEL||3;
     if(nl>=unlockLvl&&ol<unlockLvl&&window.DUNGEONS&&window.DUNGEONS[sk]&&!G.dungeonsDiscovered[sk]){
       G.dungeonsDiscovered[sk]=true;
       if(typeof window._dgShowDiscovery==='function')setTimeout(()=>window._dgShowDiscovery(sk),400);
@@ -1001,7 +1001,7 @@ function updateUI(){
     // Refresh dungeon back-card lock state when level changes
     const backEl=el.querySelector('.sk-back');
     if(backEl&&window.DUNGEONS&&window.DUNGEONS[sk]){
-      const unlockLvl2=window.DUNGEON_UNLOCK_LEVEL||10;
+      const unlockLvl2=window.DUNGEON_UNLOCK_LEVEL||3;
       if(lv<unlockLvl2)backEl.classList.add('locked');
       else backEl.classList.remove('locked');
     }
@@ -1094,7 +1094,7 @@ function buildSkills(){
     // BACK (themed dungeon for this skill)
     const back=document.createElement('div');back.className='sk-back';
     const dg=window.DUNGEONS&&window.DUNGEONS[sk];
-    const unlockLvl=window.DUNGEON_UNLOCK_LEVEL||10;
+    const unlockLvl=window.DUNGEON_UNLOCK_LEVEL||3;
     if(dg){
       const rwd=dg.reward||{};
       // Both locked and unlocked variants are pre-rendered; CSS hides one set via the .locked class.

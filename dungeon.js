@@ -36,7 +36,7 @@
   var dungeonState = null;
 
   // Skill level required to unlock all dungeons.
-  var DUNGEON_UNLOCK_LEVEL = 10;
+  var DUNGEON_UNLOCK_LEVEL = 3;
 
   // Themed level-1 dungeon definitions, one per skill.
   var DUNGEONS = {
