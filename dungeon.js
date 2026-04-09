@@ -16,7 +16,14 @@
     + '@keyframes dgRewardGlow{0%,100%{filter:drop-shadow(0 0 18px #ffaa00) drop-shadow(0 0 36px #ff8800)}50%{filter:drop-shadow(0 0 28px #ffd966) drop-shadow(0 0 50px #ffaa00)}}'
     + '@keyframes dgFwFlash{0%{opacity:1;transform:scale(0.5)}30%{opacity:1;transform:scale(2.6)}100%{opacity:0;transform:scale(3)}}'
     + '@keyframes dgFwSpark{0%{opacity:1;transform:translate(0,0) scale(1)}60%{opacity:1;transform:translate(calc(var(--dx) * 0.85),calc(var(--dy) * 0.85 - 6px)) scale(0.7)}100%{opacity:0;transform:translate(var(--dx),calc(var(--dy) + 26px)) scale(0.2)}}'
-    + '@keyframes dgFwTrail{0%{opacity:0;transform:translateY(40px) scale(0.6)}40%{opacity:1}100%{opacity:0;transform:translateY(-10px) scale(1)}}';
+    + '@keyframes dgFwTrail{0%{opacity:0;transform:translateY(40px) scale(0.6)}40%{opacity:1}100%{opacity:0;transform:translateY(-10px) scale(1)}}'
+    + '@keyframes dgSpellProjectile{0%{left:-60px;transform:scale(0.5) rotate(-25deg);opacity:0}18%{opacity:1}78%{transform:scale(1.5) rotate(15deg);opacity:1}100%{left:82%;transform:scale(0.9) rotate(35deg);opacity:0}}'
+    + '@keyframes dgSpellMeteor{0%{top:-80px;right:82%;transform:scale(0.4) rotate(-45deg);opacity:0}25%{opacity:1}85%{top:60px;right:14%;transform:scale(1.8) rotate(30deg);opacity:1}100%{top:80px;right:12%;transform:scale(0.9) rotate(45deg);opacity:0}}'
+    + '@keyframes dgSpellParticle{0%{opacity:1;transform:translate(0,0) scale(0.5) rotate(0deg)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.2) rotate(180deg)}}'
+    + '@keyframes dgSpellRaindrop{0%{opacity:0;transform:translate(0,-60px) scale(0.6)}15%{opacity:1}100%{opacity:0;transform:translate(var(--dx),40px) scale(1.1)}}'
+    + '@keyframes dgSpellBolt{0%{opacity:0;transform:scaleY(0.2) translateY(-40px)}20%{opacity:1}60%{opacity:1;transform:scaleY(1) translateY(0)}100%{opacity:0;transform:scaleY(1.1) translateY(4px)}}'
+    + '@keyframes dgSpellSwirl{0%{opacity:0;transform:rotate(0deg) scale(0.3)}25%{opacity:1}100%{opacity:0;transform:rotate(720deg) scale(2.4)}}'
+    + '@keyframes dgSpellCast{0%{transform:scale(1)}40%{transform:scale(1.25) rotate(-6deg)}70%{transform:scale(1.15) rotate(4deg)}100%{transform:scale(1) rotate(0deg)}}';
   document.head.appendChild(dgStyle);
 
 
@@ -663,6 +670,120 @@
     setTimeout(function(){ if(fx.parentNode) fx.remove(); }, type === 'crit' ? 850 : 650);
   }
 
+  // === SPELL SCROLL CAST VFX ===
+  // Each scroll type gets a distinct visual so the player can see what they cast.
+  var SPELL_FX = {
+    scroll_wind:    {color:'#88ddff', glow:'#cceeff', kind:'swirl',     shake:false, rings:1, particles:'💨', pCount:10},
+    scroll_water:   {color:'#4488dd', glow:'#99c2ff', kind:'rain',      shake:false, rings:1, particles:'💧', pCount:14},
+    scroll_fire:    {color:'#ff6622', glow:'#ffaa44', kind:'projectile', shake:true,  rings:1, particles:'🔥', pCount:12},
+    scroll_earth:   {color:'#8B5A2B', glow:'#c08850', kind:'projectile', shake:true,  rings:2, particles:'🪨', pCount:8},
+    scroll_shock:   {color:'#ffee44', glow:'#ffffaa', kind:'bolt',      shake:true,  rings:1, particles:'⚡', pCount:8},
+    scroll_inferno: {color:'#ff3322', glow:'#ffaa00', kind:'projectile', shake:true,  rings:3, particles:'🔥', pCount:18},
+    scroll_tempest: {color:'#bb77ee', glow:'#ddaaff', kind:'swirl',     shake:true,  rings:2, particles:'🌪️', pCount:14},
+    scroll_meteor:  {color:'#ff8800', glow:'#ffdd99', kind:'meteor',    shake:true,  rings:3, particles:'☄️', pCount:20}
+  };
+  function showDungeonSpellFX(scrollId){
+    var content = document.getElementById('dg-content');
+    if(!content) return;
+    content.style.position = 'relative';
+    var fx = SPELL_FX[scrollId] || {color:'#bb77ee', glow:'#ddaaff', kind:'projectile', shake:false, rings:1, particles:'✨', pCount:10};
+    var icon = (typeof ITEMS !== 'undefined' && ITEMS[scrollId]) ? ITEMS[scrollId].icon : '✨';
+
+    // Full-dialog overlay layer so effects can move across the combat area.
+    var layer = document.createElement('div');
+    layer.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:98;overflow:hidden;border-radius:6px;';
+    content.appendChild(layer);
+
+    // Background radial wash tinted to the spell's element.
+    var wash = document.createElement('div');
+    wash.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 82% 50%,'+fx.glow+'55,transparent 55%);animation:dgFlash 0.85s ease-out forwards;';
+    layer.appendChild(wash);
+
+    // Player-side "cast" flourish: tiny burst near the caster with the scroll icon.
+    var caster = document.createElement('div');
+    caster.textContent = icon;
+    caster.style.cssText = 'position:absolute;left:12%;top:64px;font-size:24px;filter:drop-shadow(0 0 10px '+fx.glow+') drop-shadow(0 0 18px '+fx.color+');animation:dgSpellCast 0.45s ease-out forwards;';
+    layer.appendChild(caster);
+    setTimeout(function(){ if(caster.parentNode) caster.remove(); }, 500);
+
+    // Primary delivery — projectile / meteor / bolt / swirl / rain
+    var deliveryMs = 450;
+    if (fx.kind === 'projectile'){
+      var proj = document.createElement('div');
+      proj.textContent = icon;
+      proj.style.cssText = 'position:absolute;top:62px;left:-40px;font-size:38px;filter:drop-shadow(0 0 16px '+fx.glow+') drop-shadow(0 0 30px '+fx.color+');animation:dgSpellProjectile 0.5s cubic-bezier(0.2,0.6,0.4,1) forwards;';
+      layer.appendChild(proj);
+      deliveryMs = 420;
+    } else if (fx.kind === 'meteor'){
+      var meteor = document.createElement('div');
+      meteor.textContent = icon;
+      meteor.style.cssText = 'position:absolute;font-size:46px;filter:drop-shadow(0 0 20px '+fx.glow+') drop-shadow(0 0 40px '+fx.color+');animation:dgSpellMeteor 0.65s cubic-bezier(0.3,0.2,0.5,1) forwards;';
+      layer.appendChild(meteor);
+      deliveryMs = 580;
+    } else if (fx.kind === 'bolt'){
+      // A jagged lightning bar slamming down onto the enemy.
+      var bolt = document.createElement('div');
+      bolt.textContent = '⚡';
+      bolt.style.cssText = 'position:absolute;right:12%;top:0;font-size:72px;filter:drop-shadow(0 0 16px '+fx.glow+') drop-shadow(0 0 28px '+fx.color+');animation:dgSpellBolt 0.4s ease-out forwards;transform-origin:top center;';
+      layer.appendChild(bolt);
+      deliveryMs = 320;
+    } else if (fx.kind === 'swirl'){
+      // Wind / tempest: rotating halo around the enemy.
+      var swirl = document.createElement('div');
+      swirl.style.cssText = 'position:absolute;right:14%;top:82px;width:70px;height:70px;margin:-35px -35px 0 0;border:3px dashed '+fx.glow+';border-radius:50%;box-shadow:0 0 18px '+fx.color+';animation:dgSpellSwirl 0.6s ease-out forwards;';
+      layer.appendChild(swirl);
+      var swirl2 = document.createElement('div');
+      swirl2.textContent = icon;
+      swirl2.style.cssText = 'position:absolute;right:14%;top:82px;font-size:30px;margin:-16px -16px 0 0;filter:drop-shadow(0 0 12px '+fx.glow+') drop-shadow(0 0 22px '+fx.color+');animation:dgSpellSwirl 0.6s ease-out forwards;';
+      layer.appendChild(swirl2);
+      deliveryMs = 450;
+    } else if (fx.kind === 'rain'){
+      // Water droplet shower above the enemy.
+      for (var r = 0; r < 12; r++){
+        (function(idx){
+          var drop = document.createElement('div');
+          drop.textContent = fx.particles;
+          var offX = (Math.random()*60 - 30);
+          drop.style.cssText = 'position:absolute;right:'+(12 + Math.random()*8)+'%;top:'+(30 + Math.random()*30)+'px;font-size:'+(14+Math.random()*10)+'px;filter:drop-shadow(0 0 6px '+fx.glow+');animation:dgSpellRaindrop 0.6s ease-out '+(idx*0.03)+'s forwards;--dx:'+offX.toFixed(1)+'px;';
+          layer.appendChild(drop);
+        })(r);
+      }
+      deliveryMs = 420;
+    }
+
+    // Impact burst at the enemy — rings + particle shower — fires after delivery.
+    setTimeout(function(){
+      var r;
+      for (r = 0; r < (fx.rings||1); r++){
+        (function(idx){
+          var ring = document.createElement('div');
+          var size = 54 + idx*22;
+          ring.style.cssText = 'position:absolute;right:14%;top:82px;width:'+size+'px;height:'+size+'px;margin:'+(-size/2)+'px '+(-size/2)+'px 0 0;border:3px solid '+fx.glow+';border-radius:50%;box-shadow:0 0 22px '+fx.color+',0 0 14px '+fx.glow+' inset;animation:dgRing 0.75s ease-out '+(idx*0.1)+'s forwards;opacity:0;';
+          layer.appendChild(ring);
+        })(r);
+      }
+      // Particle shower radiating outward from the enemy.
+      var n = fx.pCount || 12;
+      for (var i = 0; i < n; i++){
+        var ang = (Math.PI * 2 * i) / n + Math.random()*0.3;
+        var dist = 50 + Math.random()*40;
+        var p = document.createElement('div');
+        p.textContent = fx.particles || '✨';
+        p.style.cssText = 'position:absolute;right:14%;top:82px;font-size:'+(14+Math.random()*10)+'px;filter:drop-shadow(0 0 6px '+fx.glow+') drop-shadow(0 0 10px '+fx.color+');animation:dgSpellParticle 0.95s ease-out forwards;--dx:'+(Math.cos(ang)*dist).toFixed(1)+'px;--dy:'+(Math.sin(ang)*dist).toFixed(1)+'px;';
+        layer.appendChild(p);
+      }
+      // Impact shake for heavy-hitting spells.
+      if (fx.shake) {
+        content.style.animation = 'dgShake 0.35s ease-out';
+        setTimeout(function(){ content.style.animation = ''; }, 360);
+      }
+    }, deliveryMs);
+
+    setTimeout(function(){ if(layer.parentNode) layer.remove(); }, 1500);
+  }
+  // Expose so the physical-hit code path can trigger spell visuals instead.
+  window._dgSpellFX = showDungeonSpellFX;
+
   // === DUNGEON ENEMY DEATH / SPAWN VFX ===
   function showDungeonEnemyFX(type, icon) {
     var content = document.getElementById('dg-content');
@@ -955,7 +1076,7 @@
     return false;
   }
 
-  function dungeonAttack(mode){
+  function dungeonAttack(mode, explicitScrollId){
     if(!dungeonState||dungeonState.victory||dungeonState.fled) return;
     if(dungeonState.dying) return;
     var mon=dungeonState.monsters[dungeonState.room];
@@ -972,20 +1093,25 @@
       return;
     }
 
-    // Handle magic attack — pick the highest-damage spell scroll the player owns.
-    // We SELECT the scroll up front but only CONSUME it below once we're sure the
-    // cast isn't going to be fully blocked by a shield/immunity (otherwise a single
-    // bad click would burn an expensive scroll).
-    // XP comes from CRAFTING scrolls, not from casting them here.
+    // Handle magic attack — use explicitly chosen scroll, or pick highest-damage.
+    // Scroll is SELECTed up front but only CONSUMEd after the blocked-check so
+    // a misclick on a shielded / magic-immune monster doesn't waste it.
     var castScrollId = null, castScrollDmg = 0;
     if(mode==='magic'){
       var bestId = null, bestDmg = 0;
-      if (G.inv && typeof ITEMS !== 'undefined'){
-        for (var itemId in G.inv){
-          var it = ITEMS[itemId];
-          if (it && it.type === 'scroll' && (G.inv[itemId]||0) > 0){
-            var d = it.spellDmg || 0;
-            if (d > bestDmg){ bestDmg = d; bestId = itemId; }
+      // If the player clicked a specific scroll, verify they still own one.
+      if (explicitScrollId && G.inv && (G.inv[explicitScrollId]||0) > 0 && typeof ITEMS !== 'undefined' && ITEMS[explicitScrollId]){
+        bestId = explicitScrollId;
+        bestDmg = ITEMS[explicitScrollId].spellDmg || 0;
+      } else {
+        // Fall back to auto-picking the highest-damage scroll.
+        if (G.inv && typeof ITEMS !== 'undefined'){
+          for (var itemId in G.inv){
+            var it = ITEMS[itemId];
+            if (it && it.type === 'scroll' && (G.inv[itemId]||0) > 0){
+              var d = it.spellDmg || 0;
+              if (d > bestDmg){ bestDmg = d; bestId = itemId; }
+            }
           }
         }
       }
@@ -1059,7 +1185,10 @@
     if(mon.weak === atkType){pDmg=Math.floor(pDmg*1.5);effectiveness='<span style="color:#5ac85a;font-size:9px;"> ✔ Super effective!</span>';}
     else if(mon.resist === atkType){pDmg=Math.max(1,Math.floor(pDmg*0.6));effectiveness='<span style="color:#e03030;font-size:9px;"> ✖ Resisted!</span>';}
     else {effectiveness='<span style="color:#9a7e50;font-size:9px;"> Normal</span>';}
-    mon.hp=Math.max(0,mon.hp-pDmg);showDungeonDmgFloat(pDmg,isCrit?'crit':'hit','right');showDungeonHitFX('right',isCrit?'crit':'hit');
+    mon.hp=Math.max(0,mon.hp-pDmg);showDungeonDmgFloat(pDmg,isCrit?'crit':'hit','right');
+    // Spell scrolls get their own themed FX; melee/ranged keep the generic hit.
+    if(mode==='magic'&&castScrollId){ showDungeonSpellFX(castScrollId); }
+    else { showDungeonHitFX('right',isCrit?'crit':'hit'); }
     var dmgColor=isCrit?'#ffd966':(mon.weak===atkType?'#5ac85a':(mon.resist===atkType?'#e03030':'#5ac85a'));
     dungeonState.combatLog.push('You hit '+mon.icon+' '+mon.name+' for <span style="color:'+dmgColor+';font-weight:bold;">'+pDmg+'</span> damage.'+effectiveness);
 
@@ -1284,36 +1413,60 @@
     else h+='<div style="font-size:26px;">💀</div><div style="color:#e03030;font-size:12px;">Defeated</div>';
     h+='</div></div>';
 
-    // Action buttons
-    h+='<div style="display:flex;gap:4px;margin-bottom:10px;justify-content:center;flex-wrap:wrap;">';
+    // === Action buttons ===
+    h+='<div style="display:flex;gap:4px;margin-bottom:6px;justify-content:center;flex-wrap:wrap;">';
     if(!done){
       var fc=getFoodCount();
       h+='<button onclick="window._dgAttack(\'slash\')" style="flex:1;max-width:80px;padding:6px;background:#8B4513;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;font-weight:bold;" title="Normal attack">⚔ Slash</button>';
       h+='<button onclick="window._dgAttack(\'power\')" style="flex:1;max-width:80px;padding:6px;background:'+(s.critStacks>0?'#4a3010':'#251e14')+';border:1px solid '+(s.critStacks>0?'#ffd966':'#3a2c18')+';color:'+(s.critStacks>0?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Stack crit chance (+30% per stack). You still take damage!">⚡ Power'+(s.critStacks>0?' ('+s.critStacks+')':'')+'</button>';
       h+='<button onclick="window._dgEat()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:'+(fc>0?'#5ac85a':'#5a4830')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Eat food to heal (no damage taken)">🍖 Eat('+fc+')</button>';
-      // Magic button — only shows if the player owns at least one spell scroll.
-      // Auto-picks the highest-damage scroll; button shows total scrolls available
-      // and the best scroll's icon + damage so players know what they'll cast.
-      var bestScrollId=null,bestScrollDmg=0,totalScrolls=0;
-      if(typeof G!=='undefined'&&G.inv&&typeof ITEMS!=='undefined'){
-        for(var sid in G.inv){
-          var sit=ITEMS[sid];
-          if(sit&&sit.type==='scroll'&&(G.inv[sid]||0)>0){
-            totalScrolls+=G.inv[sid];
-            var sd=sit.spellDmg||0;
-            if(sd>bestScrollDmg){bestScrollDmg=sd;bestScrollId=sid;}
-          }
-        }
-      }
-      if(bestScrollId){
-        var bIcon=ITEMS[bestScrollId].icon||'📜';
-        h+='<button onclick="window._dgAttack(\'magic\')" style="flex:1;max-width:90px;padding:6px;background:#2a1540;border:1px solid #9b59b6;color:#bb77ee;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Cast your best scroll ('+ITEMS[bestScrollId].name+' · '+bestScrollDmg+' dmg). '+totalScrolls+' scroll(s) total.">'+bIcon+' Cast ('+totalScrolls+')</button>';
-      }
       h+='<button onclick="window._dgFlee()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:#e03030;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Flee and keep collected loot">🏃 Flee</button>';
     } else {
       h+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+(s.victory?'🪓 Claim & Leave':s.fled?'🏃 Leave':'Leave Dungeon')+'</button>';
     }
     h+='</div>';
+
+    // === Spell bar — visible during active combat only ===
+    if(!done){
+      var ownedScrolls=[];
+      var SCROLL_ORDER=['scroll_wind','scroll_water','scroll_fire','scroll_earth','scroll_shock','scroll_inferno','scroll_tempest','scroll_meteor'];
+      if(typeof G!=='undefined'&&G.inv&&typeof ITEMS!=='undefined'){
+        for(var si=0;si<SCROLL_ORDER.length;si++){
+          var scid=SCROLL_ORDER[si];
+          var scq=(G.inv[scid]||0);
+          if(scq>0&&ITEMS[scid]) ownedScrolls.push({id:scid,qty:scq,item:ITEMS[scid]});
+        }
+        // catch any unrecognised scroll types too
+        for(var scid2 in G.inv){
+          if(SCROLL_ORDER.indexOf(scid2)!==-1) continue;
+          if(ITEMS[scid2]&&ITEMS[scid2].type==='scroll'&&(G.inv[scid2]||0)>0)
+            ownedScrolls.push({id:scid2,qty:G.inv[scid2],item:ITEMS[scid2]});
+        }
+      }
+      // Rarity → border colour map (mirrors CSS rarity palette).
+      var rarClr={common:'#ffffff',uncommon:'#1eff00',rare:'#0070dd',epic:'#a335ee',legendary:'#ff8000',artifact:'#e6cc80'};
+      h+='<div style="margin-bottom:8px;">';
+      h+='<div style="font-family:Cinzel,serif;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;text-align:center;">✨ Spell Scrolls</div>';
+      if(ownedScrolls.length){
+        h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">';
+        for(var so=0;so<ownedScrolls.length;so++){
+          var osc=ownedScrolls[so];
+          var bclr=rarClr[osc.item.rarity||'common']||'#888';
+          var dmgTip=osc.item.spellDmg||0;
+          h+='<button onclick="window._dgAttack(\'magic\',\''+osc.id+'\')" '
+           +'style="position:relative;background:#1a0e2a;border:2px solid '+bclr+';border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;box-shadow:0 0 8px '+bclr+'44;" '
+           +'title="'+osc.item.name+' · '+dmgTip+' dmg · '+osc.qty+' owned">'
+           +'<div style="font-size:20px;line-height:1;filter:drop-shadow(0 0 6px '+bclr+');">'+osc.item.icon+'</div>'
+           +'<div style="font-size:8px;color:'+bclr+';font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">'+dmgTip+'</div>'
+           +'<span style="position:absolute;bottom:1px;right:3px;font-size:8px;color:#f0c040;font-weight:bold;">'+(osc.qty>=100?'99+':osc.qty)+'</span>'
+           +'</button>';
+        }
+        h+='</div>';
+      } else {
+        h+='<div style="font-size:9px;color:#3a2c18;font-style:italic;text-align:center;padding:4px 0;">No scrolls — craft in Magic skill</div>';
+      }
+      h+='</div>';
+    }
 
 
     // Equipment stats
