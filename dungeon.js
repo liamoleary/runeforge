@@ -44,229 +44,196 @@
 
   var dungeonState = null;
 
-  // Per-skill dungeon unlock levels. Dungeons get progressively harder and drop
-  // better gear as players climb. Exposed on window so index.html can read them.
-  var DUNGEON_UNLOCK_LEVELS = {
-    woodcutting: 3,
-    fishing:     8,
-    mining:      15,
-    cooking:     25,
-    smithing:    35,
-    fletching:   50,
-    crafting:    65,
-    magic:       80
-  };
+  // Dungeon progression: 12 tiers per skill. Each tier unlocks at a progressively
+  // higher skill level and drops better themed gear. Skill level requirements:
+  var DUNGEON_TIER_UNLOCKS = [3, 10, 18, 26, 35, 44, 54, 64, 74, 84, 92, 99];
+  // Populated by generateAllDungeons(); maps a specific dungeon id -> required skill level.
+  var DUNGEON_UNLOCK_LEVELS = {};
   // Legacy single-level export for any code that still reads it.
   var DUNGEON_UNLOCK_LEVEL = 3;
 
-  // Scale monster stats by the dungeon's unlock tier so later dungeons actually
-  // challenge a high-level player. Scale curve: roughly 1x at level 3 up to ~7x
-  // by level 80, tuned against the expected weapon power at that level.
-  function scaleDungeonMonsters(dungeon){
-    var lvl = DUNGEON_UNLOCK_LEVELS[dungeon.id] || 3;
-    var scale = 1 + (lvl - 3) * 0.085;
-    if (scale <= 1.01) return dungeon;
-    var scaled = Object.assign({}, dungeon);
-    scaled._scaled = true;
-    scaled.rooms = dungeon.rooms.map(function(r){
-      var nhp = Math.max(1, Math.round(r.hp * scale));
-      return Object.assign({}, r, {
-        hp: nhp,
-        maxhp: nhp,
-        dmg: [Math.max(1, Math.round(r.dmg[0] * Math.sqrt(scale))), Math.max(2, Math.round(r.dmg[1] * Math.sqrt(scale)))],
-        xp: Math.round(r.xp * scale)
-      });
-    });
-    return scaled;
-  }
-
-  // Themed level-1 dungeon definitions, one per skill.
-  var DUNGEONS = {
-    woodcutting: {
-      id:'woodcutting', name:'Enchanted Grove', icon:'🌳',
-      desc:'Corrupted saplings have taken root deep in the forest.',
-      flavour:'The trees stir with dark energy. 5 creatures await.',
+  // Per-skill themes: base data shared across all 12 tiers of a skill's dungeon line.
+  var SKILL_THEMES = {
+    woodcutting:{
+      name:'Enchanted Grove',icon:'🌳',
+      desc:'A grove of twisted wood, drinking deeper into darkness with every step.',
+      flavour:'The trees stir with dark energy.',
       discovery:'Deep in the woods, your axe strikes uncover a hidden grove choked with twisted growth. Eyes blink in the gloom — something has been waiting.',
-      rooms:[
-        {name:'Twisted Sapling',icon:'🌱',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:'physical'},
-        {name:'Thorny Sprout',icon:'🌿',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:null},
-        {name:'Whipping Vine',icon:'🌾',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'magic',resist:'physical'},
-        {name:'Fungal Sapling',icon:'🍄',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:'magic'},
-        {name:'Ancient Seedling',icon:'🌲',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
-      ],
-      reward:{id:'steel_axe',icon:'🪓',name:'Steel Axe',eff:'ATK +7'},
-      rareReward:{id:'grove_crown',icon:'👑',name:'Grove Crown',eff:'Helmet · DEF +3 · HP +14',chance:0.08},
-      loot:[
-        {id:'logs',name:'Logs',icon:'🪵',weight:30,min:2,max:5},
-        {id:'oak_log',name:'Oak Logs',icon:'🪵',weight:22,min:1,max:3},
-        {id:'willow_log',name:'Willow Logs',icon:'🪵',weight:12,min:1,max:2},
-        {id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:25,min:3,max:8},
-        {id:'feather',name:'Feathers',icon:'🪶',weight:20,min:2,max:6},
-        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
-      ]
+      monsters:[{name:'Twisted Sapling',icon:'🌱'},{name:'Thorny Sprout',icon:'🌿'},{name:'Whipping Vine',icon:'🌾'},{name:'Fungal Sapling',icon:'🍄'},{name:'Ancient Seedling',icon:'🌲'}],
+      loot:[{id:'logs',name:'Logs',icon:'🪵',weight:30,min:2,max:5},{id:'oak_log',name:'Oak Logs',icon:'🪵',weight:22,min:1,max:3},{id:'willow_log',name:'Willow Logs',icon:'🪵',weight:12,min:1,max:2},{id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:25,min:3,max:8},{id:'feather',name:'Feathers',icon:'🪶',weight:20,min:2,max:6},{id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}],
+      gear:{helmet:{name:'Grove Crown',icon:'👑'},chest:{name:'Grove Vestment',icon:'🍃'},boots:{name:'Grove Trodders',icon:'🥾'},jewelry:{name:'Grove Talisman',icon:'🌿'}}
     },
-    mining: {
-      id:'mining', name:'Crumbling Mineshaft', icon:'⛏️',
-      desc:'An old mineshaft has collapsed and stirred something within.',
-      flavour:'Pickaxes echo in the dark. 5 creatures await.',
+    mining:{
+      name:'Crumbling Mineshaft',icon:'⛏️',
+      desc:'Layer upon layer of abandoned shafts plunge into the earth.',
+      flavour:'Pickaxes echo in the dark.',
       discovery:'Your pickaxe punches through the rock and a draft of cold air rushes out. Beyond the breach, a forgotten mineshaft drops into the dark — and something is moving down there.',
-      rooms:[
-        {name:'Rock Crawler',icon:'🪨',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:'physical'},
-        {name:'Coal Wisp',icon:'⚫',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:null},
-        {name:'Cave Bat',icon:'🦇',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'physical',resist:null},
-        {name:'Iron Maw',icon:'🟠',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'magic',resist:'physical'},
-        {name:'Stone Warden',icon:'🗿',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
-      ],
-      reward:{id:'steel_pickaxe',icon:'⛏️',name:'Steel Pickaxe',eff:'+20% Mining speed'},
-      rareReward:{id:'cave_plate',icon:'🪨',name:'Stonehide Plate',eff:'Chest · DEF +7 · HP +30',chance:0.08},
-      loot:[
-        {id:'copper_ore',name:'Copper Ore',icon:'🟫',weight:30,min:2,max:5},
-        {id:'tin_ore',name:'Tin Ore',icon:'⬜',weight:25,min:2,max:4},
-        {id:'iron_ore',name:'Iron Ore',icon:'🔵',weight:18,min:1,max:3},
-        {id:'coal',name:'Coal',icon:'🖤',weight:14,min:1,max:3},
-        {id:'gold_ore',name:'Gold Ore',icon:'💛',weight:6,min:1,max:2},
-        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
-      ]
+      monsters:[{name:'Rock Crawler',icon:'🪨'},{name:'Coal Wisp',icon:'⚫'},{name:'Cave Bat',icon:'🦇'},{name:'Iron Maw',icon:'🟠'},{name:'Stone Warden',icon:'🗿'}],
+      loot:[{id:'copper_ore',name:'Copper Ore',icon:'🟫',weight:30,min:2,max:5},{id:'tin_ore',name:'Tin Ore',icon:'⬜',weight:25,min:2,max:4},{id:'iron_ore',name:'Iron Ore',icon:'🔵',weight:18,min:1,max:3},{id:'coal',name:'Coal',icon:'🖤',weight:14,min:1,max:3},{id:'gold_ore',name:'Gold Ore',icon:'💛',weight:6,min:1,max:2},{id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}],
+      gear:{helmet:{name:'Stonehide Helm',icon:'⛑️'},chest:{name:'Stonehide Plate',icon:'🪨'},boots:{name:'Stonehide Treads',icon:'🥾'},jewelry:{name:'Deepstone Ring',icon:'💎'}}
     },
-    fishing: {
-      id:'fishing', name:'Sunken Reef', icon:'🐟',
-      desc:'A drowned reef hides predators among its coral spires.',
-      flavour:'Bubbles rise from the deep. 5 creatures await.',
+    fishing:{
+      name:'Sunken Reef',icon:'🐟',
+      desc:'A drowned reef, deeper with each expedition, hiding predators among coral spires.',
+      flavour:'Bubbles rise from the deep.',
       discovery:'Your line snags on something that pulls back. Hauling it in, you find a chunk of coral from a sunken reef no fisher has charted. The water beneath you suddenly feels much deeper.',
-      rooms:[
-        {name:'Reef Piranha',icon:'🐟',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:null},
-        {name:'Stinging Jelly',icon:'🪼',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:'magic'},
-        {name:'Snapping Crab',icon:'🦀',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'magic',resist:'physical'},
-        {name:'Eel Spawn',icon:'🐍',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:null},
-        {name:'Coral Tyrant',icon:'🪸',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
-      ],
-      reward:{id:'steel_rod',icon:'🎣',name:'Steel Fishing Rod',eff:'+20% Fishing speed'},
-      rareReward:{id:'reef_boots',icon:'🥾',name:'Reef Tidal Boots',eff:'Boots · DEF +3 · HP +18',chance:0.08},
-      loot:[
-        {id:'raw_shrimp',name:'Raw Shrimp',icon:'🦐',weight:30,min:2,max:5},
-        {id:'raw_sardine',name:'Raw Sardine',icon:'🐟',weight:24,min:2,max:4},
-        {id:'raw_trout',name:'Raw Trout',icon:'🐠',weight:14,min:1,max:3},
-        {id:'raw_salmon',name:'Raw Salmon',icon:'🐡',weight:8,min:1,max:2},
-        {id:'raw_lobster',name:'Raw Lobster',icon:'🦞',weight:5,min:1,max:1},
-        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
-      ]
+      monsters:[{name:'Reef Piranha',icon:'🐟'},{name:'Stinging Jelly',icon:'🪼'},{name:'Snapping Crab',icon:'🦀'},{name:'Eel Spawn',icon:'🐍'},{name:'Coral Tyrant',icon:'🪸'}],
+      loot:[{id:'raw_shrimp',name:'Raw Shrimp',icon:'🦐',weight:30,min:2,max:5},{id:'raw_sardine',name:'Raw Sardine',icon:'🐟',weight:24,min:2,max:4},{id:'raw_trout',name:'Raw Trout',icon:'🐠',weight:14,min:1,max:3},{id:'raw_salmon',name:'Raw Salmon',icon:'🐡',weight:8,min:1,max:2},{id:'raw_lobster',name:'Raw Lobster',icon:'🦞',weight:5,min:1,max:1},{id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}],
+      gear:{helmet:{name:'Coralweave Hood',icon:'🪸'},chest:{name:'Scaled Cuirass',icon:'🐠'},boots:{name:'Tidal Boots',icon:'🥾'},jewelry:{name:'Pearl Pendant',icon:'🦪'}}
     },
-    cooking: {
-      id:'cooking', name:'Cursed Pantry', icon:'🍳',
+    cooking:{
+      name:'Cursed Pantry',icon:'🍳',
       desc:'Animated pots and ravenous rats infest a forgotten kitchen.',
-      flavour:'Something is bubbling. 5 creatures await.',
+      flavour:'Something is bubbling.',
       discovery:'A pungent smell drifts out from the back of an abandoned inn. Following the trail of broken crockery, you find a pantry where something is still bubbling — and watching.',
-      rooms:[
-        {name:'Pantry Rat',icon:'🐀',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'physical',resist:null},
-        {name:'Hungry Wisp',icon:'🍖',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:'physical'},
-        {name:'Boiling Pot',icon:'🍲',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'physical',resist:'magic'},
-        {name:'Spice Specter',icon:'🌶️',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'magic',resist:null},
-        {name:'Ember Cook',icon:'🔥',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
-      ],
-      reward:{id:'steel_skillet',icon:'🍳',name:'Steel Skillet',eff:'+20% Cooking speed'},
-      rareReward:{id:'hearth_amulet',icon:'🔥',name:'Hearth Amulet',eff:'Jewelry · ATK +2 · HP +28',chance:0.08},
-      loot:[
-        {id:'raw_meat',name:'Raw Meat',icon:'🥩',weight:30,min:2,max:4},
-        {id:'c_shrimp',name:'Shrimp',icon:'🍤',weight:22,min:2,max:4},
-        {id:'c_sardine',name:'Sardine',icon:'🐟',weight:16,min:1,max:3},
-        {id:'c_meat',name:'Cooked Meat',icon:'🍖',weight:10,min:1,max:2},
-        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
-      ]
+      monsters:[{name:'Pantry Rat',icon:'🐀'},{name:'Hungry Wisp',icon:'🍖'},{name:'Boiling Pot',icon:'🍲'},{name:'Spice Specter',icon:'🌶️'},{name:'Ember Cook',icon:'🔥'}],
+      loot:[{id:'raw_meat',name:'Raw Meat',icon:'🥩',weight:30,min:2,max:4},{id:'c_shrimp',name:'Shrimp',icon:'🍤',weight:22,min:2,max:4},{id:'c_sardine',name:'Sardine',icon:'🐟',weight:16,min:1,max:3},{id:'c_meat',name:'Cooked Meat',icon:'🍖',weight:10,min:1,max:2},{id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}],
+      gear:{helmet:{name:'Hearth Cowl',icon:'🧑‍🍳'},chest:{name:'Apron of Embers',icon:'🔥'},boots:{name:'Ember Sandals',icon:'🥾'},jewelry:{name:'Hearth Amulet',icon:'🍳'}}
     },
-    smithing: {
-      id:'smithing', name:'Molten Forge', icon:'🔨',
+    smithing:{
+      name:'Molten Forge',icon:'🔨',
       desc:'Slag golems shamble through an abandoned smithy.',
-      flavour:'Heat shimmers off the anvils. 5 creatures await.',
+      flavour:'Heat shimmers off the anvils.',
       discovery:'A clanging echoes from the hills — anvils that should be silent. You trace the sound to a long-forgotten forge where the bellows still breathe with heat, and the slag is stirring.',
-      rooms:[
-        {name:'Slag Imp',icon:'🧌',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'magic',resist:'physical'},
-        {name:'Anvil Spirit',icon:'⚒️',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:null},
-        {name:'Cinder Hound',icon:'🐕',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'physical',resist:null},
-        {name:'Bellows Beast',icon:'💨',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:'magic'},
-        {name:'Forge Lord',icon:'🔥',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
-      ],
-      reward:{id:'steel_smith_hammer',icon:'🔨',name:'Steel Smith Hammer',eff:'+20% Smithing speed'},
-      rareReward:{id:'forge_helm',icon:'⛑️',name:'Molten Warhelm',eff:'Helmet · DEF +6 · HP +32',chance:0.08},
-      loot:[
-        {id:'copper_ore',name:'Copper Ore',icon:'🟫',weight:24,min:2,max:5},
-        {id:'tin_ore',name:'Tin Ore',icon:'⬜',weight:22,min:2,max:4},
-        {id:'iron_ore',name:'Iron Ore',icon:'🔵',weight:16,min:1,max:3},
-        {id:'coal',name:'Coal',icon:'🖤',weight:14,min:1,max:3},
-        {id:'bronze_bar',name:'Bronze Bar',icon:'🟫',weight:10,min:1,max:2},
-        {id:'iron_bar',name:'Iron Bar',icon:'⬛',weight:5,min:1,max:1},
-        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
-      ]
+      monsters:[{name:'Slag Imp',icon:'🧌'},{name:'Anvil Spirit',icon:'⚒️'},{name:'Cinder Hound',icon:'🐕'},{name:'Bellows Beast',icon:'💨'},{name:'Forge Lord',icon:'🔥'}],
+      loot:[{id:'copper_ore',name:'Copper Ore',icon:'🟫',weight:24,min:2,max:5},{id:'tin_ore',name:'Tin Ore',icon:'⬜',weight:22,min:2,max:4},{id:'iron_ore',name:'Iron Ore',icon:'🔵',weight:16,min:1,max:3},{id:'coal',name:'Coal',icon:'🖤',weight:14,min:1,max:3},{id:'bronze_bar',name:'Bronze Bar',icon:'🟫',weight:10,min:1,max:2},{id:'iron_bar',name:'Iron Bar',icon:'⬛',weight:5,min:1,max:1},{id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}],
+      gear:{helmet:{name:'Molten Warhelm',icon:'⛑️'},chest:{name:'Forged Cuirass',icon:'🛡️'},boots:{name:'Slagwalker Boots',icon:'🥾'},jewelry:{name:'Forge Signet',icon:'💍'}}
     },
-    fletching: {
-      id:'fletching', name:'Splinterwood Hollow', icon:'🏹',
+    fletching:{
+      name:'Splinterwood Hollow',icon:'🏹',
       desc:'Vengeful tree spirits guard their fallen kin.',
-      flavour:'Branches snap. 5 creatures await.',
+      flavour:'Branches snap.',
       discovery:'A fletched arrow that isn\'t yours lies in the underbrush, still warm. Following its trajectory, you find a hollow tree gaping into a splintered hallow — and the wood remembers.',
-      rooms:[
-        {name:'Twig Sprite',icon:'🌿',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'physical',resist:null},
-        {name:'Bark Knight',icon:'🪵',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:'physical'},
-        {name:'Quill Hawk',icon:'🦅',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'physical',resist:null},
-        {name:'Sharp Beak',icon:'🐦',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'magic',resist:null},
-        {name:'Hollow Druid',icon:'🧙',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
-      ],
-      reward:{id:'steel_fletch_knife',icon:'🔪',name:'Steel Fletching Knife',eff:'+20% Fletching speed'},
-      rareReward:{id:'hollow_bow',icon:'🏹',name:'Hollow Longbow',eff:'Weapon · ATK +18',chance:0.08},
-      loot:[
-        {id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:30,min:4,max:10},
-        {id:'feather',name:'Feathers',icon:'🪶',weight:28,min:3,max:8},
-        {id:'oak_log',name:'Oak Logs',icon:'🪵',weight:18,min:1,max:3},
-        {id:'iron_arrow',name:'Iron Arrows',icon:'🪃',weight:10,min:2,max:5},
-        {id:'gold_coins',name:'Gold',icon:'🪙',weight:30,min:5,max:20}
-      ]
+      monsters:[{name:'Twig Sprite',icon:'🌿'},{name:'Bark Knight',icon:'🪵'},{name:'Quill Hawk',icon:'🦅'},{name:'Sharp Beak',icon:'🐦'},{name:'Hollow Druid',icon:'🧙'}],
+      loot:[{id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:30,min:4,max:10},{id:'feather',name:'Feathers',icon:'🪶',weight:28,min:3,max:8},{id:'oak_log',name:'Oak Logs',icon:'🪵',weight:18,min:1,max:3},{id:'iron_arrow',name:'Iron Arrows',icon:'🪃',weight:10,min:2,max:5},{id:'gold_coins',name:'Gold',icon:'🪙',weight:30,min:5,max:20}],
+      gear:{helmet:{name:'Quilled Hood',icon:'🧢'},chest:{name:'Splinter Jerkin',icon:'🏹'},boots:{name:'Huntsman Boots',icon:'🥾'},jewelry:{name:'Hawkseye Ring',icon:'🪶'}}
     },
-    crafting: {
-      id:'crafting', name:"Spinner's Lair", icon:'🕸️',
+    crafting:{
+      name:"Spinner's Lair",icon:'🕸️',
       desc:'A web-choked tower hides skittering horrors.',
-      flavour:'Silk drapes the walls. 5 creatures await.',
+      flavour:'Silk drapes the walls.',
       discovery:'Threads of strange silk cling to your needle, finer than anything you\'ve woven. They lead away from your workbench, out the door, and up to a tower thick with webs.',
-      rooms:[
-        {name:'Silk Spider',icon:'🕷️',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'physical',resist:null},
-        {name:'Tangle Weaver',icon:'🕸️',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'magic',resist:'physical'},
-        {name:'Loom Spirit',icon:'🧵',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'magic',resist:null},
-        {name:'Stitch Wraith',icon:'🪡',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:'magic'},
-        {name:'Spinner Queen',icon:'👑',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
-      ],
-      reward:{id:'steel_needle',icon:'🪡',name:'Steel Needle',eff:'+20% Crafting speed'},
-      rareReward:{id:'spinner_cloak',icon:'🕸️',name:'Spinner Weave Cloak',eff:'Chest · DEF +9 · HP +42',chance:0.08},
-      loot:[
-        {id:'cowhide',name:'Cowhide',icon:'🐄',weight:26,min:2,max:5},
-        {id:'leather',name:'Leather',icon:'📜',weight:18,min:1,max:3},
-        {id:'feather',name:'Feathers',icon:'🪶',weight:20,min:2,max:6},
-        {id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:14,min:2,max:5},
-        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
-      ]
+      monsters:[{name:'Silk Spider',icon:'🕷️'},{name:'Tangle Weaver',icon:'🕸️'},{name:'Loom Spirit',icon:'🧵'},{name:'Stitch Wraith',icon:'🪡'},{name:'Spinner Queen',icon:'👑'}],
+      loot:[{id:'cowhide',name:'Cowhide',icon:'🐄',weight:26,min:2,max:5},{id:'leather',name:'Leather',icon:'📜',weight:18,min:1,max:3},{id:'feather',name:'Feathers',icon:'🪶',weight:20,min:2,max:6},{id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:14,min:2,max:5},{id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}],
+      gear:{helmet:{name:'Silken Coif',icon:'🪡'},chest:{name:'Spinner Weave Cloak',icon:'🕸️'},boots:{name:'Woven Boots',icon:'🥾'},jewelry:{name:'Silkbinder Ring',icon:'🕷️'}}
     },
-    magic: {
-      id:'magic', name:'Whispering Vault', icon:'✨',
+    magic:{
+      name:'Whispering Vault',icon:'✨',
       desc:'Animated tomes and wisps drift through an old archive.',
-      flavour:'The air hums with arcane power. 5 creatures await.',
+      flavour:'The air hums with arcane power.',
       discovery:'Your spells stir a current you didn\'t cast. Tracing it back to its source, you find a vault sealed for centuries, its doors humming open at your touch. Voices whisper from within.',
-      rooms:[
-        {name:'Wisp',icon:'✨',hp:5,maxhp:5,dmg:[1,2],xp:15,weak:'physical',resist:'magic'},
-        {name:'Animated Tome',icon:'📖',hp:6,maxhp:6,dmg:[1,3],xp:18,weak:'physical',resist:null},
-        {name:'Rune Spectre',icon:'🔯',hp:7,maxhp:7,dmg:[1,3],xp:20,weak:'physical',resist:'magic'},
-        {name:'Mana Leech',icon:'💧',hp:8,maxhp:8,dmg:[2,3],xp:25,weak:'physical',resist:'magic'},
-        {name:'Vault Keeper',icon:'🧙',hp:12,maxhp:12,dmg:[2,4],xp:40,weak:null,resist:null}
-      ],
-      reward:{id:'apprentice_wand',icon:'🪄',name:'Apprentice Wand',eff:'+20% Magic speed'},
-      rareReward:{id:'vault_ring',icon:'💍',name:'Vault Keeper Ring',eff:'Jewelry · ATK +6 · HP +24',chance:0.08},
-      loot:[
-        {id:'feather',name:'Feathers',icon:'🪶',weight:30,min:3,max:8},
-        {id:'bones',name:'Bones',icon:'🦴',weight:25,min:2,max:5},
-        {id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:18,min:2,max:5},
-        {id:'gold_ore',name:'Gold Ore',icon:'💛',weight:6,min:1,max:1},
-        {id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}
-      ]
-    },
+      monsters:[{name:'Wisp',icon:'✨'},{name:'Animated Tome',icon:'📖'},{name:'Rune Spectre',icon:'🔯'},{name:'Mana Leech',icon:'💧'},{name:'Vault Keeper',icon:'🧙'}],
+      loot:[{id:'feather',name:'Feathers',icon:'🪶',weight:30,min:3,max:8},{id:'bones',name:'Bones',icon:'🦴',weight:25,min:2,max:5},{id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:18,min:2,max:5},{id:'gold_ore',name:'Gold Ore',icon:'💛',weight:6,min:1,max:1},{id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}],
+      gear:{helmet:{name:'Arcanist Circlet',icon:'🔮'},chest:{name:'Rune-Woven Robe',icon:'🧙'},boots:{name:'Whispering Slippers',icon:'🥾'},jewelry:{name:'Vault Keeper Ring',icon:'💍'}}
+    }
   };
 
-  // Currently active dungeon definition (defaults to woodcutting for legacy entry points)
-  var activeDungeon = DUNGEONS.woodcutting;
+  // Roman marks for the three gear ranks (I, II, III) that a skill's themed gear
+  // rotates through across its 12 dungeon tiers.
+  var GEAR_MARKS = ['I','II','III'];
+  var GEAR_SLOT_CYCLE = ['helmet','chest','boots','jewelry'];
+
+  function computeGearStats(slot, markIdx){
+    var m = markIdx + 1; // 1..3
+    var s = {};
+    if (slot === 'helmet')      { s.def = 2 + m*2;  s.hp = 10 + m*10; }
+    else if (slot === 'chest')  { s.def = 4 + m*4;  s.hp = 18 + m*18; }
+    else if (slot === 'boots')  { s.def = 1 + m*2;  s.hp = 8  + m*8;  }
+    else if (slot === 'jewelry'){ s.hp  = 14 + m*12; s.atk = m*2;     }
+    return s;
+  }
+  function gearEffLabel(stats){
+    var parts=[];
+    if(stats.atk) parts.push('ATK +'+stats.atk);
+    if(stats.def) parts.push('DEF +'+stats.def);
+    if(stats.hp)  parts.push('HP +' +stats.hp);
+    return parts.join(' · ');
+  }
+  function registerGearItem(id, name, icon, slot, stats){
+    if (typeof ITEMS === 'undefined' || ITEMS[id]) return;
+    var item = {
+      name:name, icon:icon,
+      sell:(slot==='jewelry' ? 600 : 400) + 200 * (name.indexOf('II')>=0 ? 2 : (name.indexOf('I')>=0?1:0)),
+      type:(slot==='jewelry' ? 'accessory' : 'armour'),
+      slot:slot
+    };
+    if (stats.atk) item.atk = stats.atk;
+    if (stats.def) item.def = stats.def;
+    if (stats.hp)  item.hp  = stats.hp;
+    ITEMS[id] = item;
+  }
+
+  function generateSkillDungeons(sk, theme){
+    var out = {};
+    for (var tier = 1; tier <= 12; tier++){
+      var id = sk + '_t' + tier;
+      var unlockLvl = DUNGEON_TIER_UNLOCKS[tier - 1];
+      var scale = 1 + (tier - 1) * 0.6; // tier 1 = 1x, tier 12 = 7.6x
+
+      var rooms = theme.monsters.map(function(m, i){
+        var baseHp = 5 + i * 2; // 5,7,9,11,13
+        var hp = Math.max(3, Math.round(baseHp * scale));
+        var dmn = Math.max(1, Math.round((1 + Math.floor(i/2)) * Math.sqrt(scale)));
+        var dmx = Math.max(dmn + 1, Math.round((2 + Math.floor(i/2)) * Math.sqrt(scale)));
+        return {
+          name: m.name, icon: m.icon,
+          hp: hp, maxhp: hp,
+          dmg: [dmn, dmx],
+          xp: Math.round((15 + i * 5) * scale),
+          weak: null, resist: null
+        };
+      });
+      // Bump the boss (last monster)
+      var boss = rooms[rooms.length - 1];
+      boss.hp = Math.round(boss.hp * 1.6);
+      boss.maxhp = boss.hp;
+      boss.xp = Math.round(boss.xp * 1.8);
+
+      // Gear drop for this tier: cycles helmet→chest→boots→jewelry and upgrades to mark II/III every 4 tiers.
+      var slot = GEAR_SLOT_CYCLE[(tier - 1) % 4];
+      var markIdx = Math.floor((tier - 1) / 4); // 0,1,2
+      var gearBase = theme.gear[slot];
+      var gearItemId = sk + '_' + slot + '_mk' + (markIdx + 1);
+      var gearName = gearBase.name + ' ' + GEAR_MARKS[markIdx];
+      var stats = computeGearStats(slot, markIdx);
+      registerGearItem(gearItemId, gearName, gearBase.icon, slot, stats);
+
+      out[id] = {
+        id: id,
+        skill: sk,
+        tier: tier,
+        name: theme.name + ' · Tier ' + tier,
+        shortName: theme.name,
+        icon: theme.icon,
+        desc: theme.desc,
+        flavour: theme.flavour,
+        discovery: theme.discovery,
+        rooms: rooms,
+        reward: {id: gearItemId, icon: gearBase.icon, name: gearName, eff: gearEffLabel(stats)},
+        loot: theme.loot
+      };
+      DUNGEON_UNLOCK_LEVELS[id] = unlockLvl;
+    }
+    return out;
+  }
+
+  function generateAllDungeons(){
+    var out = {};
+    Object.keys(SKILL_THEMES).forEach(function(sk){
+      var skDungeons = generateSkillDungeons(sk, SKILL_THEMES[sk]);
+      Object.keys(skDungeons).forEach(function(k){ out[k] = skDungeons[k]; });
+    });
+    return out;
+  }
+
+  // Tier stats no longer rely on scaleDungeonMonsters() since the generator scales them.
+  function scaleDungeonMonsters(d){ return d; }
+
+  // Generate 12 tier dungeons for each of the 8 skill themes (96 dungeons total).
+  var DUNGEONS = generateAllDungeons();
+
+  // Currently active dungeon definition (defaults to first woodcutting tier for legacy entry points)
+  var activeDungeon = DUNGEONS.woodcutting_t1;
 
   var DG = {
     minFood: 3,
@@ -698,7 +665,8 @@
 
   // === DUNGEON DISCOVERY POPUP (fires once when a skill hits unlock level) ===
   function showDungeonDiscoveryPopup(sk){
-    var dungeon=DUNGEONS[sk];
+    // Discovery fires for the first tier of a skill's dungeon line.
+    var dungeon=DUNGEONS[sk+'_t1']||DUNGEONS[sk];
     if(!dungeon)return;
     if(document.getElementById('dg-discovery-popup'))return;
     var ov=document.createElement('div');
@@ -1072,8 +1040,63 @@
     document.body.appendChild(ov);
   }
 
+  // === TIER PICKER (lists all 12 dungeon tiers for a given skill) ===
+  function showTierPicker(sk){
+    var theme = SKILL_THEMES[sk];
+    if(!theme) return;
+    var existing = document.getElementById('dg-tier-picker');
+    if(existing) existing.remove();
+    var lvl = (typeof slvl==='function') ? slvl(sk) : 0;
+    var skName = (typeof SKILLS!=='undefined'&&SKILLS[sk]) ? SKILLS[sk].name : sk;
+    var ov = document.createElement('div');
+    ov.id = 'dg-tier-picker';
+    ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(5,3,1,0.88);z-index:9500;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font-family:Cinzel,serif;';
+    ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
+    var modal = document.createElement('div');
+    modal.style.cssText = 'background:linear-gradient(135deg,#0f0a04 0%,#1a1308 100%);border:2px solid #f0c040;border-radius:12px;padding:18px 14px 14px;max-width:420px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(240,192,64,.4);';
+    var header =
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
+        '<div style="font-size:32px;">'+theme.icon+'</div>' +
+        '<div style="flex:1;">' +
+          '<div style="color:#f0c040;font-size:16px;font-weight:700;">'+theme.name+'</div>' +
+          '<div style="color:#9a7e50;font-size:10px;">'+skName+' Dungeons · Lvl '+lvl+'</div>' +
+        '</div>' +
+        '<div style="cursor:pointer;color:#9a7e50;font-size:24px;line-height:1;padding:0 4px;" onclick="document.getElementById(\'dg-tier-picker\').remove()">×</div>' +
+      '</div>';
+    var listWrap = document.createElement('div');
+    listWrap.style.cssText = 'flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px;';
+    for (var t = 1; t <= 12; t++){
+      var id = sk + '_t' + t;
+      var d = DUNGEONS[id]; if(!d) continue;
+      var req = DUNGEON_UNLOCK_LEVELS[id] || 3;
+      var unlocked = (lvl >= req);
+      var claimed = (typeof G!=='undefined' && G.dungeonRewards && G.dungeonRewards[id]);
+      var rw = d.reward || {};
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid '+(unlocked?'#3a2c18':'#1c1710')+';border-radius:7px;background:'+(unlocked?'#1a1308':'#0d0905')+';cursor:'+(unlocked?'pointer':'default')+';opacity:'+(unlocked?'1':'0.55')+';transition:all .15s;';
+      row.innerHTML =
+        '<div style="min-width:34px;height:34px;border-radius:5px;background:#0b0604;border:1px solid #3a2c18;display:flex;align-items:center;justify-content:center;font-size:16px;color:#f0c040;font-weight:700;">'+t+'</div>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="color:#e8d898;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(unlocked?'':'🔒 ')+'Tier '+t+'</div>' +
+          '<div style="color:#9a7e50;font-size:9px;margin-top:2px;">'+rw.icon+' '+(rw.name||'Reward')+(claimed?' <span style="color:#5ac85a">✓</span>':'')+'</div>' +
+          '<div style="color:'+(unlocked?'#5ac85a':'#9a7e50')+';font-size:9px;margin-top:1px;">'+(unlocked?'Available':'Reach Lvl '+req)+'</div>' +
+        '</div>';
+      if(unlocked){
+        (function(dungeonId){
+          row.onclick = function(){ ov.remove(); showDungeonEntry(dungeonId); };
+        })(id);
+      }
+      listWrap.appendChild(row);
+    }
+    modal.innerHTML = header;
+    modal.appendChild(listWrap);
+    ov.appendChild(modal);
+    document.body.appendChild(ov);
+  }
+
   window._dgAttack=dungeonAttack;
   window._dgShowEntry=showDungeonEntry;
+  window._dgShowTierPicker=showTierPicker;
   window._dgEat=dungeonEat;
   window._dgFlee=dungeonFlee;
   window._dgLeave=leaveDungeon;
@@ -1090,14 +1113,17 @@
   }
 
   function showDungeonEntry(dungeonId){
-    if(dungeonId&&DUNGEONS[dungeonId])activeDungeon=DUNGEONS[dungeonId];
+    // Support the legacy single-dungeon-per-skill id (e.g. 'woodcutting') by auto-mapping to tier 1.
+    if(dungeonId && !DUNGEONS[dungeonId] && DUNGEONS[dungeonId+'_t1']) dungeonId = dungeonId+'_t1';
+    if(dungeonId && DUNGEONS[dungeonId]) activeDungeon=DUNGEONS[dungeonId];
     createDungeonOverlay();
     var content=document.getElementById('dg-content');
     // Lock check: skill must reach the dungeon's unlock level before the dungeon opens
-    var skLvl=(typeof slvl==='function')?slvl(activeDungeon.id):0;
+    var dungeonSkill = activeDungeon.skill || activeDungeon.id;
+    var skLvl=(typeof slvl==='function')?slvl(dungeonSkill):0;
     var unlockLvl=getUnlockLevelFor(activeDungeon.id);
     if(skLvl<unlockLvl){
-      var skName2=(typeof SKILLS!=='undefined'&&SKILLS[activeDungeon.id])?SKILLS[activeDungeon.id].name:activeDungeon.id;
+      var skName2=(typeof SKILLS!=='undefined'&&SKILLS[dungeonSkill])?SKILLS[dungeonSkill].name:dungeonSkill;
       var hLock='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
       hLock+='<div style="text-align:center;padding:20px 8px;">';
       hLock+='<div style="font-size:48px;margin-bottom:10px;filter:grayscale(1);opacity:0.5;">'+activeDungeon.icon+'</div>';
@@ -1125,7 +1151,8 @@
     var roomList=activeDungeon.rooms||[];
 
     var h='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
-    h+='<div style="text-align:center;"><div style="font-size:32px;margin-bottom:6px;">'+activeDungeon.icon+'</div><div style="color:#f0c040;font-size:18px;font-family:Cinzel,serif;margin-bottom:2px;">'+activeDungeon.name+'</div><div style="color:#9a7e50;font-size:11px;margin-bottom:12px;">Level 1 Dungeon • 5 Rooms</div></div>';
+    var tierLbl = activeDungeon.tier ? ('Tier '+activeDungeon.tier+' · ') : '';
+    h+='<div style="text-align:center;"><div style="font-size:32px;margin-bottom:6px;">'+activeDungeon.icon+'</div><div style="color:#f0c040;font-size:18px;font-family:Cinzel,serif;margin-bottom:2px;">'+activeDungeon.name+'</div><div style="color:#9a7e50;font-size:11px;margin-bottom:12px;">'+tierLbl+'5 Rooms · Unlock Lvl '+unlockLvl+'</div></div>';
     h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">'+(activeDungeon.desc||'')+' Clear all <b>5 creatures</b> to claim the <span style="color:#f0c040;">'+rwd.icon+' '+rwd.name+'</span>.<br><span style="color:#9a7e50;font-size:10px;">⚔ Slash or ⚡ Power Attack! 🍖 Eating heals without taking damage. 🏃 Flee to keep loot.</span></div>';
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;">';
