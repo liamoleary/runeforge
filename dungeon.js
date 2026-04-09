@@ -21,25 +21,25 @@
 
 
   if(typeof ITEMS !== 'undefined'){
-    if(!ITEMS.steel_axe) ITEMS.steel_axe = {name:'Steel Axe',icon:'🪓',sell:250,type:'weapon',atk:7,slot:'hand'};
-    if(!ITEMS.enchanted_axe) ITEMS.enchanted_axe = {name:'Enchanted Grove Axe',icon:'🪓',sell:1200,type:'weapon',atk:12,slot:'hand',special:true};
-    if(!ITEMS.steel_pickaxe) ITEMS.steel_pickaxe = {name:'Steel Pickaxe',icon:'⛏️',sell:250,type:'tool'};
-    if(!ITEMS.steel_rod) ITEMS.steel_rod = {name:'Steel Fishing Rod',icon:'🎣',sell:250,type:'tool'};
-    if(!ITEMS.steel_skillet) ITEMS.steel_skillet = {name:'Steel Skillet',icon:'🍳',sell:250,type:'tool'};
-    if(!ITEMS.steel_smith_hammer) ITEMS.steel_smith_hammer = {name:'Steel Smith Hammer',icon:'🔨',sell:250,type:'tool'};
-    if(!ITEMS.steel_fletch_knife) ITEMS.steel_fletch_knife = {name:'Steel Fletching Knife',icon:'🔪',sell:250,type:'tool'};
-    if(!ITEMS.steel_needle) ITEMS.steel_needle = {name:'Steel Needle',icon:'🪡',sell:250,type:'tool'};
-    if(!ITEMS.apprentice_wand) ITEMS.apprentice_wand = {name:'Apprentice Wand',icon:'🪄',sell:250,type:'tool'};
-    if(!ITEMS.steel_shield) ITEMS.steel_shield = {name:'Steel Shield',icon:'🛡️',sell:250,type:'armour',def:5,hp:12,slot:'offhand'};
-    // Themed dungeon-boss armour drops — each dungeon's final boss has a small chance to drop these.
-    if(!ITEMS.grove_crown)    ITEMS.grove_crown    = {name:'Grove Crown',       icon:'👑',sell:400, type:'armour',   def:3, hp:14, slot:'helmet'};
-    if(!ITEMS.reef_boots)     ITEMS.reef_boots     = {name:'Reef Tidal Boots',  icon:'🥾',sell:600, type:'armour',   def:3, hp:18, slot:'boots'};
-    if(!ITEMS.cave_plate)     ITEMS.cave_plate     = {name:'Stonehide Plate',   icon:'🪨',sell:900, type:'armour',   def:7, hp:30, slot:'chest'};
-    if(!ITEMS.hearth_amulet)  ITEMS.hearth_amulet  = {name:'Hearth Amulet',     icon:'🔥',sell:1200,type:'accessory',        hp:28, atk:2, slot:'jewelry'};
-    if(!ITEMS.forge_helm)     ITEMS.forge_helm     = {name:'Molten Warhelm',    icon:'⛑️',sell:1600,type:'armour',   def:6, hp:32, slot:'helmet'};
-    if(!ITEMS.hollow_bow)     ITEMS.hollow_bow     = {name:'Hollow Longbow',    icon:'🏹',sell:2200,type:'weapon',   atk:18,         slot:'hand'};
-    if(!ITEMS.spinner_cloak)  ITEMS.spinner_cloak  = {name:'Spinner Weave Cloak',icon:'🕸️',sell:2800,type:'armour',  def:9, hp:42, slot:'chest'};
-    if(!ITEMS.vault_ring)     ITEMS.vault_ring     = {name:'Vault Keeper Ring', icon:'💍',sell:3400,type:'accessory',        hp:24, atk:6, slot:'jewelry'};
+    if(!ITEMS.steel_axe) ITEMS.steel_axe = {name:'Steel Axe',icon:'🪓',sell:250,type:'weapon',atk:7,slot:'hand',rarity:'rare'};
+    if(!ITEMS.enchanted_axe) ITEMS.enchanted_axe = {name:'Enchanted Grove Axe',icon:'🪓',sell:1200,type:'weapon',atk:12,slot:'hand',rarity:'epic',special:true};
+    if(!ITEMS.steel_pickaxe) ITEMS.steel_pickaxe = {name:'Steel Pickaxe',icon:'⛏️',sell:250,type:'tool',rarity:'rare'};
+    if(!ITEMS.steel_rod) ITEMS.steel_rod = {name:'Steel Fishing Rod',icon:'🎣',sell:250,type:'tool',rarity:'rare'};
+    if(!ITEMS.steel_skillet) ITEMS.steel_skillet = {name:'Steel Skillet',icon:'🍳',sell:250,type:'tool',rarity:'rare'};
+    if(!ITEMS.steel_smith_hammer) ITEMS.steel_smith_hammer = {name:'Steel Smith Hammer',icon:'🔨',sell:250,type:'tool',rarity:'rare'};
+    if(!ITEMS.steel_fletch_knife) ITEMS.steel_fletch_knife = {name:'Steel Fletching Knife',icon:'🔪',sell:250,type:'tool',rarity:'rare'};
+    if(!ITEMS.steel_needle) ITEMS.steel_needle = {name:'Steel Needle',icon:'🪡',sell:250,type:'tool',rarity:'rare'};
+    if(!ITEMS.apprentice_wand) ITEMS.apprentice_wand = {name:'Apprentice Wand',icon:'🪄',sell:250,type:'tool',rarity:'rare'};
+    if(!ITEMS.steel_shield) ITEMS.steel_shield = {name:'Steel Shield',icon:'🛡️',sell:250,type:'armour',def:5,hp:12,slot:'offhand',rarity:'rare'};
+    // Legacy themed dungeon-boss armour (kept so old saves still know about them).
+    if(!ITEMS.grove_crown)    ITEMS.grove_crown    = {name:'Grove Crown',       icon:'👑',sell:400, type:'armour',   def:3, hp:14, slot:'helmet',rarity:'epic'};
+    if(!ITEMS.reef_boots)     ITEMS.reef_boots     = {name:'Reef Tidal Boots',  icon:'🥾',sell:600, type:'armour',   def:3, hp:18, slot:'boots',rarity:'epic'};
+    if(!ITEMS.cave_plate)     ITEMS.cave_plate     = {name:'Stonehide Plate',   icon:'🪨',sell:900, type:'armour',   def:7, hp:30, slot:'chest',rarity:'epic'};
+    if(!ITEMS.hearth_amulet)  ITEMS.hearth_amulet  = {name:'Hearth Amulet',     icon:'🔥',sell:1200,type:'accessory',        hp:28, atk:2, slot:'jewelry',rarity:'epic'};
+    if(!ITEMS.forge_helm)     ITEMS.forge_helm     = {name:'Molten Warhelm',    icon:'⛑️',sell:1600,type:'armour',   def:6, hp:32, slot:'helmet',rarity:'epic'};
+    if(!ITEMS.hollow_bow)     ITEMS.hollow_bow     = {name:'Hollow Longbow',    icon:'🏹',sell:2200,type:'weapon',   atk:18,         slot:'hand',rarity:'epic'};
+    if(!ITEMS.spinner_cloak)  ITEMS.spinner_cloak  = {name:'Spinner Weave Cloak',icon:'🕸️',sell:2800,type:'armour',  def:9, hp:42, slot:'chest',rarity:'epic'};
+    if(!ITEMS.vault_ring)     ITEMS.vault_ring     = {name:'Vault Keeper Ring', icon:'💍',sell:3400,type:'accessory',        hp:24, atk:6, slot:'jewelry',rarity:'epic'};
   }
 
   var dungeonState = null;
@@ -150,13 +150,16 @@
     if(stats.dodge) parts.push('DODGE +'+stats.dodge+'%');
     return parts.join(' · ');
   }
-  function registerGearItem(id, name, icon, slot, stats){
+  // Mark I → rare, Mark II → epic, Mark III → legendary.
+  var GEAR_MARK_RARITIES = ['rare','epic','legendary'];
+  function registerGearItem(id, name, icon, slot, stats, markIdx){
     if (typeof ITEMS === 'undefined' || ITEMS[id]) return;
     var item = {
       name:name, icon:icon,
-      sell:(slot==='jewelry' ? 600 : 400) + 200 * (name.indexOf('II')>=0 ? 2 : (name.indexOf('I')>=0?1:0)),
+      sell:(slot==='jewelry' ? 600 : 400) + 400 * (markIdx||0),
       type:(slot==='jewelry' ? 'accessory' : 'armour'),
-      slot:slot
+      slot:slot,
+      rarity: GEAR_MARK_RARITIES[markIdx||0] || 'rare'
     };
     if (stats.atk) item.atk = stats.atk;
     if (stats.def) item.def = stats.def;
@@ -198,7 +201,7 @@
       var gearItemId = sk + '_' + slot + '_mk' + (markIdx + 1);
       var gearName = gearBase.name + ' ' + GEAR_MARKS[markIdx];
       var stats = computeGearStats(slot, markIdx);
-      registerGearItem(gearItemId, gearName, gearBase.icon, slot, stats);
+      registerGearItem(gearItemId, gearName, gearBase.icon, slot, stats, markIdx);
 
       out[id] = {
         id: id,
