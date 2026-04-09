@@ -1076,6 +1076,20 @@
     return false;
   }
 
+  // Power-stack rewards scale dramatically so investing multiple turns actually
+  // pays off. Each stack increases crit chance, crit multiplier, and grants a
+  // flat "focused strike" bonus that lands even if the crit roll whiffs.
+  //   1 stack → 40% crit, ×2.5 damage, +20% power bonus
+  //   2 stacks → 75% crit, ×3.5 damage, +40% power bonus
+  //   3 stacks → GUARANTEED crit, ×5.0 damage, +60% power bonus
+  var MAX_POWER_STACKS = 3;
+  function getPowerStackProfile(stacks){
+    if (stacks >= 3) return {critChance:1.00, critMult:5.0, bonusFrac:0.60};
+    if (stacks === 2) return {critChance:0.75, critMult:3.5, bonusFrac:0.40};
+    if (stacks === 1) return {critChance:0.40, critMult:2.5, bonusFrac:0.20};
+    return {critChance:0, critMult:1, bonusFrac:0};
+  }
+
   function dungeonAttack(mode, explicitScrollId){
     if(!dungeonState||dungeonState.victory||dungeonState.fled) return;
     if(dungeonState.dying) return;
@@ -1083,9 +1097,15 @@
     if(!mon||mon.hp<=0) return;
 
     if(mode==='power'){
-      dungeonState.critStacks=(dungeonState.critStacks||0)+1;
-      var cChance=Math.min(90,dungeonState.critStacks*30);
-      dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ You focus energy! Crit chance: '+cChance+'% (stack: '+dungeonState.critStacks+')</span>');
+      var curStacks = dungeonState.critStacks||0;
+      if (curStacks >= MAX_POWER_STACKS){
+        dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ Already at max focus (×'+MAX_POWER_STACKS+'). Unleash it!</span>');
+      } else {
+        dungeonState.critStacks = curStacks + 1;
+        var _prof = getPowerStackProfile(dungeonState.critStacks);
+        var guaranteedTxt = _prof.critChance >= 1 ? ' <b>GUARANTEED CRIT!</b>' : ' ('+Math.round(_prof.critChance*100)+'% crit)';
+        dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ Focus Power ×'+dungeonState.critStacks+' — next hit: ×'+_prof.critMult.toFixed(1)+' dmg, +'+Math.round(_prof.bonusFrac*100)+'% power bonus'+guaranteedTxt+'.</span>');
+      }
       monsterRetaliate(mon);
       tickStatusEffects(mon);
       if(dungeonState&&dungeonState.playerHp>0) G.hp=dungeonState.playerHp;
@@ -1174,10 +1194,31 @@
     }
     var isCrit=false;
     if(dungeonState.critStacks>0){
-      var critChance=Math.min(0.9,dungeonState.critStacks*0.3);
-      if(Math.random()<critChance){isCrit=true;pDmg=Math.floor(pDmg*2.5);dungeonState.combatLog.push('<span style="color:#ffd966;font-size:13px;">⚡ CRITICAL HIT!</span>');}
-      else{dungeonState.combatLog.push('<span style="color:#9a7e50;">No crit ('+Math.round(critChance*100)+'% chance)</span>');}
-      dungeonState.critStacks=0;
+      var _stacks = Math.min(MAX_POWER_STACKS, dungeonState.critStacks);
+      var _p = getPowerStackProfile(_stacks);
+
+      // Reroll the physical base with a high floor so the turns you invested don't
+      // evaporate into a lucky 1. Higher stacks → higher minimum roll. Magic scrolls
+      // already deal a tight damage band, so they skip the reroll and keep their roll.
+      if (mode !== 'magic'){
+        var _rollFloor = Math.max(1, Math.ceil(pAtk * (0.3 + 0.2 * _stacks)));
+        var _poweredRoll = rollDmg(_rollFloor, Math.max(_rollFloor, pAtk));
+        pDmg = Math.max(pDmg, _poweredRoll);
+      }
+
+      // Flat "focused strike" bonus — guaranteed extra damage even when the crit whiffs.
+      // Scales with stacks so 3 turns of investment always feels meaningful.
+      var _powerBonus = Math.max(1, Math.ceil(pAtk * _p.bonusFrac));
+      pDmg += _powerBonus;
+
+      if (Math.random() < _p.critChance){
+        isCrit = true;
+        pDmg = Math.floor(pDmg * _p.critMult);
+        dungeonState.combatLog.push('<span style="color:#ffd966;font-size:13px;font-weight:bold;">⚡ CRITICAL HIT! ×'+_p.critMult.toFixed(1)+' (+'+_powerBonus+' focus)</span>');
+      } else {
+        dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ Focused strike! +'+_powerBonus+' power damage (crit whiffed at '+Math.round(_p.critChance*100)+'%).</span>');
+      }
+      dungeonState.critStacks = 0;
     }
     // Apply weak/resist damage modifiers, then deal damage
     var atkType = (atkKind === 'magic') ? 'magic' : 'physical';
@@ -1418,7 +1459,15 @@
     if(!done){
       var fc=getFoodCount();
       h+='<button onclick="window._dgAttack(\'slash\')" style="flex:1;max-width:80px;padding:6px;background:#8B4513;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;font-weight:bold;" title="Normal attack">⚔ Slash</button>';
-      h+='<button onclick="window._dgAttack(\'power\')" style="flex:1;max-width:80px;padding:6px;background:'+(s.critStacks>0?'#4a3010':'#251e14')+';border:1px solid '+(s.critStacks>0?'#ffd966':'#3a2c18')+';color:'+(s.critStacks>0?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Stack crit chance (+30% per stack). You still take damage!">⚡ Power'+(s.critStacks>0?' ('+s.critStacks+')':'')+'</button>';
+      // Power button: preview the NEXT stack's stats so players know what they'll get.
+      var _curStacks=s.critStacks||0;
+      var _atMax=_curStacks>=MAX_POWER_STACKS;
+      var _previewProf=getPowerStackProfile(Math.min(MAX_POWER_STACKS,_curStacks+1));
+      var _powerTitle=_atMax
+        ? 'Max focus — slash now to unleash a guaranteed ×5 crit with +60% power bonus damage.'
+        : 'Focus Power: next stack → '+Math.round(_previewProf.critChance*100)+'% crit / ×'+_previewProf.critMult.toFixed(1)+' damage / +'+Math.round(_previewProf.bonusFrac*100)+'% flat bonus. Enemy still hits you this turn.';
+      var _powerLabel='⚡ Power'+(_curStacks>0?' ×'+_curStacks:'');
+      h+='<button onclick="window._dgAttack(\'power\')" style="flex:1;max-width:80px;padding:6px;background:'+(_curStacks>0?'#4a3010':'#251e14')+';border:1px solid '+(_curStacks>0?'#ffd966':'#3a2c18')+';color:'+(_curStacks>0?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="'+_powerTitle+'">'+_powerLabel+'</button>';
       h+='<button onclick="window._dgEat()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:'+(fc>0?'#5ac85a':'#5a4830')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Eat food to heal (no damage taken)">🍖 Eat('+fc+')</button>';
       h+='<button onclick="window._dgFlee()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:#e03030;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Flee and keep collected loot">🏃 Flee</button>';
     } else {
@@ -1507,10 +1556,14 @@
       h+='</div></div>';
     }
 
-    // Power charge indicator
+    // Power charge indicator — shows exactly what the next hit will do.
     if(!done&&s.critStacks>0){
-      var cc=Math.min(90,s.critStacks*30);
-      h+='<div style="text-align:center;color:#ffd966;font-size:10px;margin-bottom:6px;">⚡ Crit stacks: '+s.critStacks+' ('+cc+'% crit chance). Stack more or slash!</div>';
+      var _cp=getPowerStackProfile(Math.min(MAX_POWER_STACKS,s.critStacks));
+      var _critTxt=_cp.critChance>=1?'<b>GUARANTEED CRIT</b>':Math.round(_cp.critChance*100)+'% crit';
+      var _prompt=s.critStacks>=MAX_POWER_STACKS
+        ? ' <b style="color:#ffffcc;">UNLEASH IT! ⚔</b>'
+        : ' Stack once more for an even bigger hit.';
+      h+='<div style="text-align:center;color:#ffd966;font-size:10px;margin-bottom:6px;line-height:1.35;">⚡ Focused ×'+s.critStacks+' — '+_critTxt+' · ×'+_cp.critMult.toFixed(1)+' damage · +'+Math.round(_cp.bonusFrac*100)+'% power bonus.'+_prompt+'</div>';
     }
 
     // Loot display
