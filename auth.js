@@ -155,22 +155,24 @@
           localStorage.setItem('rforge', JSON.stringify(data.saveData));
           if(typeof G!=='undefined'){
             Object.assign(G, data.saveData);
-            if(typeof updateUI==='function') updateUI();
-            if(typeof giveStarterSword==='function') giveStarterSword();
-            if(typeof buildSkills==='function') buildSkills();
             if(typeof initXpTracking==='function') initXpTracking();
+            if(typeof recomputeMaxHp==='function') recomputeMaxHp();
+            if(typeof buildSkills==='function') buildSkills();
+            if(typeof updateUI==='function') updateUI();
           }
         } else {
           localStorage.removeItem('rforge');
           if(typeof G!=='undefined'){
+            var baseHp = (typeof BASE_MAXHP==='number') ? BASE_MAXHP : 30;
             G.skills={};G.inv={};G.equip={weapon:null,armour:null};
-            G.gold=0;G.hp=10;G.maxhp=10;G.upgrades={};G.tools={};G.dungeonRewards={};G.dungeonsDiscovered={};
+            G.gold=0;G.hp=baseHp;G.maxhp=baseHp;G.baseHp=baseHp;
+            G.upgrades={};G.tools={};G.dungeonRewards={};G.dungeonsDiscovered={};
             G.tab='woodcutting';G.task=null;G.prog=0;G.dur=0;
             G.critStacks=0;G.xpEarned={};G.startedWithSword=false;
             G.hasSeenIntro=false;
             if(typeof initSkills==='function') initSkills();
             if(typeof initXpTracking==='function') initXpTracking();
-            if(typeof giveStarterSword==='function') giveStarterSword();
+            if(typeof recomputeMaxHp==='function') recomputeMaxHp();
             if(typeof buildSkills==='function') buildSkills();
             if(typeof updateUI==='function') updateUI();
             if(typeof showIntro==='function') showIntro();

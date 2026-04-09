@@ -701,12 +701,8 @@ let G = {
 function initSkills(){for(const k of Object.keys(SKILLS))if(!G.skills[k])G.skills[k]={xp:0};}
 function initXpTracking(){if(!G.xpEarned){G.xpEarned={};} for(const k of Object.keys(SKILLS))if(!G.xpEarned[k])G.xpEarned[k]=0;}
 function giveStarterSword(){
-  if(!G.startedWithSword){
-    G.inv.bronze_sword=(G.inv.bronze_sword||0)+1;
-    G.equip.weapon='bronze_sword';
-    G.startedWithSword=true;
-    log('🗡️ You start with a <b>Bronze Sword</b>! Equip food and try a dungeon!');
-  }
+  // Starter sword removed — players now have to smith their own weapon.
+  // Keeping the function as a no-op so legacy callers don't break.
 }
 
 // SAVE / LOAD
@@ -1813,9 +1809,9 @@ function updateCombatStatsPanel() {
         +'<div class="intro-title">RuneForge</div>'
         +'<div class="intro-sub">An Idle Adventure</div>'
         +'<div class="intro-text">'
-        +'You awaken at the edge of a wild frontier, a <b>Bronze Sword</b> at your side.<br><br>'
-        +'Fish, mine, chop, and cook to survive. Craft powerful gear. '
-        +'Venture into <b>dungeons</b> to battle creatures and claim rare loot.<br><br>'
+        +'You awaken at the edge of a wild frontier with nothing but your <b>fists</b>.<br><br>'
+        +'Fish, mine, chop, and cook to survive. Smith your first weapon, craft armour, '
+        +'then venture into <b>dungeons</b> to battle creatures and claim rare loot.<br><br>'
         +'Adventure, crafting, and glory await.'
         +'</div>'
         +'<button class="intro-btn" onclick="dismissIntro()">Begin Adventure</button>'
@@ -1836,8 +1832,8 @@ function updateCombatStatsPanel() {
   updateUI();anim();
   setInterval(tick,50);
   requestNotificationPermission();
-  log('🎮 <b>Welcome to RuneForge!</b> You start with a Bronze Sword!');
-  log('💡 Tip: Fish shrimp → Cook food → Enter the Dungeon! Chop logs → Fletch bows. Mine ores → Smith gear.');
+  log('🎮 <b>Welcome to RuneForge!</b> You start with nothing but your fists — smith a weapon as soon as you can.');
+  log('💡 Tip: Mine copper + tin → Smith a Bronze Bar → Smith a Bronze Sword. Fish + cook food before entering a Dungeon.');
   if(G.task){
     const sk=findSkill(G.task);
     const a=findAction(G.task);

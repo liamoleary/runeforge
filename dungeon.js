@@ -277,7 +277,7 @@
 
   function canEnterDungeon(){
     if(typeof G==='undefined') return {ok:false,reason:'Game not loaded'};
-    if(!G.equip||!G.equip.weapon) return {ok:false,reason:'Equip a weapon first!'};
+    // Weapon is no longer required — players can enter unarmed and fight with fists (very weak).
     var f=getFoodCount();
     if(f<DG.minFood) return {ok:false,reason:'Bring at least '+DG.minFood+' food (you have '+f+')'};
     return {ok:true};
@@ -1056,7 +1056,7 @@
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;">';
     h+='<div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">REQUIREMENTS</div>';
-    h+='<div style="color:'+(wpn?'#5ac85a':'#e03030')+';font-size:11px;margin-bottom:3px;">'+(wpn?'✓':'✗')+' Weapon equipped'+(wpn?' ('+wpn.icon+' '+wpn.name+')':'')+'</div>';
+    h+='<div style="color:'+(wpn?'#5ac85a':'#e0a040')+';font-size:11px;margin-bottom:3px;">'+(wpn?'✓ Weapon equipped ('+wpn.icon+' '+wpn.name+')':'⚠ No weapon — fighting with fists (very weak)')+'</div>';
     h+='<div style="color:'+(fc>=DG.minFood?'#5ac85a':'#e03030')+';font-size:11px;margin-bottom:3px;">'+(fc>=DG.minFood?'✓':'✗')+' '+DG.minFood+'+ food (have: '+fc+')</div>';
     h+='<div style="color:#9a7e50;font-size:10px;margin-top:6px;">'+(arm?arm.icon+' '+arm.name:'No armour')+'</div>';
     h+='</div>';
@@ -1092,7 +1092,7 @@
   function initDungeon(){
     // Combat skill has been removed, so there is no longer a combat tab or page to hijack.
     if(typeof log==='function') setTimeout(function(){
-      log('🏰 The <b>Dungeon</b> awaits! Equip your Bronze Sword and bring food!');
+      log('🏰 The <b>Dungeon</b> awaits! Smith a weapon and bring food — or brave it with bare fists.');
     },2000);
   }
 
