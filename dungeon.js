@@ -1258,13 +1258,14 @@
         var firstClear=(typeof G!=='undefined')&&!G.dungeonRewards[activeDungeon.id];
         dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The dungeon falls silent. You are victorious!</span>');
 
-        // Roll for the themed gear drop. Nothing is ever guaranteed — early tiers are
-        // generous, later tiers are rare. The Hunter's Eye buff (loot_dungeon) bumps
+        // Roll for the themed gear drop. First clears always guarantee the drop so the
+        // "Claim" victory popup is always truthful. Subsequent runs use RNG — early tiers
+        // are generous, later tiers are rare. The Hunter's Eye buff (loot_dungeon) bumps
         // the chance multiplicatively if active.
         var dropChance = (rwd.chance!=null) ? rwd.chance : 50;
         var lootBuff = (typeof window.getBuffLootMult === 'function') ? window.getBuffLootMult() : 1;
         if (lootBuff > 1) dropChance = Math.min(95, Math.round(dropChance * lootBuff));
-        var gotDrop = (Math.random()*100) < dropChance;
+        var gotDrop = firstClear || (Math.random()*100) < dropChance;
         if(gotDrop){
           dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">🎁 LOOT! '+rwd.icon+' '+rwd.name+(rwd.eff?' <span style="color:#9a7e50">('+rwd.eff+')</span>':'')+'</span>');
         } else {
