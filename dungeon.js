@@ -138,8 +138,8 @@
     var s = {};
     if (slot === 'helmet')      { s.def = 2 + m*2;  s.hp = 10 + m*10; }
     else if (slot === 'chest')  { s.def = 4 + m*4;  s.hp = 18 + m*18; }
-    else if (slot === 'boots')  { s.def = 1 + m*2;  s.hp = 8  + m*8;  }
-    else if (slot === 'jewelry'){ s.hp  = 14 + m*12; s.atk = m*2;     }
+    else if (slot === 'boots')  { s.def = 1 + m*2;  s.hp = 8  + m*8;  s.dodge = 4 + m*2; } // mk1=6% → mk3=10%
+    else if (slot === 'jewelry'){ s.hp  = 14 + m*12; s.atk = m*2;     s.dodge = 2 + m*2; } // mk1=4% → mk3=8%
     return s;
   }
   function gearEffLabel(stats){
@@ -147,6 +147,7 @@
     if(stats.atk) parts.push('ATK +'+stats.atk);
     if(stats.def) parts.push('DEF +'+stats.def);
     if(stats.hp)  parts.push('HP +' +stats.hp);
+    if(stats.dodge) parts.push('DODGE +'+stats.dodge+'%');
     return parts.join(' · ');
   }
   function registerGearItem(id, name, icon, slot, stats){
@@ -160,6 +161,7 @@
     if (stats.atk) item.atk = stats.atk;
     if (stats.def) item.def = stats.def;
     if (stats.hp)  item.hp  = stats.hp;
+    if (stats.dodge) item.dodge = stats.dodge;
     ITEMS[id] = item;
   }
 
@@ -282,6 +284,17 @@
     }
     if(G.equip.armour&&ITEMS[G.equip.armour]) b+=ITEMS[G.equip.armour].def||0;
     return b;
+  }
+
+  // Player dodge chance (percent). Base 8% + sum of equipped gear dodge bonuses, capped.
+  function getPlayerDodge(){
+    var d=8;
+    if(typeof G==='undefined'||!G.equip) return d;
+    for (var i=0;i<DEF_SLOTS.length;i++){
+      var id=G.equip[DEF_SLOTS[i]];
+      if(id&&ITEMS[id]&&ITEMS[id].dodge) d+=ITEMS[id].dodge;
+    }
+    return Math.min(70,d);
   }
 
   function rollDmg(mn,mx){return Math.floor(Math.random()*(mx-mn+1))+mn;}
@@ -724,13 +737,13 @@
       dungeonState.critStacks=(dungeonState.critStacks||0)+1;
       var cChance=Math.min(90,dungeonState.critStacks*30);
       dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ You focus energy! Crit chance: '+cChance+'% (stack: '+dungeonState.critStacks+')</span>');
-      // Monster still attacks
-      var hasArm2=G.equip&&G.equip.armour&&ITEMS[G.equip.armour];
-      var blocked2=hasArm2&&Math.random()<0.18;
-      if(blocked2){
+      // Monster still attacks — dodge roll first
+      var dodgeChance2=getPlayerDodge();
+      var dodged2=(Math.random()*100)<dodgeChance2;
+      if(dodged2){
         showDungeonHitFX('left','block');
         showDungeonDmgFloat(0,'miss','left');
-        dungeonState.combatLog.push('<span style="color:#88ddff;">🛡 You block '+mon.icon+' '+mon.name+'\'s attack!</span>');
+        dungeonState.combatLog.push('<span style="color:#ffd966;">💨 You dodge '+mon.icon+' '+mon.name+'\'s attack! ('+dodgeChance2+'% dodge)</span>');
       } else {
       var mDmg2=rollDmg(mon.dmg[0],mon.dmg[1]),def2=getPlayerDef(),ad2=Math.max(1,mDmg2-Math.floor(def2*0.5));
       dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad2);showDungeonDmgFloat(ad2,'enemy-hit','left');showDungeonHitFX('left','hit');
@@ -852,13 +865,13 @@
         },600);
       }
     } else {
-      // Monster hits back on normal attack
-      var hasArm=G.equip&&G.equip.armour&&ITEMS[G.equip.armour];
-      var blocked=hasArm&&Math.random()<0.18;
-      if(blocked){
+      // Monster hits back on normal attack — roll dodge first (gear-based)
+      var dodgeChanceN=getPlayerDodge();
+      var dodgedN=(Math.random()*100)<dodgeChanceN;
+      if(dodgedN){
         showDungeonHitFX('left','block');
         showDungeonDmgFloat(0,'miss','left');
-        dungeonState.combatLog.push('<span style="color:#88ddff;">🛡 You block '+mon.icon+' '+mon.name+'\'s attack!</span>');
+        dungeonState.combatLog.push('<span style="color:#ffd966;">💨 You dodge '+mon.icon+' '+mon.name+'\'s attack! ('+dodgeChanceN+'% dodge)</span>');
       } else {
       var mDmg=rollDmg(mon.dmg[0],mon.dmg[1]),def=getPlayerDef(),ad=Math.max(1,mDmg-Math.floor(def*0.5));
       dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad);showDungeonDmgFloat(ad,'enemy-hit','left');showDungeonHitFX('left','hit');
@@ -884,12 +897,41 @@
     if(foods.length===0){showDungeonMessage('No food left!','#e03030');return;}
     var f=foods[0],healed=Math.min(f.hp,dungeonState.playerMaxHp-dungeonState.playerHp);
     if(healed<=0){showDungeonMessage('Already at full HP!','#ffd966');return;}
-    dungeonState.playerHp=Math.min(dungeonState.playerMaxHp,dungeonState.playerHp+f.hp);showDungeonDmgFloat(healed,'heal','left');
-    G.hp=dungeonState.playerHp;
+    // Apply heal first
+    dungeonState.playerHp=Math.min(dungeonState.playerMaxHp,dungeonState.playerHp+f.hp);
+    showDungeonDmgFloat(healed,'heal','left');
     G.inv[f.id]--;
     if(G.inv[f.id]<=0) delete G.inv[f.id];
-    dungeonState.combatLog.push('You eat '+f.icon+' '+f.name+' and heal <span style="color:#5ac85a">'+healed+'</span> HP. (No damage taken while eating)');
-    // Eating does NOT trigger monster attack - just heals
+    dungeonState.combatLog.push('You eat '+f.icon+' '+f.name+' and heal <span style="color:#5ac85a">'+healed+'</span> HP.');
+    // Eating leaves you open — the current monster takes a swing at you.
+    // You can still dodge it based on your gear, otherwise you take reduced damage.
+    var mon=dungeonState.monsters[dungeonState.room];
+    if(mon&&mon.hp>0){
+      var dodgeChance=getPlayerDodge();
+      var dodged=(Math.random()*100)<dodgeChance;
+      if(dodged){
+        showDungeonDmgFloat(0,'miss','left');
+        dungeonState.combatLog.push('<span style="color:#ffd966;">💨 You dodge '+mon.icon+' '+mon.name+'\'s strike while eating! ('+dodgeChance+'% dodge)</span>');
+      } else {
+        var mDmg=rollDmg(mon.dmg[0],mon.dmg[1]);
+        var def=getPlayerDef();
+        var ad=Math.max(1,mDmg-Math.floor(def*0.5));
+        dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad);
+        showDungeonDmgFloat(ad,'enemy-hit','left');
+        showDungeonHitFX('left','hit');
+        dungeonState.combatLog.push('<span style="color:#e03030;">'+mon.icon+' '+mon.name+' strikes while you eat — <b>'+ad+'</b> damage!</span>');
+        if(dungeonState.playerHp<=0){
+          dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
+          dungeonState.lootCollected=[];
+          dungeonState.totalGold=0;
+          dungeonState.totalXp=0;
+          G.hp=Math.max(1,Math.floor(G.maxhp*0.25));
+          if(typeof save==='function') save();
+          if(typeof updateUI==='function') updateUI();
+        }
+      }
+    }
+    if(dungeonState&&dungeonState.playerHp>0) G.hp=dungeonState.playerHp;
     renderDungeon();
   }
 
@@ -975,8 +1017,8 @@
 
     // Equipment stats
     if(!done){
-      var wpnItem=(G.equip&&G.equip.weapon)?ITEMS[G.equip.weapon]:null;
-      var armItem=(G.equip&&G.equip.armour)?ITEMS[G.equip.armour]:null;
+      var wpnItem=(G.equip&&(G.equip.weaponR||G.equip.weaponL||G.equip.weapon))?ITEMS[G.equip.weaponR||G.equip.weaponL||G.equip.weapon]:null;
+      var armItem=(G.equip&&(G.equip.chest||G.equip.armour))?ITEMS[G.equip.chest||G.equip.armour]:null;
       h+='<div style="display:flex;gap:4px;margin-bottom:6px;">';
       h+='<div style="flex:1;background:#1c1710;border:1px solid '+(wpnItem?'#8B4513':'#251e14')+';border-radius:4px;padding:4px 6px;display:flex;align-items:center;gap:4px;">';
       h+='<span style="font-size:14px;">'+(wpnItem?wpnItem.icon:'🗡️')+'</span>';
@@ -1153,7 +1195,7 @@
     var h='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
     var tierLbl = activeDungeon.tier ? ('Tier '+activeDungeon.tier+' · ') : '';
     h+='<div style="text-align:center;"><div style="font-size:32px;margin-bottom:6px;">'+activeDungeon.icon+'</div><div style="color:#f0c040;font-size:18px;font-family:Cinzel,serif;margin-bottom:2px;">'+activeDungeon.name+'</div><div style="color:#9a7e50;font-size:11px;margin-bottom:12px;">'+tierLbl+'5 Rooms · Unlock Lvl '+unlockLvl+'</div></div>';
-    h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">'+(activeDungeon.desc||'')+' Clear all <b>5 creatures</b> to claim the <span style="color:#f0c040;">'+rwd.icon+' '+rwd.name+'</span>.<br><span style="color:#9a7e50;font-size:10px;">⚔ Slash or ⚡ Power Attack! 🍖 Eating heals without taking damage. 🏃 Flee to keep loot.</span></div>';
+    h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">'+(activeDungeon.desc||'')+' Clear all <b>5 creatures</b> to claim the <span style="color:#f0c040;">'+rwd.icon+' '+rwd.name+'</span>.<br><span style="color:#9a7e50;font-size:10px;">⚔ Slash or ⚡ Power Attack! 🍖 Eating leaves you open — dodge gear helps. 🏃 Flee to keep loot.</span></div>';
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;">';
     h+='<div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">REQUIREMENTS</div>';

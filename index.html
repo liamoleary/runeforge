@@ -522,6 +522,7 @@ body.shake-hit #stage{animation:screenShake .35s ease}
       <div class="stat-box"><div class="sb-lbl">Hit Points</div><div class="sb-val" id="hp-val">10</div><div class="sb-bar"><div class="sb-bar-fill" id="hp-fill" style="background:#e03030"></div></div></div>
       <div class="stat-box"><div class="sb-lbl">Attack</div><div class="sb-val" id="atk-val">1</div><div class="sb-bar"><div class="sb-bar-fill" id="atk-fill" style="background:#e08020"></div></div></div>
       <div class="stat-box"><div class="sb-lbl">Defence</div><div class="sb-val" id="def-val">0</div><div class="sb-bar"><div class="sb-bar-fill" id="def-fill" style="background:#4488dd"></div></div></div>
+      <div class="stat-box"><div class="sb-lbl">Dodge</div><div class="sb-val" id="dodge-val">5%</div><div class="sb-bar"><div class="sb-bar-fill" id="dodge-fill" style="background:#b866e0"></div></div></div>
     </div>
     <div id="equip-row">
       <div class="eq-slot" id="eq-helmet" onclick="unequipSlot('helmet')"><span class="eq-icon">⛑️</span><span class="eq-lbl">Helmet</span></div>
@@ -684,17 +685,17 @@ const ITEMS = {
   bronze_shield:{name:'Bronze Shield',icon:'🛡️',sell:60,type:'armour',def:2,hp:6,slot:'offhand'},
   iron_platebody:{name:'Iron Platebody',icon:'🛡️',sell:180,type:'armour',def:5,hp:20,slot:'chest'},
   leather_body:{name:'Leather Body',icon:'👕',sell:25,type:'armour',def:1,hp:8,slot:'chest'},
-  // Craftable helmets + boots
+  // Craftable helmets + boots (boots and jewelry are the primary dodge gear)
   bronze_helm:{name:'Bronze Helm',icon:'⛑️',sell:40,type:'armour',def:1,hp:5,slot:'helmet'},
   iron_helm:{name:'Iron Helm',icon:'⛑️',sell:120,type:'armour',def:3,hp:12,slot:'helmet'},
-  leather_cap:{name:'Leather Cap',icon:'🧢',sell:15,type:'armour',def:1,hp:3,slot:'helmet'},
-  bronze_boots:{name:'Bronze Boots',icon:'🥾',sell:35,type:'armour',def:1,hp:4,slot:'boots'},
-  iron_boots:{name:'Iron Boots',icon:'🥾',sell:100,type:'armour',def:2,hp:8,slot:'boots'},
-  leather_boots:{name:'Leather Boots',icon:'🥾',sell:14,type:'armour',def:1,hp:3,slot:'boots'},
-  gold_ring:{name:'Gold Ring',icon:'💍',sell:60,type:'accessory',hp:4,slot:'jewelry'},
-  gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory',hp:8,slot:'jewelry'},
+  leather_cap:{name:'Leather Cap',icon:'🧢',sell:15,type:'armour',def:1,hp:3,slot:'helmet',dodge:2},
+  bronze_boots:{name:'Bronze Boots',icon:'🥾',sell:35,type:'armour',def:1,hp:4,slot:'boots',dodge:3},
+  iron_boots:{name:'Iron Boots',icon:'🥾',sell:100,type:'armour',def:2,hp:8,slot:'boots',dodge:4},
+  leather_boots:{name:'Leather Boots',icon:'🥾',sell:14,type:'armour',def:1,hp:3,slot:'boots',dodge:5},
+  gold_ring:{name:'Gold Ring',icon:'💍',sell:60,type:'accessory',hp:4,slot:'jewelry',dodge:3},
+  gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory',hp:8,slot:'jewelry',dodge:4},
   gold_coins:{name:'Gold Coins',icon:'🪙',sell:1,type:'currency'},
-  enchanted_ring:{name:'Enchanted Ring',icon:'💍',sell:150,type:'accessory',hp:12,atk:1,slot:'jewelry',special:true},
+  enchanted_ring:{name:'Enchanted Ring',icon:'💍',sell:150,type:'accessory',hp:12,atk:1,slot:'jewelry',dodge:7,special:true},
   level_potion:{name:'Level Potion',icon:'🧪',sell:0,type:'potion',special:true},
 };
 
@@ -956,6 +957,18 @@ function getHpBonus(){
   }
   return h;
 }
+// Base 8% chance to dodge an incoming hit, plus every equipped piece's dodge bonus.
+// Boots and jewelry are the main dodge slots. Capped at 70% so combat always has risk.
+const BASE_DODGE=8;
+const MAX_DODGE=70;
+function getDodge(){
+  let d=BASE_DODGE;
+  for(const slot of EQUIP_SLOTS){
+    const id=G.equip[slot];
+    if(id&&ITEMS[id]) d+=(ITEMS[id].dodge||0);
+  }
+  return Math.min(MAX_DODGE,d);
+}
 // Recompute G.maxhp whenever gear changes. Keeps any previously-earned HP ceiling
 // (G.baseHp) so existing saves don't suddenly lose progression.
 function recomputeMaxHp(){
@@ -1114,11 +1127,13 @@ function updateUI(){
   document.getElementById('hm').style.width=hppc+'%';
   document.getElementById('hp-fill').style.width=hppc+'%';
   document.getElementById('hp-val').textContent=Math.ceil(G.hp)+'/'+G.maxhp;
-  const atk=getAtk(),def=getDef();
+  const atk=getAtk(),def=getDef(),dodge=getDodge();
   document.getElementById('atk-val').textContent=atk;
   document.getElementById('def-val').textContent=def;
+  document.getElementById('dodge-val').textContent=dodge+'%';
   document.getElementById('atk-fill').style.width=Math.min(100,atk*8)+'%';
   document.getElementById('def-fill').style.width=Math.min(100,def*10)+'%';
+  document.getElementById('dodge-fill').style.width=Math.min(100,(dodge/MAX_DODGE)*100)+'%';
   document.getElementById('gld').textContent='🪙 '+G.gold;
   renderInv();renderEquip();
     updateCombatStatsPanel();updateStageMonsterHP();
