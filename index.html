@@ -188,9 +188,30 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 @keyframes lvlup{0%{transform:translate(-50%,-50%) scale(0);opacity:0}25%{transform:translate(-50%,-50%) scale(1.15);opacity:1}70%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-50%) scale(.9);opacity:0}}
 @keyframes xpup{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-38px);opacity:0}}
 @keyframes dmgflash{0%,100%{background:var(--bg1)}50%{background:#3a0808}}
-.lv-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);opacity:0;background:linear-gradient(135deg,#1a1002,#362200);border:2px solid var(--gold);border-radius:14px;padding:22px 32px;text-align:center;z-index:500;box-shadow:0 0 40px rgba(240,192,64,.5);animation:lvlup 2.6s ease forwards;pointer-events:none}
+@keyframes fwShoot{
+  0%{transform:translate(0,0) scale(.6);opacity:1}
+  40%{transform:translate(calc(var(--fw-dx) * .7),calc(var(--fw-dy) * .7 - 12px)) scale(1);opacity:1}
+  85%{transform:translate(var(--fw-dx),calc(var(--fw-dy) + 20px)) scale(.9);opacity:.9}
+  100%{transform:translate(var(--fw-dx),calc(var(--fw-dy) + 60px)) scale(.2);opacity:0}
+}
+@keyframes fwTrail{
+  0%{opacity:0;transform:translate(0,0) scale(0)}
+  15%{opacity:1;transform:translate(0,-8px) scale(1)}
+  100%{opacity:0;transform:translate(0,-60px) scale(.4)}
+}
+@keyframes fwPulse{
+  0%,100%{box-shadow:0 0 40px rgba(240,192,64,.5),0 0 80px rgba(240,192,64,.2)}
+  50%{box-shadow:0 0 55px rgba(240,192,64,.8),0 0 120px rgba(240,192,64,.35)}
+}
+.lv-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);opacity:0;background:linear-gradient(135deg,#1a1002,#362200);border:2px solid var(--gold);border-radius:14px;padding:22px 32px;text-align:center;z-index:500;box-shadow:0 0 40px rgba(240,192,64,.5);animation:lvlup 2.6s ease forwards,fwPulse 1.2s ease-in-out infinite;pointer-events:none}
 .lv-title{font-family:'Cinzel',serif;font-size:22px;color:var(--gold);text-shadow:0 0 14px rgba(240,192,64,.7)}
 .lv-sub{font-size:13px;color:var(--text2);margin-top:6px}
+.lv-rewards{margin-top:10px;padding-top:8px;border-top:1px solid rgba(240,192,64,.3);font-size:12px;color:#e8d898;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.lv-rwd-item{display:inline-flex;align-items:center;gap:3px;background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.35);border-radius:4px;padding:3px 8px;font-family:'Cinzel',serif}
+.lv-rwd-item .lv-rwd-ico{font-size:14px}
+.lv-rwd-item .lv-rwd-n{color:var(--gold);font-weight:700}
+.fw-particle{position:fixed;top:50%;left:50%;width:10px;height:10px;border-radius:50%;pointer-events:none;z-index:499;animation:fwShoot var(--fw-dur,1.4s) cubic-bezier(.2,.7,.3,1) forwards}
+.fw-trail{position:fixed;font-size:18px;pointer-events:none;z-index:498;animation:fwTrail .9s ease-out forwards}
 .xp-float{position:fixed;font-size:12px;color:#6ef06e;font-weight:bold;pointer-events:none;z-index:300;animation:xpup 1.4s ease forwards}
 .dmg-flash{animation:dmgflash .5s ease}
 
@@ -814,6 +835,9 @@ function addXP(sk,amt){
   if(nl>ol){
     showLvlUp(sk,nl);
     log('<span class="ll">⭐ LEVEL UP! '+SKILLS[sk].name+' is now level '+nl+'!</span>');
+    // Rewards were already granted by showLvlUp; log them so players see the haul in chat too.
+    const earned=lvlUpRewards(nl).map(r=>(ITEMS[r.id]?.icon||'')+' +'+r.n+' '+(ITEMS[r.id]?.name||r.id)).join(' · ');
+    if(earned) log('<span class="lg">🎁 '+earned+'</span>');
     sendLevelNotification(sk,nl);
     // Dungeon discovery: first time you cross the unlock threshold for a skill,
     // pop the dungeon discovery modal so the player knows it's available.
@@ -1551,12 +1575,83 @@ function clearCombatLog() {
   const cl = document.getElementById('combat-log-inner');
   if(cl) cl.innerHTML = '';
 }
+// Compute what a player earns for hitting a given skill level. Fish tier scales
+// with level so each level up feels a little more rewarding than the last, and
+// gold kicks in once the dungeon unlock level is cleared.
+function lvlUpRewards(level){
+  const rewards=[];
+  let fish;
+  if(level<=5)       fish={id:'raw_shrimp',   n:2+Math.floor(level/2)};
+  else if(level<=15) fish={id:'raw_sardine',  n:3+Math.floor((level-5)/3)};
+  else if(level<=30) fish={id:'raw_trout',    n:3+Math.floor((level-15)/4)};
+  else if(level<=50) fish={id:'raw_salmon',   n:4+Math.floor((level-30)/5)};
+  else               fish={id:'raw_lobster',  n:4+Math.floor((level-50)/6)};
+  rewards.push(fish);
+  if(level>=3) rewards.push({id:'gold_coins',n:level*8});
+  return rewards;
+}
+
+function grantLvlUpRewards(level){
+  const rewards=lvlUpRewards(level);
+  for(const r of rewards){
+    if(r.id==='gold_coins') G.gold+=r.n;
+    else give(r.id,r.n);
+  }
+  return rewards;
+}
+
+// Shoot a burst of firework particles radiating outward from the screen centre.
+function spawnFireworks(){
+  const colors=['#f0c040','#ff6060','#60d060','#60b0ff','#ff80d0','#ffffff'];
+  const particleCount=36;
+  for(let i=0;i<particleCount;i++){
+    const p=document.createElement('div');
+    p.className='fw-particle';
+    const angle=(Math.PI*2*i)/particleCount + (Math.random()-0.5)*0.3;
+    const dist=140+Math.random()*140;
+    const dx=Math.cos(angle)*dist;
+    const dy=Math.sin(angle)*dist;
+    const color=colors[Math.floor(Math.random()*colors.length)];
+    p.style.setProperty('--fw-dx',dx+'px');
+    p.style.setProperty('--fw-dy',dy+'px');
+    p.style.setProperty('--fw-dur',(1.2+Math.random()*0.8)+'s');
+    p.style.background='radial-gradient(circle,'+color+' 0%,'+color+' 40%,transparent 80%)';
+    p.style.boxShadow='0 0 10px '+color+',0 0 20px '+color;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),2100);
+  }
+  // Trailing sparkle emojis for extra flair
+  const trails=['✨','⭐','💫'];
+  for(let i=0;i<6;i++){
+    const t=document.createElement('div');
+    t.className='fw-trail';
+    t.textContent=trails[i%trails.length];
+    t.style.left=(30+Math.random()*40)+'%';
+    t.style.top=(35+Math.random()*25)+'%';
+    t.style.animationDelay=(Math.random()*0.4)+'s';
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(),1400);
+  }
+}
+
 function showLvlUp(sk,lv){
   const d=document.createElement('div');d.className='lv-popup';
   const t=document.createElement('div');t.className='lv-title';t.textContent='⭐ LEVEL UP!';
   const s=document.createElement('div');s.className='lv-sub';s.textContent=SKILLS[sk].icon+' '+SKILLS[sk].name+' — Level '+lv;
   d.appendChild(t);d.appendChild(s);
+  const rewards=grantLvlUpRewards(lv);
+  if(rewards.length){
+    const r=document.createElement('div');r.className='lv-rewards';
+    for(const rw of rewards){
+      const it=ITEMS[rw.id];if(!it)continue;
+      const chip=document.createElement('span');chip.className='lv-rwd-item';
+      chip.innerHTML='<span class="lv-rwd-ico">'+it.icon+'</span><span class="lv-rwd-n">+'+rw.n+'</span>';
+      r.appendChild(chip);
+    }
+    d.appendChild(r);
+  }
   document.body.appendChild(d);setTimeout(()=>d.remove(),2700);
+  spawnFireworks();
 }
 function showXPFloat(xp,sk){
   const d=document.createElement('div');d.className='xp-float';
