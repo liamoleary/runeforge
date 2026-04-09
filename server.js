@@ -15,6 +15,19 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
     CREATE TABLE IF NOT EXISTS saves (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, save_data TEXT NOT NULL, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id));
     `);
+
+// One-time save wipe for specific usernames, triggered on boot. Harmless if the
+// save no longer exists. Remove entries here once they have landed in production.
+const BOOT_RESET_USERS = ['batfighter5'];
+for (const uname of BOOT_RESET_USERS) {
+  try {
+    const u = db.prepare('SELECT id FROM users WHERE username = ?').get(uname.toLowerCase());
+    if (u) {
+      const r = db.prepare('DELETE FROM saves WHERE user_id = ?').run(u.id);
+      if (r.changes > 0) console.log(`[boot-reset] Wiped save for ${uname}`);
+    }
+  } catch (e) { console.error('[boot-reset] Failed for ' + uname + ':', e.message); }
+}
 app.use(express.json({ limit: '1mb' }));
 app.set('trust proxy', 1);
 app.use(session({ store: new SQLiteStore({ db: 'sessions.db', dir: dbDir }), secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'), resave: false, saveUninitialized: false, cookie: { secure: false, httpOnly: true, maxAge: 30*24*60*60*1000, sameSite: 'lax' }, proxy: true }));
