@@ -133,6 +133,77 @@
   var GEAR_MARKS = ['I','II','III'];
   var GEAR_SLOT_CYCLE = ['helmet','chest','boots','jewelry'];
 
+  // Per-skill ability templates: one entry per room (5 monsters). Each entry can include
+  // any of these flags:
+  //   poison      : DoT damage applied to the player
+  //   poisonChance: 0..1 chance per hit to poison
+  //   heal        : amount the monster restores per heal tick
+  //   healCD      : turns between heal ticks
+  //   shield      : has a periodic shield ability
+  //   shieldCD    : turns between activations
+  //   shieldTurns : duration of each shield
+  //   flying      : melee attacks miss; only ranged (bow) or magic can hit
+  //   resist      : 'physical' | 'magic' (half damage from that attack type)
+  //   immune      : 'physical' | 'magic' (zero damage from that attack type)
+  var ABILITY_TEMPLATES = {
+    woodcutting:[
+      {},
+      {poison:1,poisonChance:0.4},
+      {},
+      {heal:4,healCD:3},
+      {resist:'physical',poison:2,poisonChance:0.55}
+    ],
+    mining:[
+      {resist:'magic'},
+      {flying:true},
+      {flying:true},
+      {resist:'physical'},
+      {shield:true,shieldCD:4,shieldTurns:2,immune:'magic'}
+    ],
+    fishing:[
+      {},
+      {poison:1,poisonChance:0.5},
+      {shield:true,shieldCD:4,shieldTurns:2},
+      {resist:'magic'},
+      {shield:true,shieldCD:5,shieldTurns:2,heal:5,healCD:4}
+    ],
+    cooking:[
+      {},
+      {resist:'magic'},
+      {heal:3,healCD:3},
+      {poison:2,poisonChance:0.55},
+      {heal:6,healCD:3,resist:'magic'}
+    ],
+    smithing:[
+      {},
+      {shield:true,shieldCD:4,shieldTurns:2},
+      {},
+      {resist:'physical'},
+      {shield:true,shieldCD:4,shieldTurns:2,heal:5,healCD:4}
+    ],
+    fletching:[
+      {},
+      {shield:true,shieldCD:4,shieldTurns:2},
+      {flying:true},
+      {flying:true},
+      {heal:5,healCD:3,resist:'magic'}
+    ],
+    crafting:[
+      {poison:1,poisonChance:0.45},
+      {},
+      {flying:true},
+      {resist:'physical'},
+      {heal:5,healCD:3,poison:2,poisonChance:0.6}
+    ],
+    magic:[
+      {flying:true,immune:'magic'},
+      {resist:'magic'},
+      {immune:'physical'},
+      {heal:4,healCD:3},
+      {shield:true,shieldCD:4,shieldTurns:2,immune:'magic'}
+    ]
+  };
+
   // Per-skill stat profiles. Each skill biases its themed gear differently so the
   // player can choose a build by focusing the right skill: dodge, tank, attack,
   // or HP-heavy. Total power across the four stats stays roughly balanced.
@@ -206,18 +277,32 @@
       var unlockLvl = DUNGEON_TIER_UNLOCKS[tier - 1];
       var scale = 1 + (tier - 1) * 0.6; // tier 1 = 1x, tier 12 = 7.6x
 
+      var abilities = ABILITY_TEMPLATES[sk] || [];
       var rooms = theme.monsters.map(function(m, i){
         var baseHp = 5 + i * 2; // 5,7,9,11,13
         var hp = Math.max(3, Math.round(baseHp * scale));
         var dmn = Math.max(1, Math.round((1 + Math.floor(i/2)) * Math.sqrt(scale)));
         var dmx = Math.max(dmn + 1, Math.round((2 + Math.floor(i/2)) * Math.sqrt(scale)));
-        return {
+        var room = {
           name: m.name, icon: m.icon,
           hp: hp, maxhp: hp,
           dmg: [dmn, dmx],
           xp: Math.round((15 + i * 5) * scale),
           weak: null, resist: null
         };
+        var ab = abilities[i] || {};
+        // Copy ability flags onto the room. Heal/shield amounts also scale with tier.
+        if (ab.poison)       room.poison = Math.max(1, Math.round(ab.poison * Math.sqrt(scale)));
+        if (ab.poisonChance) room.poisonChance = ab.poisonChance;
+        if (ab.heal)         room.heal = Math.max(1, Math.round(ab.heal * Math.sqrt(scale)));
+        if (ab.healCD)       room.healCD = ab.healCD;
+        if (ab.shield)       room.shield = true;
+        if (ab.shieldCD)     room.shieldCD = ab.shieldCD;
+        if (ab.shieldTurns)  room.shieldTurns = ab.shieldTurns;
+        if (ab.flying)       room.flying = true;
+        if (ab.resist)       room.resist = ab.resist;
+        if (ab.immune)       room.immune = ab.immune;
+        return room;
       });
       // Bump the boss (last monster)
       var boss = rooms[rooms.length - 1];
@@ -322,6 +407,21 @@
     return b;
   }
 
+  // Detect what kind of physical attack the player is making, based on what they hold.
+  // Bows count as ranged (can hit flying); everything else is melee. Magic mode is its
+  // own thing handled in dungeonAttack.
+  function getPlayerAttackType(){
+    if (typeof G==='undefined'||!G.equip) return 'melee';
+    var slots = ['weaponR','weaponL'];
+    for (var i=0;i<slots.length;i++){
+      var id = G.equip[slots[i]];
+      if (!id || !ITEMS[id]) continue;
+      // Bow IDs all contain "bow"
+      if (/bow/i.test(id)) return 'ranged';
+    }
+    return 'melee';
+  }
+
   // Player dodge chance (percent). Base 8% + sum of equipped gear dodge bonuses, capped.
   function getPlayerDodge(){
     var d=8;
@@ -373,11 +473,26 @@
       room:0,
       playerHp:G.hp,
       playerMaxHp:G.maxhp,
-      monsters:srcRooms.map(function(r){return {name:r.name,icon:r.icon,hp:r.hp,maxhp:r.maxhp,dmg:r.dmg.slice(),xp:r.xp,weak:r.weak,resist:r.resist};}),
+      monsters:srcRooms.map(function(r){
+        // Copy every ability flag along with the base stats so combat can read them.
+        return {
+          name:r.name,icon:r.icon,
+          hp:r.hp,maxhp:r.maxhp,
+          dmg:r.dmg.slice(),xp:r.xp,
+          weak:r.weak,resist:r.resist,
+          immune:r.immune||null,
+          flying:!!r.flying,
+          poison:r.poison||0,poisonChance:r.poisonChance||0,
+          heal:r.heal||0,healCD:r.healCD||0,healCounter:r.healCD||0,
+          shield:!!r.shield,shieldCD:r.shieldCD||0,shieldTurns:r.shieldTurns||0,
+          shieldCounter:0,shieldedTurns:0
+        };
+      }),
       combatLog:[],
       totalXp:0,
       totalGold:0,
       lootCollected:[],
+      playerPoison:0,playerPoisonTurns:0,
       victory:false,
       fled:false,
       critStacks:0,
@@ -763,6 +878,83 @@
     ov.addEventListener('click',function(e){if(e.target===ov)dismiss();});
   }
 
+  // Apply end-of-turn effects: tick poison, cool down monster shields, refresh heals.
+  function tickStatusEffects(mon){
+    // Player poison DoT
+    if (dungeonState.playerPoison > 0 && dungeonState.playerPoisonTurns > 0){
+      var pp = dungeonState.playerPoison;
+      dungeonState.playerHp = Math.max(0, dungeonState.playerHp - pp);
+      dungeonState.playerPoisonTurns--;
+      showDungeonDmgFloat(pp,'enemy-hit','left');
+      dungeonState.combatLog.push('<span style="color:#9b59b6;">🧪 Poison ticks for <b>'+pp+'</b> ('+dungeonState.playerPoisonTurns+' turns left)</span>');
+      if(dungeonState.playerPoisonTurns<=0) dungeonState.playerPoison = 0;
+    }
+    if (!mon || mon.hp <= 0) return;
+    // Monster shield expiry
+    if (mon.shieldedTurns > 0){
+      mon.shieldedTurns--;
+      if (mon.shieldedTurns === 0){
+        dungeonState.combatLog.push('<span style="color:#88ddff;">🛡 '+mon.icon+' '+mon.name+'\'s shield fades.</span>');
+      }
+    }
+    // Monster heal cooldown
+    if (mon.heal && mon.healCD){
+      mon.healCounter = (mon.healCounter || 0) - 1;
+      if (mon.healCounter <= 0 && mon.hp < mon.maxhp){
+        var healAmt = Math.min(mon.heal, mon.maxhp - mon.hp);
+        mon.hp += healAmt;
+        mon.healCounter = mon.healCD;
+        dungeonState.combatLog.push('<span style="color:#5ac85a;">💚 '+mon.icon+' '+mon.name+' heals <b>'+healAmt+'</b> HP!</span>');
+      }
+    }
+    // Monster shield activation
+    if (mon.shield && mon.shieldCD){
+      mon.shieldCounter = (mon.shieldCounter || 0) - 1;
+      if (mon.shieldCounter <= 0 && mon.shieldedTurns <= 0){
+        mon.shieldedTurns = mon.shieldTurns || 2;
+        mon.shieldCounter = mon.shieldCD;
+        dungeonState.combatLog.push('<span style="color:#88ddff;">🛡 '+mon.icon+' '+mon.name+' raises a shield! ('+mon.shieldedTurns+' turns invulnerable)</span>');
+      }
+    }
+  }
+
+  // Common monster retaliation step. Returns true if it killed the player.
+  function monsterRetaliate(mon){
+    if (!mon || mon.hp <= 0) return false;
+    var dodgeChance = getPlayerDodge();
+    var dodged = (Math.random() * 100) < dodgeChance;
+    if (dodged){
+      showDungeonHitFX('left','block');
+      showDungeonDmgFloat(0,'miss','left');
+      dungeonState.combatLog.push('<span style="color:#ffd966;">💨 You dodge '+mon.icon+' '+mon.name+'\'s attack! ('+dodgeChance+'% dodge)</span>');
+      return false;
+    }
+    var mDmg = rollDmg(mon.dmg[0], mon.dmg[1]);
+    var def = getPlayerDef();
+    var ad = Math.max(1, mDmg - Math.floor(def * 0.5));
+    dungeonState.playerHp = Math.max(0, dungeonState.playerHp - ad);
+    showDungeonDmgFloat(ad,'enemy-hit','left');
+    showDungeonHitFX('left','hit');
+    dungeonState.combatLog.push(mon.icon+' '+mon.name+' hits you for <span style="color:#e03030">'+ad+'</span> damage.');
+    // Poison-on-hit chance
+    if (mon.poison && mon.poisonChance && Math.random() < mon.poisonChance){
+      dungeonState.playerPoison = Math.max(dungeonState.playerPoison, mon.poison);
+      dungeonState.playerPoisonTurns = Math.max(dungeonState.playerPoisonTurns, 4);
+      dungeonState.combatLog.push('<span style="color:#9b59b6;">🧪 Poisoned! '+mon.poison+' damage / turn for 4 turns.</span>');
+    }
+    if (dungeonState.playerHp <= 0){
+      dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
+      dungeonState.lootCollected = [];
+      dungeonState.totalGold = 0;
+      dungeonState.totalXp = 0;
+      G.hp = Math.max(1, Math.floor(G.maxhp * 0.25));
+      if(typeof save === 'function') save();
+      if(typeof updateUI === 'function') updateUI();
+      return true;
+    }
+    return false;
+  }
+
   function dungeonAttack(mode){
     if(!dungeonState||dungeonState.victory||dungeonState.fled) return;
     if(dungeonState.dying) return;
@@ -773,27 +965,8 @@
       dungeonState.critStacks=(dungeonState.critStacks||0)+1;
       var cChance=Math.min(90,dungeonState.critStacks*30);
       dungeonState.combatLog.push('<span style="color:#ffd966;">⚡ You focus energy! Crit chance: '+cChance+'% (stack: '+dungeonState.critStacks+')</span>');
-      // Monster still attacks — dodge roll first
-      var dodgeChance2=getPlayerDodge();
-      var dodged2=(Math.random()*100)<dodgeChance2;
-      if(dodged2){
-        showDungeonHitFX('left','block');
-        showDungeonDmgFloat(0,'miss','left');
-        dungeonState.combatLog.push('<span style="color:#ffd966;">💨 You dodge '+mon.icon+' '+mon.name+'\'s attack! ('+dodgeChance2+'% dodge)</span>');
-      } else {
-      var mDmg2=rollDmg(mon.dmg[0],mon.dmg[1]),def2=getPlayerDef(),ad2=Math.max(1,mDmg2-Math.floor(def2*0.5));
-      dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad2);showDungeonDmgFloat(ad2,'enemy-hit','left');showDungeonHitFX('left','hit');
-      dungeonState.combatLog.push(mon.icon+' '+mon.name+' hits you for <span style="color:#e03030">'+ad2+'</span> damage.');
-      if(dungeonState.playerHp<=0){
-        dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
-        dungeonState.lootCollected=[];
-        dungeonState.totalGold=0;
-        dungeonState.totalXp=0;
-        G.hp=Math.max(1,Math.floor(G.maxhp*0.25));
-        if(typeof save==='function') save();
-        if(typeof updateUI==='function') updateUI();
-      }
-      }
+      monsterRetaliate(mon);
+      tickStatusEffects(mon);
       if(dungeonState&&dungeonState.playerHp>0) G.hp=dungeonState.playerHp;
       renderDungeon();
       return;
@@ -805,6 +978,33 @@
       G.inv.feather--;if(G.inv.feather<=0)delete G.inv.feather;
       if(typeof addXP==='function')addXP('magic',5);
     }
+
+    // Determine player attack type for ability checks
+    var atkKind = (mode === 'magic') ? 'magic' : getPlayerAttackType(); // 'magic' | 'ranged' | 'melee'
+
+    // Ability gates: shield blocks all damage, flying blocks melee, immunity blocks the matched type
+    var blockedReason = null;
+    if (mon.shieldedTurns > 0){
+      blockedReason = '<span style="color:#88ddff;">🛡 '+mon.icon+' '+mon.name+' is shielded — your attack does no damage!</span>';
+    } else if (mon.flying && atkKind === 'melee'){
+      blockedReason = '<span style="color:#ffd966;">🪽 '+mon.icon+' '+mon.name+' is flying out of reach — bring a bow or magic!</span>';
+    } else if (mon.immune === 'magic' && atkKind === 'magic'){
+      blockedReason = '<span style="color:#a335ee;">✨ '+mon.icon+' '+mon.name+' is immune to magic!</span>';
+    } else if (mon.immune === 'physical' && (atkKind === 'melee' || atkKind === 'ranged')){
+      blockedReason = '<span style="color:#88ddff;">👻 '+mon.icon+' '+mon.name+' is immune to physical attacks — try magic!</span>';
+    }
+
+    if (blockedReason){
+      dungeonState.combatLog.push(blockedReason);
+      showDungeonDmgFloat(0,'miss','right');
+      // Player wasted their turn — monster still retaliates and ticks
+      monsterRetaliate(mon);
+      tickStatusEffects(mon);
+      if(dungeonState&&dungeonState.playerHp>0) G.hp=dungeonState.playerHp;
+      renderDungeon();
+      return;
+    }
+
     var pAtk=mode==='magic'?(typeof slvl==='function'?Math.floor(slvl('magic')*0.6)+2:3):getPlayerAtk();
     var pDmg=Math.max(1,rollDmg(1,pAtk));
     var isCrit=false;
@@ -814,12 +1014,13 @@
       else{dungeonState.combatLog.push('<span style="color:#9a7e50;">No crit ('+Math.round(critChance*100)+'% chance)</span>');}
       dungeonState.critStacks=0;
     }
+    // Apply weak/resist damage modifiers, then deal damage
+    var atkType = (atkKind === 'magic') ? 'magic' : 'physical';
+    var effectiveness = '';
+    if(mon.weak === atkType){pDmg=Math.floor(pDmg*1.5);effectiveness='<span style="color:#5ac85a;font-size:9px;"> ✔ Super effective!</span>';}
+    else if(mon.resist === atkType){pDmg=Math.max(1,Math.floor(pDmg*0.6));effectiveness='<span style="color:#e03030;font-size:9px;"> ✖ Resisted!</span>';}
+    else {effectiveness='<span style="color:#9a7e50;font-size:9px;"> Normal</span>';}
     mon.hp=Math.max(0,mon.hp-pDmg);showDungeonDmgFloat(pDmg,isCrit?'crit':'hit','right');showDungeonHitFX('right',isCrit?'crit':'hit');
-    var atkType=mode==='magic'?'magic':'physical';
-    var effectiveness='';
-    if(mon.weak===atkType){pDmg=Math.floor(pDmg*1.5);effectiveness='<span style="color:#5ac85a;font-size:9px;"> ✔ Super effective!</span>';}
-    else if(mon.resist===atkType){pDmg=Math.max(1,Math.floor(pDmg*0.6));effectiveness='<span style="color:#e03030;font-size:9px;"> ✖ Resisted!</span>';}
-    else{effectiveness='<span style="color:#9a7e50;font-size:9px;"> Normal</span>';}
     var dmgColor=isCrit?'#ffd966':(mon.weak===atkType?'#5ac85a':(mon.resist===atkType?'#e03030':'#5ac85a'));
     dungeonState.combatLog.push('You hit '+mon.icon+' '+mon.name+' for <span style="color:'+dmgColor+';font-weight:bold;">'+pDmg+'</span> damage.'+effectiveness);
 
@@ -903,27 +1104,9 @@
         },600);
       }
     } else {
-      // Monster hits back on normal attack — roll dodge first (gear-based)
-      var dodgeChanceN=getPlayerDodge();
-      var dodgedN=(Math.random()*100)<dodgeChanceN;
-      if(dodgedN){
-        showDungeonHitFX('left','block');
-        showDungeonDmgFloat(0,'miss','left');
-        dungeonState.combatLog.push('<span style="color:#ffd966;">💨 You dodge '+mon.icon+' '+mon.name+'\'s attack! ('+dodgeChanceN+'% dodge)</span>');
-      } else {
-      var mDmg=rollDmg(mon.dmg[0],mon.dmg[1]),def=getPlayerDef(),ad=Math.max(1,mDmg-Math.floor(def*0.5));
-      dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad);showDungeonDmgFloat(ad,'enemy-hit','left');showDungeonHitFX('left','hit');
-      dungeonState.combatLog.push(mon.icon+' '+mon.name+' hits you for <span style="color:#e03030">'+ad+'</span> damage.');
-      if(dungeonState.playerHp<=0){
-        dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
-        dungeonState.lootCollected=[];
-        dungeonState.totalGold=0;
-        dungeonState.totalXp=0;
-        G.hp=Math.max(1,Math.floor(G.maxhp*0.25));
-        if(typeof save==='function') save();
-        if(typeof updateUI==='function') updateUI();
-      }
-      }
+      // Monster hits back, then status effects tick (poison/heal/shield).
+      monsterRetaliate(mon);
+      tickStatusEffects(mon);
     }
     if(dungeonState&&!dungeonState.victory&&dungeonState.playerHp>0) G.hp=dungeonState.playerHp;
     renderDungeon();
@@ -942,32 +1125,10 @@
     if(G.inv[f.id]<=0) delete G.inv[f.id];
     dungeonState.combatLog.push('You eat '+f.icon+' '+f.name+' and heal <span style="color:#5ac85a">'+healed+'</span> HP.');
     // Eating leaves you open — the current monster takes a swing at you.
-    // You can still dodge it based on your gear, otherwise you take reduced damage.
     var mon=dungeonState.monsters[dungeonState.room];
     if(mon&&mon.hp>0){
-      var dodgeChance=getPlayerDodge();
-      var dodged=(Math.random()*100)<dodgeChance;
-      if(dodged){
-        showDungeonDmgFloat(0,'miss','left');
-        dungeonState.combatLog.push('<span style="color:#ffd966;">💨 You dodge '+mon.icon+' '+mon.name+'\'s strike while eating! ('+dodgeChance+'% dodge)</span>');
-      } else {
-        var mDmg=rollDmg(mon.dmg[0],mon.dmg[1]);
-        var def=getPlayerDef();
-        var ad=Math.max(1,mDmg-Math.floor(def*0.5));
-        dungeonState.playerHp=Math.max(0,dungeonState.playerHp-ad);
-        showDungeonDmgFloat(ad,'enemy-hit','left');
-        showDungeonHitFX('left','hit');
-        dungeonState.combatLog.push('<span style="color:#e03030;">'+mon.icon+' '+mon.name+' strikes while you eat — <b>'+ad+'</b> damage!</span>');
-        if(dungeonState.playerHp<=0){
-          dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
-          dungeonState.lootCollected=[];
-          dungeonState.totalGold=0;
-          dungeonState.totalXp=0;
-          G.hp=Math.max(1,Math.floor(G.maxhp*0.25));
-          if(typeof save==='function') save();
-          if(typeof updateUI==='function') updateUI();
-        }
-      }
+      monsterRetaliate(mon);
+      tickStatusEffects(mon);
     }
     if(dungeonState&&dungeonState.playerHp>0) G.hp=dungeonState.playerHp;
     renderDungeon();
@@ -1025,13 +1186,57 @@
     var mHp=mon?Math.max(0,(mon.hp/mon.maxhp)*100):0;
 
     var h='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
-    h+='<div style="text-align:center;margin-bottom:10px;"><div style="color:#f0c040;font-family:Cinzel,serif;font-size:16px;">'+activeDungeon.icon+' '+activeDungeon.name+'</div><div style="color:#9a7e50;font-size:11px;">Room '+(Math.min(s.room+1,s.monsters.length))+'/'+s.monsters.length+(s.totalGold>0?' | 🪙 '+s.totalGold+' gold':'')+'</div></div>';
+    h+='<div style="text-align:center;margin-bottom:8px;"><div style="color:#f0c040;font-family:Cinzel,serif;font-size:16px;">'+activeDungeon.icon+' '+activeDungeon.name+'</div><div style="color:#9a7e50;font-size:11px;">Room '+(Math.min(s.room+1,s.monsters.length))+'/'+s.monsters.length+(s.totalGold>0?' | 🪙 '+s.totalGold+' gold':'')+'</div></div>';
+
+    // === LIVE LOOT BAG === collected items so the player sees their haul as the run unfolds.
+    var bagItems = {};
+    if (s.lootCollected && s.lootCollected.length){
+      s.lootCollected.forEach(function(l){
+        if (!bagItems[l.id]) bagItems[l.id] = {icon:l.icon, name:l.name, qty:0};
+        bagItems[l.id].qty += l.qty;
+      });
+    }
+    var bagKeys = Object.keys(bagItems);
+    h+='<div style="background:linear-gradient(180deg,#1a1308,#0f0a04);border:1px solid #3a2c18;border-radius:6px;padding:6px 8px;margin-bottom:10px;">';
+    h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">';
+    h+='<span style="font-size:14px;">🎒</span>';
+    h+='<span style="color:#f0c040;font-size:10px;font-family:Cinzel,serif;letter-spacing:1px;">DUNGEON BAG</span>';
+    if (s.totalGold>0) h+='<span style="color:#f0c040;font-size:10px;margin-left:auto;">🪙 '+s.totalGold+'</span>';
+    h+='</div>';
+    if (bagKeys.length === 0){
+      h+='<div style="color:#5a4830;font-size:9px;font-style:italic;">Empty — defeat enemies to collect loot</div>';
+    } else {
+      h+='<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+      bagKeys.forEach(function(k){
+        var b=bagItems[k];
+        h+='<div title="'+b.name+'" style="display:inline-flex;align-items:center;gap:3px;background:#0b0604;border:1px solid #3a2c18;border-radius:4px;padding:3px 6px;"><span style="font-size:13px;">'+b.icon+'</span><span style="color:#e8d898;font-size:10px;font-weight:700;">×'+b.qty+'</span></div>';
+      });
+      h+='</div>';
+    }
+    h+='</div>';
 
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">';
-    h+='<div style="flex:1;text-align:center;"><div style="font-size:26px;">🧍</div><div style="color:#e8d898;font-size:12px;">You</div><div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;"><div style="height:100%;width:'+pHp+'%;background:'+(pHp>30?'#5ac85a':'#e03030')+';transition:width 0.3s;"></div></div><div style="color:#9a7e50;font-size:10px;">'+s.playerHp+'/'+s.playerMaxHp+' HP</div></div>';
+    // Player column (with poison indicator if active)
+    var poisonBadge = (s.playerPoison>0 && s.playerPoisonTurns>0)
+      ? '<div style="color:#9b59b6;font-size:9px;margin-top:2px;">🧪 Poisoned (-'+s.playerPoison+'/turn · '+s.playerPoisonTurns+'t)</div>'
+      : '';
+    h+='<div style="flex:1;text-align:center;"><div style="font-size:26px;">🧍</div><div style="color:#e8d898;font-size:12px;">You</div><div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;"><div style="height:100%;width:'+pHp+'%;background:'+(pHp>30?'#5ac85a':'#e03030')+';transition:width 0.3s;"></div></div><div style="color:#9a7e50;font-size:10px;">'+s.playerHp+'/'+s.playerMaxHp+' HP</div>'+poisonBadge+'</div>';
     h+='<div style="color:#f0c040;font-size:16px;font-family:Cinzel,serif;">VS</div>';
     h+='<div style="flex:1;text-align:center;">';
-    if(mon&&mon.hp>0) h+='<div style="font-size:26px;">'+mon.icon+'</div><div style="color:#e8d898;font-size:12px;">'+mon.name+'</div><div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;"><div style="height:100%;width:'+mHp+'%;background:#e03030;transition:width 0.3s;"></div></div><div style="color:#9a7e50;font-size:10px;">'+mon.hp+'/'+mon.maxhp+' HP</div>';
+    if(mon&&mon.hp>0) {
+      // Build status badges for the monster
+      var badges = [];
+      if (mon.shieldedTurns>0) badges.push('<span style="color:#88ddff">🛡 Shielded ('+mon.shieldedTurns+'t)</span>');
+      if (mon.flying)          badges.push('<span style="color:#ffd966">🪽 Flying</span>');
+      if (mon.immune==='magic')    badges.push('<span style="color:#a335ee">✨ Magic immune</span>');
+      if (mon.immune==='physical') badges.push('<span style="color:#88ddff">👻 Phys immune</span>');
+      if (mon.resist==='magic'&&mon.immune!=='magic')       badges.push('<span style="color:#a335ee">✨ Magic resist</span>');
+      if (mon.resist==='physical'&&mon.immune!=='physical') badges.push('<span style="color:#88ddff">⚔ Phys resist</span>');
+      if (mon.heal)            badges.push('<span style="color:#5ac85a">💚 Heals</span>');
+      if (mon.poison)          badges.push('<span style="color:#9b59b6">🧪 Poison</span>');
+      var badgesHtml = badges.length ? '<div style="font-size:8px;margin-top:2px;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">'+badges.join(' ')+'</div>' : '';
+      h+='<div style="font-size:26px;">'+mon.icon+'</div><div style="color:#e8d898;font-size:12px;">'+mon.name+'</div><div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;"><div style="height:100%;width:'+mHp+'%;background:#e03030;transition:width 0.3s;"></div></div><div style="color:#9a7e50;font-size:10px;">'+mon.hp+'/'+mon.maxhp+' HP</div>'+badgesHtml;
+    }
     else if(s.victory) h+='<div style="font-size:26px;">🪓</div><div style="color:#f0c040;font-size:12px;">Victory!</div>';
     else if(s.fled) h+='<div style="font-size:26px;">🏃</div><div style="color:#ffd966;font-size:12px;">Escaped!</div>';
     else h+='<div style="font-size:26px;">💀</div><div style="color:#e03030;font-size:12px;">Defeated</div>';
@@ -1269,6 +1474,40 @@
     h+='<div style="color:#9a7e50;font-size:10px;margin-top:6px;">'+(arm?arm.icon+' '+arm.name:'No armour')+'</div>';
     h+='</div>';
 
+    // === TACTICAL RECOMMENDATIONS ===
+    // Scan the room list for special abilities and warn the player up front so they
+    // bring the right tool for the job.
+    var hasFlying=false, hasMagicImmune=false, hasPhysImmune=false;
+    var hasMagicResist=false, hasPhysResist=false;
+    var hasShield=false, hasHeal=false, hasPoison=false;
+    roomList.forEach(function(r){
+      if(r.flying) hasFlying=true;
+      if(r.immune==='magic') hasMagicImmune=true;
+      if(r.immune==='physical') hasPhysImmune=true;
+      if(r.resist==='magic') hasMagicResist=true;
+      if(r.resist==='physical') hasPhysResist=true;
+      if(r.shield) hasShield=true;
+      if(r.heal) hasHeal=true;
+      if(r.poison) hasPoison=true;
+    });
+    var recos=[];
+    if (hasFlying)        recos.push({clr:'#ffd966',txt:'🪽 Flying enemies — bring a 🏹 bow (or ✨ magic) to hit them.'});
+    if (hasPhysImmune)    recos.push({clr:'#a335ee',txt:'👻 Physical-immune enemies — only ✨ magic can damage them.'});
+    if (hasMagicImmune)   recos.push({clr:'#88ddff',txt:'✨ Magic-immune enemies — bring a ⚔ physical weapon.'});
+    if (hasShield)        recos.push({clr:'#88ddff',txt:'🛡 Shielded enemies will block damage for a few turns at a time. Power-stack crits to break through.'});
+    if (hasHeal)          recos.push({clr:'#5ac85a',txt:'💚 Healers — burst them down before they recover.'});
+    if (hasPoison)        recos.push({clr:'#9b59b6',txt:'🧪 Poisoners — bring extra food, dodge gear helps.'});
+    if (hasPhysResist&&!hasPhysImmune) recos.push({clr:'#88ddff',txt:'⚔ Some enemies resist physical damage (½). Magic hits them for full.'});
+    if (hasMagicResist&&!hasMagicImmune) recos.push({clr:'#a335ee',txt:'✨ Some enemies resist magic damage (½). Physical hits them for full.'});
+    if (recos.length){
+      h+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;padding:10px;margin-bottom:10px;">';
+      h+='<div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">TACTICAL BRIEFING</div>';
+      recos.forEach(function(r){
+        h+='<div style="color:'+r.clr+';font-size:10px;line-height:1.4;margin-bottom:3px;">'+r.txt+'</div>';
+      });
+      h+='</div>';
+    }
+
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;"><div style="color:#8bc34a;font-size:11px;margin-bottom:6px;letter-spacing:1px;">POSSIBLE LOOT</div>';
     lootPool.forEach(function(l){
       h+='<div style="display:flex;justify-content:space-between;color:#9a7e50;font-size:10px;margin-bottom:2px;"><span>'+l.icon+' '+l.name+'</span><span>'+l.min+'-'+l.max+'</span></div>';
@@ -1285,7 +1524,17 @@
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;"><div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">ENEMIES</div>';
     roomList.forEach(function(r){
-      var weakStr=r.weak?(' | Weak: '+(r.weak==='magic'?'✨':'⚔')):'';var resistStr=r.resist?(' | Resist: '+(r.resist==='magic'?'✨':'⚔')):'';h+='<div style="display:flex;justify-content:space-between;color:#9a7e50;font-size:10px;margin-bottom:2px;"><span>'+r.icon+' '+r.name+'</span><span>'+r.maxhp+'HP | '+r.dmg[0]+'-'+r.dmg[1]+weakStr+resistStr+'</span></div>';
+      var tags=[];
+      if (r.flying) tags.push('<span style="color:#ffd966">🪽</span>');
+      if (r.shield) tags.push('<span style="color:#88ddff">🛡</span>');
+      if (r.heal) tags.push('<span style="color:#5ac85a">💚</span>');
+      if (r.poison) tags.push('<span style="color:#9b59b6">🧪</span>');
+      if (r.immune==='magic') tags.push('<span style="color:#a335ee">✨ⓘ</span>');
+      if (r.immune==='physical') tags.push('<span style="color:#88ddff">⚔ⓘ</span>');
+      if (r.resist==='magic'&&r.immune!=='magic') tags.push('<span style="color:#a335ee">✨½</span>');
+      if (r.resist==='physical'&&r.immune!=='physical') tags.push('<span style="color:#88ddff">⚔½</span>');
+      var tagHtml = tags.length ? ' '+tags.join(' ') : '';
+      h+='<div style="display:flex;justify-content:space-between;color:#9a7e50;font-size:10px;margin-bottom:2px;gap:6px;"><span>'+r.icon+' '+r.name+tagHtml+'</span><span>'+r.maxhp+'HP · '+r.dmg[0]+'-'+r.dmg[1]+'</span></div>';
     });
     h+='</div><div id="dg-msg" style="display:none;text-align:center;font-size:11px;margin-bottom:6px;"></div>';
 
