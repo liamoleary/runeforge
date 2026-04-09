@@ -871,7 +871,7 @@
   }
 
   // === FIRST-VICTORY REWARD POPUP ===
-  function showFirstVictoryPopup(dungeon, reward){
+  function showFirstVictoryPopup(dungeon, reward, isFirst){
     // Don't double-show
     if(document.getElementById('dg-victory-popup'))return;
     var ov=document.createElement('div');
@@ -880,8 +880,9 @@
 
     var modal=document.createElement('div');
     modal.style.cssText='position:relative;background:linear-gradient(135deg,#1a1308 0%,#2a1f0c 100%);border:3px solid #f0c040;border-radius:14px;padding:28px 30px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 0 50px rgba(240,192,64,0.55),0 0 100px rgba(240,192,64,0.25);animation:dgVictoryPop 0.7s cubic-bezier(0.2,1.3,0.6,1) forwards;font-family:Cinzel,serif;z-index:2;';
+    var headerText=isFirst?'⚔ First Victory ⚔':'✨ Loot Drop ✨';
     modal.innerHTML=
-      '<div style="color:#f0c040;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;font-weight:700;">⚔ First Victory ⚔</div>'+
+      '<div style="color:#f0c040;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;font-weight:700;">'+headerText+'</div>'+
       '<div style="color:#e8d898;font-size:18px;margin-bottom:18px;">'+dungeon.name+'</div>'+
       '<div style="font-size:78px;line-height:1;margin-bottom:12px;display:inline-block;animation:dgRewardSpin 0.9s ease-out forwards,dgRewardGlow 2.2s ease-in-out 0.9s infinite;">'+reward.icon+'</div>'+
       '<div style="color:#f0c040;font-size:22px;font-weight:700;margin-bottom:4px;text-shadow:0 0 12px rgba(240,192,64,0.6);">'+reward.name+'</div>'+
@@ -946,6 +947,49 @@
 
     parent.appendChild(burst);
     setTimeout(function(){if(burst.parentNode)burst.remove();},1400);
+  }
+
+  // === NO-DROP POPUP (themed gear RNG missed) ===
+  function showVictoryNoDropPopup(dungeon, reward, dropChance){
+    if(document.getElementById('dg-nodrop-popup'))return;
+    var ov=document.createElement('div');
+    ov.id='dg-nodrop-popup';
+    ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle,rgba(8,2,2,0.92) 0%,rgba(0,0,0,0.97) 100%);z-index:10000;display:flex;align-items:center;justify-content:center;animation:dgFadeIn 0.3s ease-out;overflow:hidden;padding:20px;box-sizing:border-box;';
+
+    // Red flash that blooms and fades
+    var flash=document.createElement('div');
+    flash.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(200,30,30,0.4);animation:dgFlash 0.7s ease-out forwards;pointer-events:none;z-index:1;';
+    ov.appendChild(flash);
+
+    var modal=document.createElement('div');
+    modal.style.cssText='position:relative;background:linear-gradient(135deg,#140606 0%,#1e0d0d 100%);border:3px solid #7a1a1a;border-radius:14px;padding:28px 30px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 0 40px rgba(180,30,30,0.5),0 0 80px rgba(180,30,30,0.2);animation:dgVictoryPop 0.6s cubic-bezier(0.2,1.3,0.6,1) forwards;font-family:Cinzel,serif;z-index:2;';
+    modal.innerHTML=
+      '<div style="color:#c04040;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;font-weight:700;">✖ No Drop ✖</div>'+
+      '<div style="color:#a07070;font-size:16px;margin-bottom:16px;">'+dungeon.name+'</div>'+
+      '<div style="font-size:72px;line-height:1;margin-bottom:10px;opacity:0.25;filter:grayscale(100%) brightness(0.6);">'+reward.icon+'</div>'+
+      '<div style="color:#d04040;font-size:20px;font-weight:700;margin-bottom:6px;text-shadow:0 0 10px rgba(200,30,30,0.5);">Not this time...</div>'+
+      '<div style="color:#7a4040;font-size:13px;margin-bottom:4px;font-family:Arial,sans-serif;">'+reward.icon+' <b style="color:#a06060;">'+reward.name+'</b> eluded you</div>'+
+      '<div style="color:#4a2828;font-size:12px;margin-bottom:22px;font-family:Arial,sans-serif;">Drop chance: '+dropChance+'% — keep hunting</div>'+
+      '<button id="dg-nodrop-dismiss" style="background:linear-gradient(180deg,#5a1010,#2e0808);border:2px solid #7a1a1a;color:#c08080;padding:11px 28px;font-family:Cinzel,serif;font-size:14px;font-weight:700;border-radius:6px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;box-shadow:0 0 14px rgba(180,30,30,0.4);">Try Again</button>';
+
+    ov.appendChild(modal);
+    document.body.appendChild(ov);
+
+    // A few dark grey sparks — like embers dying out
+    var emberColors=['#6a3a3a','#4a2020','#8a5050','#3a1a1a','#7a4040'];
+    function randEmber(){return emberColors[Math.floor(Math.random()*emberColors.length)];}
+    for(var i=0;i<4;i++){
+      (function(idx){setTimeout(function(){if(ov.parentNode)spawnFireworkBurst(ov,randEmber());},idx*200);})(i);
+    }
+
+    function dismiss(){
+      if(ov.parentNode){
+        ov.style.animation='dgFadeIn 0.2s ease-out reverse';
+        setTimeout(function(){if(ov.parentNode)ov.remove();},200);
+      }
+    }
+    document.getElementById('dg-nodrop-dismiss').onclick=dismiss;
+    ov.addEventListener('click',function(e){if(e.target===ov)dismiss();});
   }
 
   // === DUNGEON DISCOVERY POPUP (fires once when a skill hits unlock level) ===
@@ -1258,14 +1302,13 @@
         var firstClear=(typeof G!=='undefined')&&!G.dungeonRewards[activeDungeon.id];
         dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The dungeon falls silent. You are victorious!</span>');
 
-        // Roll for the themed gear drop. First clears always guarantee the drop so the
-        // "Claim" victory popup is always truthful. Subsequent runs use RNG — early tiers
-        // are generous, later tiers are rare. The Hunter's Eye buff (loot_dungeon) bumps
+        // Roll for the themed gear drop. Nothing is ever guaranteed — early tiers are
+        // generous, later tiers are rare. The Hunter's Eye buff (loot_dungeon) bumps
         // the chance multiplicatively if active.
         var dropChance = (rwd.chance!=null) ? rwd.chance : 50;
         var lootBuff = (typeof window.getBuffLootMult === 'function') ? window.getBuffLootMult() : 1;
         if (lootBuff > 1) dropChance = Math.min(95, Math.round(dropChance * lootBuff));
-        var gotDrop = firstClear || (Math.random()*100) < dropChance;
+        var gotDrop = (Math.random()*100) < dropChance;
         if(gotDrop){
           dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">🎁 LOOT! '+rwd.icon+' '+rwd.name+(rwd.eff?' <span style="color:#9a7e50">('+rwd.eff+')</span>':'')+'</span>');
         } else {
@@ -1298,9 +1341,11 @@
             if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">🧪 Level Potion!</span>';
             log(msg+' + loot!');
           }
-          // First-victory popup with fireworks fires only on the very first clear
-          if(firstClear){
-            setTimeout(function(){showFirstVictoryPopup(activeDungeon,rwd);},700);
+          // Always show a clear visual outcome for the themed gear roll
+          if(gotDrop){
+            setTimeout(function(){showFirstVictoryPopup(activeDungeon,rwd,firstClear);},700);
+          } else {
+            setTimeout(function(){showVictoryNoDropPopup(activeDungeon,rwd,dropChance);},700);
           }
         }
       } else {
