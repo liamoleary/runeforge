@@ -1806,6 +1806,7 @@
     var hasFlying=false, hasMagicImmune=false, hasPhysImmune=false;
     var hasMagicResist=false, hasPhysResist=false;
     var hasShield=false, hasHeal=false, hasPoison=false;
+    var hasFlyingMagicImmune=false;
     roomList.forEach(function(r){
       if(r.flying) hasFlying=true;
       if(r.immune==='magic') hasMagicImmune=true;
@@ -1815,16 +1816,32 @@
       if(r.shield) hasShield=true;
       if(r.heal) hasHeal=true;
       if(r.poison) hasPoison=true;
+      if(r.flying&&r.immune==='magic') hasFlyingMagicImmune=true;
     });
+    // When the dungeon has flying enemies AND magic-unfriendly enemies (immune or resist),
+    // a bow is the consistent recommendation — ranged AND physical, covers both problems.
+    // Offering "bow or magic" in that context sends mixed signals.
+    var flyingNeedsBow=hasFlying&&(hasFlyingMagicImmune||hasMagicImmune||hasMagicResist);
     var recos=[];
-    if (hasFlying)        recos.push({clr:'#ffd966',txt:'🪽 Flying enemies — bring a 🏹 bow (or ✨ magic) to hit them.'});
-    if (hasPhysImmune)    recos.push({clr:'#a335ee',txt:'👻 Physical-immune enemies — only ✨ magic can damage them.'});
-    if (hasMagicImmune)   recos.push({clr:'#88ddff',txt:'✨ Magic-immune enemies — bring a ⚔ physical weapon.'});
-    if (hasShield)        recos.push({clr:'#88ddff',txt:'🛡 Shielded enemies will block damage for a few turns at a time. Power-stack crits to break through.'});
-    if (hasHeal)          recos.push({clr:'#5ac85a',txt:'💚 Healers — burst them down before they recover.'});
-    if (hasPoison)        recos.push({clr:'#9b59b6',txt:'🧪 Poisoners — bring extra food, dodge gear helps.'});
-    if (hasPhysResist&&!hasPhysImmune) recos.push({clr:'#88ddff',txt:'⚔ Some enemies resist physical damage (½). Magic hits them for full.'});
-    if (hasMagicResist&&!hasMagicImmune) recos.push({clr:'#a335ee',txt:'✨ Some enemies resist magic damage (½). Physical hits them for full.'});
+    // Flying tip — phrasing depends on whether magic is actually a viable option here
+    if(hasFlying){
+      if(hasFlyingMagicImmune){
+        recos.push({clr:'#ffd966',txt:"🪽 Flying enemies — they're magic-immune; only a 🏹 bow will reach them."});
+      } else if(flyingNeedsBow){
+        recos.push({clr:'#ffd966',txt:'🪽 Flying enemies — a 🏹 bow is your best pick: ranged and physical, so it handles magic-resistant foes too.'});
+      } else {
+        recos.push({clr:'#ffd966',txt:'🪽 Flying enemies — bring a 🏹 bow (or ✨ magic) to hit them.'});
+      }
+    }
+    if(hasPhysImmune)    recos.push({clr:'#a335ee',txt:'👻 Physical-immune enemies — only ✨ magic can damage them.'});
+    // Only surface the magic-immune tip if the flying advice hasn't already steered players to physical/bow
+    if(hasMagicImmune&&!flyingNeedsBow) recos.push({clr:'#88ddff',txt:'✨ Magic-immune enemies — bring a ⚔ physical weapon.'});
+    if(hasShield)        recos.push({clr:'#88ddff',txt:'🛡 Shielded enemies will block damage for a few turns at a time. Power-stack crits to break through.'});
+    if(hasHeal)          recos.push({clr:'#5ac85a',txt:'💚 Healers — burst them down before they recover.'});
+    if(hasPoison)        recos.push({clr:'#9b59b6',txt:'🧪 Poisoners — bring extra food, dodge gear helps.'});
+    // Resist tips only when not already implied by the bow recommendation above
+    if(hasPhysResist&&!hasPhysImmune&&!flyingNeedsBow) recos.push({clr:'#88ddff',txt:'⚔ Some enemies resist physical damage (½). Magic hits them for full.'});
+    if(hasMagicResist&&!hasMagicImmune&&!flyingNeedsBow) recos.push({clr:'#a335ee',txt:'✨ Some enemies resist magic damage (½). Physical hits them for full.'});
     if (recos.length){
       h+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;padding:10px;margin-bottom:10px;">';
       h+='<div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">TACTICAL BRIEFING</div>';
