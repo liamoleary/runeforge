@@ -98,6 +98,21 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .stat-box .sb-bar{background:#0a0804;height:5px;border-radius:3px;overflow:hidden;margin-top:4px}
 .stat-box .sb-bar-fill{height:100%;border-radius:3px;transition:width .3s}
 #equip-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:0 10px 10px}
+#spell-row{padding:0 10px 10px}
+#spell-row-hdr{display:flex;align-items:center;justify-content:space-between;font-family:'Cinzel',serif;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+#spell-row-grid{display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+#spell-row-grid::-webkit-scrollbar{display:none}
+.sp-slot{flex:0 0 auto;min-width:46px;background:var(--bg2);border:2px solid var(--bdr);border-radius:6px;padding:4px 4px 3px;cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:1px;position:relative}
+.sp-slot:active{transform:scale(.93)}
+.sp-slot[data-rarity="common"]{border-color:#ffffff;box-shadow:0 0 4px rgba(255,255,255,.3) inset}
+.sp-slot[data-rarity="uncommon"]{border-color:#1eff00;box-shadow:0 0 6px rgba(30,255,0,.35) inset}
+.sp-slot[data-rarity="rare"]{border-color:#0070dd;box-shadow:0 0 7px rgba(0,112,221,.4) inset}
+.sp-slot[data-rarity="epic"]{border-color:#a335ee;box-shadow:0 0 8px rgba(163,53,238,.5) inset}
+.sp-slot[data-rarity="legendary"]{border-color:#ff8000;box-shadow:0 0 9px rgba(255,128,0,.55) inset;animation:lgEquipPulse 2.4s ease-in-out infinite}
+.sp-ico{font-size:18px;line-height:1;filter:drop-shadow(0 0 3px rgba(0,0,0,.6))}
+.sp-dmg{font-size:8px;color:var(--text2);font-family:'Cinzel',serif;line-height:1}
+.sp-qty{position:absolute;bottom:1px;right:3px;font-size:9px;color:var(--gold);font-weight:bold;text-shadow:0 0 2px #000}
+.sp-empty{font-size:9px;color:var(--text3);font-style:italic;padding:6px 4px;text-align:center;width:100%}
 .eq-slot{background:var(--bg2);border:2px solid var(--bdr);border-radius:7px;padding:6px 3px;text-align:center;cursor:pointer;transition:all .2s;min-height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative}
 .eq-slot:active{transform:scale(.95)}
 .eq-slot.on{background:#1e1508}
@@ -555,6 +570,10 @@ body.shake-hit #stage{animation:screenShake .35s ease}
       <div class="eq-slot" id="eq-weaponR" onclick="unequipSlot('weaponR')"><span class="eq-icon">🗡️</span><span class="eq-lbl">Right Hand</span></div>
       <div class="eq-slot eq-food" id="eq-fd" onclick="eatFood()"><span class="eq-icon">🍖</span><span class="eq-lbl">Food</span></div>
       <div class="eq-slot" id="eq-empty" style="opacity:.25;cursor:default"><span class="eq-icon">·</span><span class="eq-lbl">—</span></div>
+    </div>
+    <div id="spell-row">
+      <div id="spell-row-hdr"><span>📜 Spell Scrolls</span><span id="spell-row-count" style="color:var(--text3)">0</span></div>
+      <div id="spell-row-grid"></div>
     </div>
   </div>
   <div class="panel"><div class="panel-hdr"><span>Inventory</span><span id="inv-count">0/28</span></div><div id="inv-grid"></div>
@@ -1286,7 +1305,7 @@ function updateUI(){
   document.getElementById('def-fill').style.width=Math.min(100,def*10)+'%';
   document.getElementById('dodge-fill').style.width=Math.min(100,(dodge/MAX_DODGE)*100)+'%';
   document.getElementById('gld').textContent='🪙 '+G.gold;
-  renderInv();renderEquip();renderActiveBuffs();
+  renderInv();renderEquip();renderSpellBar();renderActiveBuffs();
     updateCombatStatsPanel();updateStageMonsterHP();
   const cnt=Object.values(G.inv).filter(v=>v>0).length;
   document.getElementById('inv-count').textContent=cnt+'/28';
@@ -1300,7 +1319,9 @@ function isEquippedAnywhere(id){
 }
 function renderInv(){
   const grid=document.getElementById('inv-grid');grid.innerHTML='';
-  const items=Object.entries(G.inv).filter(([,v])=>v>0);
+  // Scrolls live in the dedicated Spell Scrolls bar under the equipment — keep
+  // them out of the bag so the two inventories stay distinct.
+  const items=Object.entries(G.inv).filter(([id,v])=>v>0&&ITEMS[id]?.type!=='scroll');
   items.forEach(([id,qty])=>{
     const it=ITEMS[id];if(!it)return;
     const d=document.createElement('div');d.className='iv-slot has';
@@ -1317,6 +1338,52 @@ function renderInv(){
   const empty=Math.max(0,28-items.length);
   for(let i=0;i<Math.min(empty,28-items.length);i++){
     const d=document.createElement('div');d.className='iv-slot';grid.appendChild(d);
+  }
+}
+
+// Canonical ordering for the spell bar (matches magic level progression).
+const SPELL_ORDER=['scroll_wind','scroll_water','scroll_fire','scroll_earth','scroll_shock','scroll_inferno','scroll_tempest','scroll_meteor'];
+
+function getOwnedScrolls(){
+  const out=[];
+  if(!G.inv) return out;
+  // Keep canonical order, then append any unknown scrolls at the end.
+  for(const id of SPELL_ORDER){
+    const q=G.inv[id]||0;
+    if(q>0&&ITEMS[id]) out.push({id,qty:q,item:ITEMS[id]});
+  }
+  for(const [id,q] of Object.entries(G.inv)){
+    if(!q||q<=0) continue;
+    if(SPELL_ORDER.indexOf(id)!==-1) continue;
+    if(ITEMS[id]?.type==='scroll') out.push({id,qty:q,item:ITEMS[id]});
+  }
+  return out;
+}
+
+function renderSpellBar(){
+  const grid=document.getElementById('spell-row-grid');
+  const count=document.getElementById('spell-row-count');
+  if(!grid) return;
+  grid.innerHTML='';
+  const owned=getOwnedScrolls();
+  const total=owned.reduce((s,o)=>s+o.qty,0);
+  if(count) count.textContent=total>0?(owned.length+' type'+(owned.length>1?'s':'')+' · '+total+' total'):'empty';
+  if(!owned.length){
+    const e=document.createElement('div');e.className='sp-empty';
+    e.textContent='No scrolls — craft some in Magic to cast spells in battle.';
+    grid.appendChild(e);
+    return;
+  }
+  for(const o of owned){
+    const d=document.createElement('div');
+    d.className='sp-slot';
+    d.dataset.rarity=getItemRarity(o.id);
+    d.title=o.item.name+' · '+(o.item.spellDmg||0)+' dmg · '+o.qty+' owned';
+    d.innerHTML='<span class="sp-ico">'+o.item.icon+'</span><span class="sp-dmg">'+(o.item.spellDmg||0)+'</span><span class="sp-qty">'+(o.qty>=1000?(o.qty/1000).toFixed(1)+'k':o.qty)+'</span>';
+    d.onclick=(function(id,it){return function(){
+      log('📜 '+it.icon+' '+it.name+' (<b>'+it.spellDmg+' dmg</b>) — cast it with the spell bar inside a dungeon.');
+    };})(o.id,o.item);
+    grid.appendChild(d);
   }
 }
 
