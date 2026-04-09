@@ -786,6 +786,15 @@ function load(){
     delete G.equip.armour;
   }
   for(const slot of EQUIP_SLOTS) if(!(slot in G.equip)) G.equip[slot]=null;
+  // Migrate legacy dungeonRewards keyed by bare skill ID to the new tier-1 id.
+  if(G.dungeonRewards){
+    for(const skId of ['woodcutting','mining','fishing','cooking','smithing','fletching','crafting','magic']){
+      if(G.dungeonRewards[skId]&&!G.dungeonRewards[skId+'_t1']){
+        G.dungeonRewards[skId+'_t1']=true;
+        delete G.dungeonRewards[skId];
+      }
+    }
+  }
   // Trinket removal cleanup: drop legacy state and any trinket items in inventory
   if(G.trinkets)delete G.trinkets;
   const oldTrinketIds=['grove_wc_trinket','grove_mn_trinket','grove_fs_trinket','grove_ck_trinket','grove_sm_trinket','grove_cb_trinket','grove_fl_trinket','grove_cr_trinket','grove_mg_trinket'];
@@ -800,13 +809,15 @@ function load(){
       }
     }
   }
-  // Backfill dungeonsDiscovered: any skill already at the unlock level is silently marked
-  // discovered so the popup doesn't pop retroactively for existing players.
-  if(window.DUNGEONS){
-    for(const dgId of Object.keys(window.DUNGEONS)){
-      const dgUnlock=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[dgId])||(window.DUNGEON_UNLOCK_LEVEL||3);
-      if(!G.dungeonsDiscovered[dgId]&&slvl(dgId)>=dgUnlock){
-        G.dungeonsDiscovered[dgId]=true;
+  // Backfill dungeonsDiscovered: any skill already at the tier 1 unlock level is silently
+  // marked discovered so the popup doesn't pop retroactively for existing players.
+  // dungeonsDiscovered is keyed by SKILL id (one flag per skill line), not per-tier.
+  if(SKILLS){
+    for(const sk of Object.keys(SKILLS)){
+      const tier1=sk+'_t1';
+      const dgUnlock=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[tier1])||(window.DUNGEON_UNLOCK_LEVEL||3);
+      if(!G.dungeonsDiscovered[sk]&&slvl(sk)>=dgUnlock){
+        G.dungeonsDiscovered[sk]=true;
       }
     }
   }
@@ -875,8 +886,9 @@ function addXP(sk,amt){
   const nl=slvl(sk);
   if(nl>ol){
     // Unlock-level ups are special: the reward is the dungeon itself, so skip item loot.
-    const unlockLvl=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[sk])||(window.DUNGEON_UNLOCK_LEVEL||3);
-    const isUnlockLvl=(nl===unlockLvl)&&(window.DUNGEONS&&window.DUNGEONS[sk]);
+    // All skill dungeon lines now unlock tier 1 at level 3, so we check against that.
+    const unlockLvl=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[sk+'_t1'])||(window.DUNGEON_UNLOCK_LEVEL||3);
+    const isUnlockLvl=(nl===unlockLvl)&&(window.DUNGEONS&&window.DUNGEONS[sk+'_t1']);
     let rewards=[];
     if(!isUnlockLvl){
       rewards=grantLvlUpRewards(nl);
@@ -890,7 +902,7 @@ function addXP(sk,amt){
     sendLevelNotification(sk,nl);
     // Dungeon discovery: first time you cross the unlock threshold for a skill,
     // pop the dungeon discovery modal so the player knows it's available.
-    if(nl>=unlockLvl&&ol<unlockLvl&&window.DUNGEONS&&window.DUNGEONS[sk]&&!G.dungeonsDiscovered[sk]){
+    if(nl>=unlockLvl&&ol<unlockLvl&&window.DUNGEONS&&window.DUNGEONS[sk+'_t1']&&!G.dungeonsDiscovered[sk]){
       G.dungeonsDiscovered[sk]=true;
       if(typeof window._dgShowDiscovery==='function')setTimeout(()=>window._dgShowDiscovery(sk),400);
     }
@@ -1080,10 +1092,22 @@ function updateUI(){
     }
     // Refresh dungeon back-card lock state when level changes
     const backEl=el.querySelector('.sk-back');
-    if(backEl&&window.DUNGEONS&&window.DUNGEONS[sk]){
-      const unlockLvl2=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[sk])||(window.DUNGEON_UNLOCK_LEVEL||3);
+    if(backEl&&window.DUNGEONS&&window.DUNGEONS[sk+'_t1']){
+      const unlockLvl2=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[sk+'_t1'])||(window.DUNGEON_UNLOCK_LEVEL||3);
       if(lv<unlockLvl2)backEl.classList.add('locked');
       else backEl.classList.remove('locked');
+      // Update the tiers-cleared counter live
+      const tierEl=backEl.querySelector('.dg-tier');
+      if(tierEl){
+        let cleared=0, unlocked=0;
+        for(let t=1;t<=12;t++){
+          const id=sk+'_t'+t;
+          const req=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[id])||3;
+          if(lv>=req) unlocked++;
+          if(G.dungeonRewards&&G.dungeonRewards[id]) cleared++;
+        }
+        tierEl.textContent=cleared+'/12 cleared · '+unlocked+' unlocked';
+      }
     }
   }
   const hppc=(G.hp/G.maxhp)*100;
@@ -1186,28 +1210,37 @@ function buildSkills(){
         }
       }
     };
-    // BACK (themed dungeon for this skill)
+    // BACK (themed dungeon line for this skill — 12 tiers, opens via tier picker)
     const back=document.createElement('div');back.className='sk-back';
-    const dg=window.DUNGEONS&&window.DUNGEONS[sk];
-    const unlockLvl=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[sk])||(window.DUNGEON_UNLOCK_LEVEL||3);
+    const dg=window.DUNGEONS&&window.DUNGEONS[sk+'_t1'];
+    const unlockLvl=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[sk+'_t1'])||(window.DUNGEON_UNLOCK_LEVEL||3);
     if(dg){
-      const rwd=dg.reward||{};
+      // Compute current progress summary
+      let cleared=0, unlocked=0;
+      const curLv=slvl(sk);
+      for(let t=1;t<=12;t++){
+        const id=sk+'_t'+t;
+        const req=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[id])||3;
+        if(curLv>=req) unlocked++;
+        if(G.dungeonRewards&&G.dungeonRewards[id]) cleared++;
+      }
       // Both locked and unlocked variants are pre-rendered; CSS hides one set via the .locked class.
       back.innerHTML=
         '<div class="dg-lock-icon">🔒</div>'+
         '<div class="dg-lock-text">Locked</div>'+
         '<div class="dg-lock-hint">Reach Lvl '+unlockLvl+' '+info.name+'</div>'+
         '<div class="dg-icon">'+dg.icon+'</div>'+
-        '<div class="dg-name">'+dg.name+'</div>'+
-        '<div class="dg-tier">Lvl 1 · 5 Rooms</div>'+
-        '<div class="dg-rwd"><span class="dg-rwd-ico">'+(rwd.icon||'🏆')+'</span>'+(rwd.name||'Reward')+'</div>';
+        '<div class="dg-name">'+(dg.shortName||dg.name)+'</div>'+
+        '<div class="dg-tier">'+cleared+'/12 cleared · '+unlocked+' unlocked</div>'+
+        '<div class="dg-rwd"><span class="dg-rwd-ico">⚔️</span>Tap for tiers</div>';
       back.onclick=(e)=>{
         e.stopPropagation();
         if(slvl(sk)<unlockLvl){
-          log('🔒 '+dg.name+' is locked. Reach Lvl '+unlockLvl+' '+info.name+' to discover it.');
+          log('🔒 '+(dg.shortName||dg.name)+' is locked. Reach Lvl '+unlockLvl+' '+info.name+' to discover it.');
           return;
         }
-        if(typeof window._dgShowEntry==='function')window._dgShowEntry(sk);
+        if(typeof window._dgShowTierPicker==='function') window._dgShowTierPicker(sk);
+        else if(typeof window._dgShowEntry==='function') window._dgShowEntry(sk+'_t1');
       };
       // Initial lock state — updateUI keeps this in sync with skill level
       if(slvl(sk)<unlockLvl)back.classList.add('locked');
@@ -1426,8 +1459,8 @@ function useItem(id){
       const nextLvl=curLvl+1;
       if(nextLvl<=99){
         G.skills[sk].xp=XP[nextLvl];
-        const unlockLvl=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[sk])||(window.DUNGEON_UNLOCK_LEVEL||3);
-        const isUnlockLvl=(nextLvl===unlockLvl)&&(window.DUNGEONS&&window.DUNGEONS[sk]);
+        const unlockLvl=(window.DUNGEON_UNLOCK_LEVELS&&window.DUNGEON_UNLOCK_LEVELS[sk+'_t1'])||(window.DUNGEON_UNLOCK_LEVEL||3);
+        const isUnlockLvl=(nextLvl===unlockLvl)&&(window.DUNGEONS&&window.DUNGEONS[sk+'_t1']);
         const potionRewards=isUnlockLvl?[]:grantLvlUpRewards(nextLvl);
         showLvlUp(sk,nextLvl,potionRewards,isUnlockLvl);
         log('<span class="ll">🧪 Level Potion used! '+SKILLS[sk].name+' is now level '+nextLvl+'!</span>');
@@ -1748,7 +1781,7 @@ function showLvlUp(sk,lv,rewards,isUnlock){
   d.appendChild(t);d.appendChild(s);
   if(isUnlock){
     const u=document.createElement('div');u.className='lv-unlock-sub';
-    const dgName=(window.DUNGEONS&&window.DUNGEONS[sk]&&window.DUNGEONS[sk].name)||'A new dungeon';
+    const dgName=(window.DUNGEONS&&window.DUNGEONS[sk+'_t1']&&(window.DUNGEONS[sk+'_t1'].shortName||window.DUNGEONS[sk+'_t1'].name))||'A new dungeon';
     u.textContent=dgName+' is now open!';
     d.appendChild(u);
   } else if(rewards&&rewards.length){
