@@ -133,13 +133,39 @@
   var GEAR_MARKS = ['I','II','III'];
   var GEAR_SLOT_CYCLE = ['helmet','chest','boots','jewelry'];
 
-  function computeGearStats(slot, markIdx){
+  // Per-skill stat profiles. Each skill biases its themed gear differently so the
+  // player can choose a build by focusing the right skill: dodge, tank, attack,
+  // or HP-heavy. Total power across the four stats stays roughly balanced.
+  var SKILL_GEAR_PROFILES = {
+    woodcutting: {def:0.8, hp:1.0, dodge:1.4, atk:0.9, theme:'Agile'},
+    mining:      {def:1.4, hp:1.2, dodge:0.6, atk:0.8, theme:'Tanky'},
+    fishing:     {def:0.7, hp:1.0, dodge:1.5, atk:0.9, theme:'Evasive'},
+    cooking:     {def:1.0, hp:1.6, dodge:0.8, atk:0.7, theme:'Vital'},
+    smithing:    {def:1.6, hp:1.3, dodge:0.5, atk:0.8, theme:'Heavy'},
+    fletching:   {def:0.8, hp:1.0, dodge:1.1, atk:1.5, theme:'Precise'},
+    crafting:    {def:0.9, hp:1.0, dodge:1.3, atk:0.9, theme:'Silken'},
+    magic:       {def:0.7, hp:1.0, dodge:0.9, atk:1.7, theme:'Arcane'}
+  };
+
+  function computeGearStats(slot, markIdx, sk){
     var m = markIdx + 1; // 1..3
+    var p = SKILL_GEAR_PROFILES[sk] || {def:1,hp:1,dodge:1,atk:1};
     var s = {};
-    if (slot === 'helmet')      { s.def = 2 + m*2;  s.hp = 10 + m*10; }
-    else if (slot === 'chest')  { s.def = 4 + m*4;  s.hp = 18 + m*18; }
-    else if (slot === 'boots')  { s.def = 1 + m*2;  s.hp = 8  + m*8;  s.dodge = 4 + m*2; } // mk1=6% → mk3=10%
-    else if (slot === 'jewelry'){ s.hp  = 14 + m*12; s.atk = m*2;     s.dodge = 2 + m*2; } // mk1=4% → mk3=8%
+    if (slot === 'helmet'){
+      s.def = Math.max(1, Math.round((2 + m*2) * p.def));
+      s.hp  = Math.max(1, Math.round((10 + m*10) * p.hp));
+    } else if (slot === 'chest'){
+      s.def = Math.max(1, Math.round((4 + m*4) * p.def));
+      s.hp  = Math.max(1, Math.round((18 + m*18) * p.hp));
+    } else if (slot === 'boots'){
+      s.def   = Math.max(1, Math.round((1 + m*2) * p.def));
+      s.hp    = Math.max(1, Math.round((8 + m*8) * p.hp));
+      s.dodge = Math.max(1, Math.round((4 + m*2) * p.dodge));
+    } else if (slot === 'jewelry'){
+      s.hp    = Math.max(1, Math.round((14 + m*12) * p.hp));
+      s.atk   = Math.max(1, Math.round((m*2 + 1) * p.atk));
+      s.dodge = Math.max(1, Math.round((2 + m*2) * p.dodge));
+    }
     return s;
   }
   function gearEffLabel(stats){
@@ -149,6 +175,11 @@
     if(stats.hp)  parts.push('HP +' +stats.hp);
     if(stats.dodge) parts.push('DODGE +'+stats.dodge+'%');
     return parts.join(' · ');
+  }
+  // Drop chance per tier — generous on tier 1, painful on tier 12.
+  // Tier 1≈50% → tier 12≈8% (curve: 50 * 0.85^(t-1))
+  function dropChanceForTier(tier){
+    return Math.max(5, Math.round(50 * Math.pow(0.85, tier - 1)));
   }
   // Mark I → rare, Mark II → epic, Mark III → legendary.
   var GEAR_MARK_RARITIES = ['rare','epic','legendary'];
@@ -200,8 +231,10 @@
       var gearBase = theme.gear[slot];
       var gearItemId = sk + '_' + slot + '_mk' + (markIdx + 1);
       var gearName = gearBase.name + ' ' + GEAR_MARKS[markIdx];
-      var stats = computeGearStats(slot, markIdx);
+      var stats = computeGearStats(slot, markIdx, sk);
       registerGearItem(gearItemId, gearName, gearBase.icon, slot, stats, markIdx);
+
+      var chance = dropChanceForTier(tier);
 
       out[id] = {
         id: id,
@@ -214,7 +247,7 @@
         flavour: theme.flavour,
         discovery: theme.discovery,
         rooms: rooms,
-        reward: {id: gearItemId, icon: gearBase.icon, name: gearName, eff: gearEffLabel(stats)},
+        reward: {id: gearItemId, icon: gearBase.icon, name: gearName, eff: gearEffLabel(stats), chance: chance},
         loot: theme.loot
       };
       DUNGEON_UNLOCK_LEVELS[id] = unlockLvl;
@@ -810,30 +843,32 @@
       if(dungeonState.room+1>=dungeonState.monsters.length){
         dungeonState.room++;
         dungeonState.victory=true;
-        var rwd=activeDungeon.reward||{id:'gold_coins',name:'Gold',icon:'🪙',eff:''};
-        var rare=activeDungeon.rareReward;
+        var rwd=activeDungeon.reward||{id:'gold_coins',name:'Gold',icon:'🪙',eff:'',chance:100};
         if(typeof G!=='undefined'&&!G.dungeonRewards)G.dungeonRewards={};
         var firstClear=(typeof G!=='undefined')&&!G.dungeonRewards[activeDungeon.id];
         dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The dungeon falls silent. You are victorious!</span>');
-        if(firstClear){
-          dungeonState.combatLog.push('<span style="color:#f0c040">First Victory! Reward: '+rwd.icon+' '+rwd.name+(rwd.eff?' ('+rwd.eff+')':'')+'</span>');
-        } else {
-          dungeonState.combatLog.push('<span style="color:#9a7e50">'+rwd.icon+' '+rwd.name+' already claimed.</span>');
-        }
 
-        var gotSpecial=rare?(Math.random()<(rare.chance||0.05)):false;
-        if(gotSpecial) dungeonState.combatLog.push('<span style="color:#ff69b4;font-weight:bold">✨ RARE DROP! '+rare.icon+' '+rare.name+(rare.eff?' ('+rare.eff+')':'')+' ✨</span>');
+        // Roll for the themed gear drop. Nothing is ever guaranteed — early tiers are
+        // generous, later tiers are rare.
+        var dropChance = (rwd.chance!=null) ? rwd.chance : 50;
+        var gotDrop = (Math.random()*100) < dropChance;
+        if(gotDrop){
+          dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">🎁 LOOT! '+rwd.icon+' '+rwd.name+(rwd.eff?' <span style="color:#9a7e50">('+rwd.eff+')</span>':'')+'</span>');
+        } else {
+          dungeonState.combatLog.push('<span style="color:#9a7e50">No themed drop this run ('+dropChance+'% chance · '+rwd.icon+' '+rwd.name+'). Try again!</span>');
+        }
 
         var gotLevelPotion=Math.random()<DG.levelPotionChance;
         if(gotLevelPotion) dungeonState.combatLog.push('<span style="color:#9b59b6;font-weight:bold">🧪 EXTREMELY RARE! Level Potion dropped!</span>');
 
         if(typeof G!=='undefined'){
           if(!G.inv) G.inv={};
-          if(firstClear){
+          if(gotDrop){
             G.inv[rwd.id]=(G.inv[rwd.id]||0)+1;
+          }
+          if(firstClear){
             G.dungeonRewards[activeDungeon.id]=true;
           }
-          if(gotSpecial&&rare) G.inv[rare.id]=(G.inv[rare.id]||0)+1;
           if(gotLevelPotion) G.inv.level_potion=(G.inv.level_potion||0)+1;
           G.gold=(G.gold||0)+dungeonState.totalGold;
           dungeonState.lootCollected.forEach(function(d){
@@ -844,12 +879,12 @@
           if(typeof updateUI==='function') updateUI();
           if(typeof renderInv==='function') renderInv();
           if(typeof log==='function'){
-            var msg=rwd.icon+' <b>'+activeDungeon.name+' cleared!</b> '+(firstClear?rwd.name:'(reward already claimed)')+' + '+dungeonState.totalGold+' gold';
-            if(gotSpecial&&rare) msg+=' + <span style="color:#ff69b4">✨ '+rare.name+'!</span>';
+            var msg='<b>'+activeDungeon.name+' cleared!</b> +'+dungeonState.totalGold+' gold';
+            if(gotDrop) msg+=' + <span style="color:#f0c040">'+rwd.icon+' '+rwd.name+'</span>';
             if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">🧪 Level Potion!</span>';
             log(msg+' + loot!');
           }
-          // First-victory popup with fireworks
+          // First-victory popup with fireworks fires only on the very first clear
           if(firstClear){
             setTimeout(function(){showFirstVictoryPopup(activeDungeon,rwd);},700);
           }
@@ -1110,6 +1145,27 @@
       '</div>';
     var listWrap = document.createElement('div');
     listWrap.style.cssText = 'flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px;';
+    // Helper for rarity colour lookup (defined in index.html). Falls back to gold.
+    var rarityClr = function(itemId){
+      try {
+        if (typeof window.RARITY === 'object' && typeof window.getItemRarity === 'function') {
+          return window.RARITY[window.getItemRarity(itemId)].color;
+        }
+      } catch(e){}
+      if (typeof ITEMS !== 'undefined' && ITEMS[itemId]) {
+        var rar = ITEMS[itemId].rarity || 'common';
+        var palette = {common:'#ffffff',uncommon:'#1eff00',rare:'#0070dd',epic:'#a335ee',legendary:'#ff8000',artifact:'#e6cc80'};
+        return palette[rar] || '#f0c040';
+      }
+      return '#f0c040';
+    };
+    var profileTheme = (SKILL_GEAR_PROFILES[sk] && SKILL_GEAR_PROFILES[sk].theme) || '';
+    if (profileTheme){
+      var themeRow = document.createElement('div');
+      themeRow.style.cssText = 'padding:6px 10px;margin-bottom:4px;border-radius:6px;background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.25);text-align:center;color:#f0c040;font-size:10px;letter-spacing:1px;text-transform:uppercase;';
+      themeRow.textContent = profileTheme + ' build · gear bias';
+      listWrap.appendChild(themeRow);
+    }
     for (var t = 1; t <= 12; t++){
       var id = sk + '_t' + t;
       var d = DUNGEONS[id]; if(!d) continue;
@@ -1117,14 +1173,21 @@
       var unlocked = (lvl >= req);
       var claimed = (typeof G!=='undefined' && G.dungeonRewards && G.dungeonRewards[id]);
       var rw = d.reward || {};
+      var dropPct = rw.chance != null ? rw.chance : 50;
+      var owned = (typeof G!=='undefined' && G.inv && G.inv[rw.id]) ? G.inv[rw.id] : 0;
+      var rwClr = rarityClr(rw.id);
       var row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid '+(unlocked?'#3a2c18':'#1c1710')+';border-radius:7px;background:'+(unlocked?'#1a1308':'#0d0905')+';cursor:'+(unlocked?'pointer':'default')+';opacity:'+(unlocked?'1':'0.55')+';transition:all .15s;';
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid '+(unlocked?'#3a2c18':'#1c1710')+';border-radius:7px;background:'+(unlocked?'#1a1308':'#0d0905')+';cursor:'+(unlocked?'pointer':'default')+';opacity:'+(unlocked?'1':'0.6')+';transition:all .15s;';
+      var rewardLine = '<div style="color:#e8d898;font-size:10px;margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span style="font-size:14px;">'+rw.icon+'</span><span style="color:'+rwClr+';font-weight:700;">'+(rw.name||'Reward')+'</span>'+(owned>0?'<span style="color:#5ac85a;font-size:9px;">×'+owned+'</span>':'')+'</div>';
+      var statsLine = rw.eff ? '<div style="color:#9a7e50;font-size:9px;margin-top:2px;">'+rw.eff+'</div>' : '';
+      var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:3px;display:flex;justify-content:space-between;gap:6px;"><span style="color:#88ddff;">💎 '+dropPct+'% drop</span><span style="color:'+(unlocked?'#5ac85a':'#9a7e50')+';">'+(unlocked?'✓ Lvl '+req:'🔒 Lvl '+req)+'</span></div>';
       row.innerHTML =
         '<div style="min-width:34px;height:34px;border-radius:5px;background:#0b0604;border:1px solid #3a2c18;display:flex;align-items:center;justify-content:center;font-size:16px;color:#f0c040;font-weight:700;">'+t+'</div>' +
         '<div style="flex:1;min-width:0;">' +
-          '<div style="color:#e8d898;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(unlocked?'':'🔒 ')+'Tier '+t+'</div>' +
-          '<div style="color:#9a7e50;font-size:9px;margin-top:2px;">'+rw.icon+' '+(rw.name||'Reward')+(claimed?' <span style="color:#5ac85a">✓</span>':'')+'</div>' +
-          '<div style="color:'+(unlocked?'#5ac85a':'#9a7e50')+';font-size:9px;margin-top:1px;">'+(unlocked?'Available':'Reach Lvl '+req)+'</div>' +
+          '<div style="color:#e8d898;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(unlocked?'':'🔒 ')+'Tier '+t+(claimed?' <span style="color:#5ac85a;font-size:10px;">cleared</span>':'')+'</div>' +
+          rewardLine +
+          statsLine +
+          chanceLine +
         '</div>';
       if(unlocked){
         (function(dungeonId){
@@ -1191,7 +1254,6 @@
     var arm=(mainA&&ITEMS[mainA])?ITEMS[mainA]:null;
     var fc=getFoodCount();
     var rwd=activeDungeon.reward||{};
-    var rare=activeDungeon.rareReward;
     var lootPool=activeDungeon.loot||[];
     var roomList=activeDungeon.rooms||[];
 
@@ -1213,8 +1275,11 @@
     });
     h+='<div style="border-top:1px solid #251e14;margin-top:6px;padding-top:6px;">';
     var claimed=(typeof G!=='undefined'&&G.dungeonRewards&&G.dungeonRewards[activeDungeon.id]);
-    h+='<div style="display:flex;justify-content:space-between;color:'+(claimed?'#5a4830':'#f0c040')+';font-size:10px;margin-bottom:2px;"><span>'+rwd.icon+' '+rwd.name+(rwd.eff?' ('+rwd.eff+')':'')+'</span><span>'+(claimed?'✓ Claimed':'Guaranteed')+'</span></div>';
-    if(rare) h+='<div style="display:flex;justify-content:space-between;color:#ff69b4;font-size:10px;margin-bottom:2px;"><span>✨ '+rare.name+(rare.eff?' ('+rare.eff+')':'')+'</span><span>'+Math.round((rare.chance||0.05)*100)+'%</span></div>';
+    var rwdChance = (rwd.chance != null) ? rwd.chance : 50;
+    var rwdRarityClr = '#f0c040';
+    try { if(typeof window.RARITY==='object'&&window.getItemRarity) rwdRarityClr = window.RARITY[window.getItemRarity(rwd.id)].color; } catch(e){}
+    var rwdOwned = (typeof G!=='undefined'&&G.inv&&G.inv[rwd.id]) ? G.inv[rwd.id] : 0;
+    h+='<div style="display:flex;justify-content:space-between;color:'+rwdRarityClr+';font-size:10px;margin-bottom:2px;font-weight:700;"><span>'+rwd.icon+' '+rwd.name+(rwd.eff?' <span style="color:#9a7e50;font-weight:400;">('+rwd.eff+')</span>':'')+(rwdOwned>0?' <span style="color:#5ac85a;font-weight:400;">×'+rwdOwned+'</span>':'')+'</span><span style="color:#88ddff;">💎 '+rwdChance+'%</span></div>';
     h+='<div style="display:flex;justify-content:space-between;color:#9b59b6;font-size:10px;"><span>🧪 Level Potion</span><span>2%</span></div>';
     h+='</div></div>';
 
