@@ -972,11 +972,30 @@
       return;
     }
 
-    // Handle magic attack
+    // Handle magic attack — pick the highest-damage spell scroll the player owns.
+    // We SELECT the scroll up front but only CONSUME it below once we're sure the
+    // cast isn't going to be fully blocked by a shield/immunity (otherwise a single
+    // bad click would burn an expensive scroll).
+    // XP comes from CRAFTING scrolls, not from casting them here.
+    var castScrollId = null, castScrollDmg = 0;
     if(mode==='magic'){
-      if(!G.inv||!G.inv.feather||(G.inv.feather||0)<1){showDungeonMessage('No feathers for magic!','#e03030');renderDungeon();return;}
-      G.inv.feather--;if(G.inv.feather<=0)delete G.inv.feather;
-      if(typeof addXP==='function')addXP('magic',5);
+      var bestId = null, bestDmg = 0;
+      if (G.inv && typeof ITEMS !== 'undefined'){
+        for (var itemId in G.inv){
+          var it = ITEMS[itemId];
+          if (it && it.type === 'scroll' && (G.inv[itemId]||0) > 0){
+            var d = it.spellDmg || 0;
+            if (d > bestDmg){ bestDmg = d; bestId = itemId; }
+          }
+        }
+      }
+      if (!bestId){
+        showDungeonMessage('No spell scrolls! Craft some in the Magic skill.','#e03030');
+        renderDungeon();
+        return;
+      }
+      castScrollId = bestId;
+      castScrollDmg = bestDmg;
     }
 
     // Determine player attack type for ability checks
@@ -996,6 +1015,10 @@
 
     if (blockedReason){
       dungeonState.combatLog.push(blockedReason);
+      // If we would have consumed a scroll, don't — the attack never landed.
+      if (mode === 'magic' && castScrollId){
+        dungeonState.combatLog.push('<span style="color:#9a7e50;">Your '+ITEMS[castScrollId].icon+' '+ITEMS[castScrollId].name+' stays sheathed.</span>');
+      }
       showDungeonDmgFloat(0,'miss','right');
       // Player wasted their turn — monster still retaliates and ticks
       monsterRetaliate(mon);
@@ -1005,8 +1028,24 @@
       return;
     }
 
-    var pAtk=mode==='magic'?(typeof slvl==='function'?Math.floor(slvl('magic')*0.6)+2:3):getPlayerAtk();
-    var pDmg=Math.max(1,rollDmg(1,pAtk));
+    // Now that we know the cast will land, consume the scroll.
+    if (mode === 'magic' && castScrollId){
+      var scrItem = ITEMS[castScrollId];
+      G.inv[castScrollId]--;
+      if (G.inv[castScrollId] <= 0) delete G.inv[castScrollId];
+      dungeonState.combatLog.push('<span style="color:#bb77ee;">✨ You unfurl a '+scrItem.icon+' '+scrItem.name+'!</span>');
+    }
+
+    var pAtk = (mode==='magic') ? castScrollDmg : getPlayerAtk();
+    // Scrolls deal their listed damage with a small variance (±15%); physical attacks
+    // still use the existing 1..pAtk random roll so weapon rolls feel identical.
+    var pDmg;
+    if (mode === 'magic'){
+      var variance = 0.85 + Math.random() * 0.30;
+      pDmg = Math.max(1, Math.round(castScrollDmg * variance));
+    } else {
+      pDmg = Math.max(1, rollDmg(1, pAtk));
+    }
     var isCrit=false;
     if(dungeonState.critStacks>0){
       var critChance=Math.min(0.9,dungeonState.critStacks*0.3);
@@ -1252,8 +1291,24 @@
       h+='<button onclick="window._dgAttack(\'slash\')" style="flex:1;max-width:80px;padding:6px;background:#8B4513;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;font-weight:bold;" title="Normal attack">⚔ Slash</button>';
       h+='<button onclick="window._dgAttack(\'power\')" style="flex:1;max-width:80px;padding:6px;background:'+(s.critStacks>0?'#4a3010':'#251e14')+';border:1px solid '+(s.critStacks>0?'#ffd966':'#3a2c18')+';color:'+(s.critStacks>0?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Stack crit chance (+30% per stack). You still take damage!">⚡ Power'+(s.critStacks>0?' ('+s.critStacks+')':'')+'</button>';
       h+='<button onclick="window._dgEat()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:'+(fc>0?'#5ac85a':'#5a4830')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Eat food to heal (no damage taken)">🍖 Eat('+fc+')</button>';
-      var hasMagic=typeof G!=='undefined'&&typeof slvl==='function'&&slvl('magic')>=1&&G.inv&&(G.inv.feather||0)>0;
-      if(hasMagic) h+='<button onclick="window._dgAttack(\'magic\')" style="flex:1;max-width:80px;padding:6px;background:#2a1540;border:1px solid #9b59b6;color:#bb77ee;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Cast spell (uses feathers)">✨ Magic</button>';
+      // Magic button — only shows if the player owns at least one spell scroll.
+      // Auto-picks the highest-damage scroll; button shows total scrolls available
+      // and the best scroll's icon + damage so players know what they'll cast.
+      var bestScrollId=null,bestScrollDmg=0,totalScrolls=0;
+      if(typeof G!=='undefined'&&G.inv&&typeof ITEMS!=='undefined'){
+        for(var sid in G.inv){
+          var sit=ITEMS[sid];
+          if(sit&&sit.type==='scroll'&&(G.inv[sid]||0)>0){
+            totalScrolls+=G.inv[sid];
+            var sd=sit.spellDmg||0;
+            if(sd>bestScrollDmg){bestScrollDmg=sd;bestScrollId=sid;}
+          }
+        }
+      }
+      if(bestScrollId){
+        var bIcon=ITEMS[bestScrollId].icon||'📜';
+        h+='<button onclick="window._dgAttack(\'magic\')" style="flex:1;max-width:90px;padding:6px;background:#2a1540;border:1px solid #9b59b6;color:#bb77ee;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Cast your best scroll ('+ITEMS[bestScrollId].name+' · '+bestScrollDmg+' dmg). '+totalScrolls+' scroll(s) total.">'+bIcon+' Cast ('+totalScrolls+')</button>';
+      }
       h+='<button onclick="window._dgFlee()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:#e03030;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Flee and keep collected loot">🏃 Flee</button>';
     } else {
       h+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+(s.victory?'🪓 Claim & Leave':s.fled?'🏃 Leave':'Leave Dungeon')+'</button>';
