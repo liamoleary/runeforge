@@ -153,36 +153,32 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 #inv-btns{display:flex;gap:6px;padding:4px 8px 8px;flex-wrap:wrap}
 .inv-btn{background:var(--bg2);border:1px solid var(--bdr2);border-radius:5px;padding:5px 10px;color:var(--gold);cursor:pointer;font-size:11px;font-family:'Cinzel',serif}
 .inv-btn:active{transform:scale(.95);background:var(--bg3)}
-#shop-tabs{display:flex;border-bottom:1px solid var(--bdr)}
-.shop-tab{flex:1;text-align:center;padding:8px 6px;font-family:'Cinzel',serif;font-size:11px;color:var(--text3);cursor:pointer;letter-spacing:.5px;border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase}
-.shop-tab:active{background:var(--bg2)}
-.shop-tab.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(240,192,64,.04)}
-#shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px}
-#shop-panel.sell-mode #shop-grid{display:none}
-#shop-panel:not(.sell-mode) #shop-sell-list{display:none}
-#shop-sell-list{padding:8px}
-.ss-empty{font-size:11px;color:var(--text3);text-align:center;padding:16px 8px;font-style:italic}
-.ss-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;margin-bottom:4px}
-.ss-row:active{background:var(--bg3)}
-.ss-ico{font-size:20px;min-width:24px;text-align:center}
-.ss-info{flex:1;min-width:0}
-.ss-name{font-family:'Cinzel',serif;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ss-meta{font-size:9px;color:var(--text3);margin-top:1px}
-.ss-meta .ss-price{color:var(--gold);font-weight:600}
-.ss-btns{display:flex;gap:4px;flex-shrink:0}
-.ss-btn{background:var(--bg1);border:1px solid var(--bdr2);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;padding:5px 9px;border-radius:4px;cursor:pointer;min-width:40px}
-.ss-btn:active{transform:scale(.95);background:var(--bg3)}
-.ss-btn.ss-all{border-color:var(--gold);background:rgba(240,192,64,.08)}
-.sh-item{background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;padding:9px;cursor:pointer;transition:all .18s}
-.sh-item:active{transform:scale(.95);background:var(--bg3)}
-.sh-item.owned{border-color:var(--green);opacity:.6}
-.sh-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
-.sh-icon{font-size:18px}
-.sh-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text)}
-.sh-price{font-size:12px;color:var(--gold)}
-.sh-eff{font-size:9px;color:var(--text3);margin-top:2px}
-.sh-active{font-size:9px;color:#5ac85a;margin-top:3px;font-weight:700;letter-spacing:.3px}
-.sh-item.owned{border-color:#5ac85a;opacity:1}
+/* Worker panel */
+#worker-list{display:flex;flex-direction:column;gap:6px;padding:10px}
+.wk-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;padding:9px 10px;display:flex;align-items:center;gap:10px}
+.wk-card.active{border-color:var(--green)}
+.wk-card.idle{border-color:var(--bdr);opacity:.75}
+.wk-ico{font-size:22px;min-width:28px;text-align:center}
+.wk-body{flex:1;min-width:0}
+.wk-title{font-family:'Cinzel',serif;font-size:11px;color:var(--text);display:flex;align-items:center;gap:6px}
+.wk-status{font-size:9px;margin-top:2px}
+.wk-prog{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:4px}
+.wk-prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:3px;transition:width .15s}
+.wk-btn{background:var(--bg1);border:1px solid var(--bdr2);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;padding:5px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.wk-btn:active{transform:scale(.95);background:var(--bg3)}
+.wk-btn.hire{border-color:var(--gold);background:rgba(240,192,64,.08)}
+.wk-btn.hire[disabled]{opacity:.4;cursor:default}
+.wk-hire-row{display:flex;align-items:center;justify-content:center;padding:8px 10px}
+/* Worker picker overlay */
+#wk-picker{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(5,3,1,.88);z-index:9500;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font-family:'Cinzel',serif}
+#wk-picker-modal{background:linear-gradient(135deg,#0f0a04 0%,#1a1308 100%);border:2px solid var(--gold);border-radius:12px;padding:18px 14px 14px;max-width:400px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(240,192,64,.4)}
+#wk-picker-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding-right:4px}
+.wkp-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--bg2);cursor:pointer;transition:all .12s}
+.wkp-item:active{background:var(--bg3);transform:scale(.97)}
+.wkp-item.locked{opacity:.35;cursor:default}
+.wkp-ico{font-size:18px;min-width:24px;text-align:center}
+.wkp-name{font-family:'Cinzel',serif;font-size:11px;color:var(--text);flex:1}
+.wkp-meta{font-size:9px;color:var(--text3)}
 #active-buffs{display:flex;flex-wrap:wrap;gap:4px;padding:0 10px 6px}
 .buff-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(94,200,90,.1);border:1px solid #5ac85a;border-radius:14px;padding:3px 8px;font-size:10px;color:#9adda0;font-family:'Cinzel',serif}
 .buff-pill .buff-ico{font-size:13px;line-height:1}
@@ -588,16 +584,13 @@ body.shake-hit #stage{animation:screenShake .35s ease}
     <div id="inv-btns">
       <button class="inv-btn" onclick="sellAll()">💰 Sell Resources</button>
       <button class="inv-btn" onclick="eatFood()">🍽️ Eat Best Food</button>
+      <button class="inv-btn" onclick="showSellOverlay()">🏪 Sell Items</button>
     </div>
   </div>
-  <div class="panel" id="shop-panel">
-    <div class="panel-hdr">👷 Workers & Trade</div>
-    <div id="shop-tabs">
-      <div class="shop-tab active" id="shop-tab-buy" onclick="setShopTab('buy')">👷 Workers</div>
-      <div class="shop-tab" id="shop-tab-sell" onclick="setShopTab('sell')">💰 Sell</div>
-    </div>
-    <div id="shop-grid"></div>
-    <div id="shop-sell-list"></div>
+  <div class="panel" id="worker-panel">
+    <div class="panel-hdr"><span>👷 Workers</span><span id="worker-count">0/5</span></div>
+    <div id="worker-list"></div>
+    <div class="wk-hire-row" id="worker-hire-row"></div>
   </div>
   <div class="panel" id="log-panel"><div class="panel-hdr">Activity Log</div><div id="log-inner"></div></div>
 </div>
@@ -1012,8 +1005,6 @@ function tickWorkers(dt){
   }
 }
 
-// Legacy shop constant kept empty so any straggling references don't crash.
-const SHOP=[];
 // STATE
 const EQUIP_SLOTS = ['weaponR','weaponL','helmet','chest','boots','jewelry'];
 function freshEquip(){return{weaponR:null,weaponL:null,helmet:null,chest:null,boots:null,jewelry:null};}
@@ -1520,8 +1511,7 @@ function updateUI(){
     updateCombatStatsPanel();updateStageMonsterHP();
   const cnt=Object.values(G.inv).filter(v=>v>0).length;
   document.getElementById('inv-count').textContent=cnt+'/28';
-  if(_shopTab==='sell')renderShopSell();
-  else if(_shopTab==='buy')buildShop();
+  renderWorkers();
 }
 
 function isEquippedAnywhere(id){
@@ -1769,7 +1759,6 @@ function showSlotMenu(sk, slotType){
   if(slotType==='tool'){
     title=SKILLS[sk].icon+' '+SKILLS[sk].name+' - Tool Slot';
     const toolIds=TOOL_MAP[sk]||[];
-    const upKey='spd_'+sk.slice(0,4);
     const current=G.tools[sk];
     // Currently equipped inventory tool (can be unequipped back to inventory)
     if(current&&ITEMS[current]){
@@ -1778,11 +1767,6 @@ function showSlotMenu(sk, slotType){
       items.push({icon:it.icon,name:it.name+' (equipped)',desc:'+'+pct+'% '+SKILLS[sk].name+' speed · tap to unequip',equipped:true,action:()=>{
         give(current,1);delete G.tools[sk];log('Removed '+it.name+' from '+SKILLS[sk].name+' tool slot.');recomputeActiveTaskDur(sk);closeSlotMenu();
       }});
-    }
-    // Shop upgrade (permanent, separate)
-    if(G.upgrades[upKey]){
-      const shopItem=SHOP.find(s=>toolIds.includes(s.id));
-      items.push({icon:shopItem?shopItem.icon:'⚒',name:(shopItem?shopItem.name:'Tool')+' (shop)',desc:'Permanent shop upgrade · '+(shopItem?shopItem.eff:'+15% speed'),equipped:true,action:()=>closeSlotMenu()});
     }
     // Available tool items in inventory
     Object.entries(G.inv).filter(([id,q])=>q>0&&toolIds.includes(id)&&id!==current).forEach(([id])=>{
@@ -2044,99 +2028,198 @@ function refreshButtons(sk){
   });
 }
 
-function buildShop(){
-  const g=document.getElementById('shop-grid');
-  g.innerHTML='';
-  // Worker hire slots
+// === Worker Panel Rendering ===
+function renderWorkers(){
+  const list=document.getElementById('worker-list');if(!list)return;
+  const hireRow=document.getElementById('worker-hire-row');
+  const countEl=document.getElementById('worker-count');
   const hired=G.workers?G.workers.length:0;
-  for(let i=0;i<WORKER_MAX;i++){
-    const d=document.createElement('div');
-    d.className='sh-item';
-    if(i<hired){
-      const w=G.workers[i];
-      const aName=w.assignedAction?((findAction(w.assignedAction)||{}).name||'Unknown'):'Idle';
-      const skName=w.skill&&SKILLS[w.skill]?SKILLS[w.skill].name:'—';
-      const statusClr=w.active?'#5ac85a':'#9a7e50';
-      const statusTxt=w.active?'Working: '+aName:'Idle';
-      d.innerHTML='<div class="sh-top"><span class="sh-icon">👷</span><span class="sh-name">Worker #'+(i+1)+'</span></div>'+
-        '<div class="sh-eff" style="color:'+statusClr+';">'+statusTxt+'</div>'+
-        '<div class="sh-eff" style="font-size:9px;color:#5a4830;">'+skName+' · '+Math.round(WORKER_SPEED*100)+'% speed · '+Math.round(WORKER_XP*100)+'% XP</div>';
-      d.classList.add('owned');
-    } else if(i===hired){
-      const cost=workerHireCost(i);
-      const canAfford=G.gold>=cost;
-      d.innerHTML='<div class="sh-top"><span class="sh-icon">👷</span><span class="sh-name">Hire Worker #'+(i+1)+'</span></div>'+
-        '<div class="sh-price">🪙 '+cost+'</div>'+
-        '<div class="sh-eff">Assign to any action · '+Math.round(WORKER_SPEED*100)+'% speed</div>';
-      if(!canAfford) d.style.opacity='0.5';
-      d.onclick=function(){
-        if(hireWorker()){
-          buildShop();updateUI();
-        } else {
-          log('❌ Need '+cost+' gp to hire (have '+G.gold+').');
-        }
-      };
-    } else {
-      d.innerHTML='<div class="sh-top"><span class="sh-icon" style="opacity:0.3;">👷</span><span class="sh-name" style="color:#3a2c18;">Worker #'+(i+1)+'</span></div>'+
-        '<div class="sh-eff" style="color:#3a2c18;">Hire previous worker first</div>';
-      d.style.opacity='0.35';
-      d.style.cursor='default';
-    }
-    g.appendChild(d);
-  }
-}
-
-let _shopTab='buy';
-function setShopTab(tab){
-  _shopTab=tab;
-  document.getElementById('shop-tab-buy').classList.toggle('active',tab==='buy');
-  document.getElementById('shop-tab-sell').classList.toggle('active',tab==='sell');
-  const panel=document.getElementById('shop-panel');
-  if(panel)panel.classList.toggle('sell-mode',tab==='sell');
-  if(tab==='sell')renderShopSell();
-  else buildShop();
-}
-
-// Sort order for the sell list so related items stay grouped
-const _SELL_TYPE_ORDER={res:0,raw:1,food:2,weapon:3,armour:4,accessory:5,currency:6,tool:7,potion:8};
-
-function renderShopSell(){
-  const list=document.getElementById('shop-sell-list');if(!list)return;
+  const activeCount=G.workers?G.workers.filter(w=>w.active).length:0;
+  if(countEl) countEl.textContent=activeCount+'/'+hired+' active';
   list.innerHTML='';
+  // Render each hired worker as a card
+  for(let i=0;i<hired;i++){
+    const w=G.workers[i];
+    const a=w.assignedAction?findAction(w.assignedAction):null;
+    const skIcon=w.skill&&SKILLS[w.skill]?SKILLS[w.skill].icon:'—';
+    const skName=w.skill&&SKILLS[w.skill]?SKILLS[w.skill].name:'';
+    const aName=a?a.name:'No assignment';
+    const isActive=w.active&&a;
+    const pct=isActive&&w.dur>0?Math.min(100,(w.prog/w.dur)*100):0;
+    let statusTxt,statusClr;
+    if(isActive){
+      statusTxt=skName;statusClr='var(--green)';
+    } else if(w.assignedAction&&!w.active){
+      statusTxt='Idle — out of materials';statusClr='var(--red)';
+    } else {
+      statusTxt='Unassigned';statusClr='var(--text3)';
+    }
+    const card=document.createElement('div');
+    card.className='wk-card '+(isActive?'active':'idle');
+    card.innerHTML=
+      '<div class="wk-ico">'+(isActive?skIcon:'💤')+'</div>'+
+      '<div class="wk-body">'+
+        '<div class="wk-title"><span>Worker #'+(i+1)+'</span><span style="font-size:9px;color:var(--text3);">'+aName+'</span></div>'+
+        '<div class="wk-status" style="color:'+statusClr+';">'+statusTxt+'</div>'+
+        (isActive?'<div class="wk-prog"><div class="wk-prog-fill" style="width:'+pct+'%"></div></div>':'')+
+      '</div>'+
+      '<button class="wk-btn" data-wk="'+i+'">'+(w.assignedAction?'Reassign':'Assign')+'</button>';
+    list.appendChild(card);
+  }
+  if(!hired){
+    list.innerHTML='<div style="text-align:center;padding:12px 8px;color:var(--text3);font-size:11px;font-style:italic;">No workers hired yet. Hire your first to automate gathering!</div>';
+  }
+  // Hire button
+  if(hireRow){
+    if(hired<WORKER_MAX){
+      const cost=workerHireCost(hired);
+      const canAfford=G.gold>=cost;
+      hireRow.innerHTML='<button class="wk-btn hire" id="hire-btn"'+(canAfford?'':' disabled')+'>👷 Hire Worker #'+(hired+1)+' — 🪙 '+cost+'</button>';
+    } else {
+      hireRow.innerHTML='<div style="font-size:10px;color:var(--text3);">All workers hired ('+WORKER_MAX+'/'+WORKER_MAX+')</div>';
+    }
+  }
+  // Wire up buttons via delegation
+  list.querySelectorAll('[data-wk]').forEach(btn=>{
+    const idx=parseInt(btn.dataset.wk);
+    btn.onclick=()=>showWorkerPicker(idx);
+  });
+  const hireBtn=document.getElementById('hire-btn');
+  if(hireBtn) hireBtn.onclick=function(){
+    if(hireWorker()){renderWorkers();updateUI();}
+    else log('❌ Need '+workerHireCost(G.workers.length)+' gp (have '+G.gold+').');
+  };
+}
+
+// Two-step picker: 1) choose a skill, 2) choose an action within that skill.
+function showWorkerPicker(workerIdx){
+  const existing=document.getElementById('wk-picker');
+  if(existing) existing.remove();
+  const ov=document.createElement('div');
+  ov.id='wk-picker';
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  const modal=document.createElement('div');
+  modal.id='wk-picker-modal';
+  // Step 1: pick skill
+  function renderSkillList(){
+    modal.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
+        '<div style="color:var(--gold);font-size:14px;font-weight:700;">Assign Worker #'+(workerIdx+1)+'</div>'+
+        '<div style="cursor:pointer;color:var(--text3);font-size:22px;line-height:1;" onclick="document.getElementById(\'wk-picker\').remove()">&times;</div>'+
+      '</div>'+
+      '<div style="color:var(--text3);font-size:10px;margin-bottom:8px;">Choose a skill:</div>'+
+      '<div id="wk-picker-list"></div>';
+    const pList=modal.querySelector('#wk-picker-list');
+    // Add an Unassign option at top
+    const unRow=document.createElement('div');
+    unRow.className='wkp-item';
+    unRow.innerHTML='<span class="wkp-ico">❌</span><span class="wkp-name" style="color:var(--text3);">Unassign worker</span>';
+    unRow.onclick=function(){assignWorker(workerIdx,null);ov.remove();renderWorkers();log('👷 Worker #'+(workerIdx+1)+' unassigned.');};
+    pList.appendChild(unRow);
+    for(const sk of Object.keys(SKILLS)){
+      const skDef=SKILLS[sk];
+      const row=document.createElement('div');
+      row.className='wkp-item';
+      row.innerHTML='<span class="wkp-ico">'+skDef.icon+'</span><span class="wkp-name">'+skDef.name+'</span><span class="wkp-meta">Lv '+slvl(sk)+'</span>';
+      row.onclick=function(){renderActionList(sk);};
+      pList.appendChild(row);
+    }
+  }
+  // Step 2: pick action within the chosen skill
+  function renderActionList(sk){
+    const skDef=SKILLS[sk];
+    const lv=slvl(sk);
+    modal.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
+        '<div style="color:var(--gold);font-size:14px;font-weight:700;">'+skDef.icon+' '+skDef.name+'</div>'+
+        '<div style="display:flex;gap:10px;align-items:center;">'+
+          '<div style="cursor:pointer;color:var(--text3);font-size:11px;" onclick="void(0)" id="wkp-back">← Back</div>'+
+          '<div style="cursor:pointer;color:var(--text3);font-size:22px;line-height:1;" onclick="document.getElementById(\'wk-picker\').remove()">&times;</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="color:var(--text3);font-size:10px;margin-bottom:8px;">Choose an action (Lv '+lv+'):</div>'+
+      '<div id="wk-picker-list"></div>';
+    modal.querySelector('#wkp-back').onclick=function(){renderSkillList();};
+    const pList=modal.querySelector('#wk-picker-list');
+    const actions=ACTIONS[sk]||[];
+    for(const a of actions){
+      const unlocked=lv>=a.req;
+      const row=document.createElement('div');
+      row.className='wkp-item'+(unlocked?'':' locked');
+      const durSec=Math.round(a.dur/WORKER_SPEED/1000);
+      let needStr='';
+      if(a.need) needStr=a.need.map(c=>(ITEMS[c.id]?.icon||'')+c.n).join(' ');
+      let prodStr='';
+      if(a.prod) prodStr=a.prod.map(p=>(ITEMS[p.id]?.icon||'')+(ITEMS[p.id]?.name||p.id)).join(', ');
+      row.innerHTML=
+        '<span class="wkp-ico">'+a.icon+'</span>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div class="wkp-name">'+a.name+'</div>'+
+          '<div class="wkp-meta">'+(unlocked?durSec+'s · '+Math.round(a.xp*WORKER_XP)+' xp':'🔒 Requires Lv '+a.req)+(needStr?' · '+needStr:'')+'</div>'+
+        '</div>';
+      if(unlocked){
+        (function(actionId,actionName){
+          row.onclick=function(){
+            assignWorker(workerIdx,actionId);
+            ov.remove();
+            renderWorkers();
+            log('👷 Worker #'+(workerIdx+1)+' assigned to '+actionName+'.');
+          };
+        })(a.id,a.name);
+      }
+      pList.appendChild(row);
+    }
+  }
+  renderSkillList();
+  ov.appendChild(modal);
+  document.body.appendChild(ov);
+}
+
+// Sell overlay — replaces the old sell tab in the shop
+function showSellOverlay(){
+  const existing=document.getElementById('wk-picker');
+  if(existing) existing.remove();
+  const ov=document.createElement('div');
+  ov.id='wk-picker';
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  const modal=document.createElement('div');
+  modal.id='wk-picker-modal';
+  const _SELL_TYPE_ORDER={res:0,raw:1,food:2,weapon:3,armour:4,accessory:5,currency:6,tool:7,potion:8};
   const entries=Object.entries(G.inv)
     .filter(([id,q])=>q>0&&ITEMS[id]&&canSell(id)&&sellValue(id)>0)
-    .map(([id,q])=>{
-      const it=ITEMS[id];
-      return{id,qty:q,it,price:sellValue(id)};
-    })
+    .map(([id,q])=>({id,qty:q,it:ITEMS[id],price:sellValue(id)}))
     .sort((a,b)=>{
       const ta=_SELL_TYPE_ORDER[a.it.type]??99;
       const tb=_SELL_TYPE_ORDER[b.it.type]??99;
-      if(ta!==tb)return ta-tb;
-      return a.price-b.price;
+      return ta!==tb?ta-tb:a.price-b.price;
     });
+  let body='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
+    '<div style="color:var(--gold);font-size:14px;font-weight:700;">🏪 Sell Items</div>'+
+    '<div style="cursor:pointer;color:var(--text3);font-size:22px;line-height:1;" onclick="document.getElementById(\'wk-picker\').remove()">&times;</div>'+
+  '</div><div id="wk-picker-list">';
   if(!entries.length){
-    list.innerHTML='<div class="ss-empty">Nothing to sell right now — come back with some loot.</div>';
-    return;
-  }
-  entries.forEach(({id,qty,it,price})=>{
-    const row=document.createElement('div');row.className='ss-row';
-    const total=price*qty;
-    row.innerHTML=
-      '<span class="ss-ico">'+it.icon+'</span>'+
-      '<div class="ss-info">'+
-        '<div class="ss-name">'+it.name+'</div>'+
-        '<div class="ss-meta"><span class="ss-price">'+price+' gp</span> each · '+qty+' in bag · '+total+' gp total</div>'+
-      '</div>'+
-      '<div class="ss-btns">'+
-        '<button class="ss-btn" data-sell-one="'+id+'">Sell 1</button>'+
-        '<button class="ss-btn ss-all" data-sell-all="'+id+'">All</button>'+
+    body+='<div style="text-align:center;padding:16px 8px;color:var(--text3);font-size:11px;font-style:italic;">Nothing to sell right now.</div>';
+  } else {
+    entries.forEach(({id,qty,it,price})=>{
+      body+='<div class="wkp-item" style="cursor:default;gap:6px;">'+
+        '<span class="wkp-ico">'+it.icon+'</span>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div class="wkp-name">'+it.name+'</div>'+
+          '<div class="wkp-meta" style="color:var(--gold);">'+price+' gp each · '+qty+' owned</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:4px;">'+
+          '<button class="wk-btn" data-sell-one="'+id+'">Sell 1</button>'+
+          '<button class="wk-btn" data-sell-all="'+id+'" style="border-color:var(--gold);">All</button>'+
+        '</div>'+
       '</div>';
-    list.appendChild(row);
-  });
-  // Wire up via delegated clicks to keep markup simple
-  list.querySelectorAll('[data-sell-one]').forEach(b=>{b.onclick=()=>sellOne(b.dataset.sellOne);});
-  list.querySelectorAll('[data-sell-all]').forEach(b=>{b.onclick=()=>sellStack(b.dataset.sellAll);});
+    });
+  }
+  body+='</div>';
+  modal.innerHTML=body;
+  ov.appendChild(modal);
+  document.body.appendChild(ov);
+  modal.querySelectorAll('[data-sell-one]').forEach(b=>{b.onclick=()=>{sellOne(b.dataset.sellOne);showSellOverlay();};});
+  modal.querySelectorAll('[data-sell-all]').forEach(b=>{b.onclick=()=>{sellStack(b.dataset.sellAll);showSellOverlay();};});
 }
 // ACTIONS
 function useItem(id){
@@ -2287,7 +2370,6 @@ function sellOne(id){
   G.gold+=v;
   log('<span class="lg">💰 Sold '+it.icon+' '+it.name+' for '+v+' gp.</span>');
   updateUI();
-  renderShopSell();
 }
 
 function sellStack(id){
@@ -2300,11 +2382,7 @@ function sellStack(id){
   G.gold+=total;
   log('<span class="lg">💰 Sold '+it.icon+' '+it.name+' ×'+qty+' for '+total+' gp.</span>');
   updateUI();
-  renderShopSell();
 }
-
-// Legacy buy() removed — shop is now the worker hire panel.
-function buy(){}
 // CHARACTER ANIMATION
 function anim(){
   const ch=document.getElementById('char');
@@ -2761,7 +2839,7 @@ function updateCombatStatsPanel() {
   load();
   giveStarterSword();
   if(!G.hasSeenIntro){showIntro();}
-      buildSkills();buildTabs();buildShop();
+      buildSkills();buildTabs();renderWorkers();
   updateUI();anim();
   setInterval(tick,50);
   requestNotificationPermission();
