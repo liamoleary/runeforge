@@ -971,6 +971,10 @@ function load(){
   // Migrate: remove legacy buff state, init workers
   if(G.buffs) delete G.buffs;
   if(!Array.isArray(G.workers)) G.workers=[];
+  // Deactivate workers assigned to actions that no longer exist (e.g. removed gear recipes).
+  for(const w of G.workers){
+    if(w.action && !findAction(w.action)){w.action=null;w.skill=null;w.active=false;w.prog=0;}
+  }
   // Trinket removal cleanup: drop legacy state and any trinket items in inventory
   if(G.trinkets)delete G.trinkets;
   const oldTrinketIds=['grove_wc_trinket','grove_mn_trinket','grove_fs_trinket','grove_ck_trinket','grove_sm_trinket','grove_cb_trinket','grove_fl_trinket','grove_cr_trinket','grove_mg_trinket'];
