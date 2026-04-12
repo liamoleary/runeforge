@@ -913,24 +913,24 @@ const TOOL_BONUS={
 // Workers are persistent helpers the player hires with gold. Each worker is
 // assigned to ONE skill action and produces items / XP autonomously (slower
 // than the player). Workers consume materials just like the player — if mats
-// run out, the worker idles. Workers cannot do actions the player hasn't
-// unlocked (skill level gated).
+// run out, the worker idles until mats reappear. Workers cannot do actions
+// the player hasn't unlocked (skill level gated).
 //
 // Stored in G.workers as an array of worker objects:
-//   { id:'w0', skill:null, assignedAction:null, active:false, prog:0, dur:0 }
+//   { id, skill, assignedAction, active, prog, dur, pendingLog:{} }
 //
 // Hire cost curve (exponential):  500 · 3^n  for the (n+1)th worker.
 //   1st: 500g, 2nd: 1,500g, 3rd: 4,500g, 4th: 13,500g, 5th: 40,500g
 const WORKER_MAX = 5;
 const WORKER_SPEED = 0.55;  // workers produce at 55% player speed
 const WORKER_XP   = 0.30;  // workers grant 30% of normal XP
+const WORKER_LOG_BATCH = 4; // flush worker log every N completions
 function workerHireCost(n){ return Math.round(500 * Math.pow(3, n)); }
 function freshWorker(idx){
-  return { id:'w'+idx, skill:null, assignedAction:null, active:false, prog:0, dur:0 };
+  return { id:'w'+idx, skill:null, assignedAction:null, active:false, prog:0, dur:0, pendingLog:{} };
 }
 function initWorkers(){
   if(!G.workers) G.workers=[];
-  // Sanitise each worker on load (fill missing fields).
   for(let i=0;i<G.workers.length;i++){
     const w=G.workers[i];
     if(!w.id) w.id='w'+i;
@@ -939,7 +939,20 @@ function initWorkers(){
     if(w.active===undefined) w.active=false;
     if(w.prog===undefined)   w.prog=0;
     if(w.dur===undefined)    w.dur=0;
+    if(!w.pendingLog)        w.pendingLog={};
+    // Recompute dur on load in case speed constants or tools changed.
+    if(w.assignedAction&&w.skill){
+      const a=findAction(w.assignedAction);
+      if(a) w.dur=computeWorkerDur(a,w.skill);
+    }
   }
+}
+// Compute worker action duration factoring in WORKER_SPEED and tool bonus.
+function computeWorkerDur(action,sk){
+  let toolMult=1;
+  const tid=G.tools&&G.tools[sk];
+  if(tid&&TOOL_BONUS[tid]) toolMult=1-TOOL_BONUS[tid];
+  return Math.max(800, Math.round((action.dur / WORKER_SPEED) * toolMult));
 }
 // Hire the next worker. Returns true on success.
 function hireWorker(){
@@ -951,53 +964,79 @@ function hireWorker(){
   log('👷 Hired worker #'+(G.workers.length)+'!');
   return true;
 }
-// Assign a worker to a skill action. Validates level req + mats.
+// Assign a worker to a skill action. Validates level req.
 function assignWorker(workerIdx, actionId){
   const w=G.workers[workerIdx]; if(!w) return false;
-  if(!actionId){ // un-assign
+  // Flush any pending log from old assignment
+  flushWorkerLog(w);
+  if(!actionId){
     w.assignedAction=null; w.skill=null; w.active=false; w.prog=0; w.dur=0;
     return true;
   }
   const a=findAction(actionId); if(!a) return false;
   const sk=findSkill(actionId); if(!sk) return false;
-  const lv=slvl(sk);
-  if(lv<a.req) return false;
+  if(slvl(sk)<a.req) return false;
   w.assignedAction=actionId;
   w.skill=sk;
   w.active=true;
   w.prog=0;
-  // Worker duration: base action dur / WORKER_SPEED (slower than player).
-  // No tool or level bonuses — workers are simple.
-  w.dur=Math.max(1000, Math.round(a.dur / WORKER_SPEED));
+  w.dur=computeWorkerDur(a,sk);
+  w.pendingLog={};
   return true;
 }
-// Tick all active workers. Called from main game tick with delta ms.
+// Flush a single worker's batched production log.
+function flushWorkerLog(w){
+  const items=Object.entries(w.pendingLog||{});
+  if(!items.length) return;
+  const parts=items.map(([id,n])=>(ITEMS[id]?.icon||'')+'\u00d7'+n);
+  log('<span style="color:var(--text3)">👷 Worker produced: '+parts.join(', ')+'</span>');
+  w.pendingLog={};
+}
+// Tick all workers. Called from main game tick with delta ms.
+// Workers tick even during dungeon runs — they're autonomous.
 function tickWorkers(dt){
   if(!G.workers||!G.workers.length) return;
   for(let i=0;i<G.workers.length;i++){
     const w=G.workers[i];
-    if(!w.active||!w.assignedAction) continue;
+    if(!w.assignedAction) continue;
     const a=findAction(w.assignedAction);
     const sk=w.skill||findSkill(w.assignedAction);
     if(!a||!sk){ w.active=false; continue; }
-    // Stop if player no longer meets level req (e.g. impossible but safe)
     if(slvl(sk)<a.req){ w.active=false; continue; }
+    // Recompute dur each tick so tool equip/unequip takes effect immediately.
+    w.dur=computeWorkerDur(a,sk);
+    // If idle (out of mats), check if mats are available again.
+    if(!w.active){
+      if(a.need){
+        let canResume=true;
+        for(const c of a.need){ if(!has(c.id,c.n)){canResume=false;break;} }
+        if(!canResume) continue;
+      }
+      w.active=true; w.prog=0;
+    }
     w.prog+=dt;
     if(w.prog>=w.dur){
       w.prog-=w.dur;
-      // Check and consume materials
+      // Consume materials
       if(a.need){
         let canAfford=true;
-        for(const c of a.need){
-          if(!has(c.id,c.n)){ canAfford=false; break; }
-        }
-        if(!canAfford){ w.active=false; w.prog=0; continue; }
+        for(const c of a.need){ if(!has(c.id,c.n)){canAfford=false;break;} }
+        if(!canAfford){ w.active=false; w.prog=0; flushWorkerLog(w); continue; }
         for(const c of a.need) take(c.id,c.n);
       }
-      // Produce items
+      // Produce items — batch log output
+      let batchCount=0;
       if(a.prod){
-        for(const p of a.prod) give(p.id,p.n);
+        for(const p of a.prod){
+          give(p.id,p.n);
+          if(!w.pendingLog) w.pendingLog={};
+          w.pendingLog[p.id]=(w.pendingLog[p.id]||0)+p.n;
+          batchCount+=(w.pendingLog[p.id]);
+        }
       }
+      // Flush log every WORKER_LOG_BATCH completions (measured by total items)
+      const totalPending=Object.values(w.pendingLog||{}).reduce((s,v)=>s+v,0);
+      if(totalPending>=WORKER_LOG_BATCH) flushWorkerLog(w);
       // Grant reduced XP
       const xpAmt=Math.max(1,Math.round(a.xp*WORKER_XP));
       addXP(sk,xpAmt);
@@ -2146,7 +2185,7 @@ function showWorkerPicker(workerIdx){
       const unlocked=lv>=a.req;
       const row=document.createElement('div');
       row.className='wkp-item'+(unlocked?'':' locked');
-      const durSec=Math.round(a.dur/WORKER_SPEED/1000);
+      const durSec=Math.round(computeWorkerDur(a,sk)/1000);
       let needStr='';
       if(a.need) needStr=a.need.map(c=>(ITEMS[c.id]?.icon||'')+c.n).join(' ');
       let prodStr='';

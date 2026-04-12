@@ -578,22 +578,12 @@
       playerPoison:0,playerPoisonTurns:0,
       victory:false,
       fled:false,
-      critStacks:0,
-      bgTaskSkill:null,
-      bgTaskAction:null,
-      bgTaskProg:0,
-      bgTaskDur:0
+      critStacks:0
     };
-    // Allow background skilling - remember what was running
+    // Workers continue ticking autonomously during dungeon runs via tickWorkers().
     dungeonState.combatLog.push('You enter the <b>'+activeDungeon.name+'</b>...');
     dungeonState.combatLog.push(activeDungeon.flavour||'5 creatures await.');
     renderDungeon();
-  }
-
-  // Background skilling tick for during dungeon
-  function dungeonBgTick(){
-    if(!dungeonState||!dungeonState.bgTaskSkill) return;
-    // Not implemented as real-time yet - skills continue ticking via main loop
   }
 
 
