@@ -617,6 +617,8 @@ function lvlOf(xp){for(let i=98;i>=1;i--)if(xp>=XP[i])return i;return 1;}
 const ACTIONS = {
   woodcutting:[
     {id:'wc0',name:'Normal Tree',icon:'🌲',req:1,xp:25,dur:3500,prod:[{id:'logs',n:1}]},
+    {id:'wc4',name:'Pluck Chickens',icon:'🐔',req:1,xp:18,dur:2500,prod:[{id:'feather',n:5}]},
+    {id:'wc5',name:'Hunt Cattle',icon:'🐄',req:5,xp:30,dur:4000,prod:[{id:'cowhide',n:1},{id:'raw_meat',n:1}]},
     {id:'wc1',name:'Oak Tree',icon:'🌳',req:15,xp:38,dur:5000,prod:[{id:'oak_log',n:1}]},
     {id:'wc2',name:'Willow Tree',icon:'🌿',req:30,xp:68,dur:6000,prod:[{id:'willow_log',n:1}]},
     {id:'wc3',name:'Yew Tree',icon:'🌑',req:60,xp:175,dur:8000,prod:[{id:'yew_log',n:1}]},
@@ -638,6 +640,15 @@ const ACTIONS = {
   smithing:[
     {id:'sm0',name:'Bronze Bar',icon:'🟫',req:1,xp:28,dur:4000,prod:[{id:'bronze_bar',n:1}],need:[{id:'copper_ore',n:1},{id:'tin_ore',n:1}]},
     {id:'sm1',name:'Iron Bar',icon:'⬛',req:15,xp:32,dur:4500,prod:[{id:'iron_bar',n:1}],need:[{id:'iron_ore',n:2}]},
+    // === Novice gear — craftable without dungeon materials ===
+    {id:'sm2',name:'Bronze Sword',icon:'🗡️',req:1,xp:35,dur:5000,prod:[{id:'bronze_sword',n:1}],need:[{id:'bronze_bar',n:2}]},
+    {id:'sm3',name:'Bronze Helm',icon:'⛑️',req:5,xp:40,dur:5500,prod:[{id:'bronze_helm',n:1}],need:[{id:'bronze_bar',n:2}]},
+    {id:'sm4',name:'Bronze Boots',icon:'🥾',req:8,xp:45,dur:5500,prod:[{id:'bronze_boots',n:1}],need:[{id:'bronze_bar',n:2}]},
+    {id:'sm5',name:'Bronze Shield',icon:'🛡️',req:10,xp:55,dur:6000,prod:[{id:'bronze_shield',n:1}],need:[{id:'bronze_bar',n:3}]},
+    {id:'sm6',name:'Iron Sword',icon:'⚔️',req:20,xp:70,dur:7000,prod:[{id:'iron_sword',n:1}],need:[{id:'iron_bar',n:3}]},
+    {id:'sm7',name:'Iron Helm',icon:'⛑️',req:25,xp:80,dur:7500,prod:[{id:'iron_helm',n:1}],need:[{id:'iron_bar',n:3}]},
+    {id:'sm8',name:'Iron Boots',icon:'🥾',req:28,xp:85,dur:7500,prod:[{id:'iron_boots',n:1}],need:[{id:'iron_bar',n:3}]},
+    {id:'sm9',name:'Iron Platebody',icon:'🛡️',req:35,xp:120,dur:9000,prod:[{id:'iron_platebody',n:1}],need:[{id:'iron_bar',n:5}]},
     // Skill-tool craft recipes — these tools used to be shop upgrades. They're now
     // smithed (or for the wand, enchanted via magic) and slot into the per-skill
     // tool slot for a passive speed boost.
@@ -673,7 +684,11 @@ const ACTIONS = {
   ],
   fletching:[
     {id:'fl0',name:'Arrow Shafts',icon:'↑',req:1,xp:14,dur:2000,prod:[{id:'arrow_shaft',n:15}],need:[{id:'logs',n:1}]},
+    // === Novice bows — craftable without dungeon materials ===
+    {id:'fl1',name:'Shortbow',icon:'🏹',req:5,xp:30,dur:4500,prod:[{id:'shortbow',n:1}],need:[{id:'logs',n:2},{id:'arrow_shaft',n:5}]},
+    {id:'fl2',name:'Oak Shortbow',icon:'🏹',req:20,xp:55,dur:6000,prod:[{id:'oak_bow',n:1}],need:[{id:'oak_log',n:2},{id:'arrow_shaft',n:10},{id:'feather',n:5}]},
     {id:'fl3',name:'Iron Arrows x15',icon:'🪃',req:15,xp:38,dur:3000,prod:[{id:'iron_arrow',n:15}],need:[{id:'arrow_shaft',n:15},{id:'iron_bar',n:1},{id:'feather',n:15}]},
+    {id:'fl8',name:'Willow Bow',icon:'🏹',req:35,xp:85,dur:8000,prod:[{id:'willow_bow',n:1}],need:[{id:'willow_log',n:2},{id:'arrow_shaft',n:15},{id:'feather',n:10}]},
     // === Upgrade materials — used in the Forge to improve weapon ATK ===
     {id:'fl4',name:'Precision Kit',icon:'🎯',req:20,xp:55,dur:5500,prod:[{id:'precision_kit',n:1}],need:[{id:'arrow_shaft',n:10},{id:'feather',n:5}]},
     {id:'fl5',name:'Sharpening Stone',icon:'🪨',req:35,xp:90,dur:7000,prod:[{id:'sharpening_stone',n:1}],need:[{id:'iron_ore',n:2},{id:'arrow_shaft',n:5}]},
@@ -682,7 +697,12 @@ const ACTIONS = {
   ],
   crafting:[
     {id:'cr0',name:'Tan Cowhide',icon:'🐄',req:1,xp:14,dur:2000,prod:[{id:'leather',n:1}],need:[{id:'cowhide',n:1}]},
+    // === Novice leather gear — craftable without dungeon materials ===
+    {id:'cr1',name:'Leather Cap',icon:'🧢',req:5,xp:30,dur:4000,prod:[{id:'leather_cap',n:1}],need:[{id:'leather',n:3}]},
     {id:'cr2',name:'Gold Ring',icon:'💍',req:5,xp:25,dur:3500,prod:[{id:'gold_ring',n:1}],need:[{id:'gold_ore',n:1}]},
+    {id:'cr7',name:'Leather Boots',icon:'🥾',req:8,xp:35,dur:4500,prod:[{id:'leather_boots',n:1}],need:[{id:'leather',n:3}]},
+    {id:'cr8',name:'Leather Body',icon:'👕',req:14,xp:50,dur:5500,prod:[{id:'leather_body',n:1}],need:[{id:'leather',n:5}]},
+    {id:'cr9',name:'Gold Necklace',icon:'📿',req:20,xp:55,dur:5000,prod:[{id:'gold_necklace',n:1}],need:[{id:'gold_ore',n:2},{id:'leather',n:1}]},
     // === Upgrade materials — used in the Forge to improve HP/dodge on gear ===
     {id:'cr3',name:'Padding Kit',icon:'🧵',req:15,xp:45,dur:5000,prod:[{id:'padding_kit',n:1}],need:[{id:'leather',n:3},{id:'feather',n:3}]},
     {id:'cr4',name:'Enchanted Thread',icon:'✨',req:35,xp:100,dur:7500,prod:[{id:'enchanted_thread',n:1}],need:[{id:'leather',n:5},{id:'gold_ore',n:1}]},
@@ -735,23 +755,23 @@ const ITEMS = {
   leather:{name:'Leather',icon:'📜',sell:8,type:'res'},
   arrow_shaft:{name:'Arrow Shafts',icon:'↑',sell:0,type:'res'},
   iron_arrow:{name:'Iron Arrows',icon:'🪃',sell:2,type:'res'},
-  shortbow:{name:'Shortbow',icon:'🏹',sell:20,type:'weapon',atk:3,slot:'hand',rarity:'common',legacy:true},
-  oak_bow:{name:'Oak Shortbow',icon:'🏹',sell:45,type:'weapon',atk:6,slot:'hand',rarity:'uncommon',legacy:true},
-  willow_bow:{name:'Willow Bow',icon:'🏹',sell:90,type:'weapon',atk:10,slot:'hand',rarity:'rare',legacy:true},
-  bronze_sword:{name:'Bronze Sword',icon:'🗡️',sell:25,type:'weapon',atk:2,slot:'hand',rarity:'common',legacy:true},
-  iron_sword:{name:'Iron Sword',icon:'⚔️',sell:75,type:'weapon',atk:5,slot:'hand',rarity:'uncommon',legacy:true},
-  bronze_shield:{name:'Bronze Shield',icon:'🛡️',sell:60,type:'armour',def:2,hp:6,slot:'offhand',rarity:'common',legacy:true},
-  iron_platebody:{name:'Iron Platebody',icon:'🛡️',sell:180,type:'armour',def:5,hp:20,slot:'chest',rarity:'uncommon',legacy:true},
-  leather_body:{name:'Leather Body',icon:'👕',sell:25,type:'armour',def:1,hp:8,slot:'chest',rarity:'common',legacy:true},
-  // Legacy helmets + boots (no longer craftable — kept for existing saves)
-  bronze_helm:{name:'Bronze Helm',icon:'⛑️',sell:40,type:'armour',def:1,hp:5,slot:'helmet',rarity:'common',legacy:true},
-  iron_helm:{name:'Iron Helm',icon:'⛑️',sell:120,type:'armour',def:3,hp:12,slot:'helmet',rarity:'uncommon',legacy:true},
-  leather_cap:{name:'Leather Cap',icon:'🧢',sell:15,type:'armour',def:1,hp:3,slot:'helmet',dodge:2,rarity:'common',legacy:true},
-  bronze_boots:{name:'Bronze Boots',icon:'🥾',sell:35,type:'armour',def:1,hp:4,slot:'boots',dodge:3,rarity:'common',legacy:true},
-  iron_boots:{name:'Iron Boots',icon:'🥾',sell:100,type:'armour',def:2,hp:8,slot:'boots',dodge:4,rarity:'uncommon',legacy:true},
-  leather_boots:{name:'Leather Boots',icon:'🥾',sell:14,type:'armour',def:1,hp:3,slot:'boots',dodge:5,rarity:'common',legacy:true},
+  // === Novice gear — craftable via skills, upgradeable in the Forge ===
+  shortbow:{name:'Shortbow',icon:'🏹',sell:20,type:'weapon',atk:3,slot:'hand',rarity:'common'},
+  oak_bow:{name:'Oak Shortbow',icon:'🏹',sell:45,type:'weapon',atk:6,slot:'hand',rarity:'uncommon'},
+  willow_bow:{name:'Willow Bow',icon:'🏹',sell:90,type:'weapon',atk:10,slot:'hand',rarity:'rare'},
+  bronze_sword:{name:'Bronze Sword',icon:'🗡️',sell:25,type:'weapon',atk:2,slot:'hand',rarity:'common'},
+  iron_sword:{name:'Iron Sword',icon:'⚔️',sell:75,type:'weapon',atk:5,slot:'hand',rarity:'uncommon'},
+  bronze_shield:{name:'Bronze Shield',icon:'🛡️',sell:60,type:'armour',def:2,hp:6,slot:'offhand',rarity:'common'},
+  iron_platebody:{name:'Iron Platebody',icon:'🛡️',sell:180,type:'armour',def:5,hp:20,slot:'chest',rarity:'uncommon'},
+  leather_body:{name:'Leather Body',icon:'👕',sell:25,type:'armour',def:1,hp:8,slot:'chest',rarity:'common'},
+  bronze_helm:{name:'Bronze Helm',icon:'⛑️',sell:40,type:'armour',def:1,hp:5,slot:'helmet',rarity:'common'},
+  iron_helm:{name:'Iron Helm',icon:'⛑️',sell:120,type:'armour',def:3,hp:12,slot:'helmet',rarity:'uncommon'},
+  leather_cap:{name:'Leather Cap',icon:'🧢',sell:15,type:'armour',def:1,hp:3,slot:'helmet',dodge:2,rarity:'common'},
+  bronze_boots:{name:'Bronze Boots',icon:'🥾',sell:35,type:'armour',def:1,hp:4,slot:'boots',dodge:3,rarity:'common'},
+  iron_boots:{name:'Iron Boots',icon:'🥾',sell:100,type:'armour',def:2,hp:8,slot:'boots',dodge:4,rarity:'uncommon'},
+  leather_boots:{name:'Leather Boots',icon:'🥾',sell:14,type:'armour',def:1,hp:3,slot:'boots',dodge:5,rarity:'common'},
   gold_ring:{name:'Gold Ring',icon:'💍',sell:60,type:'accessory',hp:4,slot:'jewelry',dodge:3,rarity:'uncommon'},
-  gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory',hp:8,slot:'jewelry',dodge:4,rarity:'uncommon',legacy:true},
+  gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory',hp:8,slot:'jewelry',dodge:4,rarity:'uncommon'},
   gold_coins:{name:'Gold Coins',icon:'🪙',sell:1,type:'currency'},
   // === Potions — single-use dungeon consumables ===
   potion_strength:  {name:'Strength Potion',         icon:'💪',sell:15, type:'potion',rarity:'uncommon',potionType:'buff',stat:'atk',value:3,duration:'run'},
