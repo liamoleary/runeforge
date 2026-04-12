@@ -1858,11 +1858,11 @@
     var tierLbl = activeDungeon.tier ? ('Tier '+activeDungeon.tier+' · ') : '';
     h+='<div style="text-align:center;"><div style="font-size:32px;margin-bottom:6px;">'+activeDungeon.icon+'</div><div style="color:#f0c040;font-size:18px;font-family:Cinzel,serif;margin-bottom:2px;">'+activeDungeon.name+'</div><div style="color:#9a7e50;font-size:11px;margin-bottom:12px;">'+tierLbl+'5 Rooms · Unlock Lvl '+unlockLvl+'</div></div>';
     var entryTierLabel = rwd.tierLabel || 'Gear';
-    h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">'+(activeDungeon.desc||'')+' Clear all <b>5 creatures</b> for a chance at <span style="color:#ff8000;">'+entryTierLabel+'</span>.<br><span style="color:#9a7e50;font-size:10px;">⚔ Slash or ⚡ Power Attack! 🍖 Eating leaves you open — dodge gear helps. 🏃 Flee to keep loot.</span></div>';
+    h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">'+(activeDungeon.desc||'')+' Clear all <b>5 creatures</b> for a chance at <span style="color:#ff8000;">'+entryTierLabel+'</span>.<br><span style="color:#9a7e50;font-size:10px;">⚔ Slash or ⚡ Power Attack! 🍖 Food + 🧪 Potions heal and buff. 🏃 Flee to keep loot.</span></div>';
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;">';
     h+='<div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">REQUIREMENTS</div>';
-    h+='<div style="color:'+(wpn?'#5ac85a':'#e0a040')+';font-size:11px;margin-bottom:3px;">'+(wpn?'✓ Weapon equipped ('+wpn.icon+' '+wpn.name+')':'⚠ No weapon — fight unarmed or run dungeons for gear drops')+'</div>';
+    h+='<div style="color:'+(wpn?'#5ac85a':'#e0a040')+';font-size:11px;margin-bottom:3px;">'+(wpn?'✓ Weapon equipped ('+wpn.icon+' '+wpn.name+')':'⚠ No weapon — weapons come from dungeon drops!')+'</div>';
     h+='<div style="color:'+(fc>=DG.minFood?'#5ac85a':'#e03030')+';font-size:11px;margin-bottom:3px;">'+(fc>=DG.minFood?'✓':'✗')+' '+DG.minFood+'+ food (have: '+fc+')</div>';
     h+='<div style="color:#9a7e50;font-size:10px;margin-top:6px;">'+(arm?arm.icon+' '+arm.name:'No armour')+'</div>';
     h+='</div>';
@@ -1947,7 +1947,7 @@
   function initDungeon(){
     // Combat skill has been removed, so there is no longer a combat tab or page to hijack.
     if(typeof log==='function') setTimeout(function(){
-      log('🏰 The <b>Dungeon</b> awaits! Bring food and explore for gear drops — or brave it with bare fists.');
+      log('🏰 The <b>Dungeon</b> awaits! Bring food and potions. All gear comes from dungeon drops — upgrade it in the Forge!');
     },2000);
   }
 

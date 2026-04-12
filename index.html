@@ -2757,9 +2757,9 @@ function updateCombatStatsPanel() {
         +'<div class="intro-sub">An Idle Adventure</div>'
         +'<div class="intro-text">'
         +'You awaken at the edge of a wild frontier with nothing but your <b>fists</b>.<br><br>'
-        +'Gather, cook, and craft to survive. Venture into <b>dungeons</b> to earn weapons and armour. '
-        +'Train skills to produce food, spell scrolls, and crafting materials. Hire <b>workers</b> to help you along the way.<br><br>'
-        +'Adventure, crafting, and glory await.'
+        +'Gather resources, cook food, and brew <b>potions</b> to survive. Venture into <b>dungeons</b> to earn weapons and armour. '
+        +'Upgrade your gear in the <b>Forge</b> using skill-crafted materials. Hire <b>workers</b> to gather while you fight.<br><br>'
+        +'Adventure, forging, and glory await.'
         +'</div>'
         +'<button class="intro-btn" onclick="dismissIntro()">Begin Adventure</button>'
         +'</div>';
@@ -2779,8 +2779,8 @@ function updateCombatStatsPanel() {
   updateUI();anim();
   setInterval(tick,50);
   requestNotificationPermission();
-  log('🎮 <b>Welcome to RuneForge!</b> Gear comes from dungeons. Skills produce food, scrolls, and crafting materials. Hire workers to help train.');
-  log('💡 Tip: Fish + Cook food for dungeon heals. Craft spell scrolls in Magic. Explore dungeons for weapons and armour.');
+  log('🎮 <b>Welcome to RuneForge!</b> Gather resources → Cook food & brew potions → Craft spell scrolls → Enter dungeons for gear → Upgrade gear in the Forge → Hire workers to gather while you fight.');
+  log('💡 Tip: Fish + Cook food for dungeon heals. Brew potions for combat buffs. Craft upgrade materials for the Forge. All gear comes from dungeon drops!');
   if(G.task){
     const sk=findSkill(G.task);
     const a=findAction(G.task);
