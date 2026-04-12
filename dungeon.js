@@ -413,7 +413,10 @@
     if(typeof G==='undefined'||!G.equip) return b;
     for (var i=0;i<ATK_SLOTS.length;i++){
       var id=G.equip[ATK_SLOTS[i]];
-      if(id&&ITEMS[id]) b+=ITEMS[id].atk||0;
+      if(id&&ITEMS[id]){
+        var s=typeof getUpgradedStats==='function'?getUpgradedStats(id):{atk:ITEMS[id].atk||0};
+        b+=s.atk||0;
+      }
     }
     // Legacy fallback for saves that still use the old single-weapon field
     if(G.equip.weapon&&ITEMS[G.equip.weapon]) b+=ITEMS[G.equip.weapon].atk||0;
@@ -425,7 +428,10 @@
     if(typeof G==='undefined'||!G.equip) return b;
     for (var i=0;i<DEF_SLOTS.length;i++){
       var id=G.equip[DEF_SLOTS[i]];
-      if(id&&ITEMS[id]) b+=ITEMS[id].def||0;
+      if(id&&ITEMS[id]){
+        var s=typeof getUpgradedStats==='function'?getUpgradedStats(id):{def:ITEMS[id].def||0};
+        b+=s.def||0;
+      }
     }
     if(G.equip.armour&&ITEMS[G.equip.armour]) b+=ITEMS[G.equip.armour].def||0;
     return b;
@@ -452,7 +458,10 @@
     if(typeof G==='undefined'||!G.equip) return d;
     for (var i=0;i<DEF_SLOTS.length;i++){
       var id=G.equip[DEF_SLOTS[i]];
-      if(id&&ITEMS[id]&&ITEMS[id].dodge) d+=ITEMS[id].dodge;
+      if(id&&ITEMS[id]){
+        var s=typeof getUpgradedStats==='function'?getUpgradedStats(id):{dodge:ITEMS[id].dodge||0};
+        d+=s.dodge||0;
+      }
     }
     return Math.min(70,d);
   }
