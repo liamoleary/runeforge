@@ -254,15 +254,8 @@
     if(stats.dodge) parts.push('DODGE +'+stats.dodge+'%');
     return parts.join(' · ');
   }
-  // Drop chance per tier — generous on tier 1, painful on tier 12.
-  // Tier 1≈50% → tier 12≈8% (curve: 50 * 0.85^(t-1))
-  function dropChanceForTier(tier){
-    return Math.max(5, Math.round(50 * Math.pow(0.85, tier - 1)));
-  }
   // Mark I → rare, Mark II → epic, Mark III → legendary.
   var GEAR_MARK_RARITIES = ['rare','epic','legendary'];
-
-  // Shard themes removed — dungeons now drop gear directly.
 
   function registerGearItem(id, name, icon, slot, stats, markIdx){
     if (typeof ITEMS === 'undefined' || ITEMS[id]) return;
@@ -279,8 +272,6 @@
     if (stats.dodge) item.dodge = stats.dodge;
     ITEMS[id] = item;
   }
-
-  // registerDropGearItem removed — dungeons now use registerGearItem for direct drops.
 
   function generateSkillDungeons(sk, theme){
     var out = {};
