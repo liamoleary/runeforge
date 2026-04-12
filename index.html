@@ -698,14 +698,6 @@ const ACTIONS = {
   smithing:[
     {id:'sm0',name:'Bronze Bar',icon:'🟫',req:1,xp:28,dur:4000,prod:[{id:'bronze_bar',n:1}],need:[{id:'copper_ore',n:1},{id:'tin_ore',n:1}]},
     {id:'sm1',name:'Iron Bar',icon:'⬛',req:15,xp:32,dur:4500,prod:[{id:'iron_bar',n:1}],need:[{id:'iron_ore',n:2}]},
-    {id:'sm2',name:'Bronze Sword',icon:'🗡️',req:1,xp:35,dur:5000,prod:[{id:'bronze_sword',n:1}],need:[{id:'bronze_bar',n:1}]},
-    {id:'sm3',name:'Iron Sword',icon:'⚔️',req:19,xp:40,dur:5500,prod:[{id:'iron_sword',n:1}],need:[{id:'iron_bar',n:1}]},
-    {id:'sm4',name:'Bronze Shield',icon:'🛡️',req:7,xp:48,dur:6500,prod:[{id:'bronze_shield',n:1}],need:[{id:'bronze_bar',n:3}]},
-    {id:'sm5',name:'Iron Platebody',icon:'🛡️',req:33,xp:75,dur:8000,prod:[{id:'iron_platebody',n:1}],need:[{id:'iron_bar',n:5}]},
-    {id:'sm6',name:'Bronze Helm',icon:'⛑️',req:4,xp:40,dur:5500,prod:[{id:'bronze_helm',n:1}],need:[{id:'bronze_bar',n:2}]},
-    {id:'sm7',name:'Iron Helm',icon:'⛑️',req:22,xp:50,dur:6500,prod:[{id:'iron_helm',n:1}],need:[{id:'iron_bar',n:3}]},
-    {id:'sm8',name:'Bronze Boots',icon:'🥾',req:5,xp:40,dur:5500,prod:[{id:'bronze_boots',n:1}],need:[{id:'bronze_bar',n:2}]},
-    {id:'sm9',name:'Iron Boots',icon:'🥾',req:25,xp:50,dur:6500,prod:[{id:'iron_boots',n:1}],need:[{id:'iron_bar',n:3}]},
     // Skill-tool craft recipes — these tools used to be shop upgrades. They're now
     // smithed (or for the wand, enchanted via magic) and slot into the per-skill
     // tool slot for a passive speed boost.
@@ -753,10 +745,7 @@ const ACTIONS = {
   ],
   fletching:[
     {id:'fl0',name:'Arrow Shafts',icon:'↑',req:1,xp:14,dur:2000,prod:[{id:'arrow_shaft',n:15}],need:[{id:'logs',n:1}]},
-    {id:'fl1',name:'Shortbow (u)',icon:'🏹',req:5,xp:28,dur:4000,prod:[{id:'shortbow',n:1}],need:[{id:'logs',n:1}]},
-    {id:'fl2',name:'Oak Shortbow',icon:'🏹',req:20,xp:32,dur:4500,prod:[{id:'oak_bow',n:1}],need:[{id:'oak_log',n:1}]},
     {id:'fl3',name:'Iron Arrows x15',icon:'🪃',req:15,xp:38,dur:3000,prod:[{id:'iron_arrow',n:15}],need:[{id:'arrow_shaft',n:15},{id:'iron_bar',n:1},{id:'feather',n:15}]},
-    {id:'fl4',name:'Willow Bow',icon:'🏹',req:35,xp:58,dur:5000,prod:[{id:'willow_bow',n:1}],need:[{id:'willow_log',n:1}]},
     // === Hollow gear crafting (uses Hollow Shards from the Splinterwood Hollow dungeon) ===
     {id:'fl5', name:'Quilled Hood I',      icon:'🧢',req:3, xp:45, dur:7000, prod:[{id:'fletching_helmet_mk1',n:1}], need:[{id:'hollow_shard_mk1',n:1},{id:'arrow_shaft',n:15},{id:'feather',n:5},{id:'leather',n:2}]},
     {id:'fl6', name:'Splinter Jerkin I',   icon:'🏹',req:10,xp:60, dur:8000, prod:[{id:'fletching_chest_mk1',n:1}],  need:[{id:'hollow_shard_mk1',n:1},{id:'arrow_shaft',n:20},{id:'logs',n:4},{id:'bronze_bar',n:2}]},
@@ -773,11 +762,6 @@ const ACTIONS = {
   ],
   crafting:[
     {id:'cr0',name:'Tan Cowhide',icon:'🐄',req:1,xp:14,dur:2000,prod:[{id:'leather',n:1}],need:[{id:'cowhide',n:1}]},
-    {id:'cr1',name:'Leather Body',icon:'👕',req:14,xp:30,dur:4000,prod:[{id:'leather_body',n:1}],need:[{id:'leather',n:3}]},
-    {id:'cr2',name:'Gold Ring',icon:'💍',req:5,xp:25,dur:3500,prod:[{id:'gold_ring',n:1}],need:[{id:'gold_ore',n:1}]},
-    {id:'cr3',name:'Gold Necklace',icon:'📿',req:20,xp:35,dur:4500,prod:[{id:'gold_necklace',n:1}],need:[{id:'gold_ore',n:2}]},
-    {id:'cr4',name:'Leather Cap',icon:'🧢',req:8,xp:28,dur:3800,prod:[{id:'leather_cap',n:1}],need:[{id:'leather',n:2}]},
-    {id:'cr5',name:'Leather Boots',icon:'🥾',req:10,xp:28,dur:3800,prod:[{id:'leather_boots',n:1}],need:[{id:'leather',n:2}]},
     // === Silkweave gear crafting (uses Silkweave Shards from the Spinner's Lair dungeon) ===
     {id:'cr6', name:"Silken Coif I",           icon:'🪡',req:3, xp:45, dur:7000, prod:[{id:'crafting_helmet_mk1',n:1}], need:[{id:'silkweave_shard_mk1',n:1},{id:'leather',n:3},{id:'feather',n:5},{id:'c_shrimp',n:2}]},
     {id:'cr7', name:'Spinner Weave Cloak I',   icon:'🕸️',req:10,xp:60, dur:8000, prod:[{id:'crafting_chest_mk1',n:1}],  need:[{id:'silkweave_shard_mk1',n:1},{id:'leather',n:5},{id:'logs',n:3},{id:'arrow_shaft',n:15}]},
@@ -795,7 +779,6 @@ const ACTIONS = {
   magic:[
     // Spell scrolls — craft these to use in dungeon combat. XP comes from crafting only.
     {id:'mg0',name:'Wind Strike Scroll',icon:'🌬️',req:1,xp:22,dur:3000,prod:[{id:'scroll_wind',n:1}],need:[{id:'feather',n:1}]},
-    {id:'mg2',name:'Enchant Ring',icon:'💍',req:7,xp:28,dur:4000,prod:[{id:'enchanted_ring',n:1}],need:[{id:'gold_ring',n:1},{id:'feather',n:3}]},
     {id:'mg1',name:'Water Bolt Scroll',icon:'💧',req:13,xp:30,dur:3500,prod:[{id:'scroll_water',n:1}],need:[{id:'feather',n:2}]},
     {id:'mg4',name:'Fire Bolt Scroll',icon:'🔥',req:20,xp:55,dur:6000,prod:[{id:'scroll_fire',n:1}],need:[{id:'feather',n:3},{id:'coal',n:1}]},
     {id:'mg3',name:'Apprentice Wand',icon:'🪄',req:25,xp:80,dur:8000,prod:[{id:'apprentice_wand',n:1}],need:[{id:'oak_log',n:3},{id:'feather',n:5},{id:'gold_ore',n:1}]},
@@ -849,23 +832,23 @@ const ITEMS = {
   leather:{name:'Leather',icon:'📜',sell:8,type:'res'},
   arrow_shaft:{name:'Arrow Shafts',icon:'↑',sell:0,type:'res'},
   iron_arrow:{name:'Iron Arrows',icon:'🪃',sell:2,type:'res'},
-  shortbow:{name:'Shortbow',icon:'🏹',sell:20,type:'weapon',atk:3,slot:'hand',rarity:'common'},
-  oak_bow:{name:'Oak Shortbow',icon:'🏹',sell:45,type:'weapon',atk:6,slot:'hand',rarity:'uncommon'},
-  willow_bow:{name:'Willow Bow',icon:'🏹',sell:90,type:'weapon',atk:10,slot:'hand',rarity:'rare'},
-  bronze_sword:{name:'Bronze Sword',icon:'🗡️',sell:25,type:'weapon',atk:2,slot:'hand',rarity:'common'},
-  iron_sword:{name:'Iron Sword',icon:'⚔️',sell:75,type:'weapon',atk:5,slot:'hand',rarity:'uncommon'},
-  bronze_shield:{name:'Bronze Shield',icon:'🛡️',sell:60,type:'armour',def:2,hp:6,slot:'offhand',rarity:'common'},
-  iron_platebody:{name:'Iron Platebody',icon:'🛡️',sell:180,type:'armour',def:5,hp:20,slot:'chest',rarity:'uncommon'},
-  leather_body:{name:'Leather Body',icon:'👕',sell:25,type:'armour',def:1,hp:8,slot:'chest',rarity:'common'},
-  // Craftable helmets + boots (boots and jewelry are the primary dodge gear)
-  bronze_helm:{name:'Bronze Helm',icon:'⛑️',sell:40,type:'armour',def:1,hp:5,slot:'helmet',rarity:'common'},
-  iron_helm:{name:'Iron Helm',icon:'⛑️',sell:120,type:'armour',def:3,hp:12,slot:'helmet',rarity:'uncommon'},
-  leather_cap:{name:'Leather Cap',icon:'🧢',sell:15,type:'armour',def:1,hp:3,slot:'helmet',dodge:2,rarity:'common'},
-  bronze_boots:{name:'Bronze Boots',icon:'🥾',sell:35,type:'armour',def:1,hp:4,slot:'boots',dodge:3,rarity:'common'},
-  iron_boots:{name:'Iron Boots',icon:'🥾',sell:100,type:'armour',def:2,hp:8,slot:'boots',dodge:4,rarity:'uncommon'},
-  leather_boots:{name:'Leather Boots',icon:'🥾',sell:14,type:'armour',def:1,hp:3,slot:'boots',dodge:5,rarity:'common'},
-  gold_ring:{name:'Gold Ring',icon:'💍',sell:60,type:'accessory',hp:4,slot:'jewelry',dodge:3,rarity:'uncommon'},
-  gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory',hp:8,slot:'jewelry',dodge:4,rarity:'uncommon'},
+  // === Legacy skill-crafted gear (no longer craftable; kept so existing saves render) ===
+  shortbow:{name:'Shortbow',icon:'🏹',sell:20,type:'weapon',atk:3,slot:'hand',rarity:'common',legacy:true},
+  oak_bow:{name:'Oak Shortbow',icon:'🏹',sell:45,type:'weapon',atk:6,slot:'hand',rarity:'uncommon',legacy:true},
+  willow_bow:{name:'Willow Bow',icon:'🏹',sell:90,type:'weapon',atk:10,slot:'hand',rarity:'rare',legacy:true},
+  bronze_sword:{name:'Bronze Sword',icon:'🗡️',sell:25,type:'weapon',atk:2,slot:'hand',rarity:'common',legacy:true},
+  iron_sword:{name:'Iron Sword',icon:'⚔️',sell:75,type:'weapon',atk:5,slot:'hand',rarity:'uncommon',legacy:true},
+  bronze_shield:{name:'Bronze Shield',icon:'🛡️',sell:60,type:'armour',def:2,hp:6,slot:'offhand',rarity:'common',legacy:true},
+  iron_platebody:{name:'Iron Platebody',icon:'🛡️',sell:180,type:'armour',def:5,hp:20,slot:'chest',rarity:'uncommon',legacy:true},
+  leather_body:{name:'Leather Body',icon:'👕',sell:25,type:'armour',def:1,hp:8,slot:'chest',rarity:'common',legacy:true},
+  bronze_helm:{name:'Bronze Helm',icon:'⛑️',sell:40,type:'armour',def:1,hp:5,slot:'helmet',rarity:'common',legacy:true},
+  iron_helm:{name:'Iron Helm',icon:'⛑️',sell:120,type:'armour',def:3,hp:12,slot:'helmet',rarity:'uncommon',legacy:true},
+  leather_cap:{name:'Leather Cap',icon:'🧢',sell:15,type:'armour',def:1,hp:3,slot:'helmet',dodge:2,rarity:'common',legacy:true},
+  bronze_boots:{name:'Bronze Boots',icon:'🥾',sell:35,type:'armour',def:1,hp:4,slot:'boots',dodge:3,rarity:'common',legacy:true},
+  iron_boots:{name:'Iron Boots',icon:'🥾',sell:100,type:'armour',def:2,hp:8,slot:'boots',dodge:4,rarity:'uncommon',legacy:true},
+  leather_boots:{name:'Leather Boots',icon:'🥾',sell:14,type:'armour',def:1,hp:3,slot:'boots',dodge:5,rarity:'common',legacy:true},
+  gold_ring:{name:'Gold Ring',icon:'💍',sell:60,type:'accessory',hp:4,slot:'jewelry',dodge:3,rarity:'uncommon',legacy:true},
+  gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory',hp:8,slot:'jewelry',dodge:4,rarity:'uncommon',legacy:true},
   gold_coins:{name:'Gold Coins',icon:'🪙',sell:1,type:'currency'},
   // === Dungeon crafting shards ===
   // Dropped from dungeon completions instead of finished gear.
@@ -895,7 +878,7 @@ const ITEMS = {
   arcane_shard_mk1:     {name:'Arcane Shard',               icon:'🔮',sell:50, type:'res',rarity:'rare'},
   arcane_shard_mk2:     {name:'Refined Arcane Shard',       icon:'🔮',sell:200,type:'res',rarity:'epic'},
   arcane_shard_mk3:     {name:'Masterwork Arcane Shard',    icon:'🔮',sell:500,type:'res',rarity:'legendary'},
-  enchanted_ring:{name:'Enchanted Ring',icon:'💍',sell:150,type:'accessory',hp:12,atk:1,slot:'jewelry',dodge:7,rarity:'epic',special:true},
+  enchanted_ring:{name:'Enchanted Ring',icon:'💍',sell:150,type:'accessory',hp:12,atk:1,slot:'jewelry',dodge:7,rarity:'epic',special:true,legacy:true},
   level_potion:{name:'Level Potion',icon:'🧪',sell:0,type:'potion',rarity:'epic',special:true},
   // Spell scrolls — consumable in dungeon combat. The ✨ Magic button auto-picks the
   // highest-damage scroll you own and consumes one per cast. Craft them in Magic.
