@@ -420,6 +420,8 @@
     }
     // Legacy fallback for saves that still use the old single-weapon field
     if(G.equip.weapon&&ITEMS[G.equip.weapon]) b+=ITEMS[G.equip.weapon].atk||0;
+    // Add potion buffs during dungeon runs
+    if(dungeonState&&dungeonState.potionBuffs) b+=dungeonState.potionBuffs.atk||0;
     return b;
   }
 
@@ -434,6 +436,8 @@
       }
     }
     if(G.equip.armour&&ITEMS[G.equip.armour]) b+=ITEMS[G.equip.armour].def||0;
+    // Add potion buffs during dungeon runs
+    if(dungeonState&&dungeonState.potionBuffs) b+=dungeonState.potionBuffs.def||0;
     return b;
   }
 
@@ -463,6 +467,8 @@
         d+=s.dodge||0;
       }
     }
+    // Add potion buffs during dungeon runs
+    if(dungeonState&&dungeonState.potionBuffs) d+=dungeonState.potionBuffs.dodge||0;
     return Math.min(70,d);
   }
 
@@ -526,6 +532,8 @@
       totalGold:0,
       lootCollected:[],
       playerPoison:0,playerPoisonTurns:0,
+      potionBuffs:{atk:0,def:0,dodge:0}, // active potion buffs for this run
+      poisonImmuneTurns:0,
       victory:false,
       fled:false,
       critStacks:0,
@@ -1030,6 +1038,8 @@
 
   // Apply end-of-turn effects: tick poison, cool down monster shields, refresh heals.
   function tickStatusEffects(mon){
+    // Tick down poison immunity from antidote
+    if (dungeonState.poisonImmuneTurns > 0) dungeonState.poisonImmuneTurns--;
     // Player poison DoT
     if (dungeonState.playerPoison > 0 && dungeonState.playerPoisonTurns > 0){
       var pp = dungeonState.playerPoison;
@@ -1086,11 +1096,15 @@
     showDungeonDmgFloat(ad,'enemy-hit','left');
     showDungeonHitFX('left','hit');
     dungeonState.combatLog.push(mon.icon+' '+mon.name+' hits you for <span style="color:#e03030">'+ad+'</span> damage.');
-    // Poison-on-hit chance
+    // Poison-on-hit chance (blocked by antidote immunity)
     if (mon.poison && mon.poisonChance && Math.random() < mon.poisonChance){
-      dungeonState.playerPoison = Math.max(dungeonState.playerPoison, mon.poison);
-      dungeonState.playerPoisonTurns = Math.max(dungeonState.playerPoisonTurns, 4);
-      dungeonState.combatLog.push('<span style="color:#9b59b6;">🧪 Poisoned! '+mon.poison+' damage / turn for 4 turns.</span>');
+      if(dungeonState.poisonImmuneTurns>0){
+        dungeonState.combatLog.push('<span style="color:#5ac85a;">🧪 Poison resisted! (Antidote active)</span>');
+      } else {
+        dungeonState.playerPoison = Math.max(dungeonState.playerPoison, mon.poison);
+        dungeonState.playerPoisonTurns = Math.max(dungeonState.playerPoisonTurns, 4);
+        dungeonState.combatLog.push('<span style="color:#9b59b6;">🧪 Poisoned! '+mon.poison+' damage / turn for 4 turns.</span>');
+      }
     }
     if (dungeonState.playerHp <= 0){
       dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
@@ -1371,6 +1385,38 @@
     renderDungeon();
   }
 
+  function dungeonPotion(potionId){
+    if(!dungeonState||dungeonState.victory||dungeonState.fled||dungeonState.playerHp<=0) return;
+    if(typeof ITEMS==='undefined'||!ITEMS[potionId]||ITEMS[potionId].type!=='potion') return;
+    if(!G.inv||!G.inv[potionId]||G.inv[potionId]<=0){showDungeonMessage('No potions left!','#e03030');return;}
+    var pot=ITEMS[potionId];
+    G.inv[potionId]--;
+    if(G.inv[potionId]<=0) delete G.inv[potionId];
+    if(pot.potionType==='buff'){
+      var oldVal=dungeonState.potionBuffs[pot.stat]||0;
+      dungeonState.potionBuffs[pot.stat]=oldVal+pot.value;
+      dungeonState.combatLog.push('<span style="color:#ffd966;">'+pot.icon+' You drink '+pot.name+'! +'+pot.value+' '+pot.stat.toUpperCase()+' for this run.</span>');
+    } else if(pot.potionType==='instant'&&pot.hp){
+      var healed=Math.min(pot.hp,dungeonState.playerMaxHp-dungeonState.playerHp);
+      dungeonState.playerHp=Math.min(dungeonState.playerMaxHp,dungeonState.playerHp+pot.hp);
+      showDungeonDmgFloat(healed,'heal','left');
+      dungeonState.combatLog.push('<span style="color:#5ac85a;">'+pot.icon+' You drink '+pot.name+'! Healed <b>'+healed+'</b> HP.</span>');
+    } else if(pot.potionType==='cure'){
+      dungeonState.playerPoison=0;
+      dungeonState.playerPoisonTurns=0;
+      dungeonState.poisonImmuneTurns=pot.immuneTurns||5;
+      dungeonState.combatLog.push('<span style="color:#5ac85a;">'+pot.icon+' You drink '+pot.name+'! Poison cured, immune for '+dungeonState.poisonImmuneTurns+' turns.</span>');
+    }
+    // Using a potion costs your turn — monster retaliates
+    var mon=dungeonState.monsters[dungeonState.room];
+    if(mon&&mon.hp>0){
+      monsterRetaliate(mon);
+      tickStatusEffects(mon);
+    }
+    if(dungeonState&&dungeonState.playerHp>0) G.hp=dungeonState.playerHp;
+    renderDungeon();
+  }
+
   function dungeonFlee(){
     if(!dungeonState||dungeonState.victory||dungeonState.playerHp<=0) return;
     dungeonState.fled=true;
@@ -1558,6 +1604,45 @@
       h+='</div>';
     }
 
+    // === Potion bar — shows owned potions for dungeon use ===
+    if(!done){
+      var potions=[];
+      if(typeof G!=='undefined'&&G.inv){
+        for(var pk in G.inv){
+          if(G.inv[pk]>0&&typeof ITEMS!=='undefined'&&ITEMS[pk]&&ITEMS[pk].type==='potion'&&!ITEMS[pk].special){
+            potions.push({id:pk,qty:G.inv[pk],it:ITEMS[pk]});
+          }
+        }
+      }
+      if(potions.length>0){
+        h+='<div style="margin-bottom:8px;">';
+        h+='<div style="font-family:Cinzel,serif;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;text-align:center;">🧪 Potions</div>';
+        h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">';
+        for(var pi2=0;pi2<potions.length;pi2++){
+          var pt=potions[pi2];
+          var ptDesc=pt.it.potionType==='buff'?'+'+pt.it.value+' '+pt.it.stat.toUpperCase():pt.it.potionType==='instant'?'+'+pt.it.hp+' HP':'Cure';
+          h+='<button onclick="window._dgPotion(\''+pt.id+'\')" '
+           +'style="position:relative;background:#1a1308;border:2px solid #f0c040;border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;" '
+           +'title="'+pt.it.name+' · '+ptDesc+' · '+pt.qty+' owned">'
+           +'<div style="font-size:20px;line-height:1;">'+pt.it.icon+'</div>'
+           +'<div style="font-size:8px;color:#f0c040;font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">'+ptDesc+'</div>'
+           +'<span style="position:absolute;bottom:1px;right:3px;font-size:8px;color:#5ac85a;font-weight:bold;">'+pt.qty+'</span>'
+           +'</button>';
+        }
+        h+='</div>';
+        h+='</div>';
+      }
+      // Active potion buffs display
+      var buffs=s.potionBuffs||{};
+      var buffParts=[];
+      if(buffs.atk>0) buffParts.push('<span style="color:#f0c040;">+'+buffs.atk+' ATK</span>');
+      if(buffs.def>0) buffParts.push('<span style="color:#4488dd;">+'+buffs.def+' DEF</span>');
+      if(buffs.dodge>0) buffParts.push('<span style="color:#ffd966;">+'+buffs.dodge+'% Dodge</span>');
+      if(s.poisonImmuneTurns>0) buffParts.push('<span style="color:#5ac85a;">Poison Immune ('+s.poisonImmuneTurns+'t)</span>');
+      if(buffParts.length>0){
+        h+='<div style="text-align:center;font-size:9px;color:#9a7e50;margin-bottom:6px;">Active: '+buffParts.join(' · ')+'</div>';
+      }
+    }
 
     // Equipment stats
     if(!done){
@@ -1717,6 +1802,7 @@
   window._dgShowEntry=showDungeonEntry;
   window._dgShowTierPicker=showTierPicker;
   window._dgEat=dungeonEat;
+  window._dgPotion=dungeonPotion;
   window._dgFlee=dungeonFlee;
   window._dgLeave=leaveDungeon;
   window._dgStart=startDungeon;
