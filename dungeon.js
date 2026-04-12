@@ -292,9 +292,9 @@
     ITEMS[id] = item;
   }
 
-  // Register a weaker "dropped" version of a gear piece — ~60% of crafted stats,
-  // rarity one step below crafted (uncommon/rare/epic instead of rare/epic/legendary).
-  var DROP_GEAR_RARITIES = ['uncommon','rare','epic'];
+  // Register a dungeon-dropped gear piece — ~80% of crafted stats.
+  // Drops use rare/epic/legendary rarities so they feel rewarding as primary gear source.
+  var DROP_GEAR_RARITIES = ['rare','epic','legendary'];
   function registerDropGearItem(id, name, icon, slot, stats, markIdx){
     if (typeof ITEMS === 'undefined' || ITEMS[id]) return;
     var item = {
@@ -305,10 +305,10 @@
       rarity: DROP_GEAR_RARITIES[markIdx||0] || 'uncommon',
       dropped: true
     };
-    if (stats.atk) item.atk = Math.max(1, Math.round(stats.atk * 0.6));
-    if (stats.def) item.def = Math.max(1, Math.round(stats.def * 0.6));
-    if (stats.hp)  item.hp  = Math.max(1, Math.round(stats.hp  * 0.6));
-    if (stats.dodge) item.dodge = Math.max(1, Math.round(stats.dodge * 0.6));
+    if (stats.atk) item.atk = Math.max(1, Math.round(stats.atk * 0.8));
+    if (stats.def) item.def = Math.max(1, Math.round(stats.def * 0.8));
+    if (stats.hp)  item.hp  = Math.max(1, Math.round(stats.hp  * 0.8));
+    if (stats.dodge) item.dodge = Math.max(1, Math.round(stats.dodge * 0.8));
     ITEMS[id] = item;
   }
 
@@ -375,16 +375,16 @@
       var skCap = sk.charAt(0).toUpperCase() + sk.slice(1);
       var craftHint = skCap + ' tab \u2192 ' + gearName;
 
-      // Weak gear drop — flat 12% chance, one-rarity-below crafted, ~60% stats.
+      // Gear drop — 30% chance, ~80% of crafted stats, rewarding rarities.
       var dropGearId = gearItemId + '_drop';
       var dropGearName = gearName + ' (Rough)';
-      var dropGearRarities = ['uncommon','rare','epic'];
+      var dropGearRarities = ['rare','epic','legendary'];
       registerDropGearItem(dropGearId, dropGearName, gearBase.icon, slot, stats, markIdx);
       var dropStats = {};
-      if (stats.atk) dropStats.atk = Math.max(1, Math.round(stats.atk * 0.6));
-      if (stats.def) dropStats.def = Math.max(1, Math.round(stats.def * 0.6));
-      if (stats.hp)  dropStats.hp  = Math.max(1, Math.round(stats.hp  * 0.6));
-      if (stats.dodge) dropStats.dodge = Math.max(1, Math.round(stats.dodge * 0.6));
+      if (stats.atk) dropStats.atk = Math.max(1, Math.round(stats.atk * 0.8));
+      if (stats.def) dropStats.def = Math.max(1, Math.round(stats.def * 0.8));
+      if (stats.hp)  dropStats.hp  = Math.max(1, Math.round(stats.hp  * 0.8));
+      if (stats.dodge) dropStats.dodge = Math.max(1, Math.round(stats.dodge * 0.8));
 
       out[id] = {
         id: id,
@@ -412,7 +412,7 @@
           dropId:     dropGearId,
           dropName:   dropGearName,
           dropIcon:   gearBase.icon,
-          dropChance: 12,
+          dropChance: 30,
           dropEff:    gearEffLabel(dropStats),
           dropRarity: dropGearRarities[markIdx] || 'uncommon'
         },
