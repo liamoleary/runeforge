@@ -643,6 +643,10 @@ const ACTIONS = {
     {id:'sm14',name:'Steel Smith Hammer',icon:'🔨',req:36,xp:100,dur:8500,prod:[{id:'steel_smith_hammer',n:1}],need:[{id:'iron_bar',n:5},{id:'coal',n:3}]},
     {id:'sm15',name:'Steel Fletching Knife',icon:'🔪',req:36,xp:90,dur:8000,prod:[{id:'steel_fletch_knife',n:1}],need:[{id:'iron_bar',n:3},{id:'coal',n:2}]},
     {id:'sm16',name:'Steel Needle',icon:'🪡',req:36,xp:90,dur:8000,prod:[{id:'steel_needle',n:1}],need:[{id:'iron_bar',n:3},{id:'coal',n:2}]},
+    // === Upgrade materials — used in the Forge to improve dungeon gear ===
+    {id:'sm17',name:'Reinforcement Plate',icon:'🔩',req:20,xp:60,dur:6000,prod:[{id:'reinforce_plate',n:1}],need:[{id:'iron_bar',n:2},{id:'coal',n:1}]},
+    {id:'sm18',name:'Hardened Plate',icon:'🔩',req:40,xp:120,dur:8000,prod:[{id:'hardened_plate',n:1}],need:[{id:'iron_bar',n:4},{id:'coal',n:3},{id:'gold_ore',n:1}]},
+    {id:'sm19',name:'Masterwork Plate',icon:'🔩',req:65,xp:220,dur:12000,prod:[{id:'masterwork_plate',n:1}],need:[{id:'iron_bar',n:8},{id:'gold_ore',n:3}]},
   ],
   cooking:[
     {id:'ck0',name:'Cook Shrimp',icon:'🍤',req:1,xp:30,dur:2500,prod:[{id:'c_shrimp',n:1}],need:[{id:'raw_shrimp',n:1}]},
@@ -651,14 +655,34 @@ const ACTIONS = {
     {id:'ck3',name:'Cook Salmon',icon:'🐡',req:25,xp:90,dur:3000,prod:[{id:'c_salmon',n:1}],need:[{id:'raw_salmon',n:1}]},
     {id:'ck4',name:'Cook Lobster',icon:'🦞',req:30,xp:120,dur:3500,prod:[{id:'c_lobster',n:1}],need:[{id:'raw_lobster',n:1}]},
     {id:'ck5',name:'Cook Meat',icon:'🍖',req:1,xp:30,dur:2500,prod:[{id:'c_meat',n:1}],need:[{id:'raw_meat',n:1}]},
+    // === Potions — single-use dungeon consumables that grant temporary buffs ===
+    {id:'ck6',name:'Strength Potion',icon:'💪',req:10,xp:45,dur:5000,prod:[{id:'potion_strength',n:1}],need:[{id:'raw_meat',n:2},{id:'copper_ore',n:1}]},
+    {id:'ck7',name:'Antidote',icon:'🧪',req:15,xp:50,dur:4500,prod:[{id:'potion_antidote',n:1}],need:[{id:'raw_sardine',n:1},{id:'feather',n:3}]},
+    {id:'ck8',name:'Defence Potion',icon:'🛡️',req:20,xp:65,dur:5500,prod:[{id:'potion_defence',n:1}],need:[{id:'raw_trout',n:2},{id:'iron_ore',n:1}]},
+    {id:'ck9',name:'Dodge Potion',icon:'🏃',req:30,xp:80,dur:6000,prod:[{id:'potion_dodge',n:1}],need:[{id:'raw_salmon',n:2},{id:'feather',n:5}]},
+    {id:'ck10',name:'Healing Potion',icon:'❤️',req:35,xp:100,dur:7000,prod:[{id:'potion_healing',n:1}],need:[{id:'raw_lobster',n:1},{id:'gold_ore',n:1}]},
+    {id:'ck11',name:'Greater Strength Potion',icon:'💪',req:50,xp:140,dur:8000,prod:[{id:'potion_strength_g',n:1}],need:[{id:'raw_salmon',n:3},{id:'iron_ore',n:2},{id:'coal',n:1}]},
+    {id:'ck12',name:'Greater Defence Potion',icon:'🛡️',req:55,xp:150,dur:8000,prod:[{id:'potion_defence_g',n:1}],need:[{id:'raw_lobster',n:2},{id:'iron_bar',n:1},{id:'coal',n:1}]},
+    {id:'ck13',name:'Greater Dodge Potion',icon:'🏃',req:60,xp:160,dur:8500,prod:[{id:'potion_dodge_g',n:1}],need:[{id:'raw_lobster',n:2},{id:'feather',n:8},{id:'gold_ore',n:1}]},
+    {id:'ck14',name:'Greater Healing Potion',icon:'❤️',req:70,xp:200,dur:10000,prod:[{id:'potion_healing_g',n:1}],need:[{id:'raw_lobster',n:3},{id:'gold_ore',n:2}]},
   ],
   fletching:[
     {id:'fl0',name:'Arrow Shafts',icon:'↑',req:1,xp:14,dur:2000,prod:[{id:'arrow_shaft',n:15}],need:[{id:'logs',n:1}]},
     {id:'fl3',name:'Iron Arrows x15',icon:'🪃',req:15,xp:38,dur:3000,prod:[{id:'iron_arrow',n:15}],need:[{id:'arrow_shaft',n:15},{id:'iron_bar',n:1},{id:'feather',n:15}]},
+    // === Upgrade materials — used in the Forge to improve weapon ATK ===
+    {id:'fl4',name:'Precision Kit',icon:'🎯',req:20,xp:55,dur:5500,prod:[{id:'precision_kit',n:1}],need:[{id:'arrow_shaft',n:10},{id:'feather',n:5}]},
+    {id:'fl5',name:'Sharpening Stone',icon:'🪨',req:35,xp:90,dur:7000,prod:[{id:'sharpening_stone',n:1}],need:[{id:'iron_ore',n:2},{id:'arrow_shaft',n:5}]},
+    {id:'fl6',name:'Superior Precision Kit',icon:'🎯',req:55,xp:160,dur:10000,prod:[{id:'precision_kit_g',n:1}],need:[{id:'arrow_shaft',n:20},{id:'feather',n:10},{id:'gold_ore',n:1}]},
+    {id:'fl7',name:'Master Sharpening Stone',icon:'🪨',req:70,xp:220,dur:12000,prod:[{id:'sharpening_stone_g',n:1}],need:[{id:'iron_bar',n:3},{id:'gold_ore',n:2},{id:'arrow_shaft',n:10}]},
   ],
   crafting:[
     {id:'cr0',name:'Tan Cowhide',icon:'🐄',req:1,xp:14,dur:2000,prod:[{id:'leather',n:1}],need:[{id:'cowhide',n:1}]},
     {id:'cr2',name:'Gold Ring',icon:'💍',req:5,xp:25,dur:3500,prod:[{id:'gold_ring',n:1}],need:[{id:'gold_ore',n:1}]},
+    // === Upgrade materials — used in the Forge to improve HP/dodge on gear ===
+    {id:'cr3',name:'Padding Kit',icon:'🧵',req:15,xp:45,dur:5000,prod:[{id:'padding_kit',n:1}],need:[{id:'leather',n:3},{id:'feather',n:3}]},
+    {id:'cr4',name:'Enchanted Thread',icon:'✨',req:35,xp:100,dur:7500,prod:[{id:'enchanted_thread',n:1}],need:[{id:'leather',n:5},{id:'gold_ore',n:1}]},
+    {id:'cr5',name:'Superior Padding Kit',icon:'🧵',req:55,xp:160,dur:10000,prod:[{id:'padding_kit_g',n:1}],need:[{id:'leather',n:8},{id:'feather',n:8},{id:'gold_ore',n:1}]},
+    {id:'cr6',name:'Masterweave Thread',icon:'✨',req:75,xp:250,dur:13000,prod:[{id:'enchanted_thread_g',n:1}],need:[{id:'leather',n:12},{id:'gold_ore',n:3}]},
   ],
   magic:[
     // Spell scrolls — craft these to use in dungeon combat. XP comes from crafting only.
@@ -671,6 +695,9 @@ const ACTIONS = {
     {id:'mg7',name:'Inferno Scroll',icon:'🌋',req:55,xp:160,dur:11000,prod:[{id:'scroll_inferno',n:1}],need:[{id:'feather',n:5},{id:'coal',n:2},{id:'iron_bar',n:1}]},
     {id:'mg8',name:'Tempest Scroll',icon:'🌪️',req:70,xp:220,dur:14000,prod:[{id:'scroll_tempest',n:1}],need:[{id:'feather',n:6},{id:'yew_log',n:1},{id:'gold_ore',n:2}]},
     {id:'mg9',name:'Meteor Scroll',icon:'☄️',req:85,xp:320,dur:18000,prod:[{id:'scroll_meteor',n:1}],need:[{id:'feather',n:8},{id:'coal',n:3},{id:'gold_ore',n:3}]},
+    // === Utility scrolls — defensive and sustain options ===
+    {id:'mg10',name:'Barrier Scroll',icon:'🔰',req:45,xp:130,dur:10000,prod:[{id:'scroll_barrier',n:1}],need:[{id:'feather',n:4},{id:'iron_bar',n:1},{id:'gold_ore',n:1}]},
+    {id:'mg11',name:'Lifedrain Scroll',icon:'🩸',req:65,xp:200,dur:13000,prod:[{id:'scroll_lifedrain',n:1}],need:[{id:'feather',n:6},{id:'coal',n:2},{id:'gold_ore',n:2}]},
   ],
 };
 const ITEMS = {
@@ -721,6 +748,28 @@ const ITEMS = {
   gold_ring:{name:'Gold Ring',icon:'💍',sell:60,type:'accessory',hp:4,slot:'jewelry',dodge:3,rarity:'uncommon'},
   gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory',hp:8,slot:'jewelry',dodge:4,rarity:'uncommon',legacy:true},
   gold_coins:{name:'Gold Coins',icon:'🪙',sell:1,type:'currency'},
+  // === Potions — single-use dungeon consumables ===
+  potion_strength:  {name:'Strength Potion',         icon:'💪',sell:15, type:'potion',rarity:'uncommon',potionType:'buff',stat:'atk',value:3,duration:'run'},
+  potion_defence:   {name:'Defence Potion',          icon:'🛡️',sell:20, type:'potion',rarity:'uncommon',potionType:'buff',stat:'def',value:3,duration:'run'},
+  potion_dodge:     {name:'Dodge Potion',            icon:'🏃',sell:25, type:'potion',rarity:'uncommon',potionType:'buff',stat:'dodge',value:10,duration:'run'},
+  potion_antidote:  {name:'Antidote',                icon:'🧪',sell:12, type:'potion',rarity:'common',potionType:'cure',cures:'poison',immuneTurns:5},
+  potion_healing:   {name:'Healing Potion',          icon:'❤️',sell:30, type:'potion',rarity:'rare',potionType:'instant',hp:20},
+  potion_strength_g:{name:'Greater Strength Potion', icon:'💪',sell:40, type:'potion',rarity:'rare',potionType:'buff',stat:'atk',value:6,duration:'run'},
+  potion_defence_g: {name:'Greater Defence Potion',  icon:'🛡️',sell:45, type:'potion',rarity:'rare',potionType:'buff',stat:'def',value:6,duration:'run'},
+  potion_dodge_g:   {name:'Greater Dodge Potion',    icon:'🏃',sell:50, type:'potion',rarity:'rare',potionType:'buff',stat:'dodge',value:20,duration:'run'},
+  potion_healing_g: {name:'Greater Healing Potion',  icon:'❤️',sell:60, type:'potion',rarity:'epic',potionType:'instant',hp:40},
+  // === Upgrade materials — used in the Forge to upgrade dungeon gear ===
+  reinforce_plate:   {name:'Reinforcement Plate',     icon:'🔩',sell:20, type:'upgrade_mat',rarity:'uncommon',boosts:'def'},
+  hardened_plate:    {name:'Hardened Plate',           icon:'🔩',sell:50, type:'upgrade_mat',rarity:'rare',boosts:'def'},
+  masterwork_plate:  {name:'Masterwork Plate',         icon:'🔩',sell:120,type:'upgrade_mat',rarity:'epic',boosts:'def'},
+  precision_kit:     {name:'Precision Kit',            icon:'🎯',sell:18, type:'upgrade_mat',rarity:'uncommon',boosts:'atk'},
+  sharpening_stone:  {name:'Sharpening Stone',         icon:'🪨',sell:35, type:'upgrade_mat',rarity:'rare',boosts:'atk'},
+  precision_kit_g:   {name:'Superior Precision Kit',   icon:'🎯',sell:55, type:'upgrade_mat',rarity:'rare',boosts:'atk'},
+  sharpening_stone_g:{name:'Master Sharpening Stone',  icon:'🪨',sell:100,type:'upgrade_mat',rarity:'epic',boosts:'atk'},
+  padding_kit:       {name:'Padding Kit',              icon:'🧵',sell:15, type:'upgrade_mat',rarity:'uncommon',boosts:'hp'},
+  enchanted_thread:  {name:'Enchanted Thread',         icon:'✨',sell:40, type:'upgrade_mat',rarity:'rare',boosts:'hp'},
+  padding_kit_g:     {name:'Superior Padding Kit',     icon:'🧵',sell:55, type:'upgrade_mat',rarity:'rare',boosts:'hp'},
+  enchanted_thread_g:{name:'Masterweave Thread',       icon:'✨',sell:100,type:'upgrade_mat',rarity:'epic',boosts:'hp'},
   // === Dungeon crafting shards ===
   // Legacy shard items — no longer dropped, kept so existing saves render correctly.
   grove_shard_mk1:      {name:'Grove Shard',                icon:'🌿',sell:50, type:'res',rarity:'rare',legacy:true},
@@ -759,6 +808,8 @@ const ITEMS = {
   scroll_inferno:{name:'Inferno Scroll',icon:'🌋',sell:80,type:'scroll',spellDmg:50,rarity:'rare'},
   scroll_tempest:{name:'Tempest Scroll',icon:'🌪️',sell:120,type:'scroll',spellDmg:70,rarity:'epic'},
   scroll_meteor:{name:'Meteor Scroll',icon:'☄️',sell:180,type:'scroll',spellDmg:95,rarity:'legendary'},
+  scroll_barrier:{name:'Barrier Scroll',icon:'🔰',sell:55,type:'scroll',spellDmg:0,barrier:15,rarity:'rare'},
+  scroll_lifedrain:{name:'Lifedrain Scroll',icon:'🩸',sell:90,type:'scroll',spellDmg:30,lifedrain:0.5,rarity:'rare'},
 };
 
 const TOOL_MAP={
