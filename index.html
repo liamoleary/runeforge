@@ -591,9 +591,9 @@ body.shake-hit #stage{animation:screenShake .35s ease}
     </div>
   </div>
   <div class="panel" id="shop-panel">
-    <div class="panel-hdr">⚒ General Store</div>
+    <div class="panel-hdr">👷 Workers & Trade</div>
     <div id="shop-tabs">
-      <div class="shop-tab active" id="shop-tab-buy" onclick="setShopTab('buy')">🛒 Buy</div>
+      <div class="shop-tab active" id="shop-tab-buy" onclick="setShopTab('buy')">👷 Workers</div>
       <div class="shop-tab" id="shop-tab-sell" onclick="setShopTab('sell')">💰 Sell</div>
     </div>
     <div id="shop-grid"></div>
@@ -916,20 +916,104 @@ const TOOL_BONUS={
 // Shop now sells temporary buff potions instead of permanent tool upgrades.
 // Tools come from crafting / dungeon drops; the shop is for short-term boosts.
 // `dur` is in seconds. `effect` is a buff key (see BUFF_DEFS).
-const SHOP=[
-  {id:'buff_speed_all_1',name:'Quick Hands Brew',icon:'🧪',cost:60,eff:'+30% speed (all skills) · 60s',buff:'spd_all',mult:1.30,dur:60},
-  {id:'buff_speed_all_2',name:'Tireless Tonic',icon:'⚗️',cost:200,eff:'+50% speed (all skills) · 60s',buff:'spd_all',mult:1.50,dur:60},
-  {id:'buff_xp_all',name:'Sage Elixir',icon:'📜',cost:180,eff:'+25% XP (all skills) · 90s',buff:'xp_all',mult:1.25,dur:90},
-  {id:'buff_speed_wood',name:'Lumberjack Draught',icon:'🪓',cost:80,eff:'+50% Woodcutting speed · 60s',buff:'spd_woodcutting',mult:1.50,dur:60},
-  {id:'buff_speed_mine',name:'Stoneward Brew',icon:'⛏️',cost:80,eff:'+50% Mining speed · 60s',buff:'spd_mining',mult:1.50,dur:60},
-  {id:'buff_speed_fish',name:'Tideborne Tonic',icon:'🎣',cost:80,eff:'+50% Fishing speed · 60s',buff:'spd_fishing',mult:1.50,dur:60},
-  {id:'buff_speed_cook',name:'Hearth Cordial',icon:'🍳',cost:80,eff:'+50% Cooking speed · 60s',buff:'spd_cooking',mult:1.50,dur:60},
-  {id:'buff_speed_smith',name:'Forge Heat',icon:'🔥',cost:90,eff:'+50% Smithing speed · 60s',buff:'spd_smithing',mult:1.50,dur:60},
-  {id:'buff_speed_flet',name:'Steady Aim Tonic',icon:'🏹',cost:90,eff:'+50% Fletching speed · 60s',buff:'spd_fletching',mult:1.50,dur:60},
-  {id:'buff_speed_craft',name:'Spinner Silk',icon:'🧵',cost:90,eff:'+50% Crafting speed · 60s',buff:'spd_crafting',mult:1.50,dur:60},
-  {id:'buff_speed_magic',name:'Arcane Catalyst',icon:'✨',cost:120,eff:'+50% Magic speed · 60s',buff:'spd_magic',mult:1.50,dur:60},
-  {id:'buff_loot_dungeon',name:"Hunter's Eye",icon:'🦅',cost:300,eff:'+25% dungeon drop chance · 120s',buff:'loot_dungeon',mult:1.25,dur:120},
-];
+// === Worker Hire System ===
+// Workers are persistent helpers the player hires with gold. Each worker is
+// assigned to ONE skill action and produces items / XP autonomously (slower
+// than the player). Workers consume materials just like the player — if mats
+// run out, the worker idles. Workers cannot do actions the player hasn't
+// unlocked (skill level gated).
+//
+// Stored in G.workers as an array of worker objects:
+//   { id:'w0', skill:null, assignedAction:null, active:false, prog:0, dur:0 }
+//
+// Hire cost curve (exponential):  500 · 3^n  for the (n+1)th worker.
+//   1st: 500g, 2nd: 1,500g, 3rd: 4,500g, 4th: 13,500g, 5th: 40,500g
+const WORKER_MAX = 5;
+const WORKER_SPEED = 0.55;  // workers produce at 55% player speed
+const WORKER_XP   = 0.30;  // workers grant 30% of normal XP
+function workerHireCost(n){ return Math.round(500 * Math.pow(3, n)); }
+function freshWorker(idx){
+  return { id:'w'+idx, skill:null, assignedAction:null, active:false, prog:0, dur:0 };
+}
+function initWorkers(){
+  if(!G.workers) G.workers=[];
+  // Sanitise each worker on load (fill missing fields).
+  for(let i=0;i<G.workers.length;i++){
+    const w=G.workers[i];
+    if(!w.id) w.id='w'+i;
+    if(w.skill===undefined)  w.skill=null;
+    if(w.assignedAction===undefined) w.assignedAction=null;
+    if(w.active===undefined) w.active=false;
+    if(w.prog===undefined)   w.prog=0;
+    if(w.dur===undefined)    w.dur=0;
+  }
+}
+// Hire the next worker. Returns true on success.
+function hireWorker(){
+  if(G.workers.length>=WORKER_MAX) return false;
+  const cost=workerHireCost(G.workers.length);
+  if(G.gold<cost) return false;
+  G.gold-=cost;
+  G.workers.push(freshWorker(G.workers.length));
+  log('👷 Hired worker #'+(G.workers.length)+'!');
+  return true;
+}
+// Assign a worker to a skill action. Validates level req + mats.
+function assignWorker(workerIdx, actionId){
+  const w=G.workers[workerIdx]; if(!w) return false;
+  if(!actionId){ // un-assign
+    w.assignedAction=null; w.skill=null; w.active=false; w.prog=0; w.dur=0;
+    return true;
+  }
+  const a=findAction(actionId); if(!a) return false;
+  const sk=findSkill(actionId); if(!sk) return false;
+  const lv=slvl(sk);
+  if(lv<a.req) return false;
+  w.assignedAction=actionId;
+  w.skill=sk;
+  w.active=true;
+  w.prog=0;
+  // Worker duration: base action dur / WORKER_SPEED (slower than player).
+  // No tool or level bonuses — workers are simple.
+  w.dur=Math.max(1000, Math.round(a.dur / WORKER_SPEED));
+  return true;
+}
+// Tick all active workers. Called from main game tick with delta ms.
+function tickWorkers(dt){
+  if(!G.workers||!G.workers.length) return;
+  for(let i=0;i<G.workers.length;i++){
+    const w=G.workers[i];
+    if(!w.active||!w.assignedAction) continue;
+    const a=findAction(w.assignedAction);
+    const sk=w.skill||findSkill(w.assignedAction);
+    if(!a||!sk){ w.active=false; continue; }
+    // Stop if player no longer meets level req (e.g. impossible but safe)
+    if(slvl(sk)<a.req){ w.active=false; continue; }
+    w.prog+=dt;
+    if(w.prog>=w.dur){
+      w.prog-=w.dur;
+      // Check and consume materials
+      if(a.need){
+        let canAfford=true;
+        for(const c of a.need){
+          if(!has(c.id,c.n)){ canAfford=false; break; }
+        }
+        if(!canAfford){ w.active=false; w.prog=0; continue; }
+        for(const c of a.need) take(c.id,c.n);
+      }
+      // Produce items
+      if(a.prod){
+        for(const p of a.prod) give(p.id,p.n);
+      }
+      // Grant reduced XP
+      const xpAmt=Math.max(1,Math.round(a.xp*WORKER_XP));
+      addXP(sk,xpAmt);
+    }
+  }
+}
+
+// Legacy shop constant kept empty so any straggling references don't crash.
+const SHOP=[];
 // STATE
 const EQUIP_SLOTS = ['weaponR','weaponL','helmet','chest','boots','jewelry'];
 function freshEquip(){return{weaponR:null,weaponL:null,helmet:null,chest:null,boots:null,jewelry:null};}
@@ -937,7 +1021,7 @@ let G = {
   skills:{},inv:{},equip:freshEquip(),
   gold:0,hp:30,maxhp:30,baseHp:30,
   upgrades:{},tools:{},dungeonRewards:{},dungeonsDiscovered:{},
-  buffs:{},
+  buffs:{},workers:[],
   tab:'woodcutting',
   task:null,prog:0,dur:0,
   mhp:0,mmhp:0,mhit:0,
@@ -1011,6 +1095,8 @@ function load(){
   for(const k of Object.keys(G.buffs)){
     if(!G.buffs[k]||(G.buffs[k].expires||0)<=_now) delete G.buffs[k];
   }
+  // Worker system migration for existing saves.
+  initWorkers();
   // Trinket removal cleanup: drop legacy state and any trinket items in inventory
   if(G.trinkets)delete G.trinkets;
   const oldTrinketIds=['grove_wc_trinket','grove_mn_trinket','grove_fs_trinket','grove_ck_trinket','grove_sm_trinket','grove_cb_trinket','grove_fl_trinket','grove_cr_trinket','grove_mg_trinket'];
@@ -1298,6 +1384,7 @@ function tick(){
     const pct=Math.min(100,(G.prog/G.dur)*100);
     document.getElementById('task-prog').style.width=pct+'%';
   }
+  tickWorkers(dt);
   updateUI();
   if(Math.floor(now/8000)!==Math.floor((now-dt)/8000))save();
 }
@@ -1960,22 +2047,43 @@ function refreshButtons(sk){
 function buildShop(){
   const g=document.getElementById('shop-grid');
   g.innerHTML='';
-  const now=Date.now();
-  SHOP.forEach(s=>{
+  // Worker hire slots
+  const hired=G.workers?G.workers.length:0;
+  for(let i=0;i<WORKER_MAX;i++){
     const d=document.createElement('div');
     d.className='sh-item';
-    let badge='';
-    if(s.buff){
-      const active=G.buffs&&G.buffs[s.buff];
-      if(active && (active.expires||0)>now){
-        const left=Math.max(0,Math.ceil(((active.expires)-now)/1000));
-        badge='<div class="sh-active">⏱ '+left+'s active</div>';
-        d.classList.add('owned');
-      }
+    if(i<hired){
+      const w=G.workers[i];
+      const aName=w.assignedAction?((findAction(w.assignedAction)||{}).name||'Unknown'):'Idle';
+      const skName=w.skill&&SKILLS[w.skill]?SKILLS[w.skill].name:'—';
+      const statusClr=w.active?'#5ac85a':'#9a7e50';
+      const statusTxt=w.active?'Working: '+aName:'Idle';
+      d.innerHTML='<div class="sh-top"><span class="sh-icon">👷</span><span class="sh-name">Worker #'+(i+1)+'</span></div>'+
+        '<div class="sh-eff" style="color:'+statusClr+';">'+statusTxt+'</div>'+
+        '<div class="sh-eff" style="font-size:9px;color:#5a4830;">'+skName+' · '+Math.round(WORKER_SPEED*100)+'% speed · '+Math.round(WORKER_XP*100)+'% XP</div>';
+      d.classList.add('owned');
+    } else if(i===hired){
+      const cost=workerHireCost(i);
+      const canAfford=G.gold>=cost;
+      d.innerHTML='<div class="sh-top"><span class="sh-icon">👷</span><span class="sh-name">Hire Worker #'+(i+1)+'</span></div>'+
+        '<div class="sh-price">🪙 '+cost+'</div>'+
+        '<div class="sh-eff">Assign to any action · '+Math.round(WORKER_SPEED*100)+'% speed</div>';
+      if(!canAfford) d.style.opacity='0.5';
+      d.onclick=function(){
+        if(hireWorker()){
+          buildShop();updateUI();
+        } else {
+          log('❌ Need '+cost+' gp to hire (have '+G.gold+').');
+        }
+      };
+    } else {
+      d.innerHTML='<div class="sh-top"><span class="sh-icon" style="opacity:0.3;">👷</span><span class="sh-name" style="color:#3a2c18;">Worker #'+(i+1)+'</span></div>'+
+        '<div class="sh-eff" style="color:#3a2c18;">Hire previous worker first</div>';
+      d.style.opacity='0.35';
+      d.style.cursor='default';
     }
-    d.innerHTML='<div class="sh-top"><span class="sh-icon">'+s.icon+'</span><span class="sh-name">'+s.name+'</span></div><div class="sh-price">🪙 '+s.cost+'</div><div class="sh-eff">'+s.eff+'</div>'+badge;
-    d.onclick=()=>buy(s);g.appendChild(d);
-  });
+    g.appendChild(d);
+  }
 }
 
 let _shopTab='buy';
@@ -2195,19 +2303,8 @@ function sellStack(id){
   renderShopSell();
 }
 
-function buy(s){
-  if(G.gold<s.cost){log('❌ Need '+s.cost+' gp (have '+G.gold+').');return;}
-  G.gold-=s.cost;
-  if(s.buff){
-    applyBuff(s.buff, s.mult, s.dur);
-    log('🧪 Drank '+s.icon+' <b>'+s.name+'</b> — '+s.eff);
-  } else if(s.up){
-    G.upgrades[s.up]=true;
-    log('✅ Purchased '+s.name+'! '+s.eff);
-  }
-  document.getElementById('shop-grid').innerHTML='';buildShop();
-  updateUI();
-}
+// Legacy buy() removed — shop is now the worker hire panel.
+function buy(){}
 // CHARACTER ANIMATION
 function anim(){
   const ch=document.getElementById('char');
