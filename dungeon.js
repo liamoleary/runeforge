@@ -1340,10 +1340,7 @@
         dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The dungeon falls silent. You are victorious!</span>');
 
         // Roll 1: crafting shard. Chance scales UP with tier (T1≈10%, T12≈70%).
-        // Hunter's Eye buff (loot_dungeon) bumps the chance multiplicatively if active.
         var dropChance = (rwd.chance!=null) ? rwd.chance : 60;
-        var lootBuff = (typeof window.getBuffLootMult === 'function') ? window.getBuffLootMult() : 1;
-        if (lootBuff > 1) dropChance = Math.min(95, Math.round(dropChance * lootBuff));
         var gotDrop = (Math.random()*100) < dropChance;
         if(gotDrop){
           var craftMsg = rwd.craftName ? ' <span style="color:#9a7e50;font-size:10px;">(\u2192 forge '+rwd.craftIcon+' '+rwd.craftName+' in the skill tab)</span>' : '';

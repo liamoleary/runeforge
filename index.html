@@ -153,40 +153,19 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 #inv-btns{display:flex;gap:6px;padding:4px 8px 8px;flex-wrap:wrap}
 .inv-btn{background:var(--bg2);border:1px solid var(--bdr2);border-radius:5px;padding:5px 10px;color:var(--gold);cursor:pointer;font-size:11px;font-family:'Cinzel',serif}
 .inv-btn:active{transform:scale(.95);background:var(--bg3)}
-#shop-tabs{display:flex;border-bottom:1px solid var(--bdr)}
-.shop-tab{flex:1;text-align:center;padding:8px 6px;font-family:'Cinzel',serif;font-size:11px;color:var(--text3);cursor:pointer;letter-spacing:.5px;border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase}
-.shop-tab:active{background:var(--bg2)}
-.shop-tab.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(240,192,64,.04)}
-#shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px}
-#shop-panel.sell-mode #shop-grid{display:none}
-#shop-panel:not(.sell-mode) #shop-sell-list{display:none}
-#shop-sell-list{padding:8px}
-.ss-empty{font-size:11px;color:var(--text3);text-align:center;padding:16px 8px;font-style:italic}
-.ss-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;margin-bottom:4px}
-.ss-row:active{background:var(--bg3)}
-.ss-ico{font-size:20px;min-width:24px;text-align:center}
-.ss-info{flex:1;min-width:0}
-.ss-name{font-family:'Cinzel',serif;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ss-meta{font-size:9px;color:var(--text3);margin-top:1px}
-.ss-meta .ss-price{color:var(--gold);font-weight:600}
-.ss-btns{display:flex;gap:4px;flex-shrink:0}
-.ss-btn{background:var(--bg1);border:1px solid var(--bdr2);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;padding:5px 9px;border-radius:4px;cursor:pointer;min-width:40px}
-.ss-btn:active{transform:scale(.95);background:var(--bg3)}
-.ss-btn.ss-all{border-color:var(--gold);background:rgba(240,192,64,.08)}
-.sh-item{background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;padding:9px;cursor:pointer;transition:all .18s}
-.sh-item:active{transform:scale(.95);background:var(--bg3)}
-.sh-item.owned{border-color:var(--green);opacity:.6}
-.sh-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
-.sh-icon{font-size:18px}
-.sh-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text)}
-.sh-price{font-size:12px;color:var(--gold)}
-.sh-eff{font-size:9px;color:var(--text3);margin-top:2px}
-.sh-active{font-size:9px;color:#5ac85a;margin-top:3px;font-weight:700;letter-spacing:.3px}
-.sh-item.owned{border-color:#5ac85a;opacity:1}
-#active-buffs{display:flex;flex-wrap:wrap;gap:4px;padding:0 10px 6px}
-.buff-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(94,200,90,.1);border:1px solid #5ac85a;border-radius:14px;padding:3px 8px;font-size:10px;color:#9adda0;font-family:'Cinzel',serif}
-.buff-pill .buff-ico{font-size:13px;line-height:1}
-.buff-pill .buff-time{color:#5ac85a;font-weight:700}
+#workers-panel{padding-bottom:6px}
+.wk-card{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;margin:4px 8px}
+.wk-card .wk-info{flex:1;min-width:0}
+.wk-card .wk-name{font-family:'Cinzel',serif;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-card .wk-status{font-size:9px;color:var(--text3);margin-top:1px}
+.wk-prog{height:3px;background:var(--bg1);border-radius:2px;margin-top:3px;overflow:hidden}
+.wk-prog-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s}
+.wk-btn{background:var(--bg1);border:1px solid var(--bdr2);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;padding:5px 9px;border-radius:4px;cursor:pointer}
+.wk-btn:active{transform:scale(.95);background:var(--bg3)}
+.wk-hire{text-align:center;padding:8px}
+.wk-hire-btn{background:rgba(240,192,64,.08);border:1px solid var(--gold);color:var(--gold);font-family:'Cinzel',serif;font-size:11px;padding:7px 16px;border-radius:5px;cursor:pointer}
+.wk-hire-btn:active{transform:scale(.95)}
+.wk-hire-btn:disabled{opacity:.4;cursor:default}
 #log-inner{padding:6px 10px;max-height:140px;overflow-y:auto}
 #log-inner::-webkit-scrollbar{width:3px}
 #log-inner::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
@@ -558,7 +537,6 @@ body.shake-hit #stage{animation:screenShake .35s ease}
       <div id="task-prog-wrap"><div id="task-prog"></div></div>
       <div id="task-sub"><span id="task-xp-lbl"></span><span id="task-dur-lbl"></span></div>
     </div>
-    <div id="active-buffs"></div>
     <div id="pages"></div>
   </div>
   <div class="panel">
@@ -590,14 +568,9 @@ body.shake-hit #stage{animation:screenShake .35s ease}
       <button class="inv-btn" onclick="eatFood()">🍽️ Eat Best Food</button>
     </div>
   </div>
-  <div class="panel" id="shop-panel">
-    <div class="panel-hdr">⚒ General Store</div>
-    <div id="shop-tabs">
-      <div class="shop-tab active" id="shop-tab-buy" onclick="setShopTab('buy')">🛒 Buy</div>
-      <div class="shop-tab" id="shop-tab-sell" onclick="setShopTab('sell')">💰 Sell</div>
-    </div>
-    <div id="shop-grid"></div>
-    <div id="shop-sell-list"></div>
+  <div class="panel" id="workers-panel">
+    <div class="panel-hdr" id="workers-hdr">Workers · 0/0</div>
+    <div id="workers-list"></div>
   </div>
   <div class="panel" id="log-panel"><div class="panel-hdr">Activity Log</div><div id="log-inner"></div></div>
 </div>
@@ -914,23 +887,12 @@ const TOOL_BONUS={
   needle:0.15,steel_needle:0.20,
   staff:0.15,apprentice_wand:0.20
 };
-// Shop now sells temporary buff potions instead of permanent tool upgrades.
-// Tools come from crafting / dungeon drops; the shop is for short-term boosts.
-// `dur` is in seconds. `effect` is a buff key (see BUFF_DEFS).
-const SHOP=[
-  {id:'buff_speed_all_1',name:'Quick Hands Brew',icon:'🧪',cost:60,eff:'+30% speed (all skills) · 60s',buff:'spd_all',mult:1.30,dur:60},
-  {id:'buff_speed_all_2',name:'Tireless Tonic',icon:'⚗️',cost:200,eff:'+50% speed (all skills) · 60s',buff:'spd_all',mult:1.50,dur:60},
-  {id:'buff_xp_all',name:'Sage Elixir',icon:'📜',cost:180,eff:'+25% XP (all skills) · 90s',buff:'xp_all',mult:1.25,dur:90},
-  {id:'buff_speed_wood',name:'Lumberjack Draught',icon:'🪓',cost:80,eff:'+50% Woodcutting speed · 60s',buff:'spd_woodcutting',mult:1.50,dur:60},
-  {id:'buff_speed_mine',name:'Stoneward Brew',icon:'⛏️',cost:80,eff:'+50% Mining speed · 60s',buff:'spd_mining',mult:1.50,dur:60},
-  {id:'buff_speed_fish',name:'Tideborne Tonic',icon:'🎣',cost:80,eff:'+50% Fishing speed · 60s',buff:'spd_fishing',mult:1.50,dur:60},
-  {id:'buff_speed_cook',name:'Hearth Cordial',icon:'🍳',cost:80,eff:'+50% Cooking speed · 60s',buff:'spd_cooking',mult:1.50,dur:60},
-  {id:'buff_speed_smith',name:'Forge Heat',icon:'🔥',cost:90,eff:'+50% Smithing speed · 60s',buff:'spd_smithing',mult:1.50,dur:60},
-  {id:'buff_speed_flet',name:'Steady Aim Tonic',icon:'🏹',cost:90,eff:'+50% Fletching speed · 60s',buff:'spd_fletching',mult:1.50,dur:60},
-  {id:'buff_speed_craft',name:'Spinner Silk',icon:'🧵',cost:90,eff:'+50% Crafting speed · 60s',buff:'spd_crafting',mult:1.50,dur:60},
-  {id:'buff_speed_magic',name:'Arcane Catalyst',icon:'✨',cost:120,eff:'+50% Magic speed · 60s',buff:'spd_magic',mult:1.50,dur:60},
-  {id:'buff_loot_dungeon',name:"Hunter's Eye",icon:'🦅',cost:300,eff:'+25% dungeon drop chance · 120s',buff:'loot_dungeon',mult:1.25,dur:120},
-];
+// === Worker system ===
+// Workers are hireable helpers that repeat skill actions at reduced speed/XP.
+// Max 5 workers with escalating hire costs.
+const WORKER_COSTS = [500, 1500, 4000, 10000, 25000];
+const WORKER_SPEED_MULT = 0.60;  // 60% of player speed
+const WORKER_XP_MULT    = 0.30;  // 30% XP
 // STATE
 const EQUIP_SLOTS = ['weaponR','weaponL','helmet','chest','boots','jewelry'];
 function freshEquip(){return{weaponR:null,weaponL:null,helmet:null,chest:null,boots:null,jewelry:null};}
@@ -938,7 +900,7 @@ let G = {
   skills:{},inv:{},equip:freshEquip(),
   gold:0,hp:30,maxhp:30,baseHp:30,
   upgrades:{},tools:{},dungeonRewards:{},dungeonsDiscovered:{},
-  buffs:{},
+  workers:[],
   tab:'woodcutting',
   task:null,prog:0,dur:0,
   mhp:0,mmhp:0,mhit:0,
@@ -1006,12 +968,9 @@ function load(){
       if(k.indexOf('spd_')===0) delete G.upgrades[k];
     }
   }
-  if(!G.buffs) G.buffs={};
-  // Drop expired buffs on load so a long-offline player doesn't see ghost timers.
-  const _now=Date.now();
-  for(const k of Object.keys(G.buffs)){
-    if(!G.buffs[k]||(G.buffs[k].expires||0)<=_now) delete G.buffs[k];
-  }
+  // Migrate: remove legacy buff state, init workers
+  if(G.buffs) delete G.buffs;
+  if(!Array.isArray(G.workers)) G.workers=[];
   // Trinket removal cleanup: drop legacy state and any trinket items in inventory
   if(G.trinkets)delete G.trinkets;
   const oldTrinketIds=['grove_wc_trinket','grove_mn_trinket','grove_fs_trinket','grove_ck_trinket','grove_sm_trinket','grove_cb_trinket','grove_fl_trinket','grove_cr_trinket','grove_mg_trinket'];
@@ -1049,88 +1008,12 @@ function xpPct(sk){
   if(l>=99)return 100;
   return Math.round(((x-XP[l])/(XP[nl]-XP[l]))*100);
 }
-// Buff helpers — temporary shop potions / consumables that grant time-limited boosts.
-function getActiveBuff(key){
-  const b=G.buffs&&G.buffs[key];
-  if(!b) return null;
-  if((b.expires||0)<=Date.now()){delete G.buffs[key];return null;}
-  return b;
-}
-// Returns a multiplier > 1 if a speed buff for this skill is active. The all-skills
-// buff stacks multiplicatively with the per-skill buff.
-function getBuffSpeedMult(sk){
-  let mult=1;
-  const all=getActiveBuff('spd_all');
-  if(all) mult*=(all.mult||1);
-  const own=getActiveBuff('spd_'+sk);
-  if(own) mult*=(own.mult||1);
-  return mult;
-}
-function getBuffXpMult(sk){
-  let mult=1;
-  const all=getActiveBuff('xp_all');
-  if(all) mult*=(all.mult||1);
-  const own=getActiveBuff('xp_'+sk);
-  if(own) mult*=(own.mult||1);
-  return mult;
-}
-function getBuffLootMult(){
-  const b=getActiveBuff('loot_dungeon');
-  return b?(b.mult||1):1;
-}
-window.getBuffLootMult=getBuffLootMult;
-function applyBuff(buffKey, mult, durationSec){
-  if(!G.buffs) G.buffs={};
-  const now=Date.now();
-  const cur=G.buffs[buffKey];
-  // If a buff of the same key is already active with the same or higher mult,
-  // extend its duration. Otherwise replace.
-  if(cur && (cur.expires||0)>now && (cur.mult||1)>=mult){
-    cur.expires = (cur.expires||now) + durationSec*1000;
-  } else {
-    G.buffs[buffKey] = {mult:mult, expires: now + durationSec*1000};
-  }
-}
-
 function getToolSpeedMult(sk){
-  // Lower = faster. Equipped tool gives a passive % boost; shop buffs stack on top.
+  // Lower = faster. Equipped tool gives a passive % boost.
   let mult=1;
   const tid=G.tools[sk];
   if(tid&&TOOL_BONUS[tid])mult=1-TOOL_BONUS[tid];
-  // Apply temporary speed buff (mult>1 means faster, so divide our multiplier).
-  const speedBuff=getBuffSpeedMult(sk);
-  if(speedBuff>1) mult=mult/speedBuff;
   return Math.max(0.05,mult);
-}
-
-// Renders the row of active buff pills above the action pages.
-const _BUFF_LABELS = {
-  spd_all:'⚡ All Speed',
-  xp_all:'📜 XP Boost',
-  loot_dungeon:'🦅 Lucky Loot',
-  spd_woodcutting:'🪓 Wood Speed',
-  spd_mining:'⛏️ Mine Speed',
-  spd_fishing:'🎣 Fish Speed',
-  spd_cooking:'🍳 Cook Speed',
-  spd_smithing:'🔨 Smith Speed',
-  spd_fletching:'🏹 Fletch Speed',
-  spd_crafting:'🧵 Craft Speed',
-  spd_magic:'✨ Magic Speed',
-};
-function renderActiveBuffs(){
-  const el=document.getElementById('active-buffs');if(!el)return;
-  if(!G.buffs){el.innerHTML='';return;}
-  const now=Date.now();
-  const pills=[];
-  for(const k of Object.keys(G.buffs)){
-    const b=G.buffs[k];
-    if(!b||(b.expires||0)<=now){delete G.buffs[k];continue;}
-    const left=Math.max(0,Math.ceil((b.expires-now)/1000));
-    const label=_BUFF_LABELS[k]||k;
-    const pct=Math.round(((b.mult||1)-1)*100);
-    pills.push('<div class="buff-pill"><span class="buff-ico">'+(label.split(' ')[0])+'</span>'+label.split(' ').slice(1).join(' ')+' +'+pct+'% <span class="buff-time">'+left+'s</span></div>');
-  }
-  el.innerHTML=pills.join('');
 }
 function getActiveToolBadge(sk){
   // Returns HTML for the active task bar showing equipped tool + bonus, or ''
@@ -1170,9 +1053,6 @@ function recomputeActiveTaskDur(forSk){
   updateActiveTaskBar();
 }
 function addXP(sk,amt){
-  // Apply any active XP buff before banking the gain.
-  const xpMult=getBuffXpMult(sk);
-  if(xpMult>1) amt=Math.round(amt*xpMult);
   const ol=slvl(sk);
   G.skills[sk].xp=(G.skills[sk].xp||0)+amt;
   if(!G.xpEarned)G.xpEarned={};
@@ -1430,12 +1310,10 @@ function updateUI(){
   document.getElementById('def-fill').style.width=Math.min(100,def*10)+'%';
   document.getElementById('dodge-fill').style.width=Math.min(100,(dodge/MAX_DODGE)*100)+'%';
   document.getElementById('gld').textContent='🪙 '+G.gold;
-  renderInv();renderEquip();renderSpellBar();renderActiveBuffs();
+  renderInv();renderEquip();renderSpellBar();
     updateCombatStatsPanel();updateStageMonsterHP();
   const cnt=Object.values(G.inv).filter(v=>v>0).length;
   document.getElementById('inv-count').textContent=cnt+'/28';
-  if(_shopTab==='sell')renderShopSell();
-  else if(_shopTab==='buy')buildShop();
 }
 
 function isEquippedAnywhere(id){
@@ -1692,11 +1570,6 @@ function showSlotMenu(sk, slotType){
       items.push({icon:it.icon,name:it.name+' (equipped)',desc:'+'+pct+'% '+SKILLS[sk].name+' speed · tap to unequip',equipped:true,action:()=>{
         give(current,1);delete G.tools[sk];log('Removed '+it.name+' from '+SKILLS[sk].name+' tool slot.');recomputeActiveTaskDur(sk);closeSlotMenu();
       }});
-    }
-    // Shop upgrade (permanent, separate)
-    if(G.upgrades[upKey]){
-      const shopItem=SHOP.find(s=>toolIds.includes(s.id));
-      items.push({icon:shopItem?shopItem.icon:'⚒',name:(shopItem?shopItem.name:'Tool')+' (shop)',desc:'Permanent shop upgrade · '+(shopItem?shopItem.eff:'+15% speed'),equipped:true,action:()=>closeSlotMenu()});
     }
     // Available tool items in inventory
     Object.entries(G.inv).filter(([id,q])=>q>0&&toolIds.includes(id)&&id!==current).forEach(([id])=>{
@@ -1958,79 +1831,6 @@ function refreshButtons(sk){
   });
 }
 
-function buildShop(){
-  const g=document.getElementById('shop-grid');
-  g.innerHTML='';
-  const now=Date.now();
-  SHOP.forEach(s=>{
-    const d=document.createElement('div');
-    d.className='sh-item';
-    let badge='';
-    if(s.buff){
-      const active=G.buffs&&G.buffs[s.buff];
-      if(active && (active.expires||0)>now){
-        const left=Math.max(0,Math.ceil(((active.expires)-now)/1000));
-        badge='<div class="sh-active">⏱ '+left+'s active</div>';
-        d.classList.add('owned');
-      }
-    }
-    d.innerHTML='<div class="sh-top"><span class="sh-icon">'+s.icon+'</span><span class="sh-name">'+s.name+'</span></div><div class="sh-price">🪙 '+s.cost+'</div><div class="sh-eff">'+s.eff+'</div>'+badge;
-    d.onclick=()=>buy(s);g.appendChild(d);
-  });
-}
-
-let _shopTab='buy';
-function setShopTab(tab){
-  _shopTab=tab;
-  document.getElementById('shop-tab-buy').classList.toggle('active',tab==='buy');
-  document.getElementById('shop-tab-sell').classList.toggle('active',tab==='sell');
-  const panel=document.getElementById('shop-panel');
-  if(panel)panel.classList.toggle('sell-mode',tab==='sell');
-  if(tab==='sell')renderShopSell();
-  else buildShop();
-}
-
-// Sort order for the sell list so related items stay grouped
-const _SELL_TYPE_ORDER={res:0,raw:1,food:2,weapon:3,armour:4,accessory:5,currency:6,tool:7,potion:8};
-
-function renderShopSell(){
-  const list=document.getElementById('shop-sell-list');if(!list)return;
-  list.innerHTML='';
-  const entries=Object.entries(G.inv)
-    .filter(([id,q])=>q>0&&ITEMS[id]&&canSell(id)&&sellValue(id)>0)
-    .map(([id,q])=>{
-      const it=ITEMS[id];
-      return{id,qty:q,it,price:sellValue(id)};
-    })
-    .sort((a,b)=>{
-      const ta=_SELL_TYPE_ORDER[a.it.type]??99;
-      const tb=_SELL_TYPE_ORDER[b.it.type]??99;
-      if(ta!==tb)return ta-tb;
-      return a.price-b.price;
-    });
-  if(!entries.length){
-    list.innerHTML='<div class="ss-empty">Nothing to sell right now — come back with some loot.</div>';
-    return;
-  }
-  entries.forEach(({id,qty,it,price})=>{
-    const row=document.createElement('div');row.className='ss-row';
-    const total=price*qty;
-    row.innerHTML=
-      '<span class="ss-ico">'+it.icon+'</span>'+
-      '<div class="ss-info">'+
-        '<div class="ss-name">'+it.name+'</div>'+
-        '<div class="ss-meta"><span class="ss-price">'+price+' gp</span> each · '+qty+' in bag · '+total+' gp total</div>'+
-      '</div>'+
-      '<div class="ss-btns">'+
-        '<button class="ss-btn" data-sell-one="'+id+'">Sell 1</button>'+
-        '<button class="ss-btn ss-all" data-sell-all="'+id+'">All</button>'+
-      '</div>';
-    list.appendChild(row);
-  });
-  // Wire up via delegated clicks to keep markup simple
-  list.querySelectorAll('[data-sell-one]').forEach(b=>{b.onclick=()=>sellOne(b.dataset.sellOne);});
-  list.querySelectorAll('[data-sell-all]').forEach(b=>{b.onclick=()=>sellStack(b.dataset.sellAll);});
-}
 // ACTIONS
 function useItem(id){
   const it=ITEMS[id];
@@ -2180,7 +1980,6 @@ function sellOne(id){
   G.gold+=v;
   log('<span class="lg">💰 Sold '+it.icon+' '+it.name+' for '+v+' gp.</span>');
   updateUI();
-  renderShopSell();
 }
 
 function sellStack(id){
@@ -2193,22 +1992,8 @@ function sellStack(id){
   G.gold+=total;
   log('<span class="lg">💰 Sold '+it.icon+' '+it.name+' ×'+qty+' for '+total+' gp.</span>');
   updateUI();
-  renderShopSell();
 }
 
-function buy(s){
-  if(G.gold<s.cost){log('❌ Need '+s.cost+' gp (have '+G.gold+').');return;}
-  G.gold-=s.cost;
-  if(s.buff){
-    applyBuff(s.buff, s.mult, s.dur);
-    log('🧪 Drank '+s.icon+' <b>'+s.name+'</b> — '+s.eff);
-  } else if(s.up){
-    G.upgrades[s.up]=true;
-    log('✅ Purchased '+s.name+'! '+s.eff);
-  }
-  document.getElementById('shop-grid').innerHTML='';buildShop();
-  updateUI();
-}
 // CHARACTER ANIMATION
 function anim(){
   const ch=document.getElementById('char');
@@ -2665,7 +2450,7 @@ function updateCombatStatsPanel() {
   load();
   giveStarterSword();
   if(!G.hasSeenIntro){showIntro();}
-      buildSkills();buildTabs();buildShop();
+      buildSkills();buildTabs();
   updateUI();anim();
   setInterval(tick,50);
   requestNotificationPermission();
