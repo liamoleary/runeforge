@@ -565,8 +565,10 @@ body.shake-hit #stage{animation:screenShake .35s ease}
   <div class="panel"><div class="panel-hdr"><span>Inventory</span><span id="inv-count">0/28</span></div><div id="inv-grid"></div>
     <div id="inv-btns">
       <button class="inv-btn" onclick="sellAll()">💰 Sell Resources</button>
+      <button class="inv-btn" onclick="toggleSellList()">🏷️ Sell Items</button>
       <button class="inv-btn" onclick="eatFood()">🍽️ Eat Best Food</button>
     </div>
+    <div id="inv-sell-list" style="display:none;padding:4px 8px 8px;"></div>
   </div>
   <div class="panel" id="workers-panel">
     <div class="panel-hdr" id="workers-hdr">Workers · 0/0</div>
@@ -1364,7 +1366,7 @@ function updateUI(){
   document.getElementById('def-fill').style.width=Math.min(100,def*10)+'%';
   document.getElementById('dodge-fill').style.width=Math.min(100,(dodge/MAX_DODGE)*100)+'%';
   document.getElementById('gld').textContent='🪙 '+G.gold;
-  renderInv();renderEquip();renderSpellBar();
+  renderInv();renderEquip();renderSpellBar();renderWorkers();
     updateCombatStatsPanel();updateStageMonsterHP();
   const cnt=Object.values(G.inv).filter(v=>v>0).length;
   document.getElementById('inv-count').textContent=cnt+'/28';
@@ -1995,6 +1997,130 @@ function eatFood(){
   useItem(f[0][0]);
 }
 
+// === Worker UI ===
+function renderWorkers(){
+  const hdr=document.getElementById('workers-hdr');
+  const list=document.getElementById('workers-list');
+  if(!hdr||!list)return;
+  const max=WORKER_COSTS.length;
+  const count=G.workers.length;
+  hdr.textContent='Workers \u00b7 '+count+'/'+max;
+  let h='';
+  // Worker cards
+  G.workers.forEach((w,i)=>{
+    const a=w.action?findAction(w.action):null;
+    const sk=w.action?findSkill(w.action):null;
+    const skInfo=sk&&SKILLS[sk]?SKILLS[sk]:null;
+    const label=a?(skInfo?skInfo.icon+' ':'')+a.icon+' '+a.name:'Unassigned';
+    const status=!w.action?'Idle \u2014 tap Assign':(!w.active?'Idle \u2014 out of materials':'Working...');
+    const pct=w.dur>0?Math.min(100,(w.prog||0)/w.dur*100):0;
+    h+='<div class="wk-card">';
+    h+='<div class="wk-info">';
+    h+='<div class="wk-name">Worker '+(i+1)+': '+label+'</div>';
+    h+='<div class="wk-status">'+status+'</div>';
+    if(w.action&&w.active){
+      h+='<div class="wk-prog"><div class="wk-prog-fill" style="width:'+pct.toFixed(1)+'%"></div></div>';
+    }
+    h+='</div>';
+    h+='<button class="wk-btn" onclick="showWorkerAssign('+i+')">'+(w.action?'Reassign':'Assign')+'</button>';
+    h+='</div>';
+  });
+  // Hire button
+  if(count<max){
+    const cost=WORKER_COSTS[count];
+    h+='<div class="wk-hire"><button class="wk-hire-btn" onclick="hireWorker()"'+(G.gold<cost?' disabled':'')+'>Hire Worker \u00b7 \ud83e\ude99 '+cost+'</button></div>';
+  }
+  list.innerHTML=h;
+}
+
+function hireWorker(){
+  const idx=G.workers.length;
+  if(idx>=WORKER_COSTS.length)return;
+  const cost=WORKER_COSTS[idx];
+  if(G.gold<cost){log('\u274c Need '+cost+' gp to hire a worker (have '+G.gold+').');return;}
+  G.gold-=cost;
+  G.workers.push({id:'w'+idx,skill:null,action:null,prog:0,dur:0,active:false});
+  log('\ud83d\udc77 Hired Worker '+(idx+1)+'! Assign them to a task.');
+  updateUI();
+}
+
+function showWorkerAssign(workerIdx){
+  const w=G.workers[workerIdx];if(!w)return;
+  // Build overlay: pick skill, then pick action
+  const existing=document.getElementById('wk-assign-overlay');
+  if(existing)existing.remove();
+  const ov=document.createElement('div');
+  ov.id='wk-assign-overlay';
+  ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(5,3,1,0.88);z-index:9500;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font-family:Cinzel,serif;';
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  const modal=document.createElement('div');
+  modal.style.cssText='background:linear-gradient(135deg,#0f0a04 0%,#1a1308 100%);border:2px solid #f0c040;border-radius:12px;padding:18px 14px 14px;max-width:360px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(240,192,64,.4);';
+  showWorkerSkillPicker(modal,ov,workerIdx);
+  ov.appendChild(modal);
+  document.body.appendChild(ov);
+}
+
+function showWorkerSkillPicker(modal,ov,workerIdx){
+  let h='<div style="color:#f0c040;font-size:14px;font-weight:700;margin-bottom:10px;text-align:center;">Assign Worker '+(workerIdx+1)+'</div>';
+  h+='<div style="color:#9a7e50;font-size:10px;text-align:center;margin-bottom:12px;">Choose a skill</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;">';
+  for(const sk of Object.keys(SKILLS)){
+    const s=SKILLS[sk];
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#1a1308;border:1px solid #3a2c18;border-radius:6px;cursor:pointer;" data-wk-skill="'+sk+'">';
+    h+='<span style="font-size:20px;">'+s.icon+'</span>';
+    h+='<span style="color:#e8d898;font-size:12px;font-weight:700;">'+s.name+'</span>';
+    h+='<span style="color:#9a7e50;font-size:10px;margin-left:auto;">Lvl '+slvl(sk)+'</span>';
+    h+='</div>';
+  }
+  h+='</div>';
+  modal.innerHTML=h;
+  modal.querySelectorAll('[data-wk-skill]').forEach(function(el){
+    el.onclick=function(){showWorkerActionPicker(modal,ov,workerIdx,el.dataset.wkSkill);};
+  });
+}
+
+function showWorkerActionPicker(modal,ov,workerIdx,sk){
+  const actions=ACTIONS[sk]||[];
+  const lvl=slvl(sk);
+  const s=SKILLS[sk];
+  let h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+  h+='<div style="cursor:pointer;color:#9a7e50;font-size:18px;" data-wk-back="1">\u2190</div>';
+  h+='<span style="font-size:20px;">'+s.icon+'</span>';
+  h+='<span style="color:#f0c040;font-size:14px;font-weight:700;">'+s.name+'</span>';
+  h+='</div>';
+  h+='<div style="color:#9a7e50;font-size:10px;text-align:center;margin-bottom:10px;">Choose an action for Worker '+(workerIdx+1)+'</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex:1;">';
+  const eligible=actions.filter(a=>lvl>=a.req);
+  if(!eligible.length){
+    h+='<div style="color:#9a7e50;font-size:11px;text-align:center;padding:16px;">No unlocked actions yet.</div>';
+  }
+  eligible.forEach(function(a){
+    const prodDesc=a.prod?a.prod.map(function(p){return(ITEMS[p.id]?ITEMS[p.id].icon:'')+' '+(ITEMS[p.id]?ITEMS[p.id].name:p.id);}).join(', '):'';
+    const needDesc=a.need?a.need.map(function(c){return(ITEMS[c.id]?ITEMS[c.id].icon:'')+c.n;}).join(' '):'';
+    h+='<div style="display:flex;align-items:center;gap:6px;padding:7px 8px;background:#1a1308;border:1px solid #3a2c18;border-radius:5px;cursor:pointer;" data-wk-action="'+a.id+'">';
+    h+='<span style="font-size:16px;">'+a.icon+'</span>';
+    h+='<div style="flex:1;min-width:0;">';
+    h+='<div style="color:#e8d898;font-size:11px;">'+a.name+'</div>';
+    h+='<div style="color:#9a7e50;font-size:9px;">'+(prodDesc||'')+(needDesc?' \u00b7 needs: '+needDesc:'')+'</div>';
+    h+='</div></div>';
+  });
+  h+='</div>';
+  modal.innerHTML=h;
+  modal.querySelector('[data-wk-back]').onclick=function(){showWorkerSkillPicker(modal,ov,workerIdx);};
+  modal.querySelectorAll('[data-wk-action]').forEach(function(el){
+    el.onclick=function(){
+      const w=G.workers[workerIdx];
+      w.action=el.dataset.wkAction;
+      w.skill=sk;
+      w.prog=0;w.dur=0;w.active=true;
+      ov.remove();
+      const a=findAction(w.action);
+      log('\ud83d\udc77 Worker '+(workerIdx+1)+' assigned to '+s.icon+' '+(a?a.name:w.action)+'.');
+      updateUI();
+    };
+  });
+}
+
 function sellAll(){
   let gold=0,sold=[];
   for(const[id,qty]of Object.entries(G.inv)){
@@ -2009,7 +2135,44 @@ function sellAll(){
   else log('Nothing to sell.');
 }
 
-// ===== Shop helpers =====
+// Sort order for the sell list so related items stay grouped
+const _SELL_TYPE_ORDER={res:0,raw:1,food:2,weapon:3,armour:4,accessory:5,currency:6,tool:7,potion:8};
+
+let _sellListOpen=false;
+function toggleSellList(){
+  _sellListOpen=!_sellListOpen;
+  const el=document.getElementById('inv-sell-list');
+  if(!el)return;
+  el.style.display=_sellListOpen?'block':'none';
+  if(_sellListOpen)renderSellList();
+}
+function renderSellList(){
+  const el=document.getElementById('inv-sell-list');if(!el)return;
+  if(!_sellListOpen){el.innerHTML='';return;}
+  const entries=Object.entries(G.inv)
+    .filter(([id,q])=>q>0&&ITEMS[id]&&canSell(id)&&sellValue(id)>0)
+    .map(([id,q])=>({id,qty:q,it:ITEMS[id],price:sellValue(id)}))
+    .sort((a,b)=>{
+      const ta=_SELL_TYPE_ORDER[a.it.type]??99;
+      const tb=_SELL_TYPE_ORDER[b.it.type]??99;
+      if(ta!==tb)return ta-tb;
+      return a.price-b.price;
+    });
+  if(!entries.length){el.innerHTML='<div style="font-size:11px;color:#9a7e50;text-align:center;padding:8px;font-style:italic;">Nothing to sell.</div>';return;}
+  let h='';
+  entries.forEach(({id,qty,it,price})=>{
+    h+='<div style="display:flex;align-items:center;gap:6px;padding:5px 6px;background:#0d0905;border:1px solid #251e14;border-radius:5px;margin-bottom:3px;">';
+    h+='<span style="font-size:16px;">'+it.icon+'</span>';
+    h+='<div style="flex:1;min-width:0;"><div style="font-size:10px;color:#e8d898;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+it.name+'</div>';
+    h+='<div style="font-size:9px;color:#9a7e50;">'+price+' gp each \u00b7 '+qty+' owned</div></div>';
+    h+='<button class="wk-btn" onclick="sellOne(\''+id+'\');renderSellList()">Sell 1</button>';
+    h+='<button class="wk-btn" style="border-color:#f0c040;" onclick="sellStack(\''+id+'\');renderSellList()">All</button>';
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+
+// ===== Sell helpers =====
 function canSell(id){
   const it=ITEMS[id];if(!it)return false;
   if(it.special)return false;
