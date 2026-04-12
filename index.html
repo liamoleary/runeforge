@@ -1171,6 +1171,59 @@ function recomputeMaxHp(){
 }
 // GAME LOOP
 let lastT=Date.now();
+// === Worker tick ===
+// Each worker independently tracks progress. On completion: consume materials,
+// grant prod items, grant reduced XP (30%), batch log every 3 completions.
+// Workers keep repeating until materials run out. Workers tick during dungeons.
+let _workerLogBatch={};
+function tickWorkers(dt){
+  if(!G.workers||!G.workers.length) return;
+  for(const w of G.workers){
+    if(!w.action||!w.active) continue;
+    const a=findAction(w.action);
+    if(!a){w.active=false;continue;}
+    const sk=findSkill(w.action);
+    if(!sk){w.active=false;continue;}
+    // Compute duration: base * worker speed penalty * tool bonus
+    const toolMult=getToolSpeedMult(sk);
+    const dur=Math.max(800,Math.floor(a.dur / WORKER_SPEED_MULT * toolMult));
+    w.dur=dur;
+    w.prog=(w.prog||0)+dt;
+    if(w.prog>=dur){
+      w.prog=0;
+      // Check & consume materials
+      if(a.need){
+        let canDo=true;
+        for(const c of a.need){if(!has(c.id,c.n)){canDo=false;break;}}
+        if(!canDo){w.active=false;continue;}
+        for(const c of a.need)take(c.id,c.n);
+      }
+      // Grant products
+      if(a.prod){for(const p of a.prod)give(p.id,p.n);}
+      // Grant reduced XP
+      const wxp=Math.max(1,Math.round(a.xp*WORKER_XP_MULT));
+      addXP(sk,wxp);
+      // Batch log: accumulate, emit every 3 completions
+      const bk=w.id+'_'+w.action;
+      if(!_workerLogBatch[bk])_workerLogBatch[bk]={count:0,xp:0,prod:[],sk:sk,action:a};
+      const b=_workerLogBatch[bk];
+      b.count++;b.xp+=wxp;
+      if(a.prod)a.prod.forEach(p=>{const e=b.prod.find(x=>x.id===p.id);if(e)e.n+=p.n;else b.prod.push({id:p.id,n:p.n});});
+      if(b.count>=3){
+        const desc=b.prod.map(p=>(ITEMS[p.id]?.icon||'')+(ITEMS[p.id]?.name||p.id)+'x'+p.n).join(', ');
+        log('👷 Worker: '+desc+' <span class="lx">(+'+b.xp+'xp '+SKILLS[b.sk].name+')</span>');
+        delete _workerLogBatch[bk];
+      }
+      // Check if next cycle is possible (pre-check materials for repeat)
+      if(a.need){
+        let canRepeat=true;
+        for(const c of a.need){if(!has(c.id,c.n)){canRepeat=false;break;}}
+        if(!canRepeat){w.active=false;}
+      }
+    }
+  }
+}
+
 function tick(){
   const now=Date.now(),dt=Math.min(now-lastT,500);lastT=now;
   if(G.task){
@@ -1179,6 +1232,7 @@ function tick(){
     const pct=Math.min(100,(G.prog/G.dur)*100);
     document.getElementById('task-prog').style.width=pct+'%';
   }
+  tickWorkers(dt);
   updateUI();
   if(Math.floor(now/8000)!==Math.floor((now-dt)/8000))save();
 }
