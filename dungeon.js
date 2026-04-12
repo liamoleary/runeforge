@@ -1767,7 +1767,8 @@
         var tpDropPalette={uncommon:'#1eff00',rare:'#0070dd',epic:'#a335ee',legendary:'#ff8000'};
         var tpDropClr=tpDropPalette[rw.dropRarity||'uncommon']||'#1eff00';
         var tpDropOwned=(typeof G!=='undefined'&&G.inv&&G.inv[rw.dropId])?G.inv[rw.dropId]:0;
-        gearDropLine='<div style="font-size:9px;color:'+tpDropClr+';margin-top:2px;display:flex;align-items:center;gap:3px;flex-wrap:wrap;"><span>⚡</span><span style="font-size:12px;">'+rw.dropIcon+'</span><span>'+rw.dropName+'</span>'+(tpDropOwned>0?'<span style="color:#5ac85a;font-size:9px;">×'+tpDropOwned+'</span>':'')+'<span style="color:#ffd966;margin-left:auto;">'+(rw.dropChance||12)+'%</span></div>';
+        var tierLabel = t<=4?'Tier 1 Gear':t<=8?'Tier 2 Gear':'Tier 3 Gear';
+        gearDropLine='<div style="font-size:9px;color:'+tpDropClr+';margin-top:2px;display:flex;align-items:center;gap:3px;flex-wrap:wrap;"><span>⚡</span><span>'+tierLabel+'</span>'+(tpDropOwned>0?'<span style="color:#5ac85a;font-size:9px;">×'+tpDropOwned+'</span>':'')+'<span style="color:#ffd966;margin-left:auto;">'+(rw.dropChance||30)+'%</span></div>';
       }
       var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:3px;display:flex;justify-content:space-between;gap:6px;"><span style="color:#88ddff;">💎 '+dropPct+'% shard</span><span style="color:'+(unlocked?'#5ac85a':'#9a7e50')+';">'+(unlocked?'✓ Lvl '+req:'🔒 Lvl '+req)+'</span></div>';
       row.innerHTML =
@@ -1914,8 +1915,10 @@
       var dropRarityPalette={common:'#ffffff',uncommon:'#1eff00',rare:'#0070dd',epic:'#a335ee',legendary:'#ff8000'};
       var dropClr=dropRarityPalette[rwd.dropRarity||'uncommon']||'#1eff00';
       var dropOwnedEntry=(typeof G!=='undefined'&&G.inv&&G.inv[rwd.dropId])?G.inv[rwd.dropId]:0;
-      h+='<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px;"><span style="color:'+dropClr+';">'+rwd.dropIcon+' '+rwd.dropName+(dropOwnedEntry>0?' <span style="color:#5ac85a;font-weight:400;">×'+dropOwnedEntry+'</span>':'')+'</span><span style="color:#ffd966;">⚡ '+(rwd.dropChance||12)+'%</span></div>';
-      if(rwd.dropEff) h+='<div style="font-size:9px;color:#5a4830;margin-bottom:2px;padding-left:6px;">'+rwd.dropEff+' <span style="color:#9a7e50;">(rough — craft for full stats)</span></div>';
+      var entryTier = activeDungeon.tier || 1;
+      var entryTierLabel = entryTier<=4?'Tier 1 Gear':entryTier<=8?'Tier 2 Gear':'Tier 3 Gear';
+      h+='<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px;"><span style="color:'+dropClr+';">⚔ '+entryTierLabel+(dropOwnedEntry>0?' <span style="color:#5ac85a;font-weight:400;">×'+dropOwnedEntry+'</span>':'')+'</span><span style="color:#ffd966;">⚡ '+(rwd.dropChance||30)+'%</span></div>';
+      if(rwd.dropEff) h+='<div style="font-size:9px;color:#5a4830;margin-bottom:2px;padding-left:6px;">'+rwd.dropEff+'</div>';
     }
     h+='<div style="display:flex;justify-content:space-between;color:#9b59b6;font-size:10px;"><span>🧪 Level Potion</span><span>2%</span></div>';
     h+='</div></div>';
