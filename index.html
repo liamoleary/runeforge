@@ -788,14 +788,14 @@ const ITEMS = {
   gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory',hp:8,slot:'jewelry',dodge:4,rarity:'uncommon'},
   gold_coins:{name:'Gold Coins',icon:'🪙',sell:1,type:'currency'},
   // === Potions — single-use dungeon consumables ===
-  potion_strength:  {name:'Strength Potion',         icon:'💪',sell:15, type:'potion',rarity:'uncommon',potionType:'buff',stat:'atk',value:3,duration:'run'},
-  potion_defence:   {name:'Defence Potion',          icon:'🛡️',sell:20, type:'potion',rarity:'uncommon',potionType:'buff',stat:'def',value:3,duration:'run'},
-  potion_dodge:     {name:'Dodge Potion',            icon:'🏃',sell:25, type:'potion',rarity:'uncommon',potionType:'buff',stat:'dodge',value:10,duration:'run'},
+  potion_strength:  {name:'Strength Potion',         icon:'💪',sell:15, type:'potion',rarity:'uncommon',potionType:'buff',stat:'atk',value:3,turns:3},
+  potion_defence:   {name:'Defence Potion',          icon:'🛡️',sell:20, type:'potion',rarity:'uncommon',potionType:'buff',stat:'def',value:3,turns:4},
+  potion_dodge:     {name:'Dodge Potion',            icon:'🏃',sell:25, type:'potion',rarity:'uncommon',potionType:'buff',stat:'dodge',value:10,turns:5},
   potion_antidote:  {name:'Antidote',                icon:'🧪',sell:12, type:'potion',rarity:'common',potionType:'cure',cures:'poison',immuneTurns:5},
   potion_healing:   {name:'Healing Potion',          icon:'❤️',sell:30, type:'potion',rarity:'rare',potionType:'instant',hp:20},
-  potion_strength_g:{name:'Greater Strength Potion', icon:'💪',sell:40, type:'potion',rarity:'rare',potionType:'buff',stat:'atk',value:6,duration:'run'},
-  potion_defence_g: {name:'Greater Defence Potion',  icon:'🛡️',sell:45, type:'potion',rarity:'rare',potionType:'buff',stat:'def',value:6,duration:'run'},
-  potion_dodge_g:   {name:'Greater Dodge Potion',    icon:'🏃',sell:50, type:'potion',rarity:'rare',potionType:'buff',stat:'dodge',value:20,duration:'run'},
+  potion_strength_g:{name:'Greater Strength Potion', icon:'💪',sell:40, type:'potion',rarity:'rare',potionType:'buff',stat:'atk',value:6,turns:6},
+  potion_defence_g: {name:'Greater Defence Potion',  icon:'🛡️',sell:45, type:'potion',rarity:'rare',potionType:'buff',stat:'def',value:6,turns:7},
+  potion_dodge_g:   {name:'Greater Dodge Potion',    icon:'🏃',sell:50, type:'potion',rarity:'rare',potionType:'buff',stat:'dodge',value:20,turns:8},
   potion_healing_g: {name:'Greater Healing Potion',  icon:'❤️',sell:60, type:'potion',rarity:'epic',potionType:'instant',hp:40},
   // === Upgrade materials — used in the Forge to upgrade dungeon gear ===
   reinforce_plate:   {name:'Reinforcement Plate',     icon:'🔩',sell:20, type:'upgrade_mat',rarity:'uncommon',boosts:'def'},
@@ -1928,7 +1928,7 @@ function buildActPage(sk){
         effectLine='<span class="ab-effect'+(hasBuff?' has-buff':'')+'">'+parts.join(' · ')+'</span>';
       } else if(prodItem&&prodItem.type==='potion'){
         const parts=[];
-        if(prodItem.potionType==='buff') parts.push('⬆ +'+prodItem.value+' '+prodItem.stat.toUpperCase()+' (full run)');
+        if(prodItem.potionType==='buff') parts.push('⬆ +'+prodItem.value+' '+prodItem.stat.toUpperCase()+' ('+prodItem.turns+' turns)');
         if(prodItem.potionType==='instant') parts.push('❤️ +'+prodItem.hp+' HP (instant)');
         if(prodItem.potionType==='cure') parts.push('🌿 Cure poison · immune '+prodItem.immuneTurns+'t');
         if(parts.length) effectLine='<span class="ab-effect is-potion">'+parts.join(' · ')+'</span>';
@@ -1996,7 +1996,7 @@ function showRecipeDetail(id){
     let phtml='<div style="margin:8px 0 6px;padding:8px 12px;background:rgba(163,136,232,0.08);border:1px solid rgba(163,136,232,0.2);border-radius:6px;">';
     phtml+='<div style="font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Potion Effect</div>';
     phtml+='<div style="text-align:center;">';
-    if(prod.potionType==='buff') phtml+='<span style="color:#ffd966;font-size:13px;font-weight:bold;">⬆ +'+prod.value+' '+prod.stat.toUpperCase()+' <span style="font-size:10px;color:#9a7e50;">(entire dungeon run)</span></span>';
+    if(prod.potionType==='buff') phtml+='<span style="color:#ffd966;font-size:13px;font-weight:bold;">⬆ +'+prod.value+' '+prod.stat.toUpperCase()+' <span style="font-size:10px;color:#9a7e50;">('+prod.turns+' turns)</span></span>';
     if(prod.potionType==='instant') phtml+='<span style="color:#5ac85a;font-size:13px;font-weight:bold;">❤️ +'+prod.hp+' HP <span style="font-size:10px;color:#9a7e50;">(instant)</span></span>';
     if(prod.potionType==='cure') phtml+='<span style="color:#5ac85a;font-size:13px;font-weight:bold;">🌿 Cure Poison + Immune <span style="font-size:10px;color:#9a7e50;">('+prod.immuneTurns+' turns)</span></span>';
     phtml+='</div></div>';

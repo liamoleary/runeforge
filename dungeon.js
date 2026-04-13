@@ -496,8 +496,8 @@
     }
     // Legacy fallback for saves that still use the old single-weapon field
     if(G.equip.weapon&&ITEMS[G.equip.weapon]) b+=ITEMS[G.equip.weapon].atk||0;
-    // Add potion buffs during dungeon runs
-    if(dungeonState&&dungeonState.potionBuffs) b+=dungeonState.potionBuffs.atk||0;
+    // Add potion buffs during dungeon runs (turn-limited)
+    if(dungeonState&&dungeonState.potionBuffs&&dungeonState.potionBuffs.atkTurns>0) b+=dungeonState.potionBuffs.atk||0;
     // Add temporary food buffs
     if(dungeonState&&dungeonState.foodBuffs&&dungeonState.foodBuffs.atkTurns>0) b+=dungeonState.foodBuffs.atk||0;
     return b;
@@ -514,8 +514,8 @@
       }
     }
     if(G.equip.armour&&ITEMS[G.equip.armour]) b+=ITEMS[G.equip.armour].def||0;
-    // Add potion buffs during dungeon runs
-    if(dungeonState&&dungeonState.potionBuffs) b+=dungeonState.potionBuffs.def||0;
+    // Add potion buffs during dungeon runs (turn-limited)
+    if(dungeonState&&dungeonState.potionBuffs&&dungeonState.potionBuffs.defTurns>0) b+=dungeonState.potionBuffs.def||0;
     // Add temporary food buffs
     if(dungeonState&&dungeonState.foodBuffs&&dungeonState.foodBuffs.defTurns>0) b+=dungeonState.foodBuffs.def||0;
     return b;
@@ -547,8 +547,8 @@
         d+=s.dodge||0;
       }
     }
-    // Add potion buffs during dungeon runs
-    if(dungeonState&&dungeonState.potionBuffs) d+=dungeonState.potionBuffs.dodge||0;
+    // Add potion buffs during dungeon runs (turn-limited)
+    if(dungeonState&&dungeonState.potionBuffs&&dungeonState.potionBuffs.dodgeTurns>0) d+=dungeonState.potionBuffs.dodge||0;
     return Math.min(70,d);
   }
 
@@ -612,7 +612,7 @@
       totalGold:0,
       lootCollected:[],
       playerPoison:0,playerPoisonTurns:0,
-      potionBuffs:{atk:0,def:0,dodge:0}, // active potion buffs for this run
+      potionBuffs:{atk:0,atkTurns:0,def:0,defTurns:0,dodge:0,dodgeTurns:0}, // turn-limited potion buffs
       foodPouch:buildFoodPouch(), // limited food brought into dungeon
       foodBuffs:{atk:0,atkTurns:0,def:0,defTurns:0,regen:0,regenTurns:0}, // temp food buffs
       poisonImmuneTurns:0,
@@ -1131,6 +1131,13 @@
         fb.regenTurns--;if(fb.regenTurns<=0){fb.regen=0;dungeonState.combatLog.push('<span style="color:#5a4830;">🍲 Food regen fades.</span>');}
       }
     }
+    // Tick potion buffs (ATK, DEF, Dodge durations)
+    if(dungeonState.potionBuffs){
+      var pb=dungeonState.potionBuffs;
+      if(pb.atkTurns>0){pb.atkTurns--;if(pb.atkTurns<=0){pb.atk=0;dungeonState.combatLog.push('<span style="color:#5a4830;">💪 Strength potion wears off.</span>');}}
+      if(pb.defTurns>0){pb.defTurns--;if(pb.defTurns<=0){pb.def=0;dungeonState.combatLog.push('<span style="color:#5a4830;">🛡️ Defence potion wears off.</span>');}}
+      if(pb.dodgeTurns>0){pb.dodgeTurns--;if(pb.dodgeTurns<=0){pb.dodge=0;dungeonState.combatLog.push('<span style="color:#5a4830;">🏃 Dodge potion wears off.</span>');}}
+    }
     // Tick down poison immunity from antidote or food
     if (dungeonState.poisonImmuneTurns > 0) dungeonState.poisonImmuneTurns--;
     // Player poison DoT
@@ -1508,9 +1515,9 @@
     G.inv[potionId]--;
     if(G.inv[potionId]<=0) delete G.inv[potionId];
     if(pot.potionType==='buff'){
-      var oldVal=dungeonState.potionBuffs[pot.stat]||0;
-      dungeonState.potionBuffs[pot.stat]=oldVal+pot.value;
-      dungeonState.combatLog.push('<span style="color:#ffd966;">'+pot.icon+' You drink '+pot.name+'! +'+pot.value+' '+pot.stat.toUpperCase()+' for this run.</span>');
+      dungeonState.potionBuffs[pot.stat]=pot.value;
+      dungeonState.potionBuffs[pot.stat+'Turns']=pot.turns||5;
+      dungeonState.combatLog.push('<span style="color:#ffd966;">'+pot.icon+' You drink '+pot.name+'! +'+pot.value+' '+pot.stat.toUpperCase()+' for '+pot.turns+' turns.</span>');
     } else if(pot.potionType==='instant'&&pot.hp){
       var healed=Math.min(pot.hp,dungeonState.playerMaxHp-dungeonState.playerHp);
       dungeonState.playerHp=Math.min(dungeonState.playerMaxHp,dungeonState.playerHp+pot.hp);
@@ -1778,7 +1785,7 @@
         h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">';
         for(var pi2=0;pi2<potions.length;pi2++){
           var pt=potions[pi2];
-          var ptDesc=pt.it.potionType==='buff'?'+'+pt.it.value+' '+pt.it.stat.toUpperCase():pt.it.potionType==='instant'?'+'+pt.it.hp+' HP':'Cure';
+          var ptDesc=pt.it.potionType==='buff'?'+'+pt.it.value+' '+pt.it.stat.toUpperCase()+' ('+pt.it.turns+'t)':pt.it.potionType==='instant'?'+'+pt.it.hp+' HP':'Cure';
           h+='<button onclick="window._dgPotion(\''+pt.id+'\')" '
            +'style="position:relative;background:#1a1308;border:2px solid #f0c040;border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;" '
            +'title="'+pt.it.name+' · '+ptDesc+' · '+pt.qty+' owned">'
@@ -1794,9 +1801,9 @@
       var buffs=s.potionBuffs||{};
       var fb=s.foodBuffs||{};
       var buffParts=[];
-      if(buffs.atk>0) buffParts.push('<span style="color:#f0c040;">+'+buffs.atk+' ATK</span>');
-      if(buffs.def>0) buffParts.push('<span style="color:#4488dd;">+'+buffs.def+' DEF</span>');
-      if(buffs.dodge>0) buffParts.push('<span style="color:#ffd966;">+'+buffs.dodge+'% Dodge</span>');
+      if(buffs.atk>0&&buffs.atkTurns>0) buffParts.push('<span style="color:#f0c040;">💪+'+buffs.atk+' ATK ('+buffs.atkTurns+'t)</span>');
+      if(buffs.def>0&&buffs.defTurns>0) buffParts.push('<span style="color:#4488dd;">🛡️+'+buffs.def+' DEF ('+buffs.defTurns+'t)</span>');
+      if(buffs.dodge>0&&buffs.dodgeTurns>0) buffParts.push('<span style="color:#ffd966;">🏃+'+buffs.dodge+'% Dodge ('+buffs.dodgeTurns+'t)</span>');
       if(fb.atk>0&&fb.atkTurns>0) buffParts.push('<span style="color:#f0c040;">🌶️+'+fb.atk+' ATK ('+fb.atkTurns+'t)</span>');
       if(fb.def>0&&fb.defTurns>0) buffParts.push('<span style="color:#4488dd;">🌶️+'+fb.def+' DEF ('+fb.defTurns+'t)</span>');
       if(fb.regen>0&&fb.regenTurns>0) buffParts.push('<span style="color:#5ac85a;">🍲+'+fb.regen+' regen ('+fb.regenTurns+'t)</span>');
