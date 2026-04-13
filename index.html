@@ -693,6 +693,11 @@ const ACTIONS = {
     {id:'ck_venison',name:'Roast Venison',icon:'🍖',req:20,xp:65,dur:4000,prod:[{id:'c_venison',n:1}],need:[{id:'venison',n:1},{id:'coal',n:1}]},
   ],
   brewing:[
+    // === Starter potions — low-level recipes so new players can begin levelling ===
+    {id:'br_paste',name:'Herb Paste',icon:'🌿',req:1,xp:18,dur:3000,prod:[{id:'potion_herb_paste',n:1}],need:[{id:'feather',n:3}]},
+    {id:'br_tonic',name:'Minor Tonic',icon:'🫗',req:1,xp:22,dur:3500,prod:[{id:'potion_minor_tonic',n:1}],need:[{id:'raw_shrimp',n:1},{id:'copper_ore',n:1}]},
+    {id:'br_salve',name:'Crude Salve',icon:'🩹',req:5,xp:32,dur:4000,prod:[{id:'potion_crude_salve',n:1}],need:[{id:'raw_sardine',n:1},{id:'tin_ore',n:1}]},
+    // === Standard potions ===
     {id:'br0',name:'Strength Potion',icon:'💪',req:10,xp:45,dur:5000,prod:[{id:'potion_strength',n:1}],need:[{id:'raw_meat',n:2},{id:'copper_ore',n:1}]},
     {id:'br1',name:'Antidote',icon:'🧪',req:15,xp:50,dur:4500,prod:[{id:'potion_antidote',n:1}],need:[{id:'raw_sardine',n:1},{id:'feather',n:3}]},
     {id:'br2',name:'Defence Potion',icon:'🛡️',req:20,xp:65,dur:5500,prod:[{id:'potion_defence',n:1}],need:[{id:'raw_trout',n:2},{id:'iron_ore',n:1}]},
@@ -810,6 +815,9 @@ const ITEMS = {
   gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory',hp:8,slot:'jewelry',dodge:4,rarity:'uncommon'},
   gold_coins:{name:'Gold Coins',icon:'🪙',sell:1,type:'currency'},
   // === Potions — single-use dungeon consumables ===
+  potion_herb_paste:{name:'Herb Paste',              icon:'🌿',sell:3,  type:'potion',rarity:'common',potionType:'instant',hp:5},
+  potion_minor_tonic:{name:'Minor Tonic',            icon:'🫗',sell:5,  type:'potion',rarity:'common',potionType:'buff',stat:'atk',value:1,turns:2},
+  potion_crude_salve:{name:'Crude Salve',            icon:'🩹',sell:8,  type:'potion',rarity:'common',potionType:'instant',hp:10},
   potion_strength:  {name:'Strength Potion',         icon:'💪',sell:15, type:'potion',rarity:'uncommon',potionType:'buff',stat:'atk',value:3,turns:3},
   potion_defence:   {name:'Defence Potion',          icon:'🛡️',sell:20, type:'potion',rarity:'uncommon',potionType:'buff',stat:'def',value:3,turns:4},
   potion_dodge:     {name:'Dodge Potion',            icon:'🏃',sell:25, type:'potion',rarity:'uncommon',potionType:'buff',stat:'dodge',value:10,turns:5},
