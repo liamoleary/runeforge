@@ -1309,12 +1309,12 @@ function tick(){
   const now=Date.now(),dt=Math.min(now-lastT,500);lastT=now;
   if(G.task){
     G.prog+=dt;
-    if(G.prog>=G.dur){completeTick();G.prog=0;}
+    if(G.prog>=G.dur){try{completeTick();}catch(e){console.error('completeTick error:',e);log('❌ Error: '+e.message);}G.prog=0;}
     const pct=Math.min(100,(G.prog/G.dur)*100);
     document.getElementById('task-prog').style.width=pct+'%';
   }
   tickWorkers(dt);
-  updateUI();
+  try{updateUI();}catch(e){console.error('updateUI error:',e);}
   if(Math.floor(now/8000)!==Math.floor((now-dt)/8000))save();
 }
 
@@ -2499,6 +2499,11 @@ function anim(){
       al.style.animation='stir 1.2s ease-in-out infinite';
       ar.style.animation='stir 1.2s ease-in-out infinite .6s';
       prop.innerHTML='<div class="prop-tool" style="bottom:30px;right:48px">🧵</div>';
+      break;
+    case 'hunting':
+      al.style.animation='chop .7s ease-in-out infinite';
+      ar.style.animation='chop .7s ease-in-out infinite .35s';
+      prop.innerHTML='<div class="prop-tool" style="bottom:30px;right:50px">🎯</div>';
       break;
   }
 }
