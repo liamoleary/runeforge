@@ -1309,18 +1309,19 @@ function tick(){
   const now=Date.now(),dt=Math.min(now-lastT,500);lastT=now;
   if(G.task){
     G.prog+=dt;
-    if(G.prog>=G.dur){try{completeTick();}catch(e){console.error('completeTick error:',e);log('❌ Error: '+e.message);}G.prog=0;}
+    if(G.prog>=G.dur){completeTick();G.prog=0;}
     const pct=Math.min(100,(G.prog/G.dur)*100);
     document.getElementById('task-prog').style.width=pct+'%';
   }
   tickWorkers(dt);
-  try{updateUI();}catch(e){console.error('updateUI error:',e);}
+  updateUI();
   if(Math.floor(now/8000)!==Math.floor((now-dt)/8000))save();
 }
 
 function completeTick(){
   const a=findAction(G.task);if(!a){stopTask();return;}
   const sk=findSkill(G.task);
+  if(!sk){console.error('completeTick: no skill for task',G.task);return;}
   // Check consumables
   if(a.need){
     for(const c of a.need){
