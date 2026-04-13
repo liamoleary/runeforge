@@ -36,6 +36,8 @@
     if(!ITEMS.steel_smith_hammer) ITEMS.steel_smith_hammer = {name:'Steel Smith Hammer',icon:'🔨',sell:250,type:'tool',rarity:'rare'};
     if(!ITEMS.steel_fletch_knife) ITEMS.steel_fletch_knife = {name:'Steel Fletching Knife',icon:'🔪',sell:250,type:'tool',rarity:'rare'};
     if(!ITEMS.steel_needle) ITEMS.steel_needle = {name:'Steel Needle',icon:'🪡',sell:250,type:'tool',rarity:'rare'};
+    if(!ITEMS.hunting_knife) ITEMS.hunting_knife = {name:'Hunting Knife',icon:'🔪',sell:80,type:'tool',rarity:'common'};
+    if(!ITEMS.steel_hunting_knife) ITEMS.steel_hunting_knife = {name:'Steel Hunting Knife',icon:'🔪',sell:250,type:'tool',rarity:'rare'};
     if(!ITEMS.apprentice_wand) ITEMS.apprentice_wand = {name:'Apprentice Wand',icon:'🪄',sell:250,type:'tool',rarity:'rare'};
     if(!ITEMS.steel_shield) ITEMS.steel_shield = {name:'Steel Shield',icon:'🛡️',sell:250,type:'armour',def:5,hp:12,slot:'offhand',rarity:'rare'};
     // Legacy themed dungeon-boss armour (kept so old saves still know about them).
@@ -132,6 +134,15 @@
       monsters:[{name:'Wisp',icon:'✨'},{name:'Animated Tome',icon:'📖'},{name:'Rune Spectre',icon:'🔯'},{name:'Mana Leech',icon:'💧'},{name:'Vault Keeper',icon:'🧙'}],
       loot:[{id:'feather',name:'Feathers',icon:'🪶',weight:30,min:3,max:8},{id:'bones',name:'Bones',icon:'🦴',weight:25,min:2,max:5},{id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:18,min:2,max:5},{id:'gold_ore',name:'Gold Ore',icon:'💛',weight:6,min:1,max:1},{id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}],
       gear:{helmet:{name:'Arcanist Circlet',icon:'🔮'},chest:{name:'Rune-Woven Robe',icon:'🧙'},boots:{name:'Whispering Slippers',icon:'🥾'},jewelry:{name:'Vault Keeper Ring',icon:'💍'}}
+    },
+    hunting:{
+      name:'Savage Wilds',icon:'🎯',
+      desc:'Untamed wilderness where predators rule and prey must fight to survive.',
+      flavour:'A low growl echoes through the brush.',
+      discovery:'Following a trail of massive paw prints into dense forest, you stumble upon a hunting ground where beasts have grown bold and territorial. Something primal watches from the shadows.',
+      monsters:[{name:'Feral Boar',icon:'🐗'},{name:'Pack Wolf',icon:'🐺'},{name:'Charging Stag',icon:'🦌'},{name:'Cave Bear',icon:'🐻'},{name:'Alpha Predator',icon:'🦁'}],
+      loot:[{id:'raw_meat',name:'Raw Meat',icon:'🥩',weight:28,min:2,max:5},{id:'feather',name:'Feathers',icon:'🪶',weight:20,min:2,max:5},{id:'cowhide',name:'Cowhide',icon:'🐄',weight:16,min:1,max:3},{id:'bones',name:'Bones',icon:'🦴',weight:22,min:2,max:5},{id:'venison',name:'Raw Venison',icon:'🦌',weight:10,min:1,max:2},{id:'antler',name:'Antler',icon:'🦌',weight:6,min:1,max:1},{id:'gold_coins',name:'Gold',icon:'🪙',weight:30,min:5,max:20}],
+      gear:{helmet:{name:'Primal Headdress',icon:'🦌'},chest:{name:'Beasthide Tunic',icon:'🐻'},boots:{name:'Stalker Boots',icon:'🥾'},jewelry:{name:'Fang Necklace',icon:'🦷'}}
     }
   };
 
@@ -208,6 +219,13 @@
       {immune:'physical'},
       {heal:4,healCD:3},
       {shield:true,shieldCD:4,shieldTurns:2,immune:'magic'}
+    ],
+    hunting:[
+      {},
+      {poison:1,poisonChance:0.3},
+      {resist:'magic'},
+      {heal:4,healCD:3,resist:'physical'},
+      {shield:true,shieldCD:4,shieldTurns:2,poison:2,poisonChance:0.5}
     ]
   };
 
@@ -222,7 +240,8 @@
     smithing:    {def:1.6, hp:1.3, dodge:0.5, atk:0.8, theme:'Heavy'},
     fletching:   {def:0.8, hp:1.0, dodge:1.1, atk:1.5, theme:'Precise'},
     crafting:    {def:0.9, hp:1.0, dodge:1.3, atk:0.9, theme:'Silken'},
-    magic:       {def:0.7, hp:1.0, dodge:0.9, atk:1.7, theme:'Arcane'}
+    magic:       {def:0.7, hp:1.0, dodge:0.9, atk:1.7, theme:'Arcane'},
+    hunting:     {def:0.9, hp:1.1, dodge:1.3, atk:1.0, theme:'Primal'}
   };
 
   function computeGearStats(slot, markIdx, sk){

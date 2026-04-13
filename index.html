@@ -606,6 +606,7 @@ const SKILLS = {
   woodcutting:{name:'Woodcutting',icon:'🪓',color:'#8B4513'},
   mining:{name:'Mining',icon:'⛏️',color:'#909090'},
   fishing:{name:'Fishing',icon:'🎣',color:'#4488dd'},
+  hunting:{name:'Hunting',icon:'🎯',color:'#8B6914'},
   smithing:{name:'Smithing',icon:'🔨',color:'#FF8C00'},
   cooking:{name:'Cooking',icon:'🍳',color:'#FF6347'},
   fletching:{name:'Fletching',icon:'🏹',color:'#228B22'},
@@ -620,11 +621,17 @@ function lvlOf(xp){for(let i=98;i>=1;i--)if(xp>=XP[i])return i;return 1;}
 const ACTIONS = {
   woodcutting:[
     {id:'wc0',name:'Normal Tree',icon:'🌲',req:1,xp:25,dur:3500,prod:[{id:'logs',n:1}]},
-    {id:'wc4',name:'Pluck Chickens',icon:'🐔',req:1,xp:18,dur:2500,prod:[{id:'feather',n:5}]},
-    {id:'wc5',name:'Hunt Cattle',icon:'🐄',req:5,xp:30,dur:4000,prod:[{id:'cowhide',n:1},{id:'raw_meat',n:1}]},
     {id:'wc1',name:'Oak Tree',icon:'🌳',req:15,xp:38,dur:5000,prod:[{id:'oak_log',n:1}]},
     {id:'wc2',name:'Willow Tree',icon:'🌿',req:30,xp:68,dur:6000,prod:[{id:'willow_log',n:1}]},
     {id:'wc3',name:'Yew Tree',icon:'🌑',req:60,xp:175,dur:8000,prod:[{id:'yew_log',n:1}]},
+  ],
+  hunting:[
+    {id:'ht0',name:'Pluck Chickens',icon:'🐔',req:1,xp:18,dur:2500,prod:[{id:'feather',n:5}]},
+    {id:'ht1',name:'Hunt Cattle',icon:'🐄',req:5,xp:30,dur:4000,prod:[{id:'cowhide',n:1},{id:'raw_meat',n:1}]},
+    {id:'ht2',name:'Track Boar',icon:'🐗',req:15,xp:50,dur:5000,prod:[{id:'raw_meat',n:2},{id:'bones',n:1}]},
+    {id:'ht3',name:'Hunt Deer',icon:'🦌',req:25,xp:70,dur:6000,prod:[{id:'venison',n:1},{id:'antler',n:1}]},
+    {id:'ht4',name:'Trap Wolves',icon:'🐺',req:40,xp:100,dur:7500,prod:[{id:'wolf_pelt',n:1},{id:'raw_meat',n:1},{id:'bones',n:1}]},
+    {id:'ht5',name:'Slay Bear',icon:'🐻',req:55,xp:150,dur:9000,prod:[{id:'bear_pelt',n:1},{id:'raw_meat',n:2},{id:'bones',n:2}]},
   ],
   mining:[
     {id:'mn0',name:'Copper Rock',icon:'🟫',req:1,xp:22,dur:3000,prod:[{id:'copper_ore',n:1}]},
@@ -662,6 +669,7 @@ const ACTIONS = {
     {id:'sm14',name:'Steel Smith Hammer',icon:'🔨',req:36,xp:100,dur:8500,prod:[{id:'steel_smith_hammer',n:1}],need:[{id:'iron_bar',n:5},{id:'coal',n:3}]},
     {id:'sm15',name:'Steel Fletching Knife',icon:'🔪',req:36,xp:90,dur:8000,prod:[{id:'steel_fletch_knife',n:1}],need:[{id:'iron_bar',n:3},{id:'coal',n:2}]},
     {id:'sm16',name:'Steel Needle',icon:'🪡',req:36,xp:90,dur:8000,prod:[{id:'steel_needle',n:1}],need:[{id:'iron_bar',n:3},{id:'coal',n:2}]},
+    {id:'sm20',name:'Steel Hunting Knife',icon:'🔪',req:34,xp:90,dur:8000,prod:[{id:'steel_hunting_knife',n:1}],need:[{id:'iron_bar',n:3},{id:'coal',n:2}]},
     // === Upgrade materials — used in the Forge to improve dungeon gear ===
     {id:'sm17',name:'Reinforcement Plate',icon:'🔩',req:20,xp:60,dur:6000,prod:[{id:'reinforce_plate',n:1}],need:[{id:'iron_bar',n:2},{id:'coal',n:1}]},
     {id:'sm18',name:'Hardened Plate',icon:'🔩',req:40,xp:120,dur:8000,prod:[{id:'hardened_plate',n:1}],need:[{id:'iron_bar',n:4},{id:'coal',n:3},{id:'gold_ore',n:1}]},
@@ -680,6 +688,8 @@ const ACTIONS = {
     {id:'ck_herb',name:'Herb Fish',icon:'🌿',req:28,xp:80,dur:4000,prod:[{id:'c_herb_fish',n:1}],need:[{id:'raw_sardine',n:2},{id:'feather',n:3}]},
     {id:'ck_stew',name:'Hearty Stew',icon:'🍲',req:38,xp:100,dur:5000,prod:[{id:'c_hearty_stew',n:1}],need:[{id:'raw_salmon',n:1},{id:'raw_meat',n:1},{id:'coal',n:1}]},
     {id:'ck_feast',name:'Lobster Feast',icon:'🍽️',req:48,xp:140,dur:6000,prod:[{id:'c_lobster_feast',n:1}],need:[{id:'raw_lobster',n:2},{id:'raw_trout',n:1}]},
+    {id:'ck_bone',name:'Bone Broth',icon:'🍲',req:15,xp:50,dur:3500,prod:[{id:'c_bone_broth',n:1}],need:[{id:'bones',n:2},{id:'raw_meat',n:1}]},
+    {id:'ck_venison',name:'Roast Venison',icon:'🍖',req:20,xp:65,dur:4000,prod:[{id:'c_venison',n:1}],need:[{id:'venison',n:1},{id:'coal',n:1}]},
     // === Potions — single-use dungeon consumables that grant temporary buffs ===
     {id:'ck6',name:'Strength Potion',icon:'💪',req:10,xp:45,dur:5000,prod:[{id:'potion_strength',n:1}],need:[{id:'raw_meat',n:2},{id:'copper_ore',n:1}]},
     {id:'ck7',name:'Antidote',icon:'🧪',req:15,xp:50,dur:4500,prod:[{id:'potion_antidote',n:1}],need:[{id:'raw_sardine',n:1},{id:'feather',n:3}]},
@@ -698,6 +708,7 @@ const ACTIONS = {
     {id:'fl2',name:'Oak Shortbow',icon:'🏹',req:20,xp:55,dur:6000,prod:[{id:'oak_bow',n:1}],need:[{id:'oak_log',n:2},{id:'arrow_shaft',n:10},{id:'feather',n:5}]},
     {id:'fl3',name:'Iron Arrows x15',icon:'🪃',req:15,xp:38,dur:3000,prod:[{id:'iron_arrow',n:15}],need:[{id:'arrow_shaft',n:15},{id:'iron_bar',n:1},{id:'feather',n:15}]},
     {id:'fl8',name:'Willow Bow',icon:'🏹',req:35,xp:85,dur:8000,prod:[{id:'willow_bow',n:1}],need:[{id:'willow_log',n:2},{id:'arrow_shaft',n:15},{id:'feather',n:10}]},
+    {id:'fl9',name:'Antler Bow',icon:'🏹',req:30,xp:75,dur:7000,prod:[{id:'antler_bow',n:1}],need:[{id:'antler',n:2},{id:'arrow_shaft',n:10},{id:'feather',n:8}]},
     // === Upgrade materials — used in the Forge to improve weapon ATK ===
     {id:'fl4',name:'Precision Kit',icon:'🎯',req:20,xp:55,dur:5500,prod:[{id:'precision_kit',n:1}],need:[{id:'arrow_shaft',n:10},{id:'feather',n:5}]},
     {id:'fl5',name:'Sharpening Stone',icon:'🪨',req:35,xp:90,dur:7000,prod:[{id:'sharpening_stone',n:1}],need:[{id:'iron_ore',n:2},{id:'arrow_shaft',n:5}]},
@@ -706,6 +717,8 @@ const ACTIONS = {
   ],
   crafting:[
     {id:'cr0',name:'Tan Cowhide',icon:'🐄',req:1,xp:14,dur:2000,prod:[{id:'leather',n:1}],need:[{id:'cowhide',n:1}]},
+    {id:'cr10',name:'Tan Wolf Pelt',icon:'🐺',req:30,xp:60,dur:4000,prod:[{id:'leather',n:3}],need:[{id:'wolf_pelt',n:1}]},
+    {id:'cr11',name:'Tan Bear Pelt',icon:'🐻',req:50,xp:100,dur:5500,prod:[{id:'leather',n:5}],need:[{id:'bear_pelt',n:1}]},
     // === Novice leather gear — craftable without dungeon materials ===
     {id:'cr1',name:'Leather Cap',icon:'🧢',req:5,xp:30,dur:4000,prod:[{id:'leather_cap',n:1}],need:[{id:'leather',n:3}]},
     {id:'cr2',name:'Gold Ring',icon:'💍',req:5,xp:25,dur:3500,prod:[{id:'gold_ring',n:1}],need:[{id:'gold_ore',n:1}]},
@@ -767,12 +780,19 @@ const ITEMS = {
   feather:{name:'Feathers',icon:'🪶',sell:1,type:'res'},
   cowhide:{name:'Cowhide',icon:'🐄',sell:5,type:'res'},
   leather:{name:'Leather',icon:'📜',sell:8,type:'res'},
+  venison:{name:'Raw Venison',icon:'🦌',sell:6,type:'raw'},
+  antler:{name:'Antler',icon:'🦌',sell:12,type:'res'},
+  wolf_pelt:{name:'Wolf Pelt',icon:'🐺',sell:18,type:'res'},
+  bear_pelt:{name:'Bear Pelt',icon:'🐻',sell:30,type:'res'},
+  c_venison:{name:'Roast Venison',icon:'🍖',sell:18,type:'food',hp:8,foodBuff:{atk:1,turns:3}},
+  c_bone_broth:{name:'Bone Broth',icon:'🍲',sell:14,type:'food',hp:6,foodBuff:{def:2,turns:3}},
   arrow_shaft:{name:'Arrow Shafts',icon:'↑',sell:0,type:'res'},
   iron_arrow:{name:'Iron Arrows',icon:'🪃',sell:2,type:'res'},
   // === Novice gear — craftable via skills, upgradeable in the Forge ===
   shortbow:{name:'Shortbow',icon:'🏹',sell:20,type:'weapon',atk:3,slot:'hand',rarity:'common'},
   oak_bow:{name:'Oak Shortbow',icon:'🏹',sell:45,type:'weapon',atk:6,slot:'hand',rarity:'uncommon'},
   willow_bow:{name:'Willow Bow',icon:'🏹',sell:90,type:'weapon',atk:10,slot:'hand',rarity:'rare'},
+  antler_bow:{name:'Antler Bow',icon:'🏹',sell:70,type:'weapon',atk:8,slot:'hand',rarity:'uncommon'},
   bronze_sword:{name:'Bronze Sword',icon:'🗡️',sell:25,type:'weapon',atk:2,slot:'hand',rarity:'common'},
   iron_sword:{name:'Iron Sword',icon:'⚔️',sell:75,type:'weapon',atk:5,slot:'hand',rarity:'uncommon'},
   bronze_shield:{name:'Bronze Shield',icon:'🛡️',sell:60,type:'armour',def:2,hp:6,slot:'offhand',rarity:'common'},
@@ -859,6 +879,7 @@ const TOOL_MAP={
   smithing:['hammer','steel_smith_hammer'],
   fletching:['fletch_knife','steel_fletch_knife'],
   crafting:['needle','steel_needle'],
+  hunting:['hunting_knife','steel_hunting_knife'],
   magic:['staff','apprentice_wand'],
 };
 // Speed bonus per tool item (fraction faster). Higher = better.
@@ -870,6 +891,7 @@ const TOOL_BONUS={
   hammer:0.15,steel_smith_hammer:0.20,
   fletch_knife:0.15,steel_fletch_knife:0.20,
   needle:0.15,steel_needle:0.20,
+  hunting_knife:0.15,steel_hunting_knife:0.20,
   staff:0.15,apprentice_wand:0.20
 };
 // === Forge system ===
@@ -991,6 +1013,9 @@ function load(){
   if(G.xpEarned&&G.xpEarned.combat) delete G.xpEarned.combat;
   if(G.tab==='combat') G.tab='woodcutting';
   if(typeof G.task==='string'&&G.task.indexOf('cb')===0){G.task=null;G.prog=0;}
+  // Hunting skill migration: wc4/wc5 moved from woodcutting to hunting (ht0/ht1).
+  if(G.task==='wc4'){G.task='ht0';G.prog=0;}
+  if(G.task==='wc5'){G.task='ht1';G.prog=0;}
   // Equipment slot expansion: migrate legacy single weapon/armour to new multi-slot layout.
   if(!G.equip) G.equip=freshEquip();
   if('weapon' in G.equip && !('weaponR' in G.equip)){
