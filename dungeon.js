@@ -499,6 +499,81 @@
     return c;
   }
 
+  // Potion pouch: limits how many potions you can bring into a dungeon run.
+  var POTION_POUCH_SLOTS = 3;   // max different potion types
+  var POTION_PER_SLOT    = 3;   // max stack per slot
+
+  function getPotionList(){
+    var p=[];
+    if(typeof G==='undefined') return p;
+    var inv=G.inv||{};
+    for(var k in inv){if(ITEMS[k]&&ITEMS[k].type==='potion'&&!ITEMS[k].special&&inv[k]>0) p.push({id:k,name:ITEMS[k].name,icon:ITEMS[k].icon,qty:inv[k],it:ITEMS[k]});}
+    return p;
+  }
+
+  function buildPotionPouch(){
+    var pouch=[];
+    var inv=G.inv||{};
+    var loadout=G.potionLoadout||{};
+    var hasLoadout=Object.keys(loadout).some(function(k){return loadout[k]>0&&inv[k]>0;});
+    if(hasLoadout){
+      for(var lid in loadout){
+        if(pouch.length>=POTION_POUCH_SLOTS) break;
+        if(!loadout[lid]||loadout[lid]<=0) continue;
+        if(!ITEMS[lid]||ITEMS[lid].type!=='potion'||ITEMS[lid].special) continue;
+        var avail=inv[lid]||0;
+        if(avail<=0) continue;
+        var it=ITEMS[lid];
+        pouch.push({id:lid,name:it.name,icon:it.icon,qty:Math.min(loadout[lid],avail,POTION_PER_SLOT),it:it});
+      }
+    } else {
+      // Auto-fill: pick potions from inventory
+      var potions=getPotionList();
+      for(var i=0;i<potions.length&&pouch.length<POTION_POUCH_SLOTS;i++){
+        pouch.push({id:potions[i].id,name:potions[i].name,icon:potions[i].icon,qty:Math.min(potions[i].qty,POTION_PER_SLOT),it:potions[i].it});
+      }
+    }
+    return pouch;
+  }
+
+  function dungeonSetPotionLoadout(potionId, delta){
+    if(!G.potionLoadout) G.potionLoadout={};
+    var inv=G.inv||{};
+    var cur=G.potionLoadout[potionId]||0;
+    var avail=inv[potionId]||0;
+    var slotsUsed=0;
+    for(var k in G.potionLoadout){if(k!==potionId&&G.potionLoadout[k]>0)slotsUsed++;}
+    var next=Math.max(0,Math.min(POTION_PER_SLOT,avail,cur+delta));
+    if(next>0&&cur===0&&slotsUsed>=POTION_POUCH_SLOTS) next=0;
+    if(next===0) delete G.potionLoadout[potionId];
+    else G.potionLoadout[potionId]=next;
+    if(typeof save==='function') save();
+    if(typeof activeDungeon!=='undefined') showDungeonEntry(activeDungeon.id);
+  }
+
+  function dungeonClearPotionLoadout(){
+    G.potionLoadout={};
+    if(typeof save==='function') save();
+    if(typeof activeDungeon!=='undefined') showDungeonEntry(activeDungeon.id);
+  }
+
+  function dungeonAutoPotionLoadout(){
+    G.potionLoadout={};
+    var potions=getPotionList();
+    for(var i=0;i<potions.length&&i<POTION_POUCH_SLOTS;i++){
+      G.potionLoadout[potions[i].id]=Math.min(potions[i].qty,POTION_PER_SLOT);
+    }
+    if(typeof save==='function') save();
+    if(typeof activeDungeon!=='undefined') showDungeonEntry(activeDungeon.id);
+  }
+
+  function getPouchPotionCount(){
+    if(!dungeonState||!dungeonState.potionPouch) return 0;
+    var c=0;
+    for(var i=0;i<dungeonState.potionPouch.length;i++) c+=dungeonState.potionPouch[i].qty;
+    return c;
+  }
+
   var ATK_SLOTS = ['weaponR','weaponL','jewelry'];
   var DEF_SLOTS = ['weaponR','weaponL','helmet','chest','boots','jewelry'];
 
@@ -633,6 +708,7 @@
       playerPoison:0,playerPoisonTurns:0,
       potionBuffs:{atk:0,atkTurns:0,def:0,defTurns:0,dodge:0,dodgeTurns:0}, // turn-limited potion buffs
       foodPouch:buildFoodPouch(), // limited food brought into dungeon
+      potionPouch:buildPotionPouch(), // limited potions brought into dungeon
       foodBuffs:{atk:0,atkTurns:0,def:0,defTurns:0,regen:0,regenTurns:0}, // temp food buffs
       poisonImmuneTurns:0,
       victory:false,
@@ -1529,10 +1605,17 @@
   function dungeonPotion(potionId){
     if(!dungeonState||dungeonState.victory||dungeonState.fled||dungeonState.playerHp<=0) return;
     if(typeof ITEMS==='undefined'||!ITEMS[potionId]||ITEMS[potionId].type!=='potion') return;
-    if(!G.inv||!G.inv[potionId]||G.inv[potionId]<=0){showDungeonMessage('No potions left!','#e03030');return;}
+    // Use potion from pouch if available, otherwise fall back to inventory
+    var slot=null;
+    if(dungeonState.potionPouch){
+      for(var i=0;i<dungeonState.potionPouch.length;i++){
+        if(dungeonState.potionPouch[i].id===potionId&&dungeonState.potionPouch[i].qty>0){slot=dungeonState.potionPouch[i];break;}
+      }
+    }
+    if(!slot){showDungeonMessage('No potions left!','#e03030');return;}
     var pot=ITEMS[potionId];
-    G.inv[potionId]--;
-    if(G.inv[potionId]<=0) delete G.inv[potionId];
+    slot.qty--;
+    if(G.inv[potionId]){G.inv[potionId]--;if(G.inv[potionId]<=0) delete G.inv[potionId];}
     if(pot.potionType==='buff'){
       dungeonState.potionBuffs[pot.stat]=pot.value;
       dungeonState.potionBuffs[pot.stat+'Turns']=pot.turns||5;
@@ -1788,28 +1871,27 @@
       h+='</div>';
     }
 
-    // === Potion bar — shows owned potions for dungeon use ===
+    // === Potion bar — shows potions from potion pouch ===
     if(!done){
       var potions=[];
-      if(typeof G!=='undefined'&&G.inv){
-        for(var pk in G.inv){
-          if(G.inv[pk]>0&&typeof ITEMS!=='undefined'&&ITEMS[pk]&&ITEMS[pk].type==='potion'&&!ITEMS[pk].special){
-            potions.push({id:pk,qty:G.inv[pk],it:ITEMS[pk]});
-          }
+      if(s.potionPouch){
+        for(var pi3=0;pi3<s.potionPouch.length;pi3++){
+          if(s.potionPouch[pi3].qty>0) potions.push(s.potionPouch[pi3]);
         }
       }
       if(potions.length>0){
         h+='<div style="margin-bottom:8px;">';
-        h+='<div style="font-family:Cinzel,serif;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;text-align:center;">🧪 Potions</div>';
+        h+='<div style="font-family:Cinzel,serif;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;text-align:center;">⚗️ Potions</div>';
         h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">';
         for(var pi2=0;pi2<potions.length;pi2++){
           var pt=potions[pi2];
-          var ptDesc=pt.it.potionType==='buff'?'+'+pt.it.value+' '+pt.it.stat.toUpperCase()+' ('+pt.it.turns+'t)':pt.it.potionType==='instant'?'+'+pt.it.hp+' HP':'Cure';
+          var ptIt=pt.it||ITEMS[pt.id];
+          var ptDesc=ptIt.potionType==='buff'?'+'+ptIt.value+' '+ptIt.stat.toUpperCase()+' ('+ptIt.turns+'t)':ptIt.potionType==='instant'?'+'+ptIt.hp+' HP':'Cure';
           h+='<button onclick="window._dgPotion(\''+pt.id+'\')" '
-           +'style="position:relative;background:#1a1308;border:2px solid #f0c040;border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;" '
-           +'title="'+pt.it.name+' · '+ptDesc+' · '+pt.qty+' owned">'
-           +'<div style="font-size:20px;line-height:1;">'+pt.it.icon+'</div>'
-           +'<div style="font-size:8px;color:#f0c040;font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">'+ptDesc+'</div>'
+           +'style="position:relative;background:#1a1308;border:2px solid #20B2AA;border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;" '
+           +'title="'+pt.name+' · '+ptDesc+' · '+pt.qty+' in pouch">'
+           +'<div style="font-size:20px;line-height:1;">'+pt.icon+'</div>'
+           +'<div style="font-size:8px;color:#20B2AA;font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">'+ptDesc+'</div>'
            +'<span style="position:absolute;bottom:1px;right:3px;font-size:8px;color:#5ac85a;font-weight:bold;">'+pt.qty+'</span>'
            +'</button>';
         }
@@ -1998,6 +2080,9 @@
   window._dgSetLoadout=dungeonSetLoadout;
   window._dgClearLoadout=dungeonClearLoadout;
   window._dgAutoLoadout=dungeonAutoLoadout;
+  window._dgSetPotionLoadout=dungeonSetPotionLoadout;
+  window._dgClearPotionLoadout=dungeonClearPotionLoadout;
+  window._dgAutoPotionLoadout=dungeonAutoPotionLoadout;
   // Apply the tier scaling once up front so all downstream code reads scaled HP/dmg.
   Object.keys(DUNGEONS).forEach(function(k){ DUNGEONS[k] = scaleDungeonMonsters(DUNGEONS[k]); });
   window.DUNGEONS=DUNGEONS;
@@ -2113,6 +2198,54 @@
       }
     }
     h+='<div style="color:#5a4830;font-size:9px;font-style:italic;margin-top:4px;">Eating during combat is safe — no enemy retaliation. Max '+FOOD_POUCH_SLOTS+' food types, '+FOOD_PER_SLOT+' each.</div>';
+    h+='</div>';
+
+    // === POTION LOADOUT CONFIGURATOR ===
+    var _allPotions=getPotionList();
+    var _potLoadout=G.potionLoadout||{};
+    var _potSlotsUsed=0;for(var _pk in _potLoadout){if(_potLoadout[_pk]>0&&(G.inv[_pk]||0)>0)_potSlotsUsed++;}
+    var _potTotal=0;for(var _pk2 in _potLoadout){_potTotal+=Math.min(_potLoadout[_pk2]||0,G.inv[_pk2]||0);}
+    h+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;padding:10px;margin-bottom:10px;">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    h+='<div style="color:#20B2AA;font-size:11px;letter-spacing:1px;">⚗️ POTION BELT <span style="color:#9a7e50;font-weight:normal;font-size:10px;">('+_potSlotsUsed+'/'+POTION_POUCH_SLOTS+' slots · '+_potTotal+' items)</span></div>';
+    h+='<div style="display:flex;gap:4px;">';
+    h+='<button onclick="window._dgAutoPotionLoadout()" style="padding:3px 8px;background:#0a1a18;border:1px solid #20B2AA;color:#20B2AA;border-radius:4px;cursor:pointer;font-size:9px;font-family:Cinzel,serif;">Auto-Fill</button>';
+    h+='<button onclick="window._dgClearPotionLoadout()" style="padding:3px 8px;background:#251e14;border:1px solid #5a4830;color:#9a7e50;border-radius:4px;cursor:pointer;font-size:9px;font-family:Cinzel,serif;">Clear</button>';
+    h+='</div></div>';
+    if(_allPotions.length===0){
+      h+='<div style="color:#5a4830;font-size:10px;font-style:italic;">No potions in inventory — brew some potions first!</div>';
+    } else {
+      for(var _pi=0;_pi<_allPotions.length;_pi++){
+        var _ap=_allPotions[_pi];
+        var _pit=_ap.it;
+        var _plqty=_potLoadout[_ap.id]||0;
+        var _pmaxQty=Math.min(_ap.qty,POTION_PER_SLOT);
+        var _pcanAdd=_plqty<_pmaxQty&&(_plqty>0||_potSlotsUsed<POTION_POUCH_SLOTS);
+        // Build effect description
+        var _pefParts=[];
+        if(_pit.potionType==='buff') _pefParts.push('+'+_pit.value+' '+_pit.stat.toUpperCase()+' ('+_pit.turns+'t)');
+        else if(_pit.potionType==='instant'&&_pit.hp) _pefParts.push('+'+_pit.hp+' HP');
+        else if(_pit.potionType==='cure') _pefParts.push('Cure '+(_pit.cures||'poison')+' + immune ('+(_pit.immuneTurns||5)+'t)');
+        var _pbrdClr=_plqty>0?'#20B2AA':'#3a2c18';
+        var _pbgClr=_plqty>0?'#0a1a18':'#0b0805';
+        h+='<div style="display:flex;align-items:center;gap:8px;background:'+_pbgClr+';border:1px solid '+_pbrdClr+';border-radius:6px;padding:6px 8px;margin-bottom:6px;">';
+        h+='<span style="font-size:18px;flex-shrink:0;">'+_ap.icon+'</span>';
+        h+='<div style="flex:1;min-width:0;">';
+        h+='<div style="color:#e8d898;font-size:11px;font-weight:bold;">'+_ap.name+'</div>';
+        h+='<div style="color:#20B2AA;font-size:9px;">'+_pefParts.join(' · ')+'</div>';
+        h+='<div style="color:#5a4830;font-size:9px;">'+_ap.qty+' in inventory · max '+_pmaxQty+' per run</div>';
+        h+='</div>';
+        h+='<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">';
+        h+='<button onclick="window._dgSetPotionLoadout(\''+_ap.id+'\',-1)" style="width:22px;height:22px;background:#251e14;border:1px solid #5a4830;color:#e8d898;border-radius:4px;cursor:pointer;font-size:13px;line-height:1;padding:0;"'
+          +(_plqty<=0?' disabled style="width:22px;height:22px;background:#1a1308;border:1px solid #2b2112;color:#3a2c18;border-radius:4px;cursor:not-allowed;font-size:13px;line-height:1;padding:0;"':'')+'>−</button>';
+        h+='<span style="color:'+(_plqty>0?'#20B2AA':'#5a4830')+';font-size:13px;font-weight:bold;min-width:16px;text-align:center;">'+_plqty+'</span>';
+        h+='<button onclick="window._dgSetPotionLoadout(\''+_ap.id+'\',1)" style="width:22px;height:22px;background:'+(_pcanAdd?'#0a1a18':'#1a1308')+';border:1px solid '+(_pcanAdd?'#20B2AA':'#2b2112')+';color:'+(_pcanAdd?'#20B2AA':'#3a2c18')+';border-radius:4px;cursor:'+(_pcanAdd?'pointer':'not-allowed')+';font-size:13px;line-height:1;padding:0;"'
+          +(!_pcanAdd?' disabled':'')+'>+</button>';
+        h+='</div>';
+        h+='</div>';
+      }
+    }
+    h+='<div style="color:#5a4830;font-size:9px;font-style:italic;margin-top:4px;">Drinking potions costs a turn — enemy retaliates! Max '+POTION_POUCH_SLOTS+' types, '+POTION_PER_SLOT+' each.</div>';
     h+='</div>';
 
     // === TACTICAL RECOMMENDATIONS ===

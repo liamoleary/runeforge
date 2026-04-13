@@ -609,6 +609,7 @@ const SKILLS = {
   hunting:{name:'Hunting',icon:'🎯',color:'#8B6914'},
   smithing:{name:'Smithing',icon:'🔨',color:'#FF8C00'},
   cooking:{name:'Cooking',icon:'🍳',color:'#FF6347'},
+  brewing:{name:'Brewing',icon:'⚗️',color:'#20B2AA'},
   fletching:{name:'Fletching',icon:'🏹',color:'#228B22'},
   crafting:{name:'Crafting',icon:'🧵',color:'#9370DB'},
   magic:{name:'Magic',icon:'✨',color:'#9b59b6'},
@@ -690,16 +691,17 @@ const ACTIONS = {
     {id:'ck_feast',name:'Lobster Feast',icon:'🍽️',req:48,xp:140,dur:6000,prod:[{id:'c_lobster_feast',n:1}],need:[{id:'raw_lobster',n:2},{id:'raw_trout',n:1}]},
     {id:'ck_bone',name:'Bone Broth',icon:'🍲',req:15,xp:50,dur:3500,prod:[{id:'c_bone_broth',n:1}],need:[{id:'bones',n:2},{id:'raw_meat',n:1}]},
     {id:'ck_venison',name:'Roast Venison',icon:'🍖',req:20,xp:65,dur:4000,prod:[{id:'c_venison',n:1}],need:[{id:'venison',n:1},{id:'coal',n:1}]},
-    // === Potions — single-use dungeon consumables that grant temporary buffs ===
-    {id:'ck6',name:'Strength Potion',icon:'💪',req:10,xp:45,dur:5000,prod:[{id:'potion_strength',n:1}],need:[{id:'raw_meat',n:2},{id:'copper_ore',n:1}]},
-    {id:'ck7',name:'Antidote',icon:'🧪',req:15,xp:50,dur:4500,prod:[{id:'potion_antidote',n:1}],need:[{id:'raw_sardine',n:1},{id:'feather',n:3}]},
-    {id:'ck8',name:'Defence Potion',icon:'🛡️',req:20,xp:65,dur:5500,prod:[{id:'potion_defence',n:1}],need:[{id:'raw_trout',n:2},{id:'iron_ore',n:1}]},
-    {id:'ck9',name:'Dodge Potion',icon:'🏃',req:30,xp:80,dur:6000,prod:[{id:'potion_dodge',n:1}],need:[{id:'raw_salmon',n:2},{id:'feather',n:5}]},
-    {id:'ck10',name:'Healing Potion',icon:'❤️',req:35,xp:100,dur:7000,prod:[{id:'potion_healing',n:1}],need:[{id:'raw_lobster',n:1},{id:'gold_ore',n:1}]},
-    {id:'ck11',name:'Greater Strength Potion',icon:'💪',req:50,xp:140,dur:8000,prod:[{id:'potion_strength_g',n:1}],need:[{id:'raw_salmon',n:3},{id:'iron_ore',n:2},{id:'coal',n:1}]},
-    {id:'ck12',name:'Greater Defence Potion',icon:'🛡️',req:55,xp:150,dur:8000,prod:[{id:'potion_defence_g',n:1}],need:[{id:'raw_lobster',n:2},{id:'iron_bar',n:1},{id:'coal',n:1}]},
-    {id:'ck13',name:'Greater Dodge Potion',icon:'🏃',req:60,xp:160,dur:8500,prod:[{id:'potion_dodge_g',n:1}],need:[{id:'raw_lobster',n:2},{id:'feather',n:8},{id:'gold_ore',n:1}]},
-    {id:'ck14',name:'Greater Healing Potion',icon:'❤️',req:70,xp:200,dur:10000,prod:[{id:'potion_healing_g',n:1}],need:[{id:'raw_lobster',n:3},{id:'gold_ore',n:2}]},
+  ],
+  brewing:[
+    {id:'br0',name:'Strength Potion',icon:'💪',req:10,xp:45,dur:5000,prod:[{id:'potion_strength',n:1}],need:[{id:'raw_meat',n:2},{id:'copper_ore',n:1}]},
+    {id:'br1',name:'Antidote',icon:'🧪',req:15,xp:50,dur:4500,prod:[{id:'potion_antidote',n:1}],need:[{id:'raw_sardine',n:1},{id:'feather',n:3}]},
+    {id:'br2',name:'Defence Potion',icon:'🛡️',req:20,xp:65,dur:5500,prod:[{id:'potion_defence',n:1}],need:[{id:'raw_trout',n:2},{id:'iron_ore',n:1}]},
+    {id:'br3',name:'Dodge Potion',icon:'🏃',req:30,xp:80,dur:6000,prod:[{id:'potion_dodge',n:1}],need:[{id:'raw_salmon',n:2},{id:'feather',n:5}]},
+    {id:'br4',name:'Healing Potion',icon:'❤️',req:35,xp:100,dur:7000,prod:[{id:'potion_healing',n:1}],need:[{id:'raw_lobster',n:1},{id:'gold_ore',n:1}]},
+    {id:'br5',name:'Greater Strength Potion',icon:'💪',req:50,xp:140,dur:8000,prod:[{id:'potion_strength_g',n:1}],need:[{id:'raw_salmon',n:3},{id:'iron_ore',n:2},{id:'coal',n:1}]},
+    {id:'br6',name:'Greater Defence Potion',icon:'🛡️',req:55,xp:150,dur:8000,prod:[{id:'potion_defence_g',n:1}],need:[{id:'raw_lobster',n:2},{id:'iron_bar',n:1},{id:'coal',n:1}]},
+    {id:'br7',name:'Greater Dodge Potion',icon:'🏃',req:60,xp:160,dur:8500,prod:[{id:'potion_dodge_g',n:1}],need:[{id:'raw_lobster',n:2},{id:'feather',n:8},{id:'gold_ore',n:1}]},
+    {id:'br8',name:'Greater Healing Potion',icon:'❤️',req:70,xp:200,dur:10000,prod:[{id:'potion_healing_g',n:1}],need:[{id:'raw_lobster',n:3},{id:'gold_ore',n:2}]},
   ],
   fletching:[
     {id:'fl0',name:'Arrow Shafts',icon:'↑',req:1,xp:14,dur:2000,prod:[{id:'arrow_shaft',n:15}],need:[{id:'logs',n:1}]},
@@ -876,6 +878,7 @@ const TOOL_MAP={
   mining:['pick','steel_pickaxe'],
   fishing:['rod','steel_rod'],
   cooking:['tinder','steel_skillet'],
+  brewing:[],
   smithing:['hammer','steel_smith_hammer'],
   fletching:['fletch_knife','steel_fletch_knife'],
   crafting:['needle','steel_needle'],
@@ -979,6 +982,7 @@ let G = {
   workers:[],
   gearUpgrades:{}, // maps itemId -> upgrade level (1-5)
   foodLoadout:{},  // maps food item id -> desired qty in pouch (manual configuration)
+  potionLoadout:{}, // maps potion item id -> desired qty in potion belt (manual configuration)
   tab:'woodcutting',
   task:null,prog:0,dur:0,
   mhp:0,mmhp:0,mhit:0,
@@ -1004,6 +1008,7 @@ function load(){
   if(!G.xpEarned)G.xpEarned={};
   if(!G.startedWithSword)G.startedWithSword=false;
   if(!G.foodLoadout)G.foodLoadout={};
+  if(!G.potionLoadout)G.potionLoadout={};
   // Combat skill removal cleanup.
   // Preserve any HP ceiling the player already earned from the old combat-level maxhp
   // formula so existing saves don't lose progression. Anything above BASE_MAXHP becomes
