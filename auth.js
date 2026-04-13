@@ -154,8 +154,11 @@
         if(data.hasSave && data.saveData){
           localStorage.setItem('rforge', JSON.stringify(data.saveData));
           if(typeof G!=='undefined'){
-            Object.assign(G, data.saveData);
-            if(typeof initXpTracking==='function') initXpTracking();
+            // Use load() so all save-migrations (new skills, task ID renames,
+            // equipment slot expansion, etc.) run on the cloud data — not just
+            // a raw Object.assign that would skip initSkills() and break any
+            // skill added after the save was created (e.g. Hunting).
+            if(typeof load==='function') load();
             if(typeof recomputeMaxHp==='function') recomputeMaxHp();
             if(typeof buildSkills==='function') buildSkills();
             if(typeof updateUI==='function') updateUI();

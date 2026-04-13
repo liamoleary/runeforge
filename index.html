@@ -1134,6 +1134,7 @@ function recomputeActiveTaskDur(forSk){
   updateActiveTaskBar();
 }
 function addXP(sk,amt){
+  if(!G.skills[sk])G.skills[sk]={xp:0};
   const ol=slvl(sk);
   G.skills[sk].xp=(G.skills[sk].xp||0)+amt;
   if(!G.xpEarned)G.xpEarned={};
