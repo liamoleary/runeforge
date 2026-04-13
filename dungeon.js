@@ -379,6 +379,10 @@
     goldPerRoom: [3, 8]
   };
 
+  // Food pouch: limits how much food you can bring into a dungeon run.
+  var FOOD_POUCH_SLOTS = 5;   // max different food types
+  var FOOD_PER_SLOT    = 5;   // max stack per slot
+
   function getFoodCount(){
     var c=0;
     if(typeof G==='undefined') return 0;
@@ -393,6 +397,28 @@
     var inv=G.inv||{};
     for(var k in inv){if(ITEMS[k]&&ITEMS[k].type==='food'&&inv[k]>0) f.push({id:k,name:ITEMS[k].name,icon:ITEMS[k].icon,hp:ITEMS[k].hp,qty:inv[k]});}
     return f;
+  }
+
+  // Build a food pouch snapshot from current inventory, capped by slot/stack limits.
+  function buildFoodPouch(){
+    var pouch=[];
+    var foods=getFoodList().sort(function(a,b){return b.hp-a.hp;});
+    for(var i=0;i<foods.length&&pouch.length<FOOD_POUCH_SLOTS;i++){
+      var it=ITEMS[foods[i].id];
+      pouch.push({
+        id:foods[i].id,name:foods[i].name,icon:foods[i].icon,
+        hp:foods[i].hp,qty:Math.min(foods[i].qty,FOOD_PER_SLOT),
+        buff:(it&&it.foodBuff)?it.foodBuff:null
+      });
+    }
+    return pouch;
+  }
+
+  function getPouchFoodCount(){
+    if(!dungeonState||!dungeonState.foodPouch) return 0;
+    var c=0;
+    for(var i=0;i<dungeonState.foodPouch.length;i++) c+=dungeonState.foodPouch[i].qty;
+    return c;
   }
 
   var ATK_SLOTS = ['weaponR','weaponL','jewelry'];
@@ -413,6 +439,8 @@
     if(G.equip.weapon&&ITEMS[G.equip.weapon]) b+=ITEMS[G.equip.weapon].atk||0;
     // Add potion buffs during dungeon runs
     if(dungeonState&&dungeonState.potionBuffs) b+=dungeonState.potionBuffs.atk||0;
+    // Add temporary food buffs
+    if(dungeonState&&dungeonState.foodBuffs&&dungeonState.foodBuffs.atkTurns>0) b+=dungeonState.foodBuffs.atk||0;
     return b;
   }
 
@@ -429,6 +457,8 @@
     if(G.equip.armour&&ITEMS[G.equip.armour]) b+=ITEMS[G.equip.armour].def||0;
     // Add potion buffs during dungeon runs
     if(dungeonState&&dungeonState.potionBuffs) b+=dungeonState.potionBuffs.def||0;
+    // Add temporary food buffs
+    if(dungeonState&&dungeonState.foodBuffs&&dungeonState.foodBuffs.defTurns>0) b+=dungeonState.foodBuffs.def||0;
     return b;
   }
 
@@ -524,6 +554,8 @@
       lootCollected:[],
       playerPoison:0,playerPoisonTurns:0,
       potionBuffs:{atk:0,def:0,dodge:0}, // active potion buffs for this run
+      foodPouch:buildFoodPouch(), // limited food brought into dungeon
+      foodBuffs:{atk:0,atkTurns:0,def:0,defTurns:0,regen:0,regenTurns:0}, // temp food buffs
       poisonImmuneTurns:0,
       victory:false,
       fled:false,
@@ -1029,7 +1061,18 @@
 
   // Apply end-of-turn effects: tick poison, cool down monster shields, refresh heals.
   function tickStatusEffects(mon){
-    // Tick down poison immunity from antidote
+    // Tick food buffs (ATK, DEF duration, regen)
+    if(dungeonState.foodBuffs){
+      var fb=dungeonState.foodBuffs;
+      if(fb.atkTurns>0){fb.atkTurns--;if(fb.atkTurns<=0){fb.atk=0;dungeonState.combatLog.push('<span style="color:#5a4830;">🌶️ Food ATK buff fades.</span>');}}
+      if(fb.defTurns>0){fb.defTurns--;if(fb.defTurns<=0){fb.def=0;dungeonState.combatLog.push('<span style="color:#5a4830;">🌶️ Food DEF buff fades.</span>');}}
+      if(fb.regen>0&&fb.regenTurns>0){
+        var regenAmt=Math.min(fb.regen,dungeonState.playerMaxHp-dungeonState.playerHp);
+        if(regenAmt>0){dungeonState.playerHp+=regenAmt;showDungeonDmgFloat(regenAmt,'heal','left');dungeonState.combatLog.push('<span style="color:#5ac85a;">🍲 Food regen heals <b>'+regenAmt+'</b> HP ('+fb.regenTurns+'t left)</span>');}
+        fb.regenTurns--;if(fb.regenTurns<=0){fb.regen=0;dungeonState.combatLog.push('<span style="color:#5a4830;">🍲 Food regen fades.</span>');}
+      }
+    }
+    // Tick down poison immunity from antidote or food
     if (dungeonState.poisonImmuneTurns > 0) dungeonState.poisonImmuneTurns--;
     // Player poison DoT
     if (dungeonState.playerPoison > 0 && dungeonState.playerPoisonTurns > 0){
@@ -1354,24 +1397,46 @@
     renderDungeon();
   }
 
-  function dungeonEat(){
+  function dungeonEat(foodId){
     if(!dungeonState||dungeonState.victory||dungeonState.fled||dungeonState.playerHp<=0) return;
-    var foods=getFoodList();
-    if(foods.length===0){showDungeonMessage('No food left!','#e03030');return;}
-    var f=foods[0],healed=Math.min(f.hp,dungeonState.playerMaxHp-dungeonState.playerHp);
-    if(healed<=0){showDungeonMessage('Already at full HP!','#ffd966');return;}
-    // Apply heal first
-    dungeonState.playerHp=Math.min(dungeonState.playerMaxHp,dungeonState.playerHp+f.hp);
-    showDungeonDmgFloat(healed,'heal','left');
-    G.inv[f.id]--;
-    if(G.inv[f.id]<=0) delete G.inv[f.id];
-    dungeonState.combatLog.push('You eat '+f.icon+' '+f.name+' and heal <span style="color:#5ac85a">'+healed+'</span> HP.');
-    // Eating leaves you open — the current monster takes a swing at you.
-    var mon=dungeonState.monsters[dungeonState.room];
-    if(mon&&mon.hp>0){
-      monsterRetaliate(mon);
-      tickStatusEffects(mon);
+    if(!dungeonState.foodPouch||!dungeonState.foodPouch.length){showDungeonMessage('No food in pouch!','#e03030');return;}
+    // Find the requested food in the pouch
+    var slot=null;
+    for(var i=0;i<dungeonState.foodPouch.length;i++){
+      if(dungeonState.foodPouch[i].id===foodId&&dungeonState.foodPouch[i].qty>0){slot=dungeonState.foodPouch[i];break;}
     }
+    if(!slot){showDungeonMessage('No food left!','#e03030');return;}
+    var hasBuff=!!slot.buff;
+    var healed=Math.min(slot.hp,dungeonState.playerMaxHp-dungeonState.playerHp);
+    if(healed<=0&&!hasBuff){showDungeonMessage('Already at full HP!','#ffd966');return;}
+    // Apply heal
+    dungeonState.playerHp=Math.min(dungeonState.playerMaxHp,dungeonState.playerHp+slot.hp);
+    if(healed>0) showDungeonDmgFloat(healed,'heal','left');
+    // Consume from pouch and inventory
+    slot.qty--;
+    if(G.inv[slot.id]){G.inv[slot.id]--;if(G.inv[slot.id]<=0) delete G.inv[slot.id];}
+    // Build log message
+    var logParts=['You eat '+slot.icon+' '+slot.name];
+    if(healed>0) logParts.push('heal <span style="color:#5ac85a">'+healed+'</span> HP');
+    // Apply food buff
+    if(hasBuff){
+      var b=slot.buff;
+      if(b.atk){dungeonState.foodBuffs.atk=b.atk;dungeonState.foodBuffs.atkTurns=b.turns||3;}
+      if(b.def){dungeonState.foodBuffs.def=b.def;dungeonState.foodBuffs.defTurns=b.turns||3;}
+      if(b.regen){dungeonState.foodBuffs.regen=b.regen;dungeonState.foodBuffs.regenTurns=b.turns||4;}
+      if(b.poisonImmune){dungeonState.poisonImmuneTurns=Math.max(dungeonState.poisonImmuneTurns,b.poisonImmune);dungeonState.playerPoison=0;dungeonState.playerPoisonTurns=0;}
+      var bp=[];
+      if(b.atk) bp.push('+'+b.atk+' ATK');
+      if(b.def) bp.push('+'+b.def+' DEF');
+      if(b.regen) bp.push('+'+b.regen+' HP/turn');
+      if(b.poisonImmune) bp.push('Poison Immune');
+      if(bp.length) logParts.push('<span style="color:#ffd966;">'+bp.join(', ')+' ('+(b.turns||b.poisonImmune)+'t)</span>');
+    }
+    dungeonState.combatLog.push(logParts.join(' · ')+'.');
+    // Eating from your food pouch is SAFE — no monster retaliation!
+    // Status effects still tick (poison, shields, monster heals).
+    var mon=dungeonState.monsters[dungeonState.room];
+    if(mon&&mon.hp>0) tickStatusEffects(mon);
     if(dungeonState&&dungeonState.playerHp>0) G.hp=dungeonState.playerHp;
     renderDungeon();
   }
@@ -1519,7 +1584,6 @@
     // === Action buttons ===
     h+='<div style="display:flex;gap:4px;margin-bottom:6px;justify-content:center;flex-wrap:wrap;">';
     if(!done){
-      var fc=getFoodCount();
       h+='<button onclick="window._dgAttack(\'slash\')" style="flex:1;max-width:80px;padding:6px;background:#8B4513;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;font-weight:bold;" title="Normal attack">⚔ Slash</button>';
       // Power button: preview the NEXT stack's stats so players know what they'll get.
       var _curStacks=s.critStacks||0;
@@ -1530,12 +1594,51 @@
         : 'Focus Power: next stack → '+Math.round(_previewProf.critChance*100)+'% crit / ×'+_previewProf.critMult.toFixed(1)+' damage / +'+Math.round(_previewProf.bonusFrac*100)+'% flat bonus. Enemy still hits you this turn.';
       var _powerLabel='⚡ Power'+(_curStacks>0?' ×'+_curStacks:'');
       h+='<button onclick="window._dgAttack(\'power\')" style="flex:1;max-width:80px;padding:6px;background:'+(_curStacks>0?'#4a3010':'#251e14')+';border:1px solid '+(_curStacks>0?'#ffd966':'#3a2c18')+';color:'+(_curStacks>0?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="'+_powerTitle+'">'+_powerLabel+'</button>';
-      h+='<button onclick="window._dgEat()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:'+(fc>0?'#5ac85a':'#5a4830')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Eat food to heal (no damage taken)">🍖 Eat('+fc+')</button>';
       h+='<button onclick="window._dgFlee()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:#e03030;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Flee and keep collected loot">🏃 Flee</button>';
     } else {
       h+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+(s.victory?'🪓 Claim & Leave':s.fled?'🏃 Leave':'Leave Dungeon')+'</button>';
     }
     h+='</div>';
+
+    // === Food Pouch bar — shows individual food items the player packed for this run ===
+    if(!done){
+      var _pouch=s.foodPouch||[];
+      var _pouchUsed=0;for(var _pi=0;_pi<_pouch.length;_pi++){if(_pouch[_pi].qty>0)_pouchUsed++;}
+      h+='<div style="margin-bottom:8px;">';
+      h+='<div style="font-family:Cinzel,serif;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;text-align:center;">🍖 Food Pouch <span style="color:#3a2c18;">('+_pouchUsed+'/'+FOOD_POUCH_SLOTS+' slots · no retaliation)</span></div>';
+      h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">';
+      var _slotIdx=0;
+      for(var _fi=0;_fi<_pouch.length;_fi++){
+        var _pf=_pouch[_fi];
+        if(_pf.qty>0){
+          var _bDesc='';
+          if(_pf.buff){
+            var _bp=[];
+            if(_pf.buff.atk) _bp.push('+'+_pf.buff.atk+' ATK');
+            if(_pf.buff.def) _bp.push('+'+_pf.buff.def+' DEF');
+            if(_pf.buff.regen) _bp.push('+'+_pf.buff.regen+' regen');
+            if(_pf.buff.poisonImmune) _bp.push('Anti-poison');
+            _bDesc=' · '+_bp.join(', ')+' ('+(_pf.buff.turns||_pf.buff.poisonImmune)+'t)';
+          }
+          var _brdClr=_pf.buff?'#ffd966':'#5ac85a';
+          h+='<button onclick="window._dgEat(\''+_pf.id+'\')" '
+           +'style="position:relative;background:#1a1308;border:2px solid '+_brdClr+';border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;" '
+           +'title="'+_pf.name+' · +'+_pf.hp+' HP'+_bDesc+' · '+_pf.qty+' in pouch">'
+           +'<div style="font-size:20px;line-height:1;">'+_pf.icon+'</div>'
+           +'<div style="font-size:8px;color:'+_brdClr+';font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">+'+_pf.hp+'</div>'
+           +'<span style="position:absolute;bottom:1px;right:3px;font-size:8px;color:#f0c040;font-weight:bold;">'+_pf.qty+'</span>'
+           +'</button>';
+          _slotIdx++;
+        }
+      }
+      for(;_slotIdx<FOOD_POUCH_SLOTS;_slotIdx++){
+        h+='<div style="background:#110d07;border:2px dashed #2b2112;border-radius:6px;padding:5px 7px 4px;min-width:44px;text-align:center;cursor:default;opacity:0.3;">'
+         +'<div style="font-size:20px;line-height:1;filter:grayscale(1) brightness(0.55);">🍖</div>'
+         +'<div style="font-size:8px;color:#3a2c18;font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">—</div>'
+         +'</div>';
+      }
+      h+='</div></div>';
+    }
 
     // === Spell bar — always renders all canonical scroll slots in combat so the
     // player can see which scrolls they own, which are empty, and which are still
@@ -1623,12 +1726,16 @@
         h+='</div>';
         h+='</div>';
       }
-      // Active potion buffs display
+      // Active potion + food buffs display
       var buffs=s.potionBuffs||{};
+      var fb=s.foodBuffs||{};
       var buffParts=[];
       if(buffs.atk>0) buffParts.push('<span style="color:#f0c040;">+'+buffs.atk+' ATK</span>');
       if(buffs.def>0) buffParts.push('<span style="color:#4488dd;">+'+buffs.def+' DEF</span>');
       if(buffs.dodge>0) buffParts.push('<span style="color:#ffd966;">+'+buffs.dodge+'% Dodge</span>');
+      if(fb.atk>0&&fb.atkTurns>0) buffParts.push('<span style="color:#f0c040;">🌶️+'+fb.atk+' ATK ('+fb.atkTurns+'t)</span>');
+      if(fb.def>0&&fb.defTurns>0) buffParts.push('<span style="color:#4488dd;">🌶️+'+fb.def+' DEF ('+fb.defTurns+'t)</span>');
+      if(fb.regen>0&&fb.regenTurns>0) buffParts.push('<span style="color:#5ac85a;">🍲+'+fb.regen+' regen ('+fb.regenTurns+'t)</span>');
       if(s.poisonImmuneTurns>0) buffParts.push('<span style="color:#5ac85a;">Poison Immune ('+s.poisonImmuneTurns+'t)</span>');
       if(buffParts.length>0){
         h+='<div style="text-align:center;font-size:9px;color:#9a7e50;margin-bottom:6px;">Active: '+buffParts.join(' · ')+'</div>';
@@ -1857,6 +1964,36 @@
     h+='<div style="color:'+(fc>=DG.minFood?'#5ac85a':'#e03030')+';font-size:11px;margin-bottom:3px;">'+(fc>=DG.minFood?'✓':'✗')+' '+DG.minFood+'+ food (have: '+fc+')</div>';
     h+='<div style="color:#9a7e50;font-size:10px;margin-top:6px;">'+(arm?arm.icon+' '+arm.name:'No armour')+'</div>';
     h+='</div>';
+
+    // === FOOD POUCH PREVIEW — show what food will be packed for this run ===
+    var _entryPouch=buildFoodPouch();
+    if(_entryPouch.length>0){
+      var _epUsed=_entryPouch.length;
+      var _epTotal=0;_entryPouch.forEach(function(f){_epTotal+=f.qty;});
+      h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;">';
+      h+='<div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">🍖 FOOD POUCH <span style="color:#9a7e50;font-weight:normal;font-size:10px;">('+_epUsed+'/'+FOOD_POUCH_SLOTS+' slots · '+_epTotal+' items)</span></div>';
+      h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">';
+      for(var _epi=0;_epi<_entryPouch.length;_epi++){
+        var _ef=_entryPouch[_epi];
+        var _eBuff='';
+        if(_ef.buff){
+          var _ebp=[];
+          if(_ef.buff.atk) _ebp.push('+'+_ef.buff.atk+' ATK');
+          if(_ef.buff.def) _ebp.push('+'+_ef.buff.def+' DEF');
+          if(_ef.buff.regen) _ebp.push('+'+_ef.buff.regen+' regen');
+          if(_ef.buff.poisonImmune) _ebp.push('Anti-poison');
+          _eBuff=' <span style="color:#ffd966;font-size:9px;">('+_ebp.join(', ')+')</span>';
+        }
+        h+='<div style="display:inline-flex;align-items:center;gap:4px;background:#0b0604;border:1px solid '+(_ef.buff?'#ffd966':'#3a2c18')+';border-radius:4px;padding:3px 8px;">';
+        h+='<span style="font-size:14px;">'+_ef.icon+'</span>';
+        h+='<span style="color:#e8d898;font-size:10px;">'+_ef.name+' <span style="color:#5ac85a;">+'+_ef.hp+'HP</span>'+_eBuff+'</span>';
+        h+='<span style="color:#f0c040;font-size:10px;font-weight:bold;">×'+_ef.qty+'</span>';
+        h+='</div>';
+      }
+      h+='</div>';
+      h+='<div style="color:#5a4830;font-size:9px;font-style:italic;">Eating is safe — no enemy retaliation. Max '+FOOD_POUCH_SLOTS+' types, '+FOOD_PER_SLOT+' each.</div>';
+      h+='</div>';
+    }
 
     // === TACTICAL RECOMMENDATIONS ===
     // Scan the room list for special abilities and warn the player up front so they
