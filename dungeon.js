@@ -399,19 +399,78 @@
     return f;
   }
 
-  // Build a food pouch snapshot from current inventory, capped by slot/stack limits.
+  // Build a food pouch snapshot. Uses G.foodLoadout if configured, otherwise auto-fills
+  // from inventory sorted by HP (highest first).
   function buildFoodPouch(){
     var pouch=[];
-    var foods=getFoodList().sort(function(a,b){return b.hp-a.hp;});
-    for(var i=0;i<foods.length&&pouch.length<FOOD_POUCH_SLOTS;i++){
-      var it=ITEMS[foods[i].id];
-      pouch.push({
-        id:foods[i].id,name:foods[i].name,icon:foods[i].icon,
-        hp:foods[i].hp,qty:Math.min(foods[i].qty,FOOD_PER_SLOT),
-        buff:(it&&it.foodBuff)?it.foodBuff:null
-      });
+    var inv=G.inv||{};
+    var loadout=G.foodLoadout||{};
+    var hasLoadout=Object.keys(loadout).some(function(k){return loadout[k]>0&&inv[k]>0;});
+    if(hasLoadout){
+      // Use manual loadout — respect the player's choices, cap at what's in inventory
+      for(var lid in loadout){
+        if(pouch.length>=FOOD_POUCH_SLOTS) break;
+        if(!loadout[lid]||loadout[lid]<=0) continue;
+        if(!ITEMS[lid]||ITEMS[lid].type!=='food') continue;
+        var avail=inv[lid]||0;
+        if(avail<=0) continue;
+        var it=ITEMS[lid];
+        pouch.push({
+          id:lid,name:it.name,icon:it.icon,
+          hp:it.hp,qty:Math.min(loadout[lid],avail,FOOD_PER_SLOT),
+          buff:it.foodBuff||null
+        });
+      }
+    } else {
+      // Auto-fill: highest-HP foods first
+      var foods=getFoodList().sort(function(a,b){return b.hp-a.hp;});
+      for(var i=0;i<foods.length&&pouch.length<FOOD_POUCH_SLOTS;i++){
+        var it2=ITEMS[foods[i].id];
+        pouch.push({
+          id:foods[i].id,name:foods[i].name,icon:foods[i].icon,
+          hp:foods[i].hp,qty:Math.min(foods[i].qty,FOOD_PER_SLOT),
+          buff:it2.foodBuff||null
+        });
+      }
     }
     return pouch;
+  }
+
+  // Adjust how many of a food the player wants in their loadout, then refresh the entry UI.
+  function dungeonSetLoadout(foodId, delta){
+    if(!G.foodLoadout) G.foodLoadout={};
+    var inv=G.inv||{};
+    var cur=G.foodLoadout[foodId]||0;
+    var avail=inv[foodId]||0;
+    // Count slots already used (excluding this food)
+    var slotsUsed=0;
+    for(var k in G.foodLoadout){if(k!==foodId&&G.foodLoadout[k]>0)slotsUsed++;}
+    var next=Math.max(0,Math.min(FOOD_PER_SLOT,avail,cur+delta));
+    // If adding this food would exceed slot limit, clamp
+    if(next>0&&cur===0&&slotsUsed>=FOOD_POUCH_SLOTS) next=0;
+    if(next===0) delete G.foodLoadout[foodId];
+    else G.foodLoadout[foodId]=next;
+    if(typeof save==='function') save();
+    // Re-render the entry screen to reflect the change
+    if(typeof activeDungeon!=='undefined') showDungeonEntry(activeDungeon.id);
+  }
+
+  // Clear all loadout slots and auto-fill next time
+  function dungeonClearLoadout(){
+    G.foodLoadout={};
+    if(typeof save==='function') save();
+    if(typeof activeDungeon!=='undefined') showDungeonEntry(activeDungeon.id);
+  }
+
+  // Auto-fill loadout: pick top foods by HP up to slot limit
+  function dungeonAutoLoadout(){
+    G.foodLoadout={};
+    var foods=getFoodList().sort(function(a,b){return b.hp-a.hp;});
+    for(var i=0;i<foods.length&&i<FOOD_POUCH_SLOTS;i++){
+      G.foodLoadout[foods[i].id]=Math.min(foods[i].qty,FOOD_PER_SLOT);
+    }
+    if(typeof save==='function') save();
+    if(typeof activeDungeon!=='undefined') showDungeonEntry(activeDungeon.id);
   }
 
   function getPouchFoodCount(){
@@ -1605,39 +1664,44 @@
       var _pouch=s.foodPouch||[];
       var _pouchUsed=0;for(var _pi=0;_pi<_pouch.length;_pi++){if(_pouch[_pi].qty>0)_pouchUsed++;}
       h+='<div style="margin-bottom:8px;">';
-      h+='<div style="font-family:Cinzel,serif;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;text-align:center;">🍖 Food Pouch <span style="color:#3a2c18;">('+_pouchUsed+'/'+FOOD_POUCH_SLOTS+' slots · no retaliation)</span></div>';
-      h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">';
+      h+='<div style="font-family:Cinzel,serif;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;text-align:center;">🍖 Food Pouch <span style="color:#3a2c18;">('+_pouchUsed+'/'+FOOD_POUCH_SLOTS+' · no retaliation)</span></div>';
       var _slotIdx=0;
       for(var _fi=0;_fi<_pouch.length;_fi++){
         var _pf=_pouch[_fi];
         if(_pf.qty>0){
-          var _bDesc='';
-          if(_pf.buff){
-            var _bp=[];
-            if(_pf.buff.atk) _bp.push('+'+_pf.buff.atk+' ATK');
-            if(_pf.buff.def) _bp.push('+'+_pf.buff.def+' DEF');
-            if(_pf.buff.regen) _bp.push('+'+_pf.buff.regen+' regen');
-            if(_pf.buff.poisonImmune) _bp.push('Anti-poison');
-            _bDesc=' · '+_bp.join(', ')+' ('+(_pf.buff.turns||_pf.buff.poisonImmune)+'t)';
+          // Build effect parts shown directly on the button
+          var _efParts=['+'+_pf.hp+' HP'];
+          var _hasBuff=!!_pf.buff;
+          if(_hasBuff){
+            var _bp=_pf.buff;
+            if(_bp.atk) _efParts.push('+'+_bp.atk+' ATK ('+_bp.turns+'t)');
+            if(_bp.def) _efParts.push('+'+_bp.def+' DEF ('+_bp.turns+'t)');
+            if(_bp.regen) _efParts.push('+'+_bp.regen+'/turn ('+_bp.turns+'t)');
+            if(_bp.poisonImmune) _efParts.push('🌿 Anti-poison ('+_bp.poisonImmune+'t)');
           }
-          var _brdClr=_pf.buff?'#ffd966':'#5ac85a';
+          var _brdClr=_hasBuff?'#ffd966':'#5ac85a';
+          var _effClr=_hasBuff?'#ffd966':'#5ac85a';
           h+='<button onclick="window._dgEat(\''+_pf.id+'\')" '
-           +'style="position:relative;background:#1a1308;border:2px solid '+_brdClr+';border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;" '
-           +'title="'+_pf.name+' · +'+_pf.hp+' HP'+_bDesc+' · '+_pf.qty+' in pouch">'
-           +'<div style="font-size:20px;line-height:1;">'+_pf.icon+'</div>'
-           +'<div style="font-size:8px;color:'+_brdClr+';font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">+'+_pf.hp+'</div>'
-           +'<span style="position:absolute;bottom:1px;right:3px;font-size:8px;color:#f0c040;font-weight:bold;">'+_pf.qty+'</span>'
+           +'style="display:flex;align-items:center;gap:6px;width:100%;background:#1a1308;border:2px solid '+_brdClr+';border-radius:6px;padding:6px 8px;cursor:pointer;margin-bottom:4px;text-align:left;" '
+           +'title="Click to eat">'
+           +'<span style="font-size:20px;flex-shrink:0;">'+_pf.icon+'</span>'
+           +'<div style="flex:1;min-width:0;">'
+           +'<div style="font-size:10px;color:#e8d898;font-weight:bold;font-family:Cinzel,serif;">'+_pf.name+'</div>'
+           +'<div style="font-size:9px;color:'+_effClr+';">'+_efParts.join(' · ')+'</div>'
+           +'</div>'
+           +'<span style="background:#0b0604;border:1px solid #3a2c18;border-radius:4px;padding:1px 6px;font-size:10px;color:#f0c040;font-weight:bold;flex-shrink:0;">×'+_pf.qty+'</span>'
            +'</button>';
           _slotIdx++;
         }
       }
+      // Empty slots
       for(;_slotIdx<FOOD_POUCH_SLOTS;_slotIdx++){
-        h+='<div style="background:#110d07;border:2px dashed #2b2112;border-radius:6px;padding:5px 7px 4px;min-width:44px;text-align:center;cursor:default;opacity:0.3;">'
-         +'<div style="font-size:20px;line-height:1;filter:grayscale(1) brightness(0.55);">🍖</div>'
-         +'<div style="font-size:8px;color:#3a2c18;font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">—</div>'
+        h+='<div style="display:flex;align-items:center;gap:6px;width:100%;background:#0b0805;border:2px dashed #1e1810;border-radius:6px;padding:6px 8px;margin-bottom:4px;opacity:0.4;">'
+         +'<span style="font-size:20px;flex-shrink:0;filter:grayscale(1) brightness(0.4);">🍖</span>'
+         +'<div style="flex:1;"><div style="font-size:9px;color:#3a2c18;font-family:Cinzel,serif;">Empty slot</div></div>'
          +'</div>';
       }
-      h+='</div></div>';
+      h+='</div>';
     }
 
     // === Spell bar — always renders all canonical scroll slots in combat so the
@@ -1905,6 +1969,9 @@
   window._dgLeave=leaveDungeon;
   window._dgStart=startDungeon;
   window._dgShowDiscovery=showDungeonDiscoveryPopup;
+  window._dgSetLoadout=dungeonSetLoadout;
+  window._dgClearLoadout=dungeonClearLoadout;
+  window._dgAutoLoadout=dungeonAutoLoadout;
   // Apply the tier scaling once up front so all downstream code reads scaled HP/dmg.
   Object.keys(DUNGEONS).forEach(function(k){ DUNGEONS[k] = scaleDungeonMonsters(DUNGEONS[k]); });
   window.DUNGEONS=DUNGEONS;
@@ -1965,35 +2032,62 @@
     h+='<div style="color:#9a7e50;font-size:10px;margin-top:6px;">'+(arm?arm.icon+' '+arm.name:'No armour')+'</div>';
     h+='</div>';
 
-    // === FOOD POUCH PREVIEW — show what food will be packed for this run ===
-    var _entryPouch=buildFoodPouch();
-    if(_entryPouch.length>0){
-      var _epUsed=_entryPouch.length;
-      var _epTotal=0;_entryPouch.forEach(function(f){_epTotal+=f.qty;});
-      h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;">';
-      h+='<div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">🍖 FOOD POUCH <span style="color:#9a7e50;font-weight:normal;font-size:10px;">('+_epUsed+'/'+FOOD_POUCH_SLOTS+' slots · '+_epTotal+' items)</span></div>';
-      h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">';
-      for(var _epi=0;_epi<_entryPouch.length;_epi++){
-        var _ef=_entryPouch[_epi];
-        var _eBuff='';
-        if(_ef.buff){
-          var _ebp=[];
-          if(_ef.buff.atk) _ebp.push('+'+_ef.buff.atk+' ATK');
-          if(_ef.buff.def) _ebp.push('+'+_ef.buff.def+' DEF');
-          if(_ef.buff.regen) _ebp.push('+'+_ef.buff.regen+' regen');
-          if(_ef.buff.poisonImmune) _ebp.push('Anti-poison');
-          _eBuff=' <span style="color:#ffd966;font-size:9px;">('+_ebp.join(', ')+')</span>';
+    // === FOOD LOADOUT CONFIGURATOR ===
+    // Shows all food in inventory; player sets how many of each goes in the pouch.
+    var _allFoods=getFoodList().sort(function(a,b){return b.hp-a.hp;});
+    var _loadout=G.foodLoadout||{};
+    var _slotsUsed=0;for(var _lk in _loadout){if(_loadout[_lk]>0&&(G.inv[_lk]||0)>0)_slotsUsed++;}
+    var _lootTotal=0;for(var _lk2 in _loadout){_lootTotal+=Math.min(_loadout[_lk2]||0,G.inv[_lk2]||0);}
+    h+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;padding:10px;margin-bottom:10px;">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    h+='<div style="color:#f0c040;font-size:11px;letter-spacing:1px;">🍖 FOOD POUCH <span style="color:#9a7e50;font-weight:normal;font-size:10px;">('+_slotsUsed+'/'+FOOD_POUCH_SLOTS+' slots · '+_lootTotal+' items)</span></div>';
+    h+='<div style="display:flex;gap:4px;">';
+    h+='<button onclick="window._dgAutoLoadout()" style="padding:3px 8px;background:#251a06;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-size:9px;font-family:Cinzel,serif;">Auto-Fill</button>';
+    h+='<button onclick="window._dgClearLoadout()" style="padding:3px 8px;background:#251e14;border:1px solid #5a4830;color:#9a7e50;border-radius:4px;cursor:pointer;font-size:9px;font-family:Cinzel,serif;">Clear</button>';
+    h+='</div></div>';
+    if(_allFoods.length===0){
+      h+='<div style="color:#5a4830;font-size:10px;font-style:italic;">No food in inventory — cook some food first!</div>';
+    } else {
+      // One row per food type in inventory
+      for(var _fi2=0;_fi2<_allFoods.length;_fi2++){
+        var _af=_allFoods[_fi2];
+        var _it=ITEMS[_af.id];
+        var _lqty=_loadout[_af.id]||0;
+        var _maxQty=Math.min(_af.qty,FOOD_PER_SLOT);
+        var _canAdd=_lqty<_maxQty&&(_lqty>0||_slotsUsed<FOOD_POUCH_SLOTS);
+        // Build effect description
+        var _efParts=['+'+_af.hp+' HP'];
+        var _hasBuff=_it&&_it.foodBuff;
+        if(_hasBuff){
+          var _b=_it.foodBuff;
+          if(_b.atk) _efParts.push('+'+_b.atk+' ATK ('+_b.turns+'t)');
+          if(_b.def) _efParts.push('+'+_b.def+' DEF ('+_b.turns+'t)');
+          if(_b.regen) _efParts.push('+'+_b.regen+' HP/turn ('+_b.turns+'t)');
+          if(_b.poisonImmune) _efParts.push('🌿 Anti-poison ('+_b.poisonImmune+'t)');
         }
-        h+='<div style="display:inline-flex;align-items:center;gap:4px;background:#0b0604;border:1px solid '+(_ef.buff?'#ffd966':'#3a2c18')+';border-radius:4px;padding:3px 8px;">';
-        h+='<span style="font-size:14px;">'+_ef.icon+'</span>';
-        h+='<span style="color:#e8d898;font-size:10px;">'+_ef.name+' <span style="color:#5ac85a;">+'+_ef.hp+'HP</span>'+_eBuff+'</span>';
-        h+='<span style="color:#f0c040;font-size:10px;font-weight:bold;">×'+_ef.qty+'</span>';
+        var _brdClr=_lqty>0?(_hasBuff?'#ffd966':'#5ac85a'):'#3a2c18';
+        var _bgClr=_lqty>0?'#1a1308':'#0b0805';
+        h+='<div style="display:flex;align-items:center;gap:8px;background:'+_bgClr+';border:1px solid '+_brdClr+';border-radius:6px;padding:6px 8px;margin-bottom:6px;">';
+        // Food icon + name + effects
+        h+='<span style="font-size:18px;flex-shrink:0;">'+_af.icon+'</span>';
+        h+='<div style="flex:1;min-width:0;">';
+        h+='<div style="color:#e8d898;font-size:11px;font-weight:bold;">'+_af.name+'</div>';
+        h+='<div style="color:'+(_hasBuff?'#ffd966':'#5ac85a')+';font-size:9px;">'+_efParts.join(' · ')+'</div>';
+        h+='<div style="color:#5a4830;font-size:9px;">'+_af.qty+' in inventory · max '+_maxQty+' per run</div>';
+        h+='</div>';
+        // Qty controls
+        h+='<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">';
+        h+='<button onclick="window._dgSetLoadout(\''+_af.id+'\',-1)" style="width:22px;height:22px;background:#251e14;border:1px solid #5a4830;color:#e8d898;border-radius:4px;cursor:pointer;font-size:13px;line-height:1;padding:0;"'
+          +(_lqty<=0?' disabled style="width:22px;height:22px;background:#1a1308;border:1px solid #2b2112;color:#3a2c18;border-radius:4px;cursor:not-allowed;font-size:13px;line-height:1;padding:0;"':'')+'>−</button>';
+        h+='<span style="color:'+(_lqty>0?'#f0c040':'#5a4830')+';font-size:13px;font-weight:bold;min-width:16px;text-align:center;">'+_lqty+'</span>';
+        h+='<button onclick="window._dgSetLoadout(\''+_af.id+'\',1)" style="width:22px;height:22px;background:'+(_canAdd?'#251a06':'#1a1308')+';border:1px solid '+(_canAdd?'#f0c040':'#2b2112')+';color:'+(_canAdd?'#f0c040':'#3a2c18')+';border-radius:4px;cursor:'+(_canAdd?'pointer':'not-allowed')+';font-size:13px;line-height:1;padding:0;"'
+          +(!_canAdd?' disabled':'')+'>+</button>';
+        h+='</div>';
         h+='</div>';
       }
-      h+='</div>';
-      h+='<div style="color:#5a4830;font-size:9px;font-style:italic;">Eating is safe — no enemy retaliation. Max '+FOOD_POUCH_SLOTS+' types, '+FOOD_PER_SLOT+' each.</div>';
-      h+='</div>';
     }
+    h+='<div style="color:#5a4830;font-size:9px;font-style:italic;margin-top:4px;">Eating during combat is safe — no enemy retaliation. Max '+FOOD_POUCH_SLOTS+' food types, '+FOOD_PER_SLOT+' each.</div>';
+    h+='</div>';
 
     // === TACTICAL RECOMMENDATIONS ===
     // Scan the room list for special abilities and warn the player up front so they

@@ -91,6 +91,8 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .act-btn .ab-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text2)}
 .act-btn .ab-meta{font-size:9px;color:var(--text3)}
 .act-btn .ab-req{font-size:9px;color:#c08020}
+.act-btn .ab-effect{font-size:9px;color:#5ac85a;font-weight:bold;margin-top:1px}
+.act-btn .ab-effect.has-buff{color:#ffd966}
 #char-panel{}
 #char-stats{display:flex;gap:8px;padding:10px 12px}
 .stat-box{flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;padding:8px;text-align:center}
@@ -953,6 +955,7 @@ let G = {
   upgrades:{},tools:{},dungeonRewards:{},dungeonsDiscovered:{},
   workers:[],
   gearUpgrades:{}, // maps itemId -> upgrade level (1-5)
+  foodLoadout:{},  // maps food item id -> desired qty in pouch (manual configuration)
   tab:'woodcutting',
   task:null,prog:0,dur:0,
   mhp:0,mmhp:0,mhit:0,
@@ -977,6 +980,7 @@ function load(){
   if(!G.dungeonsDiscovered)G.dungeonsDiscovered={};
   if(!G.xpEarned)G.xpEarned={};
   if(!G.startedWithSword)G.startedWithSword=false;
+  if(!G.foodLoadout)G.foodLoadout={};
   // Combat skill removal cleanup.
   // Preserve any HP ceiling the player already earned from the old combat-level maxhp
   // formula so existing saves don't lose progression. Anything above BASE_MAXHP becomes
@@ -1905,11 +1909,31 @@ function buildActPage(sk){
     else if(a.mhp) meta='❤️×'+a.mhp+' hp';
     else meta='~'+(a.dur/1000).toFixed(1)+'s';
 
+    // For food items, show combat effects so players know what they're cooking
+    let effectLine='';
+    if(a.prod&&a.prod.length>0){
+      const prodId=a.prod[0].id;
+      const prodItem=ITEMS[prodId];
+      if(prodItem&&prodItem.type==='food'){
+        const parts=['+'+prodItem.hp+' HP'];
+        const hasBuff=!!prodItem.foodBuff;
+        if(hasBuff){
+          const b=prodItem.foodBuff;
+          if(b.atk) parts.push('+'+b.atk+' ATK '+b.turns+'t');
+          if(b.def) parts.push('+'+b.def+' DEF '+b.turns+'t');
+          if(b.regen) parts.push('+'+b.regen+'/turn '+b.turns+'t');
+          if(b.poisonImmune) parts.push('Anti-poison '+b.poisonImmune+'t');
+        }
+        effectLine='<span class="ab-effect'+(hasBuff?' has-buff':'')+'">'+parts.join(' · ')+'</span>';
+      }
+    }
+
     html+='<button class="act-btn" data-id="'+a.id+'" data-req="'+a.req+'" onclick="actBtnTap(\''+a.id+'\',this)">'
       +'<span class="ab-icon">'+a.icon+'</span>'
       +'<span class="ab-name">'+a.name+'</span>'
       +'<span class="ab-req">Lv.'+a.req+' · +'+a.xp+'xp</span>'
       +'<span class="ab-meta">'+meta+'</span>'
+      +effectLine
       +'</button>';
   }
   return html+'</div>';
