@@ -17,7 +17,9 @@
 button,a,[onclick]{touch-action:manipulation}
 html,body{height:100%;overflow-x:hidden}
 body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,serif;font-size:15px}
-#hdr{position:sticky;top:0;z-index:200;background:linear-gradient(180deg,#140e04,#0e0a03);border-bottom:2px solid var(--bdr2);padding:6px 12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 18px rgba(180,120,0,.35)}
+#hdr{background:linear-gradient(180deg,#140e04,#0e0a03);border-bottom:1px solid var(--bdr);padding:6px 12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(180,120,0,.25)}
+#active-task-strip{position:sticky;top:0;z-index:200;background:linear-gradient(180deg,#0e0a03,#0a0703);border-bottom:2px solid var(--bdr2);padding:4px 12px 6px;display:flex;flex-direction:column;gap:3px;box-shadow:0 2px 14px rgba(0,0,0,.6);}
+#active-task-strip-row{display:flex;align-items:center;gap:8px;}
 #logo{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--gold);letter-spacing:3px;text-shadow:0 0 14px rgba(240,192,64,.5)}
 #hdr-right{display:flex;align-items:center;gap:10px}
 .hpill{background:var(--bg2);border:1px solid var(--bdr);border-radius:20px;padding:3px 9px;font-size:12px;display:flex;align-items:center;gap:5px}
@@ -31,7 +33,7 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .sk-card{background:transparent;padding:0;cursor:pointer;position:relative;perspective:1000px;min-height:86px}
 .sk-card:active{transform:scale(.97)}
 .sk-flip{position:relative;width:100%;height:100%;min-height:86px;transform-style:preserve-3d;transition:transform 0.65s cubic-bezier(0.4,0.2,0.2,1)}
-#skills-grid.dungeons-mode .sk-card:not(.dg-btn-in-grid) .sk-flip{transform:rotateY(180deg)}
+#skills-grid.dungeons-mode .sk-card .sk-flip{transform:rotateY(180deg)}
 .sk-front,.sk-back{position:absolute;top:0;left:0;width:100%;height:100%;min-height:86px;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--bg2);padding:9px 10px;box-sizing:border-box;overflow:hidden}
 .sk-back{transform:rotateY(180deg);background:linear-gradient(135deg,#1a1308 0%,#241a0c 100%);border:1px solid var(--bdr);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:7px 6px;gap:1px}
 .sk-back.locked{background:linear-gradient(135deg,#0e0a04 0%,#15110a 100%);border-color:#1f1810}
@@ -49,6 +51,14 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .sk-back.locked .dg-lock-hint{display:block}
 .sk-card.sk-active .sk-front{background:#241c0c;box-shadow:inset 0 0 16px rgba(240,192,64,.08)}
 .dg-btn-in-grid{background:linear-gradient(180deg,#2a1f0f,#1a1308) !important;border:1px solid var(--gold) !important;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:9px 10px !important;min-height:86px}
+@keyframes dungeonBtnShimmer{0%,72%{background-position:200% center;opacity:0}78%{opacity:1}92%{opacity:1;background-position:-200% center}100%{opacity:0;background-position:-200% center}}
+@keyframes dungeonBtnGlow{0%,100%{box-shadow:0 0 14px rgba(240,192,64,.45),0 0 30px rgba(240,192,64,.2),inset 0 0 12px rgba(240,192,64,.08)}50%{box-shadow:0 0 22px rgba(240,192,64,.7),0 0 45px rgba(240,192,64,.35),inset 0 0 18px rgba(240,192,64,.15)}}
+#dungeon-main-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:16px 20px;background:linear-gradient(90deg,#1a1206,#2a1c08,#1a1206);border:2px solid var(--gold);border-radius:10px;cursor:pointer;font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--gold);letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 16px rgba(240,192,64,.6);animation:dungeonBtnGlow 2.4s ease-in-out infinite;position:relative;overflow:hidden;transition:transform .15s}
+#dungeon-main-btn::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent 0%,rgba(240,192,64,.18) 40%,rgba(255,220,100,.32) 50%,rgba(240,192,64,.18) 60%,transparent 100%);background-size:200% 100%;animation:dungeonBtnShimmer 14s linear infinite;pointer-events:none}
+#dungeon-main-btn:active{transform:scale(.97)}
+#dungeon-main-btn.dungeons-active{background:linear-gradient(90deg,#0e0a04,#1a1208,#0e0a04);color:var(--text2);text-shadow:none;animation:none;box-shadow:0 0 8px rgba(240,192,64,.2),inset 0 0 6px rgba(0,0,0,.4)}
+#dungeon-main-btn.dungeons-active::before{display:none}
+#dungeon-main-btn-ico{font-size:26px;line-height:1;filter:drop-shadow(0 0 8px rgba(240,192,64,.7))}
 #skills-grid:not(.dungeons-mode) .sk-back{pointer-events:none}
 #skills-grid.dungeons-mode .sk-front{pointer-events:none}
 .sk-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
@@ -62,9 +72,7 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .xp-track{background:#0a0804;height:5px;border-radius:3px;overflow:hidden}
 .xp-fill{height:100%;border-radius:3px;transition:width .4s ease}
 .xp-label{font-size:9px;color:var(--text3);margin-top:2px}
-#act-panel .panel-hdr{}
-#task-box{margin:10px;background:var(--bg2);border:1px solid var(--bdr);border-radius:8px;padding:11px}
-#task-title{font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:7px}
+#task-title{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);margin-bottom:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #task-prog-wrap{background:#0a0804;height:9px;border-radius:5px;overflow:hidden}
 #task-prog{height:100%;border-radius:5px;transition:width .08s linear;background:linear-gradient(90deg,var(--gold),#ff9900)}
 #task-sub{font-size:11px;color:var(--text3);margin-top:4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
@@ -91,9 +99,9 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .act-btn .ab-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text2)}
 .act-btn .ab-meta{font-size:9px;color:var(--text3)}
 .act-btn .ab-req{font-size:9px;color:#c08020}
-.act-btn .ab-stats{font-size:9px;color:#5ac85a;font-weight:600;line-height:1.3}
-.act-btn .ab-shard{font-size:9px;font-weight:700;line-height:1.3}
-.act-btn .ab-mats{font-size:9px;color:var(--text3);line-height:1.3}
+.act-btn .ab-effect{font-size:10px;color:#5ac85a;font-weight:bold;margin-top:3px;background:rgba(90,200,90,0.1);border:1px solid rgba(90,200,90,0.25);border-radius:4px;padding:2px 6px;line-height:1.3}
+.act-btn .ab-effect.has-buff{color:#ffd966;background:rgba(255,217,102,0.1);border-color:rgba(255,217,102,0.25)}
+.act-btn .ab-effect.is-potion{color:#a388e8;background:rgba(163,136,232,0.1);border-color:rgba(163,136,232,0.25)}
 #char-panel{}
 #char-stats{display:flex;gap:8px;padding:10px 12px}
 .stat-box{flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;padding:8px;text-align:center}
@@ -138,6 +146,10 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .eq-slot .eq-icon{font-size:17px;line-height:1}
 .eq-slot .eq-lbl{font-size:7px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
 .eq-slot .eq-name{font-size:8px;color:var(--text2);line-height:1.1;max-width:62px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#equip-inv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px}
+#equip-inv-panel .iv-slot{min-height:62px}
+#equip-inv-panel{display:none}
+#equip-inv-panel.has-items{display:block}
 #inv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px}
 .iv-slot{background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;aspect-ratio:1;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;padding:4px;position:relative}
 .iv-slot:active{transform:scale(.95)}
@@ -156,40 +168,23 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 #inv-btns{display:flex;gap:6px;padding:4px 8px 8px;flex-wrap:wrap}
 .inv-btn{background:var(--bg2);border:1px solid var(--bdr2);border-radius:5px;padding:5px 10px;color:var(--gold);cursor:pointer;font-size:11px;font-family:'Cinzel',serif}
 .inv-btn:active{transform:scale(.95);background:var(--bg3)}
-#shop-tabs{display:flex;border-bottom:1px solid var(--bdr)}
-.shop-tab{flex:1;text-align:center;padding:8px 6px;font-family:'Cinzel',serif;font-size:11px;color:var(--text3);cursor:pointer;letter-spacing:.5px;border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase}
-.shop-tab:active{background:var(--bg2)}
-.shop-tab.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(240,192,64,.04)}
-#shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px}
-#shop-panel.sell-mode #shop-grid{display:none}
-#shop-panel:not(.sell-mode) #shop-sell-list{display:none}
-#shop-sell-list{padding:8px}
-.ss-empty{font-size:11px;color:var(--text3);text-align:center;padding:16px 8px;font-style:italic}
-.ss-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;margin-bottom:4px}
-.ss-row:active{background:var(--bg3)}
-.ss-ico{font-size:20px;min-width:24px;text-align:center}
-.ss-info{flex:1;min-width:0}
-.ss-name{font-family:'Cinzel',serif;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ss-meta{font-size:9px;color:var(--text3);margin-top:1px}
-.ss-meta .ss-price{color:var(--gold);font-weight:600}
-.ss-btns{display:flex;gap:4px;flex-shrink:0}
-.ss-btn{background:var(--bg1);border:1px solid var(--bdr2);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;padding:5px 9px;border-radius:4px;cursor:pointer;min-width:40px}
-.ss-btn:active{transform:scale(.95);background:var(--bg3)}
-.ss-btn.ss-all{border-color:var(--gold);background:rgba(240,192,64,.08)}
-.sh-item{background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;padding:9px;cursor:pointer;transition:all .18s}
-.sh-item:active{transform:scale(.95);background:var(--bg3)}
-.sh-item.owned{border-color:var(--green);opacity:.6}
-.sh-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
-.sh-icon{font-size:18px}
-.sh-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text)}
-.sh-price{font-size:12px;color:var(--gold)}
-.sh-eff{font-size:9px;color:var(--text3);margin-top:2px}
-.sh-active{font-size:9px;color:#5ac85a;margin-top:3px;font-weight:700;letter-spacing:.3px}
-.sh-item.owned{border-color:#5ac85a;opacity:1}
-#active-buffs{display:flex;flex-wrap:wrap;gap:4px;padding:0 10px 6px}
-.buff-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(94,200,90,.1);border:1px solid #5ac85a;border-radius:14px;padding:3px 8px;font-size:10px;color:#9adda0;font-family:'Cinzel',serif}
-.buff-pill .buff-ico{font-size:13px;line-height:1}
-.buff-pill .buff-time{color:#5ac85a;font-weight:700}
+#workers-panel{padding-bottom:6px}
+.wk-card{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;margin:4px 8px}
+.wk-card .wk-info{flex:1;min-width:0}
+.wk-card .wk-name{font-family:'Cinzel',serif;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-card .wk-status{font-size:9px;color:var(--text3);margin-top:1px}
+.wk-prog{height:3px;background:var(--bg1);border-radius:2px;margin-top:3px;overflow:hidden}
+.wk-prog-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s}
+.wk-btn{background:var(--bg1);border:1px solid var(--bdr2);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;padding:5px 9px;border-radius:4px;cursor:pointer}
+.wk-btn:active{transform:scale(.95);background:var(--bg3)}
+.wk-hire{text-align:center;padding:8px}
+.wk-hire-btn{background:rgba(240,192,64,.08);border:1px solid var(--gold);color:var(--gold);font-family:'Cinzel',serif;font-size:11px;padding:7px 16px;border-radius:5px;cursor:pointer}
+.wk-hire-btn:active{transform:scale(.95)}
+.wk-hire-btn:disabled{opacity:.4;cursor:default}
+#workers-tab-bar{display:flex;gap:4px;padding:4px 8px 6px;}
+.wtab{flex:1;background:var(--bg1);border:1px solid var(--bdr);color:var(--text3);font-family:'Cinzel',serif;font-size:11px;padding:6px 8px;cursor:pointer;border-radius:5px;transition:all .15s;}
+.wtab.wtab-active{background:rgba(240,192,64,.1);border-color:var(--gold);color:var(--gold);}
+.wtab:active{transform:scale(.95);}
 #log-inner{padding:6px 10px;max-height:140px;overflow-y:auto}
 #log-inner::-webkit-scrollbar{width:3px}
 #log-inner::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
@@ -455,6 +450,14 @@ body.combat-active #combat-log{display:block}
 .cs-item.cs-total .cs-value{color:var(--gold);font-size:15px}
 .cs-total-label{font-size:7px;color:var(--text3);text-align:center;padding:0 4px;line-height:1.2}
 
+/* Player HP bar on stage (below character) */
+#stage-hp{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  width:52px;height:5px;background:#1c1710;border:1px solid #3a2c18;
+  border-radius:3px;overflow:hidden;z-index:5;pointer-events:none;
+}
+#stage-hp-fill{height:100%;background:#5ac85a;transition:width .3s,background .3s;border-radius:3px;width:100%}
+
 /* Monster HP bar on stage */
 #stage-monster-hp{
   display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);
@@ -551,17 +554,22 @@ body.shake-hit #stage{animation:screenShake .35s ease}
     <div class="hpill" id="gld">🪙 0</div>
   </div>
 </div>
+<div id="active-task-strip">
+  <div id="active-task-strip-row">
+    <div id="task-title">Idle — choose a skill below</div>
+    <button id="task-stop" onclick="stopTask()">■ Stop</button>
+  </div>
+  <div id="task-prog-wrap"><div id="task-prog"></div></div>
+  <div id="task-sub"><span id="task-xp-lbl"></span><span id="task-dur-lbl"></span></div>
+</div>
 <div id="main">
   <div class="panel"><div class="panel-hdr">Skills</div><div id="skills-grid"></div></div>
+  <button id="dungeon-main-btn" onclick="toggleDungeonsMode()">
+    <span id="dungeon-main-btn-ico">🏰</span>
+    <span id="dungeon-main-btn-txt">ENTER THE DUNGEONS</span>
+  </button>
 
   <div class="panel" id="act-panel">
-    <div class="panel-hdr"><span>Active Task</span><button id="task-stop" onclick="stopTask()">■ Stop</button></div>
-    <div id="task-box">
-      <div id="task-title">Idle — choose a skill and action below</div>
-      <div id="task-prog-wrap"><div id="task-prog"></div></div>
-      <div id="task-sub"><span id="task-xp-lbl"></span><span id="task-dur-lbl"></span></div>
-    </div>
-    <div id="active-buffs"></div>
     <div id="pages"></div>
   </div>
   <div class="panel">
@@ -587,27 +595,35 @@ body.shake-hit #stage{animation:screenShake .35s ease}
       <div id="spell-row-grid"></div>
     </div>
   </div>
+  <div class="panel" id="equip-inv-panel"><div class="panel-hdr" style="display:flex;align-items:center;justify-content:space-between;"><span>Equipment <span id="equip-inv-count" style="color:var(--text3);font-size:10px">0 items</span></span><button onclick="autoEquipBest()" style="padding:3px 9px;background:#1a1a08;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-size:10px;font-family:Cinzel,serif;font-weight:bold;" title="Automatically equip the highest-scoring gear in each slot">⚡ Best in Slot</button></div><div id="equip-inv-grid"></div></div>
   <div class="panel"><div class="panel-hdr"><span>Inventory</span><span id="inv-count">0/28</span></div><div id="inv-grid"></div>
     <div id="inv-btns">
       <button class="inv-btn" onclick="sellAll()">💰 Sell Resources</button>
+      <button class="inv-btn" onclick="toggleSellList()">🏷️ Sell Items</button>
       <button class="inv-btn" onclick="eatFood()">🍽️ Eat Best Food</button>
     </div>
+    <div id="inv-sell-list" style="display:none;padding:4px 8px 8px;"></div>
   </div>
-  <div class="panel" id="shop-panel">
-    <div class="panel-hdr">⚒ General Store</div>
-    <div id="shop-tabs">
-      <div class="shop-tab active" id="shop-tab-buy" onclick="setShopTab('buy')">🛒 Buy</div>
-      <div class="shop-tab" id="shop-tab-sell" onclick="setShopTab('sell')">💰 Sell</div>
+  <div class="panel" id="forge-panel">
+    <div class="panel-hdr">Forge</div>
+    <div id="forge-grid"></div>
+    <div id="forge-detail" style="display:none;"></div>
+  </div>
+  <div class="panel" id="workers-panel">
+    <div class="panel-hdr" id="workers-hdr">Workers · 0/0</div>
+    <div id="workers-tab-bar">
+      <button id="wtab-workers" class="wtab wtab-active" onclick="switchWorkersTab('workers')">⚒ Workers</button>
+      <button id="wtab-sell" class="wtab" onclick="switchWorkersTab('sell')">💰 Sell Items</button>
     </div>
-    <div id="shop-grid"></div>
-    <div id="shop-sell-list"></div>
+    <div id="workers-list"></div>
+    <div id="workers-sell-body" style="display:none;padding:4px 8px 8px;"></div>
   </div>
   <div class="panel" id="log-panel"><div class="panel-hdr">Activity Log</div><div id="log-inner"></div></div>
 </div>
 <div id="stage"><div id="combat-log"><div class="combat-log-hdr">Combat Log</div><div id="combat-log-inner"></div></div><div id="scene"><div id="ground"></div><div id="prop"></div>
   <div id="stage-monster-hp"><div class="smhp-name"></div><div class="smhp-bar"><div class="smhp-fill"></div></div><div class="smhp-text"></div></div>
  <div id="char"><div class="c-head"><div class="c-el"></div><div class="c-er"></div><div class="c-mouth"></div><div class="c-helm" id="chelm"></div></div><div class="c-body" id="cbody"></div><div class="c-belt"></div><div class="c-al" id="cal"></div><div class="c-ar" id="car"></div><div class="c-ll" id="cll"></div><div class="c-lr" id="clr"></div><div class="c-boot-l"></div><div class="c-boot-r"></div></div>
-
+<div id="stage-hp"><div id="stage-hp-fill"></div></div>
 <div id="hit-vignette"></div>
 <div id="combat-stats-panel">
  <div class="cs-row">
@@ -626,8 +642,10 @@ const SKILLS = {
   woodcutting:{name:'Woodcutting',icon:'🪓',color:'#8B4513'},
   mining:{name:'Mining',icon:'⛏️',color:'#909090'},
   fishing:{name:'Fishing',icon:'🎣',color:'#4488dd'},
+  hunting:{name:'Hunting',icon:'🎯',color:'#8B6914'},
   smithing:{name:'Smithing',icon:'🔨',color:'#FF8C00'},
   cooking:{name:'Cooking',icon:'🍳',color:'#FF6347'},
+  brewing:{name:'Brewing',icon:'⚗️',color:'#20B2AA'},
   fletching:{name:'Fletching',icon:'🏹',color:'#228B22'},
   crafting:{name:'Crafting',icon:'🧵',color:'#9370DB'},
   magic:{name:'Magic',icon:'✨',color:'#9b59b6'},
@@ -643,20 +661,14 @@ const ACTIONS = {
     {id:'wc1',name:'Oak Tree',icon:'🌳',req:15,xp:38,dur:5000,prod:[{id:'oak_log',n:1}]},
     {id:'wc2',name:'Willow Tree',icon:'🌿',req:30,xp:68,dur:6000,prod:[{id:'willow_log',n:1}]},
     {id:'wc3',name:'Yew Tree',icon:'🌑',req:60,xp:175,dur:8000,prod:[{id:'yew_log',n:1}]},
-    // === Grove gear crafting (uses Grove Shards from the Enchanted Grove dungeon) ===
-    // mk1 shards drop from tiers 1-4 · mk2 from tiers 5-8 · mk3 from tiers 9-12
-    {id:'wc4', name:'Grove Crown I',     icon:'👑',req:3, xp:45, dur:7000, prod:[{id:'woodcutting_helmet_mk1',n:1}], need:[{id:'grove_shard_mk1',n:1},{id:'logs',n:5},{id:'leather',n:2},{id:'c_shrimp',n:2}]},
-    {id:'wc5', name:'Grove Vestment I',  icon:'🍃',req:10,xp:60, dur:8000, prod:[{id:'woodcutting_chest_mk1',n:1}],  need:[{id:'grove_shard_mk1',n:1},{id:'oak_log',n:3},{id:'bronze_bar',n:2},{id:'feather',n:8}]},
-    {id:'wc6', name:'Grove Trodders I',  icon:'🥾',req:18,xp:55, dur:7500, prod:[{id:'woodcutting_boots_mk1',n:1}],  need:[{id:'grove_shard_mk1',n:1},{id:'oak_log',n:4},{id:'leather',n:3},{id:'iron_ore',n:3}]},
-    {id:'wc7', name:'Grove Talisman I',  icon:'🌿',req:26,xp:70, dur:8500, prod:[{id:'woodcutting_jewelry_mk1',n:1}], need:[{id:'grove_shard_mk1',n:1},{id:'willow_log',n:2},{id:'gold_ring',n:1},{id:'scroll_wind',n:2}]},
-    {id:'wc8', name:'Grove Crown II',    icon:'👑',req:35,xp:120,dur:10000,prod:[{id:'woodcutting_helmet_mk2',n:1}], need:[{id:'grove_shard_mk2',n:1},{id:'willow_log',n:4},{id:'iron_bar',n:3},{id:'c_trout',n:2}]},
-    {id:'wc9', name:'Grove Vestment II', icon:'🍃',req:44,xp:150,dur:11000,prod:[{id:'woodcutting_chest_mk2',n:1}],  need:[{id:'grove_shard_mk2',n:1},{id:'willow_log',n:5},{id:'coal',n:4},{id:'scroll_water',n:2}]},
-    {id:'wc10',name:'Grove Trodders II', icon:'🥾',req:54,xp:130,dur:10500,prod:[{id:'woodcutting_boots_mk2',n:1}],  need:[{id:'grove_shard_mk2',n:1},{id:'yew_log',n:2},{id:'gold_ore',n:2},{id:'c_salmon',n:2}]},
-    {id:'wc11',name:'Grove Talisman II', icon:'🌿',req:64,xp:160,dur:11500,prod:[{id:'woodcutting_jewelry_mk2',n:1}], need:[{id:'grove_shard_mk2',n:1},{id:'yew_log',n:3},{id:'gold_ore',n:3},{id:'willow_bow',n:1}]},
-    {id:'wc12',name:'Grove Crown III',   icon:'👑',req:74,xp:280,dur:14000,prod:[{id:'woodcutting_helmet_mk3',n:1}], need:[{id:'grove_shard_mk3',n:1},{id:'yew_log',n:4},{id:'iron_bar',n:5},{id:'c_lobster',n:3}]},
-    {id:'wc13',name:'Grove Vestment III',icon:'🍃',req:84,xp:350,dur:16000,prod:[{id:'woodcutting_chest_mk3',n:1}],  need:[{id:'grove_shard_mk3',n:1},{id:'yew_log',n:5},{id:'gold_ore',n:5},{id:'scroll_shock',n:2}]},
-    {id:'wc14',name:'Grove Trodders III',icon:'🥾',req:92,xp:320,dur:15000,prod:[{id:'woodcutting_boots_mk3',n:1}],  need:[{id:'grove_shard_mk3',n:1},{id:'yew_log',n:6},{id:'gold_ore',n:5},{id:'scroll_inferno',n:1}]},
-    {id:'wc15',name:'Grove Talisman III',icon:'🌿',req:99,xp:400,dur:18000,prod:[{id:'woodcutting_jewelry_mk3',n:1}], need:[{id:'grove_shard_mk3',n:1},{id:'yew_log',n:8},{id:'gold_ore',n:6},{id:'scroll_tempest',n:1}]},
+  ],
+  hunting:[
+    {id:'ht0',name:'Pluck Chickens',icon:'🐔',req:1,xp:18,dur:2500,prod:[{id:'feather',n:5}]},
+    {id:'ht1',name:'Hunt Cattle',icon:'🐄',req:5,xp:30,dur:4000,prod:[{id:'cowhide',n:1},{id:'raw_meat',n:1}]},
+    {id:'ht2',name:'Track Boar',icon:'🐗',req:15,xp:50,dur:5000,prod:[{id:'raw_meat',n:2},{id:'bones',n:1}]},
+    {id:'ht3',name:'Hunt Deer',icon:'🦌',req:25,xp:70,dur:6000,prod:[{id:'venison',n:1},{id:'antler',n:1}]},
+    {id:'ht4',name:'Trap Wolves',icon:'🐺',req:40,xp:100,dur:7500,prod:[{id:'wolf_pelt',n:1},{id:'raw_meat',n:1},{id:'bones',n:1}]},
+    {id:'ht5',name:'Slay Bear',icon:'🐻',req:55,xp:150,dur:9000,prod:[{id:'bear_pelt',n:1},{id:'raw_meat',n:2},{id:'bones',n:2}]},
   ],
   mining:[
     {id:'mn0',name:'Copper Rock',icon:'🟫',req:1,xp:22,dur:3000,prod:[{id:'copper_ore',n:1}]},
@@ -664,19 +676,6 @@ const ACTIONS = {
     {id:'mn2',name:'Iron Rock',icon:'🔵',req:15,xp:35,dur:4500,prod:[{id:'iron_ore',n:1}]},
     {id:'mn3',name:'Coal Rock',icon:'🖤',req:30,xp:50,dur:5500,prod:[{id:'coal',n:1}]},
     {id:'mn4',name:'Gold Rock',icon:'💛',req:40,xp:65,dur:7000,prod:[{id:'gold_ore',n:1}]},
-    // === Stonehide gear crafting (uses Deepstone Shards from the Crumbling Mineshaft) ===
-    {id:'mn5', name:'Stonehide Helm I',    icon:'⛑️',req:3, xp:45, dur:7000, prod:[{id:'mining_helmet_mk1',n:1}], need:[{id:'deepstone_shard_mk1',n:1},{id:'copper_ore',n:4},{id:'tin_ore',n:4},{id:'c_meat',n:2}]},
-    {id:'mn6', name:'Stonehide Plate I',   icon:'🪨',req:10,xp:60, dur:8000, prod:[{id:'mining_chest_mk1',n:1}],  need:[{id:'deepstone_shard_mk1',n:1},{id:'copper_ore',n:6},{id:'logs',n:4},{id:'arrow_shaft',n:10}]},
-    {id:'mn7', name:'Stonehide Treads I',  icon:'🥾',req:18,xp:55, dur:7500, prod:[{id:'mining_boots_mk1',n:1}],  need:[{id:'deepstone_shard_mk1',n:1},{id:'iron_ore',n:3},{id:'leather',n:3},{id:'c_sardine',n:2}]},
-    {id:'mn8', name:'Deepstone Ring I',    icon:'💎',req:26,xp:70, dur:8500, prod:[{id:'mining_jewelry_mk1',n:1}], need:[{id:'deepstone_shard_mk1',n:1},{id:'iron_ore',n:4},{id:'gold_ring',n:1},{id:'scroll_wind',n:2}]},
-    {id:'mn9', name:'Stonehide Helm II',   icon:'⛑️',req:35,xp:120,dur:10000,prod:[{id:'mining_helmet_mk2',n:1}], need:[{id:'deepstone_shard_mk2',n:1},{id:'coal',n:4},{id:'iron_bar',n:3},{id:'c_trout',n:2}]},
-    {id:'mn10',name:'Stonehide Plate II',  icon:'🪨',req:44,xp:150,dur:11000,prod:[{id:'mining_chest_mk2',n:1}],  need:[{id:'deepstone_shard_mk2',n:1},{id:'coal',n:6},{id:'oak_log',n:4},{id:'scroll_water',n:2}]},
-    {id:'mn11',name:'Stonehide Treads II', icon:'🥾',req:54,xp:130,dur:10500,prod:[{id:'mining_boots_mk2',n:1}],  need:[{id:'deepstone_shard_mk2',n:1},{id:'gold_ore',n:3},{id:'iron_bar',n:4},{id:'c_salmon',n:2}]},
-    {id:'mn12',name:'Deepstone Ring II',   icon:'💎',req:64,xp:160,dur:11500,prod:[{id:'mining_jewelry_mk2',n:1}], need:[{id:'deepstone_shard_mk2',n:1},{id:'gold_ore',n:4},{id:'willow_bow',n:1},{id:'scroll_fire',n:2}]},
-    {id:'mn13',name:'Stonehide Helm III',  icon:'⛑️',req:74,xp:280,dur:14000,prod:[{id:'mining_helmet_mk3',n:1}], need:[{id:'deepstone_shard_mk3',n:1},{id:'gold_ore',n:5},{id:'iron_bar',n:6},{id:'c_lobster',n:3}]},
-    {id:'mn14',name:'Stonehide Plate III', icon:'🪨',req:84,xp:350,dur:16000,prod:[{id:'mining_chest_mk3',n:1}],  need:[{id:'deepstone_shard_mk3',n:1},{id:'gold_ore',n:6},{id:'yew_log',n:3},{id:'scroll_shock',n:2}]},
-    {id:'mn15',name:'Stonehide Treads III',icon:'🥾',req:92,xp:320,dur:15000,prod:[{id:'mining_boots_mk3',n:1}],  need:[{id:'deepstone_shard_mk3',n:1},{id:'gold_ore',n:7},{id:'iron_bar',n:6},{id:'scroll_inferno',n:1}]},
-    {id:'mn16',name:'Deepstone Ring III',  icon:'💎',req:99,xp:400,dur:18000,prod:[{id:'mining_jewelry_mk3',n:1}], need:[{id:'deepstone_shard_mk3',n:1},{id:'gold_ore',n:8},{id:'yew_log',n:5},{id:'scroll_tempest',n:1}]},
   ],
   fishing:[
     {id:'fs0',name:'Net (Shrimp)',icon:'🦐',req:1,xp:25,dur:3500,prod:[{id:'raw_shrimp',n:1}]},
@@ -684,31 +683,19 @@ const ACTIONS = {
     {id:'fs2',name:'Trout',icon:'🐠',req:20,xp:50,dur:5500,prod:[{id:'raw_trout',n:1}]},
     {id:'fs3',name:'Salmon',icon:'🐡',req:30,xp:70,dur:6500,prod:[{id:'raw_salmon',n:1}]},
     {id:'fs4',name:'Lobster Cage',icon:'🦞',req:40,xp:90,dur:8000,prod:[{id:'raw_lobster',n:1}]},
-    // === Reef gear crafting (uses Reef Shards from the Sunken Reef dungeon) ===
-    {id:'fs5', name:'Coralweave Hood I',   icon:'🪸',req:3, xp:45, dur:7000, prod:[{id:'fishing_helmet_mk1',n:1}], need:[{id:'reef_shard_mk1',n:1},{id:'raw_shrimp',n:4},{id:'leather',n:2},{id:'scroll_wind',n:1}]},
-    {id:'fs6', name:'Scaled Cuirass I',    icon:'🐠',req:10,xp:60, dur:8000, prod:[{id:'fishing_chest_mk1',n:1}],  need:[{id:'reef_shard_mk1',n:1},{id:'raw_sardine',n:4},{id:'logs',n:4},{id:'feather',n:8}]},
-    {id:'fs7', name:'Tidal Boots I',       icon:'🥾',req:18,xp:55, dur:7500, prod:[{id:'fishing_boots_mk1',n:1}],  need:[{id:'reef_shard_mk1',n:1},{id:'raw_trout',n:3},{id:'leather',n:3},{id:'iron_ore',n:3}]},
-    {id:'fs8', name:'Pearl Pendant I',     icon:'🦪',req:26,xp:70, dur:8500, prod:[{id:'fishing_jewelry_mk1',n:1}], need:[{id:'reef_shard_mk1',n:1},{id:'raw_salmon',n:2},{id:'gold_ring',n:1},{id:'scroll_water',n:1}]},
-    {id:'fs9', name:'Coralweave Hood II',  icon:'🪸',req:35,xp:120,dur:10000,prod:[{id:'fishing_helmet_mk2',n:1}], need:[{id:'reef_shard_mk2',n:1},{id:'raw_salmon',n:4},{id:'iron_bar',n:2},{id:'c_sardine',n:4}]},
-    {id:'fs10',name:'Scaled Cuirass II',   icon:'🐠',req:44,xp:150,dur:11000,prod:[{id:'fishing_chest_mk2',n:1}],  need:[{id:'reef_shard_mk2',n:1},{id:'raw_lobster',n:3},{id:'coal',n:3},{id:'scroll_fire',n:2}]},
-    {id:'fs11',name:'Tidal Boots II',      icon:'🥾',req:54,xp:130,dur:10500,prod:[{id:'fishing_boots_mk2',n:1}],  need:[{id:'reef_shard_mk2',n:1},{id:'raw_lobster',n:4},{id:'gold_ore',n:2},{id:'c_salmon',n:2}]},
-    {id:'fs12',name:'Pearl Pendant II',    icon:'🦪',req:64,xp:160,dur:11500,prod:[{id:'fishing_jewelry_mk2',n:1}], need:[{id:'reef_shard_mk2',n:1},{id:'raw_lobster',n:5},{id:'gold_ore',n:3},{id:'scroll_earth',n:2}]},
-    {id:'fs13',name:'Coralweave Hood III', icon:'🪸',req:74,xp:280,dur:14000,prod:[{id:'fishing_helmet_mk3',n:1}], need:[{id:'reef_shard_mk3',n:1},{id:'raw_lobster',n:6},{id:'gold_ore',n:4},{id:'c_lobster',n:3}]},
-    {id:'fs14',name:'Scaled Cuirass III',  icon:'🐠',req:84,xp:350,dur:16000,prod:[{id:'fishing_chest_mk3',n:1}],  need:[{id:'reef_shard_mk3',n:1},{id:'raw_lobster',n:8},{id:'yew_log',n:3},{id:'scroll_inferno',n:1}]},
-    {id:'fs15',name:'Tidal Boots III',     icon:'🥾',req:92,xp:320,dur:15000,prod:[{id:'fishing_boots_mk3',n:1}],  need:[{id:'reef_shard_mk3',n:1},{id:'raw_lobster',n:10},{id:'gold_ore',n:6},{id:'scroll_inferno',n:2}]},
-    {id:'fs16',name:'Pearl Pendant III',   icon:'🦪',req:99,xp:400,dur:18000,prod:[{id:'fishing_jewelry_mk3',n:1}], need:[{id:'reef_shard_mk3',n:1},{id:'raw_lobster',n:12},{id:'gold_ore',n:8},{id:'scroll_tempest',n:1}]},
   ],
   smithing:[
     {id:'sm0',name:'Bronze Bar',icon:'🟫',req:1,xp:28,dur:4000,prod:[{id:'bronze_bar',n:1}],need:[{id:'copper_ore',n:1},{id:'tin_ore',n:1}]},
     {id:'sm1',name:'Iron Bar',icon:'⬛',req:15,xp:32,dur:4500,prod:[{id:'iron_bar',n:1}],need:[{id:'iron_ore',n:2}]},
-    {id:'sm2',name:'Bronze Sword',icon:'🗡️',req:1,xp:35,dur:5000,prod:[{id:'bronze_sword',n:1}],need:[{id:'bronze_bar',n:1}]},
-    {id:'sm3',name:'Iron Sword',icon:'⚔️',req:19,xp:40,dur:5500,prod:[{id:'iron_sword',n:1}],need:[{id:'iron_bar',n:1}]},
-    {id:'sm4',name:'Bronze Shield',icon:'🛡️',req:7,xp:48,dur:6500,prod:[{id:'bronze_shield',n:1}],need:[{id:'bronze_bar',n:3}]},
-    {id:'sm5',name:'Iron Platebody',icon:'🛡️',req:33,xp:75,dur:8000,prod:[{id:'iron_platebody',n:1}],need:[{id:'iron_bar',n:5}]},
-    {id:'sm6',name:'Bronze Helm',icon:'⛑️',req:4,xp:40,dur:5500,prod:[{id:'bronze_helm',n:1}],need:[{id:'bronze_bar',n:2}]},
-    {id:'sm7',name:'Iron Helm',icon:'⛑️',req:22,xp:50,dur:6500,prod:[{id:'iron_helm',n:1}],need:[{id:'iron_bar',n:3}]},
-    {id:'sm8',name:'Bronze Boots',icon:'🥾',req:5,xp:40,dur:5500,prod:[{id:'bronze_boots',n:1}],need:[{id:'bronze_bar',n:2}]},
-    {id:'sm9',name:'Iron Boots',icon:'🥾',req:25,xp:50,dur:6500,prod:[{id:'iron_boots',n:1}],need:[{id:'iron_bar',n:3}]},
+    // === Novice gear — craftable without dungeon materials ===
+    {id:'sm2',name:'Bronze Sword',icon:'🗡️',req:1,xp:35,dur:5000,prod:[{id:'bronze_sword',n:1}],need:[{id:'bronze_bar',n:2}]},
+    {id:'sm3',name:'Bronze Helm',icon:'⛑️',req:5,xp:40,dur:5500,prod:[{id:'bronze_helm',n:1}],need:[{id:'bronze_bar',n:2}]},
+    {id:'sm4',name:'Bronze Boots',icon:'🥾',req:8,xp:45,dur:5500,prod:[{id:'bronze_boots',n:1}],need:[{id:'bronze_bar',n:2}]},
+    {id:'sm5',name:'Bronze Shield',icon:'🛡️',req:10,xp:55,dur:6000,prod:[{id:'bronze_shield',n:1}],need:[{id:'bronze_bar',n:3}]},
+    {id:'sm6',name:'Iron Sword',icon:'⚔️',req:20,xp:70,dur:7000,prod:[{id:'iron_sword',n:1}],need:[{id:'iron_bar',n:3}]},
+    {id:'sm7',name:'Iron Helm',icon:'⛑️',req:25,xp:80,dur:7500,prod:[{id:'iron_helm',n:1}],need:[{id:'iron_bar',n:3}]},
+    {id:'sm8',name:'Iron Boots',icon:'🥾',req:28,xp:85,dur:7500,prod:[{id:'iron_boots',n:1}],need:[{id:'iron_bar',n:3}]},
+    {id:'sm9',name:'Iron Platebody',icon:'🛡️',req:35,xp:120,dur:9000,prod:[{id:'iron_platebody',n:1}],need:[{id:'iron_bar',n:5}]},
     // Skill-tool craft recipes — these tools used to be shop upgrades. They're now
     // smithed (or for the wand, enchanted via magic) and slot into the per-skill
     // tool slot for a passive speed boost.
@@ -719,19 +706,11 @@ const ACTIONS = {
     {id:'sm14',name:'Steel Smith Hammer',icon:'🔨',req:36,xp:100,dur:8500,prod:[{id:'steel_smith_hammer',n:1}],need:[{id:'iron_bar',n:5},{id:'coal',n:3}]},
     {id:'sm15',name:'Steel Fletching Knife',icon:'🔪',req:36,xp:90,dur:8000,prod:[{id:'steel_fletch_knife',n:1}],need:[{id:'iron_bar',n:3},{id:'coal',n:2}]},
     {id:'sm16',name:'Steel Needle',icon:'🪡',req:36,xp:90,dur:8000,prod:[{id:'steel_needle',n:1}],need:[{id:'iron_bar',n:3},{id:'coal',n:2}]},
-    // === Forge gear crafting (uses Forge Shards from the Molten Forge dungeon) ===
-    {id:'sm17',name:'Molten Warhelm I',    icon:'⛑️',req:3, xp:45, dur:7000, prod:[{id:'smithing_helmet_mk1',n:1}], need:[{id:'forge_shard_mk1',n:1},{id:'bronze_bar',n:3},{id:'logs',n:3},{id:'c_meat',n:2}]},
-    {id:'sm18',name:'Forged Cuirass I',    icon:'🛡️',req:10,xp:60, dur:8000, prod:[{id:'smithing_chest_mk1',n:1}],  need:[{id:'forge_shard_mk1',n:1},{id:'bronze_bar',n:5},{id:'oak_log',n:2},{id:'feather',n:8}]},
-    {id:'sm19',name:'Slagwalker Boots I',  icon:'🥾',req:18,xp:55, dur:7500, prod:[{id:'smithing_boots_mk1',n:1}],  need:[{id:'forge_shard_mk1',n:1},{id:'iron_bar',n:2},{id:'leather',n:3},{id:'raw_trout',n:2}]},
-    {id:'sm20',name:'Forge Signet I',      icon:'💍',req:26,xp:70, dur:8500, prod:[{id:'smithing_jewelry_mk1',n:1}], need:[{id:'forge_shard_mk1',n:1},{id:'iron_bar',n:3},{id:'gold_ring',n:1},{id:'scroll_water',n:1}]},
-    {id:'sm21',name:'Molten Warhelm II',   icon:'⛑️',req:35,xp:120,dur:10000,prod:[{id:'smithing_helmet_mk2',n:1}], need:[{id:'forge_shard_mk2',n:1},{id:'iron_bar',n:4},{id:'coal',n:4},{id:'c_trout',n:2}]},
-    {id:'sm22',name:'Forged Cuirass II',   icon:'🛡️',req:44,xp:150,dur:11000,prod:[{id:'smithing_chest_mk2',n:1}],  need:[{id:'forge_shard_mk2',n:1},{id:'iron_bar',n:6},{id:'gold_ore',n:2},{id:'scroll_fire',n:2}]},
-    {id:'sm23',name:'Slagwalker Boots II', icon:'🥾',req:54,xp:130,dur:10500,prod:[{id:'smithing_boots_mk2',n:1}],  need:[{id:'forge_shard_mk2',n:1},{id:'iron_bar',n:6},{id:'gold_ore',n:3},{id:'c_salmon',n:2}]},
-    {id:'sm24',name:'Forge Signet II',     icon:'💍',req:64,xp:160,dur:11500,prod:[{id:'smithing_jewelry_mk2',n:1}], need:[{id:'forge_shard_mk2',n:1},{id:'iron_bar',n:7},{id:'gold_ore',n:4},{id:'willow_bow',n:1}]},
-    {id:'sm25',name:'Molten Warhelm III',  icon:'⛑️',req:74,xp:280,dur:14000,prod:[{id:'smithing_helmet_mk3',n:1}], need:[{id:'forge_shard_mk3',n:1},{id:'iron_bar',n:8},{id:'gold_ore',n:5},{id:'c_lobster',n:3}]},
-    {id:'sm26',name:'Forged Cuirass III',  icon:'🛡️',req:84,xp:350,dur:16000,prod:[{id:'smithing_chest_mk3',n:1}],  need:[{id:'forge_shard_mk3',n:1},{id:'iron_bar',n:10},{id:'gold_ore',n:6},{id:'yew_log',n:3}]},
-    {id:'sm27',name:'Slagwalker Boots III',icon:'🥾',req:92,xp:320,dur:15000,prod:[{id:'smithing_boots_mk3',n:1}],  need:[{id:'forge_shard_mk3',n:1},{id:'iron_bar',n:12},{id:'gold_ore',n:7},{id:'scroll_inferno',n:2}]},
-    {id:'sm28',name:'Forge Signet III',    icon:'💍',req:99,xp:400,dur:18000,prod:[{id:'smithing_jewelry_mk3',n:1}], need:[{id:'forge_shard_mk3',n:1},{id:'iron_bar',n:15},{id:'gold_ore',n:8},{id:'scroll_tempest',n:1}]},
+    {id:'sm20',name:'Steel Hunting Knife',icon:'🔪',req:34,xp:90,dur:8000,prod:[{id:'steel_hunting_knife',n:1}],need:[{id:'iron_bar',n:3},{id:'coal',n:2}]},
+    // === Upgrade materials — used in the Forge to improve dungeon gear ===
+    {id:'sm17',name:'Reinforcement Plate',icon:'🔩',req:20,xp:60,dur:6000,prod:[{id:'reinforce_plate',n:1}],need:[{id:'iron_bar',n:2},{id:'coal',n:1}]},
+    {id:'sm18',name:'Hardened Plate',icon:'🔩',req:40,xp:120,dur:8000,prod:[{id:'hardened_plate',n:1}],need:[{id:'iron_bar',n:4},{id:'coal',n:3},{id:'gold_ore',n:1}]},
+    {id:'sm19',name:'Masterwork Plate',icon:'🔩',req:65,xp:220,dur:12000,prod:[{id:'masterwork_plate',n:1}],need:[{id:'iron_bar',n:8},{id:'gold_ore',n:3}]},
   ],
   cooking:[
     {id:'ck0',name:'Cook Shrimp',icon:'🍤',req:1,xp:30,dur:2500,prod:[{id:'c_shrimp',n:1}],need:[{id:'raw_shrimp',n:1}]},
@@ -740,65 +719,64 @@ const ACTIONS = {
     {id:'ck3',name:'Cook Salmon',icon:'🐡',req:25,xp:90,dur:3000,prod:[{id:'c_salmon',n:1}],need:[{id:'raw_salmon',n:1}]},
     {id:'ck4',name:'Cook Lobster',icon:'🦞',req:30,xp:120,dur:3500,prod:[{id:'c_lobster',n:1}],need:[{id:'raw_lobster',n:1}]},
     {id:'ck5',name:'Cook Meat',icon:'🍖',req:1,xp:30,dur:2500,prod:[{id:'c_meat',n:1}],need:[{id:'raw_meat',n:1}]},
-    // === Hearth gear crafting (uses Ember Shards from the Cursed Pantry dungeon) ===
-    {id:'ck6', name:'Hearth Cowl I',       icon:'🧑‍🍳',req:3, xp:45, dur:7000, prod:[{id:'cooking_helmet_mk1',n:1}], need:[{id:'ember_shard_mk1',n:1},{id:'c_shrimp',n:4},{id:'leather',n:2},{id:'scroll_wind',n:1}]},
-    {id:'ck7', name:'Apron of Embers I',   icon:'🔥',req:10,xp:60, dur:8000, prod:[{id:'cooking_chest_mk1',n:1}],  need:[{id:'ember_shard_mk1',n:1},{id:'c_sardine',n:3},{id:'logs',n:3},{id:'bronze_bar',n:2}]},
-    {id:'ck8', name:'Ember Sandals I',     icon:'🥾',req:18,xp:55, dur:7500, prod:[{id:'cooking_boots_mk1',n:1}],  need:[{id:'ember_shard_mk1',n:1},{id:'c_trout',n:3},{id:'leather',n:3},{id:'iron_bar',n:2}]},
-    {id:'ck9', name:'Hearth Amulet I',     icon:'🍳',req:26,xp:70, dur:8500, prod:[{id:'cooking_jewelry_mk1',n:1}], need:[{id:'ember_shard_mk1',n:1},{id:'c_salmon',n:3},{id:'gold_ring',n:1},{id:'scroll_water',n:1}]},
-    {id:'ck10',name:'Hearth Cowl II',      icon:'🧑‍🍳',req:35,xp:120,dur:10000,prod:[{id:'cooking_helmet_mk2',n:1}], need:[{id:'ember_shard_mk2',n:1},{id:'c_salmon',n:4},{id:'iron_bar',n:3},{id:'willow_log',n:3}]},
-    {id:'ck11',name:'Apron of Embers II',  icon:'🔥',req:44,xp:150,dur:11000,prod:[{id:'cooking_chest_mk2',n:1}],  need:[{id:'ember_shard_mk2',n:1},{id:'c_lobster',n:3},{id:'coal',n:3},{id:'scroll_fire',n:2}]},
-    {id:'ck12',name:'Ember Sandals II',    icon:'🥾',req:54,xp:130,dur:10500,prod:[{id:'cooking_boots_mk2',n:1}],  need:[{id:'ember_shard_mk2',n:1},{id:'c_lobster',n:4},{id:'gold_ore',n:2},{id:'oak_bow',n:1}]},
-    {id:'ck13',name:'Hearth Amulet II',    icon:'🍳',req:64,xp:160,dur:11500,prod:[{id:'cooking_jewelry_mk2',n:1}], need:[{id:'ember_shard_mk2',n:1},{id:'c_lobster',n:5},{id:'gold_ore',n:3},{id:'scroll_earth',n:2}]},
-    {id:'ck14',name:'Hearth Cowl III',     icon:'🧑‍🍳',req:74,xp:280,dur:14000,prod:[{id:'cooking_helmet_mk3',n:1}], need:[{id:'ember_shard_mk3',n:1},{id:'c_lobster',n:6},{id:'gold_ore',n:4},{id:'yew_log',n:3}]},
-    {id:'ck15',name:'Apron of Embers III', icon:'🔥',req:84,xp:350,dur:16000,prod:[{id:'cooking_chest_mk3',n:1}],  need:[{id:'ember_shard_mk3',n:1},{id:'c_lobster',n:8},{id:'gold_ore',n:5},{id:'scroll_shock',n:2}]},
-    {id:'ck16',name:'Ember Sandals III',   icon:'🥾',req:92,xp:320,dur:15000,prod:[{id:'cooking_boots_mk3',n:1}],  need:[{id:'ember_shard_mk3',n:1},{id:'c_lobster',n:10},{id:'gold_ore',n:6},{id:'scroll_inferno',n:1}]},
-    {id:'ck17',name:'Hearth Amulet III',   icon:'🍳',req:99,xp:400,dur:18000,prod:[{id:'cooking_jewelry_mk3',n:1}], need:[{id:'ember_shard_mk3',n:1},{id:'c_lobster',n:12},{id:'gold_ore',n:8},{id:'scroll_tempest',n:1}]},
+    // === Buff foods — grant short-term combat effects when eaten during a dungeon ===
+    {id:'ck_spiced',name:'Spiced Meat',icon:'🌶️',req:12,xp:45,dur:3500,prod:[{id:'c_spiced_meat',n:1}],need:[{id:'raw_meat',n:2},{id:'copper_ore',n:1}]},
+    {id:'ck_pie',name:'Fish Pie',icon:'🥧',req:22,xp:70,dur:4000,prod:[{id:'c_fish_pie',n:1}],need:[{id:'raw_trout',n:1},{id:'raw_shrimp',n:1}]},
+    {id:'ck_herb',name:'Herb Fish',icon:'🌿',req:28,xp:80,dur:4000,prod:[{id:'c_herb_fish',n:1}],need:[{id:'raw_sardine',n:2},{id:'feather',n:3}]},
+    {id:'ck_stew',name:'Hearty Stew',icon:'🍲',req:38,xp:100,dur:5000,prod:[{id:'c_hearty_stew',n:1}],need:[{id:'raw_salmon',n:1},{id:'raw_meat',n:1},{id:'coal',n:1}]},
+    {id:'ck_feast',name:'Lobster Feast',icon:'🍽️',req:48,xp:140,dur:6000,prod:[{id:'c_lobster_feast',n:1}],need:[{id:'raw_lobster',n:2},{id:'raw_trout',n:1}]},
+    {id:'ck_bone',name:'Bone Broth',icon:'🍲',req:15,xp:50,dur:3500,prod:[{id:'c_bone_broth',n:1}],need:[{id:'bones',n:2},{id:'raw_meat',n:1}]},
+    {id:'ck_venison',name:'Roast Venison',icon:'🍖',req:20,xp:65,dur:4000,prod:[{id:'c_venison',n:1}],need:[{id:'venison',n:1},{id:'coal',n:1}]},
+  ],
+  brewing:[
+    // === Starter potions — low-level recipes so new players can begin levelling ===
+    {id:'br_paste',name:'Herb Paste',icon:'🌿',req:1,xp:18,dur:3000,prod:[{id:'potion_herb_paste',n:1}],need:[{id:'feather',n:3}]},
+    {id:'br_tonic',name:'Minor Tonic',icon:'🫗',req:1,xp:22,dur:3500,prod:[{id:'potion_minor_tonic',n:1}],need:[{id:'raw_shrimp',n:1},{id:'copper_ore',n:1}]},
+    {id:'br_salve',name:'Crude Salve',icon:'🩹',req:5,xp:32,dur:4000,prod:[{id:'potion_crude_salve',n:1}],need:[{id:'raw_sardine',n:1},{id:'tin_ore',n:1}]},
+    // === Standard potions ===
+    {id:'br0',name:'Strength Potion',icon:'💪',req:10,xp:45,dur:5000,prod:[{id:'potion_strength',n:1}],need:[{id:'raw_meat',n:2},{id:'copper_ore',n:1}]},
+    {id:'br1',name:'Antidote',icon:'🧪',req:15,xp:50,dur:4500,prod:[{id:'potion_antidote',n:1}],need:[{id:'raw_sardine',n:1},{id:'feather',n:3}]},
+    {id:'br2',name:'Defence Potion',icon:'🛡️',req:20,xp:65,dur:5500,prod:[{id:'potion_defence',n:1}],need:[{id:'raw_trout',n:2},{id:'iron_ore',n:1}]},
+    {id:'br3',name:'Dodge Potion',icon:'🏃',req:30,xp:80,dur:6000,prod:[{id:'potion_dodge',n:1}],need:[{id:'raw_salmon',n:2},{id:'feather',n:5}]},
+    {id:'br4',name:'Healing Potion',icon:'❤️',req:35,xp:100,dur:7000,prod:[{id:'potion_healing',n:1}],need:[{id:'raw_lobster',n:1},{id:'gold_ore',n:1}]},
+    {id:'br5',name:'Greater Strength Potion',icon:'💪',req:50,xp:140,dur:8000,prod:[{id:'potion_strength_g',n:1}],need:[{id:'raw_salmon',n:3},{id:'iron_ore',n:2},{id:'coal',n:1}]},
+    {id:'br6',name:'Greater Defence Potion',icon:'🛡️',req:55,xp:150,dur:8000,prod:[{id:'potion_defence_g',n:1}],need:[{id:'raw_lobster',n:2},{id:'iron_bar',n:1},{id:'coal',n:1}]},
+    {id:'br7',name:'Greater Dodge Potion',icon:'🏃',req:60,xp:160,dur:8500,prod:[{id:'potion_dodge_g',n:1}],need:[{id:'raw_lobster',n:2},{id:'feather',n:8},{id:'gold_ore',n:1}]},
+    {id:'br8',name:'Greater Healing Potion',icon:'❤️',req:70,xp:200,dur:10000,prod:[{id:'potion_healing_g',n:1}],need:[{id:'raw_lobster',n:3},{id:'gold_ore',n:2}]},
   ],
   fletching:[
     {id:'fl0',name:'Arrow Shafts',icon:'↑',req:1,xp:14,dur:2000,prod:[{id:'arrow_shaft',n:15}],need:[{id:'logs',n:1}]},
-    {id:'fl1',name:'Shortbow (u)',icon:'🏹',req:5,xp:28,dur:4000,prod:[{id:'shortbow',n:1}],need:[{id:'logs',n:1}]},
-    {id:'fl2',name:'Oak Shortbow',icon:'🏹',req:20,xp:32,dur:4500,prod:[{id:'oak_bow',n:1}],need:[{id:'oak_log',n:1}]},
+    // === Novice bows — craftable without dungeon materials ===
+    {id:'fl1',name:'Shortbow',icon:'🏹',req:5,xp:30,dur:4500,prod:[{id:'shortbow',n:1}],need:[{id:'logs',n:2},{id:'arrow_shaft',n:5}]},
+    {id:'fl2',name:'Oak Shortbow',icon:'🏹',req:20,xp:55,dur:6000,prod:[{id:'oak_bow',n:1}],need:[{id:'oak_log',n:2},{id:'arrow_shaft',n:10},{id:'feather',n:5}]},
     {id:'fl3',name:'Iron Arrows x15',icon:'🪃',req:15,xp:38,dur:3000,prod:[{id:'iron_arrow',n:15}],need:[{id:'arrow_shaft',n:15},{id:'iron_bar',n:1},{id:'feather',n:15}]},
-    {id:'fl4',name:'Willow Bow',icon:'🏹',req:35,xp:58,dur:5000,prod:[{id:'willow_bow',n:1}],need:[{id:'willow_log',n:1}]},
-    // === Hollow gear crafting (uses Hollow Shards from the Splinterwood Hollow dungeon) ===
-    {id:'fl5', name:'Quilled Hood I',      icon:'🧢',req:3, xp:45, dur:7000, prod:[{id:'fletching_helmet_mk1',n:1}], need:[{id:'hollow_shard_mk1',n:1},{id:'arrow_shaft',n:15},{id:'feather',n:5},{id:'leather',n:2}]},
-    {id:'fl6', name:'Splinter Jerkin I',   icon:'🏹',req:10,xp:60, dur:8000, prod:[{id:'fletching_chest_mk1',n:1}],  need:[{id:'hollow_shard_mk1',n:1},{id:'arrow_shaft',n:20},{id:'logs',n:4},{id:'bronze_bar',n:2}]},
-    {id:'fl7', name:'Huntsman Boots I',    icon:'🥾',req:18,xp:55, dur:7500, prod:[{id:'fletching_boots_mk1',n:1}],  need:[{id:'hollow_shard_mk1',n:1},{id:'arrow_shaft',n:25},{id:'feather',n:10},{id:'leather',n:3}]},
-    {id:'fl8', name:'Hawkseye Ring I',     icon:'🪶',req:26,xp:70, dur:8500, prod:[{id:'fletching_jewelry_mk1',n:1}], need:[{id:'hollow_shard_mk1',n:1},{id:'iron_arrow',n:10},{id:'feather',n:15},{id:'gold_ring',n:1}]},
-    {id:'fl9', name:'Quilled Hood II',     icon:'🧢',req:35,xp:120,dur:10000,prod:[{id:'fletching_helmet_mk2',n:1}], need:[{id:'hollow_shard_mk2',n:1},{id:'willow_bow',n:1},{id:'feather',n:20},{id:'iron_bar',n:2}]},
-    {id:'fl10',name:'Splinter Jerkin II',  icon:'🏹',req:44,xp:150,dur:11000,prod:[{id:'fletching_chest_mk2',n:1}],  need:[{id:'hollow_shard_mk2',n:1},{id:'iron_arrow',n:20},{id:'coal',n:3},{id:'scroll_fire',n:1}]},
-    {id:'fl11',name:'Huntsman Boots II',   icon:'🥾',req:54,xp:130,dur:10500,prod:[{id:'fletching_boots_mk2',n:1}],  need:[{id:'hollow_shard_mk2',n:1},{id:'iron_arrow',n:25},{id:'feather',n:25},{id:'gold_ore',n:2}]},
-    {id:'fl12',name:'Hawkseye Ring II',    icon:'🪶',req:64,xp:160,dur:11500,prod:[{id:'fletching_jewelry_mk2',n:1}], need:[{id:'hollow_shard_mk2',n:1},{id:'iron_arrow',n:30},{id:'gold_ore',n:3},{id:'scroll_earth',n:2}]},
-    {id:'fl13',name:'Quilled Hood III',    icon:'🧢',req:74,xp:280,dur:14000,prod:[{id:'fletching_helmet_mk3',n:1}], need:[{id:'hollow_shard_mk3',n:1},{id:'iron_arrow',n:35},{id:'gold_ore',n:4},{id:'c_lobster',n:3}]},
-    {id:'fl14',name:'Splinter Jerkin III', icon:'🏹',req:84,xp:350,dur:16000,prod:[{id:'fletching_chest_mk3',n:1}],  need:[{id:'hollow_shard_mk3',n:1},{id:'iron_arrow',n:40},{id:'gold_ore',n:5},{id:'yew_log',n:3}]},
-    {id:'fl15',name:'Huntsman Boots III',  icon:'🥾',req:92,xp:320,dur:15000,prod:[{id:'fletching_boots_mk3',n:1}],  need:[{id:'hollow_shard_mk3',n:1},{id:'iron_arrow',n:45},{id:'gold_ore',n:6},{id:'scroll_inferno',n:2}]},
-    {id:'fl16',name:'Hawkseye Ring III',   icon:'🪶',req:99,xp:400,dur:18000,prod:[{id:'fletching_jewelry_mk3',n:1}], need:[{id:'hollow_shard_mk3',n:1},{id:'iron_arrow',n:50},{id:'gold_ore',n:8},{id:'scroll_tempest',n:1}]},
+    {id:'fl8',name:'Willow Bow',icon:'🏹',req:35,xp:85,dur:8000,prod:[{id:'willow_bow',n:1}],need:[{id:'willow_log',n:2},{id:'arrow_shaft',n:15},{id:'feather',n:10}]},
+    {id:'fl9',name:'Antler Bow',icon:'🏹',req:30,xp:75,dur:7000,prod:[{id:'antler_bow',n:1}],need:[{id:'antler',n:2},{id:'arrow_shaft',n:10},{id:'feather',n:8}]},
+    // === Upgrade materials — used in the Forge to improve weapon ATK ===
+    {id:'fl4',name:'Precision Kit',icon:'🎯',req:20,xp:55,dur:5500,prod:[{id:'precision_kit',n:1}],need:[{id:'arrow_shaft',n:10},{id:'feather',n:5}]},
+    {id:'fl5',name:'Sharpening Stone',icon:'🪨',req:35,xp:90,dur:7000,prod:[{id:'sharpening_stone',n:1}],need:[{id:'iron_ore',n:2},{id:'arrow_shaft',n:5}]},
+    {id:'fl6',name:'Superior Precision Kit',icon:'🎯',req:55,xp:160,dur:10000,prod:[{id:'precision_kit_g',n:1}],need:[{id:'arrow_shaft',n:20},{id:'feather',n:10},{id:'gold_ore',n:1}]},
+    {id:'fl7',name:'Master Sharpening Stone',icon:'🪨',req:70,xp:220,dur:12000,prod:[{id:'sharpening_stone_g',n:1}],need:[{id:'iron_bar',n:3},{id:'gold_ore',n:2},{id:'arrow_shaft',n:10}]},
   ],
   crafting:[
     {id:'cr0',name:'Tan Cowhide',icon:'🐄',req:1,xp:14,dur:2000,prod:[{id:'leather',n:1}],need:[{id:'cowhide',n:1}]},
-    {id:'cr1',name:'Leather Body',icon:'👕',req:14,xp:30,dur:4000,prod:[{id:'leather_body',n:1}],need:[{id:'leather',n:3}]},
+    {id:'cr10',name:'Tan Wolf Pelt',icon:'🐺',req:30,xp:60,dur:4000,prod:[{id:'leather',n:3}],need:[{id:'wolf_pelt',n:1}]},
+    {id:'cr11',name:'Tan Bear Pelt',icon:'🐻',req:50,xp:100,dur:5500,prod:[{id:'leather',n:5}],need:[{id:'bear_pelt',n:1}]},
+    // === Novice leather gear — craftable without dungeon materials ===
+    {id:'cr1',name:'Leather Cap',icon:'🧢',req:5,xp:30,dur:4000,prod:[{id:'leather_cap',n:1}],need:[{id:'leather',n:3}]},
     {id:'cr2',name:'Gold Ring',icon:'💍',req:5,xp:25,dur:3500,prod:[{id:'gold_ring',n:1}],need:[{id:'gold_ore',n:1}]},
-    {id:'cr3',name:'Gold Necklace',icon:'📿',req:20,xp:35,dur:4500,prod:[{id:'gold_necklace',n:1}],need:[{id:'gold_ore',n:2}]},
-    {id:'cr4',name:'Leather Cap',icon:'🧢',req:8,xp:28,dur:3800,prod:[{id:'leather_cap',n:1}],need:[{id:'leather',n:2}]},
-    {id:'cr5',name:'Leather Boots',icon:'🥾',req:10,xp:28,dur:3800,prod:[{id:'leather_boots',n:1}],need:[{id:'leather',n:2}]},
-    // === Silkweave gear crafting (uses Silkweave Shards from the Spinner's Lair dungeon) ===
-    {id:'cr6', name:"Silken Coif I",           icon:'🪡',req:3, xp:45, dur:7000, prod:[{id:'crafting_helmet_mk1',n:1}], need:[{id:'silkweave_shard_mk1',n:1},{id:'leather',n:3},{id:'feather',n:5},{id:'c_shrimp',n:2}]},
-    {id:'cr7', name:'Spinner Weave Cloak I',   icon:'🕸️',req:10,xp:60, dur:8000, prod:[{id:'crafting_chest_mk1',n:1}],  need:[{id:'silkweave_shard_mk1',n:1},{id:'leather',n:5},{id:'logs',n:3},{id:'arrow_shaft',n:15}]},
-    {id:'cr8', name:'Woven Boots I',           icon:'🥾',req:18,xp:55, dur:7500, prod:[{id:'crafting_boots_mk1',n:1}],  need:[{id:'silkweave_shard_mk1',n:1},{id:'leather',n:4},{id:'gold_ring',n:1},{id:'iron_ore',n:3}]},
-    {id:'cr9', name:'Silkbinder Ring I',       icon:'🕷️',req:26,xp:70, dur:8500, prod:[{id:'crafting_jewelry_mk1',n:1}], need:[{id:'silkweave_shard_mk1',n:1},{id:'leather',n:5},{id:'gold_necklace',n:1},{id:'scroll_wind',n:2}]},
-    {id:'cr10',name:"Silken Coif II",          icon:'🪡',req:35,xp:120,dur:10000,prod:[{id:'crafting_helmet_mk2',n:1}], need:[{id:'silkweave_shard_mk2',n:1},{id:'leather',n:6},{id:'iron_bar',n:2},{id:'c_trout',n:2}]},
-    {id:'cr11',name:'Spinner Weave Cloak II',  icon:'🕸️',req:44,xp:150,dur:11000,prod:[{id:'crafting_chest_mk2',n:1}],  need:[{id:'silkweave_shard_mk2',n:1},{id:'leather',n:8},{id:'coal',n:3},{id:'scroll_fire',n:2}]},
-    {id:'cr12',name:'Woven Boots II',          icon:'🥾',req:54,xp:130,dur:10500,prod:[{id:'crafting_boots_mk2',n:1}],  need:[{id:'silkweave_shard_mk2',n:1},{id:'leather',n:8},{id:'gold_ore',n:2},{id:'c_salmon',n:2}]},
-    {id:'cr13',name:'Silkbinder Ring II',      icon:'🕷️',req:64,xp:160,dur:11500,prod:[{id:'crafting_jewelry_mk2',n:1}], need:[{id:'silkweave_shard_mk2',n:1},{id:'leather',n:10},{id:'gold_ore',n:3},{id:'willow_bow',n:1}]},
-    {id:'cr14',name:"Silken Coif III",         icon:'🪡',req:74,xp:280,dur:14000,prod:[{id:'crafting_helmet_mk3',n:1}], need:[{id:'silkweave_shard_mk3',n:1},{id:'leather',n:12},{id:'gold_ore',n:4},{id:'c_lobster',n:3}]},
-    {id:'cr15',name:'Spinner Weave Cloak III', icon:'🕸️',req:84,xp:350,dur:16000,prod:[{id:'crafting_chest_mk3',n:1}],  need:[{id:'silkweave_shard_mk3',n:1},{id:'leather',n:15},{id:'gold_ore',n:5},{id:'yew_log',n:4}]},
-    {id:'cr16',name:'Woven Boots III',         icon:'🥾',req:92,xp:320,dur:15000,prod:[{id:'crafting_boots_mk3',n:1}],  need:[{id:'silkweave_shard_mk3',n:1},{id:'leather',n:18},{id:'gold_ore',n:6},{id:'scroll_inferno',n:2}]},
-    {id:'cr17',name:'Silkbinder Ring III',     icon:'🕷️',req:99,xp:400,dur:18000,prod:[{id:'crafting_jewelry_mk3',n:1}], need:[{id:'silkweave_shard_mk3',n:1},{id:'leather',n:20},{id:'gold_ore',n:8},{id:'scroll_tempest',n:1}]},
+    {id:'cr7',name:'Leather Boots',icon:'🥾',req:8,xp:35,dur:4500,prod:[{id:'leather_boots',n:1}],need:[{id:'leather',n:3}]},
+    {id:'cr8',name:'Leather Body',icon:'👕',req:14,xp:50,dur:5500,prod:[{id:'leather_body',n:1}],need:[{id:'leather',n:5}]},
+    {id:'cr9',name:'Gold Necklace',icon:'📿',req:20,xp:55,dur:5000,prod:[{id:'gold_necklace',n:1}],need:[{id:'gold_ore',n:2},{id:'leather',n:1}]},
+    // === Upgrade materials — used in the Forge to improve HP/dodge on gear ===
+    {id:'cr3',name:'Padding Kit',icon:'🧵',req:15,xp:45,dur:5000,prod:[{id:'padding_kit',n:1}],need:[{id:'leather',n:3},{id:'feather',n:3}]},
+    {id:'cr4',name:'Enchanted Thread',icon:'✨',req:35,xp:100,dur:7500,prod:[{id:'enchanted_thread',n:1}],need:[{id:'leather',n:5},{id:'gold_ore',n:1}]},
+    {id:'cr5',name:'Superior Padding Kit',icon:'🧵',req:55,xp:160,dur:10000,prod:[{id:'padding_kit_g',n:1}],need:[{id:'leather',n:8},{id:'feather',n:8},{id:'gold_ore',n:1}]},
+    {id:'cr6',name:'Masterweave Thread',icon:'✨',req:75,xp:250,dur:13000,prod:[{id:'enchanted_thread_g',n:1}],need:[{id:'leather',n:12},{id:'gold_ore',n:3}]},
   ],
   magic:[
     // Spell scrolls — craft these to use in dungeon combat. XP comes from crafting only.
     {id:'mg0',name:'Wind Strike Scroll',icon:'🌬️',req:1,xp:22,dur:3000,prod:[{id:'scroll_wind',n:1}],need:[{id:'feather',n:1}]},
-    {id:'mg2',name:'Enchant Ring',icon:'💍',req:7,xp:28,dur:4000,prod:[{id:'enchanted_ring',n:1}],need:[{id:'gold_ring',n:1},{id:'feather',n:3}]},
     {id:'mg1',name:'Water Bolt Scroll',icon:'💧',req:13,xp:30,dur:3500,prod:[{id:'scroll_water',n:1}],need:[{id:'feather',n:2}]},
     {id:'mg4',name:'Fire Bolt Scroll',icon:'🔥',req:20,xp:55,dur:6000,prod:[{id:'scroll_fire',n:1}],need:[{id:'feather',n:3},{id:'coal',n:1}]},
     {id:'mg3',name:'Apprentice Wand',icon:'🪄',req:25,xp:80,dur:8000,prod:[{id:'apprentice_wand',n:1}],need:[{id:'oak_log',n:3},{id:'feather',n:5},{id:'gold_ore',n:1}]},
@@ -807,19 +785,9 @@ const ACTIONS = {
     {id:'mg7',name:'Inferno Scroll',icon:'🌋',req:55,xp:160,dur:11000,prod:[{id:'scroll_inferno',n:1}],need:[{id:'feather',n:5},{id:'coal',n:2},{id:'iron_bar',n:1}]},
     {id:'mg8',name:'Tempest Scroll',icon:'🌪️',req:70,xp:220,dur:14000,prod:[{id:'scroll_tempest',n:1}],need:[{id:'feather',n:6},{id:'yew_log',n:1},{id:'gold_ore',n:2}]},
     {id:'mg9',name:'Meteor Scroll',icon:'☄️',req:85,xp:320,dur:18000,prod:[{id:'scroll_meteor',n:1}],need:[{id:'feather',n:8},{id:'coal',n:3},{id:'gold_ore',n:3}]},
-    // === Arcane gear crafting (uses Arcane Shards from the Whispering Vault dungeon) ===
-    {id:'mg10',name:'Arcanist Circlet I',    icon:'🔮',req:3, xp:45, dur:7000, prod:[{id:'magic_helmet_mk1',n:1}], need:[{id:'arcane_shard_mk1',n:1},{id:'feather',n:5},{id:'scroll_wind',n:2},{id:'leather',n:2}]},
-    {id:'mg11',name:'Rune-Woven Robe I',     icon:'🧙',req:10,xp:60, dur:8000, prod:[{id:'magic_chest_mk1',n:1}],  need:[{id:'arcane_shard_mk1',n:1},{id:'feather',n:8},{id:'logs',n:3},{id:'bronze_bar',n:2}]},
-    {id:'mg12',name:'Whispering Slippers I', icon:'🥾',req:18,xp:55, dur:7500, prod:[{id:'magic_boots_mk1',n:1}],  need:[{id:'arcane_shard_mk1',n:1},{id:'feather',n:10},{id:'scroll_water',n:1},{id:'leather',n:3}]},
-    {id:'mg13',name:'Vault Keeper Ring I',   icon:'💍',req:26,xp:70, dur:8500, prod:[{id:'magic_jewelry_mk1',n:1}], need:[{id:'arcane_shard_mk1',n:1},{id:'feather',n:15},{id:'scroll_water',n:2},{id:'gold_ring',n:1}]},
-    {id:'mg14',name:'Arcanist Circlet II',   icon:'🔮',req:35,xp:120,dur:10000,prod:[{id:'magic_helmet_mk2',n:1}], need:[{id:'arcane_shard_mk2',n:1},{id:'feather',n:20},{id:'scroll_fire',n:2},{id:'iron_bar',n:2}]},
-    {id:'mg15',name:'Rune-Woven Robe II',    icon:'🧙',req:44,xp:150,dur:11000,prod:[{id:'magic_chest_mk2',n:1}],  need:[{id:'arcane_shard_mk2',n:1},{id:'feather',n:25},{id:'scroll_earth',n:2},{id:'coal',n:3}]},
-    {id:'mg16',name:'Whispering Slippers II',icon:'🥾',req:54,xp:130,dur:10500,prod:[{id:'magic_boots_mk2',n:1}],  need:[{id:'arcane_shard_mk2',n:1},{id:'feather',n:30},{id:'scroll_earth',n:2},{id:'gold_ore',n:2}]},
-    {id:'mg17',name:'Vault Keeper Ring II',  icon:'💍',req:64,xp:160,dur:11500,prod:[{id:'magic_jewelry_mk2',n:1}], need:[{id:'arcane_shard_mk2',n:1},{id:'feather',n:35},{id:'scroll_shock',n:2},{id:'gold_ore',n:3}]},
-    {id:'mg18',name:'Arcanist Circlet III',  icon:'🔮',req:74,xp:280,dur:14000,prod:[{id:'magic_helmet_mk3',n:1}], need:[{id:'arcane_shard_mk3',n:1},{id:'feather',n:40},{id:'scroll_inferno',n:1},{id:'gold_ore',n:4}]},
-    {id:'mg19',name:'Rune-Woven Robe III',   icon:'🧙',req:84,xp:350,dur:16000,prod:[{id:'magic_chest_mk3',n:1}],  need:[{id:'arcane_shard_mk3',n:1},{id:'feather',n:50},{id:'scroll_inferno',n:2},{id:'gold_ore',n:5}]},
-    {id:'mg20',name:'Whispering Slippers III',icon:'🥾',req:92,xp:320,dur:15000,prod:[{id:'magic_boots_mk3',n:1}],  need:[{id:'arcane_shard_mk3',n:1},{id:'feather',n:60},{id:'scroll_tempest',n:1},{id:'gold_ore',n:6}]},
-    {id:'mg21',name:'Vault Keeper Ring III', icon:'💍',req:99,xp:400,dur:18000,prod:[{id:'magic_jewelry_mk3',n:1}], need:[{id:'arcane_shard_mk3',n:1},{id:'feather',n:80},{id:'scroll_tempest',n:2},{id:'gold_ore',n:8}]},
+    // === Utility scrolls — defensive and sustain options ===
+    {id:'mg10',name:'Barrier Scroll',icon:'🔰',req:45,xp:130,dur:10000,prod:[{id:'scroll_barrier',n:1}],need:[{id:'feather',n:4},{id:'iron_bar',n:1},{id:'gold_ore',n:1}]},
+    {id:'mg11',name:'Lifedrain Scroll',icon:'🩸',req:65,xp:200,dur:13000,prod:[{id:'scroll_lifedrain',n:1}],need:[{id:'feather',n:6},{id:'coal',n:2},{id:'gold_ore',n:2}]},
   ],
 };
 const ITEMS = {
@@ -846,21 +814,33 @@ const ITEMS = {
   c_salmon:{name:'Salmon',icon:'🐡',sell:20,type:'food',hp:9},
   c_lobster:{name:'Lobster',icon:'🦞',sell:32,type:'food',hp:12},
   c_meat:{name:'Cooked Meat',icon:'🍖',sell:8,type:'food',hp:5},
+  c_spiced_meat:{name:'Spiced Meat',icon:'🌶️',sell:10,type:'food',hp:4,foodBuff:{def:2,turns:3}},
+  c_fish_pie:{name:'Fish Pie',icon:'🥧',sell:16,type:'food',hp:5,foodBuff:{atk:2,turns:3}},
+  c_herb_fish:{name:'Herb Fish',icon:'🌿',sell:12,type:'food',hp:4,foodBuff:{poisonImmune:4}},
+  c_hearty_stew:{name:'Hearty Stew',icon:'🍲',sell:22,type:'food',hp:3,foodBuff:{regen:2,turns:4}},
+  c_lobster_feast:{name:'Lobster Feast',icon:'🍽️',sell:40,type:'food',hp:10,foodBuff:{atk:2,def:3,turns:3}},
   bones:{name:'Bones',icon:'🦴',sell:2,type:'res'},
   feather:{name:'Feathers',icon:'🪶',sell:1,type:'res'},
   cowhide:{name:'Cowhide',icon:'🐄',sell:5,type:'res'},
   leather:{name:'Leather',icon:'📜',sell:8,type:'res'},
+  venison:{name:'Raw Venison',icon:'🦌',sell:6,type:'raw'},
+  antler:{name:'Antler',icon:'🦌',sell:12,type:'res'},
+  wolf_pelt:{name:'Wolf Pelt',icon:'🐺',sell:18,type:'res'},
+  bear_pelt:{name:'Bear Pelt',icon:'🐻',sell:30,type:'res'},
+  c_venison:{name:'Roast Venison',icon:'🍖',sell:18,type:'food',hp:8,foodBuff:{atk:1,turns:3}},
+  c_bone_broth:{name:'Bone Broth',icon:'🍲',sell:14,type:'food',hp:6,foodBuff:{def:2,turns:3}},
   arrow_shaft:{name:'Arrow Shafts',icon:'↑',sell:0,type:'res'},
   iron_arrow:{name:'Iron Arrows',icon:'🪃',sell:2,type:'res'},
+  // === Novice gear — craftable via skills, upgradeable in the Forge ===
   shortbow:{name:'Shortbow',icon:'🏹',sell:20,type:'weapon',atk:3,slot:'hand',rarity:'common'},
   oak_bow:{name:'Oak Shortbow',icon:'🏹',sell:45,type:'weapon',atk:6,slot:'hand',rarity:'uncommon'},
   willow_bow:{name:'Willow Bow',icon:'🏹',sell:90,type:'weapon',atk:10,slot:'hand',rarity:'rare'},
+  antler_bow:{name:'Antler Bow',icon:'🏹',sell:70,type:'weapon',atk:8,slot:'hand',rarity:'uncommon'},
   bronze_sword:{name:'Bronze Sword',icon:'🗡️',sell:25,type:'weapon',atk:2,slot:'hand',rarity:'common'},
   iron_sword:{name:'Iron Sword',icon:'⚔️',sell:75,type:'weapon',atk:5,slot:'hand',rarity:'uncommon'},
   bronze_shield:{name:'Bronze Shield',icon:'🛡️',sell:60,type:'armour',def:2,hp:6,slot:'offhand',rarity:'common'},
   iron_platebody:{name:'Iron Platebody',icon:'🛡️',sell:180,type:'armour',def:5,hp:20,slot:'chest',rarity:'uncommon'},
   leather_body:{name:'Leather Body',icon:'👕',sell:25,type:'armour',def:1,hp:8,slot:'chest',rarity:'common'},
-  // Craftable helmets + boots (boots and jewelry are the primary dodge gear)
   bronze_helm:{name:'Bronze Helm',icon:'⛑️',sell:40,type:'armour',def:1,hp:5,slot:'helmet',rarity:'common'},
   iron_helm:{name:'Iron Helm',icon:'⛑️',sell:120,type:'armour',def:3,hp:12,slot:'helmet',rarity:'uncommon'},
   leather_cap:{name:'Leather Cap',icon:'🧢',sell:15,type:'armour',def:1,hp:3,slot:'helmet',dodge:2,rarity:'common'},
@@ -870,35 +850,58 @@ const ITEMS = {
   gold_ring:{name:'Gold Ring',icon:'💍',sell:60,type:'accessory',hp:4,slot:'jewelry',dodge:3,rarity:'uncommon'},
   gold_necklace:{name:'Gold Necklace',icon:'📿',sell:100,type:'accessory',hp:8,slot:'jewelry',dodge:4,rarity:'uncommon'},
   gold_coins:{name:'Gold Coins',icon:'🪙',sell:1,type:'currency'},
+  // === Potions — single-use dungeon consumables ===
+  potion_herb_paste:{name:'Herb Paste',              icon:'🌿',sell:3,  type:'potion',rarity:'common',potionType:'instant',hp:5},
+  potion_minor_tonic:{name:'Minor Tonic',            icon:'🫗',sell:5,  type:'potion',rarity:'common',potionType:'buff',stat:'atk',value:1,turns:2},
+  potion_crude_salve:{name:'Crude Salve',            icon:'🩹',sell:8,  type:'potion',rarity:'common',potionType:'instant',hp:10},
+  potion_strength:  {name:'Strength Potion',         icon:'💪',sell:15, type:'potion',rarity:'uncommon',potionType:'buff',stat:'atk',value:3,turns:3},
+  potion_defence:   {name:'Defence Potion',          icon:'🛡️',sell:20, type:'potion',rarity:'uncommon',potionType:'buff',stat:'def',value:3,turns:4},
+  potion_dodge:     {name:'Dodge Potion',            icon:'🏃',sell:25, type:'potion',rarity:'uncommon',potionType:'buff',stat:'dodge',value:10,turns:5},
+  potion_antidote:  {name:'Antidote',                icon:'🧪',sell:12, type:'potion',rarity:'common',potionType:'cure',cures:'poison',immuneTurns:5},
+  potion_healing:   {name:'Healing Potion',          icon:'❤️',sell:30, type:'potion',rarity:'rare',potionType:'instant',hp:20},
+  potion_strength_g:{name:'Greater Strength Potion', icon:'💪',sell:40, type:'potion',rarity:'rare',potionType:'buff',stat:'atk',value:6,turns:6},
+  potion_defence_g: {name:'Greater Defence Potion',  icon:'🛡️',sell:45, type:'potion',rarity:'rare',potionType:'buff',stat:'def',value:6,turns:7},
+  potion_dodge_g:   {name:'Greater Dodge Potion',    icon:'🏃',sell:50, type:'potion',rarity:'rare',potionType:'buff',stat:'dodge',value:20,turns:8},
+  potion_healing_g: {name:'Greater Healing Potion',  icon:'❤️',sell:60, type:'potion',rarity:'epic',potionType:'instant',hp:40},
+  // === Upgrade materials — used in the Forge to upgrade dungeon gear ===
+  reinforce_plate:   {name:'Reinforcement Plate',     icon:'🔩',sell:20, type:'upgrade_mat',rarity:'uncommon',boosts:'def'},
+  hardened_plate:    {name:'Hardened Plate',           icon:'🔩',sell:50, type:'upgrade_mat',rarity:'rare',boosts:'def'},
+  masterwork_plate:  {name:'Masterwork Plate',         icon:'🔩',sell:120,type:'upgrade_mat',rarity:'epic',boosts:'def'},
+  precision_kit:     {name:'Precision Kit',            icon:'🎯',sell:18, type:'upgrade_mat',rarity:'uncommon',boosts:'atk'},
+  sharpening_stone:  {name:'Sharpening Stone',         icon:'🪨',sell:35, type:'upgrade_mat',rarity:'rare',boosts:'atk'},
+  precision_kit_g:   {name:'Superior Precision Kit',   icon:'🎯',sell:55, type:'upgrade_mat',rarity:'rare',boosts:'atk'},
+  sharpening_stone_g:{name:'Master Sharpening Stone',  icon:'🪨',sell:100,type:'upgrade_mat',rarity:'epic',boosts:'atk'},
+  padding_kit:       {name:'Padding Kit',              icon:'🧵',sell:15, type:'upgrade_mat',rarity:'uncommon',boosts:'hp'},
+  enchanted_thread:  {name:'Enchanted Thread',         icon:'✨',sell:40, type:'upgrade_mat',rarity:'rare',boosts:'hp'},
+  padding_kit_g:     {name:'Superior Padding Kit',     icon:'🧵',sell:55, type:'upgrade_mat',rarity:'rare',boosts:'hp'},
+  enchanted_thread_g:{name:'Masterweave Thread',       icon:'✨',sell:100,type:'upgrade_mat',rarity:'epic',boosts:'hp'},
   // === Dungeon crafting shards ===
-  // Dropped from dungeon completions instead of finished gear.
-  // Combine with skill materials in the matching skill tab to forge themed gear.
-  // Tiers 1-4 drop mk1 shards, tiers 5-8 → mk2, tiers 9-12 → mk3.
-  grove_shard_mk1:      {name:'Grove Shard',                icon:'🌿',sell:50, type:'res',rarity:'rare'},
-  grove_shard_mk2:      {name:'Refined Grove Shard',        icon:'🌿',sell:200,type:'res',rarity:'epic'},
-  grove_shard_mk3:      {name:'Masterwork Grove Shard',     icon:'🌿',sell:500,type:'res',rarity:'legendary'},
-  deepstone_shard_mk1:  {name:'Deepstone Shard',            icon:'💎',sell:50, type:'res',rarity:'rare'},
-  deepstone_shard_mk2:  {name:'Refined Deepstone Shard',    icon:'💎',sell:200,type:'res',rarity:'epic'},
-  deepstone_shard_mk3:  {name:'Masterwork Deepstone Shard', icon:'💎',sell:500,type:'res',rarity:'legendary'},
-  reef_shard_mk1:       {name:'Reef Shard',                 icon:'🪸',sell:50, type:'res',rarity:'rare'},
-  reef_shard_mk2:       {name:'Refined Reef Shard',         icon:'🪸',sell:200,type:'res',rarity:'epic'},
-  reef_shard_mk3:       {name:'Masterwork Reef Shard',      icon:'🪸',sell:500,type:'res',rarity:'legendary'},
-  ember_shard_mk1:      {name:'Ember Shard',                icon:'🔥',sell:50, type:'res',rarity:'rare'},
-  ember_shard_mk2:      {name:'Refined Ember Shard',        icon:'🔥',sell:200,type:'res',rarity:'epic'},
-  ember_shard_mk3:      {name:'Masterwork Ember Shard',     icon:'🔥',sell:500,type:'res',rarity:'legendary'},
-  forge_shard_mk1:      {name:'Forge Shard',                icon:'⚒️',sell:50, type:'res',rarity:'rare'},
-  forge_shard_mk2:      {name:'Refined Forge Shard',        icon:'⚒️',sell:200,type:'res',rarity:'epic'},
-  forge_shard_mk3:      {name:'Masterwork Forge Shard',     icon:'⚒️',sell:500,type:'res',rarity:'legendary'},
-  hollow_shard_mk1:     {name:'Hollow Shard',               icon:'🏹',sell:50, type:'res',rarity:'rare'},
-  hollow_shard_mk2:     {name:'Refined Hollow Shard',       icon:'🏹',sell:200,type:'res',rarity:'epic'},
-  hollow_shard_mk3:     {name:'Masterwork Hollow Shard',    icon:'🏹',sell:500,type:'res',rarity:'legendary'},
-  silkweave_shard_mk1:  {name:'Silkweave Shard',            icon:'🕸️',sell:50, type:'res',rarity:'rare'},
-  silkweave_shard_mk2:  {name:'Refined Silkweave Shard',    icon:'🕸️',sell:200,type:'res',rarity:'epic'},
-  silkweave_shard_mk3:  {name:'Masterwork Silkweave Shard', icon:'🕸️',sell:500,type:'res',rarity:'legendary'},
-  arcane_shard_mk1:     {name:'Arcane Shard',               icon:'🔮',sell:50, type:'res',rarity:'rare'},
-  arcane_shard_mk2:     {name:'Refined Arcane Shard',       icon:'🔮',sell:200,type:'res',rarity:'epic'},
-  arcane_shard_mk3:     {name:'Masterwork Arcane Shard',    icon:'🔮',sell:500,type:'res',rarity:'legendary'},
-  enchanted_ring:{name:'Enchanted Ring',icon:'💍',sell:150,type:'accessory',hp:12,atk:1,slot:'jewelry',dodge:7,rarity:'epic',special:true},
+  // Legacy shard items — no longer dropped, kept so existing saves render correctly.
+  grove_shard_mk1:      {name:'Grove Shard',                icon:'🌿',sell:50, type:'res',rarity:'rare',legacy:true},
+  grove_shard_mk2:      {name:'Refined Grove Shard',        icon:'🌿',sell:200,type:'res',rarity:'epic',legacy:true},
+  grove_shard_mk3:      {name:'Masterwork Grove Shard',     icon:'🌿',sell:500,type:'res',rarity:'legendary',legacy:true},
+  deepstone_shard_mk1:  {name:'Deepstone Shard',            icon:'💎',sell:50, type:'res',rarity:'rare',legacy:true},
+  deepstone_shard_mk2:  {name:'Refined Deepstone Shard',    icon:'💎',sell:200,type:'res',rarity:'epic',legacy:true},
+  deepstone_shard_mk3:  {name:'Masterwork Deepstone Shard', icon:'💎',sell:500,type:'res',rarity:'legendary',legacy:true},
+  reef_shard_mk1:       {name:'Reef Shard',                 icon:'🪸',sell:50, type:'res',rarity:'rare',legacy:true},
+  reef_shard_mk2:       {name:'Refined Reef Shard',         icon:'🪸',sell:200,type:'res',rarity:'epic',legacy:true},
+  reef_shard_mk3:       {name:'Masterwork Reef Shard',      icon:'🪸',sell:500,type:'res',rarity:'legendary',legacy:true},
+  ember_shard_mk1:      {name:'Ember Shard',                icon:'🔥',sell:50, type:'res',rarity:'rare',legacy:true},
+  ember_shard_mk2:      {name:'Refined Ember Shard',        icon:'🔥',sell:200,type:'res',rarity:'epic',legacy:true},
+  ember_shard_mk3:      {name:'Masterwork Ember Shard',     icon:'🔥',sell:500,type:'res',rarity:'legendary',legacy:true},
+  forge_shard_mk1:      {name:'Forge Shard',                icon:'⚒️',sell:50, type:'res',rarity:'rare',legacy:true},
+  forge_shard_mk2:      {name:'Refined Forge Shard',        icon:'⚒️',sell:200,type:'res',rarity:'epic',legacy:true},
+  forge_shard_mk3:      {name:'Masterwork Forge Shard',     icon:'⚒️',sell:500,type:'res',rarity:'legendary',legacy:true},
+  hollow_shard_mk1:     {name:'Hollow Shard',               icon:'🏹',sell:50, type:'res',rarity:'rare',legacy:true},
+  hollow_shard_mk2:     {name:'Refined Hollow Shard',       icon:'🏹',sell:200,type:'res',rarity:'epic',legacy:true},
+  hollow_shard_mk3:     {name:'Masterwork Hollow Shard',    icon:'🏹',sell:500,type:'res',rarity:'legendary',legacy:true},
+  silkweave_shard_mk1:  {name:'Silkweave Shard',            icon:'🕸️',sell:50, type:'res',rarity:'rare',legacy:true},
+  silkweave_shard_mk2:  {name:'Refined Silkweave Shard',    icon:'🕸️',sell:200,type:'res',rarity:'epic',legacy:true},
+  silkweave_shard_mk3:  {name:'Masterwork Silkweave Shard', icon:'🕸️',sell:500,type:'res',rarity:'legendary',legacy:true},
+  arcane_shard_mk1:     {name:'Arcane Shard',               icon:'🔮',sell:50, type:'res',rarity:'rare',legacy:true},
+  arcane_shard_mk2:     {name:'Refined Arcane Shard',       icon:'🔮',sell:200,type:'res',rarity:'epic',legacy:true},
+  arcane_shard_mk3:     {name:'Masterwork Arcane Shard',    icon:'🔮',sell:500,type:'res',rarity:'legendary',legacy:true},
+  enchanted_ring:{name:'Enchanted Ring',icon:'💍',sell:150,type:'accessory',hp:12,atk:1,slot:'jewelry',dodge:7,rarity:'epic',special:true,legacy:true},
   level_potion:{name:'Level Potion',icon:'🧪',sell:0,type:'potion',rarity:'epic',special:true},
   // Spell scrolls — consumable in dungeon combat. The ✨ Magic button auto-picks the
   // highest-damage scroll you own and consumes one per cast. Craft them in Magic.
@@ -910,6 +913,8 @@ const ITEMS = {
   scroll_inferno:{name:'Inferno Scroll',icon:'🌋',sell:80,type:'scroll',spellDmg:50,rarity:'rare'},
   scroll_tempest:{name:'Tempest Scroll',icon:'🌪️',sell:120,type:'scroll',spellDmg:70,rarity:'epic'},
   scroll_meteor:{name:'Meteor Scroll',icon:'☄️',sell:180,type:'scroll',spellDmg:95,rarity:'legendary'},
+  scroll_barrier:{name:'Barrier Scroll',icon:'🔰',sell:55,type:'scroll',spellDmg:0,barrier:15,rarity:'rare'},
+  scroll_lifedrain:{name:'Lifedrain Scroll',icon:'🩸',sell:90,type:'scroll',spellDmg:30,lifedrain:0.5,rarity:'rare'},
 };
 
 const TOOL_MAP={
@@ -917,9 +922,11 @@ const TOOL_MAP={
   mining:['pick','steel_pickaxe'],
   fishing:['rod','steel_rod'],
   cooking:['tinder','steel_skillet'],
+  brewing:[],
   smithing:['hammer','steel_smith_hammer'],
   fletching:['fletch_knife','steel_fletch_knife'],
   crafting:['needle','steel_needle'],
+  hunting:['hunting_knife','steel_hunting_knife'],
   magic:['staff','apprentice_wand'],
 };
 // Speed bonus per tool item (fraction faster). Higher = better.
@@ -931,25 +938,84 @@ const TOOL_BONUS={
   hammer:0.15,steel_smith_hammer:0.20,
   fletch_knife:0.15,steel_fletch_knife:0.20,
   needle:0.15,steel_needle:0.20,
+  hunting_knife:0.15,steel_hunting_knife:0.20,
   staff:0.15,apprentice_wand:0.20
 };
-// Shop now sells temporary buff potions instead of permanent tool upgrades.
-// Tools come from crafting / dungeon drops; the shop is for short-term boosts.
-// `dur` is in seconds. `effect` is a buff key (see BUFF_DEFS).
-const SHOP=[
-  {id:'buff_speed_all_1',name:'Quick Hands Brew',icon:'🧪',cost:60,eff:'+30% speed (all skills) · 60s',buff:'spd_all',mult:1.30,dur:60},
-  {id:'buff_speed_all_2',name:'Tireless Tonic',icon:'⚗️',cost:200,eff:'+50% speed (all skills) · 60s',buff:'spd_all',mult:1.50,dur:60},
-  {id:'buff_xp_all',name:'Sage Elixir',icon:'📜',cost:180,eff:'+25% XP (all skills) · 90s',buff:'xp_all',mult:1.25,dur:90},
-  {id:'buff_speed_wood',name:'Lumberjack Draught',icon:'🪓',cost:80,eff:'+50% Woodcutting speed · 60s',buff:'spd_woodcutting',mult:1.50,dur:60},
-  {id:'buff_speed_mine',name:'Stoneward Brew',icon:'⛏️',cost:80,eff:'+50% Mining speed · 60s',buff:'spd_mining',mult:1.50,dur:60},
-  {id:'buff_speed_fish',name:'Tideborne Tonic',icon:'🎣',cost:80,eff:'+50% Fishing speed · 60s',buff:'spd_fishing',mult:1.50,dur:60},
-  {id:'buff_speed_cook',name:'Hearth Cordial',icon:'🍳',cost:80,eff:'+50% Cooking speed · 60s',buff:'spd_cooking',mult:1.50,dur:60},
-  {id:'buff_speed_smith',name:'Forge Heat',icon:'🔥',cost:90,eff:'+50% Smithing speed · 60s',buff:'spd_smithing',mult:1.50,dur:60},
-  {id:'buff_speed_flet',name:'Steady Aim Tonic',icon:'🏹',cost:90,eff:'+50% Fletching speed · 60s',buff:'spd_fletching',mult:1.50,dur:60},
-  {id:'buff_speed_craft',name:'Spinner Silk',icon:'🧵',cost:90,eff:'+50% Crafting speed · 60s',buff:'spd_crafting',mult:1.50,dur:60},
-  {id:'buff_speed_magic',name:'Arcane Catalyst',icon:'✨',cost:120,eff:'+50% Magic speed · 60s',buff:'spd_magic',mult:1.50,dur:60},
-  {id:'buff_loot_dungeon',name:"Hunter's Eye",icon:'🦅',cost:300,eff:'+25% dungeon drop chance · 120s',buff:'loot_dungeon',mult:1.25,dur:120},
+// === Forge system ===
+// Each piece of dungeon gear can be upgraded +1 to +5 in the Forge.
+// Each level requires specific upgrade materials + gold.
+// Stats increase by 10% per level (cumulative: +1=10%, +5=50%).
+const FORGE_MAX_LEVEL = 5;
+const FORGE_STAT_BONUS_PER_LEVEL = 0.10; // +10% per upgrade level
+const FORGE_COSTS = [
+  // level 1 → 2: +1
+  {mats:[{id:'reinforce_plate',n:1},{id:'precision_kit',n:1},{id:'padding_kit',n:1}], gold:200},
+  // +2
+  {mats:[{id:'reinforce_plate',n:2},{id:'sharpening_stone',n:1},{id:'enchanted_thread',n:1}], gold:600},
+  // +3
+  {mats:[{id:'hardened_plate',n:1},{id:'precision_kit_g',n:1},{id:'padding_kit_g',n:1}], gold:1500},
+  // +4
+  {mats:[{id:'hardened_plate',n:2},{id:'sharpening_stone_g',n:1},{id:'enchanted_thread_g',n:1}], gold:3000},
+  // +5
+  {mats:[{id:'masterwork_plate',n:2},{id:'sharpening_stone_g',n:1},{id:'enchanted_thread_g',n:1}], gold:5000},
 ];
+function getGearUpgradeLevel(itemId){
+  return (G.gearUpgrades && G.gearUpgrades[itemId]) || 0;
+}
+function getUpgradedStats(itemId){
+  var base = ITEMS[itemId];
+  if(!base) return {};
+  var lvl = getGearUpgradeLevel(itemId);
+  if(lvl <= 0) return {atk:base.atk||0, def:base.def||0, hp:base.hp||0, dodge:base.dodge||0};
+  var mult = 1 + lvl * FORGE_STAT_BONUS_PER_LEVEL;
+  return {
+    atk: Math.round((base.atk||0) * mult),
+    def: Math.round((base.def||0) * mult),
+    hp:  Math.round((base.hp||0)  * mult),
+    dodge: Math.round((base.dodge||0) * mult)
+  };
+}
+function getGearDisplayName(itemId){
+  var base = ITEMS[itemId];
+  if(!base) return itemId;
+  var lvl = getGearUpgradeLevel(itemId);
+  return base.name + (lvl > 0 ? ' +'+lvl : '');
+}
+function canForgeUpgrade(itemId){
+  var lvl = getGearUpgradeLevel(itemId);
+  if(lvl >= FORGE_MAX_LEVEL) return {ok:false, reason:'Max level'};
+  var cost = FORGE_COSTS[lvl];
+  if(!cost) return {ok:false, reason:'Max level'};
+  if(G.gold < cost.gold) return {ok:false, reason:'Need '+cost.gold+' gold (have '+G.gold+')'};
+  for(var i=0;i<cost.mats.length;i++){
+    var m = cost.mats[i];
+    var have = (G.inv && G.inv[m.id]) || 0;
+    if(have < m.n) return {ok:false, reason:'Need '+m.n+'x '+(ITEMS[m.id]?ITEMS[m.id].name:m.id)+' (have '+have+')'};
+  }
+  return {ok:true};
+}
+function doForgeUpgrade(itemId){
+  var check = canForgeUpgrade(itemId);
+  if(!check.ok) return false;
+  var lvl = getGearUpgradeLevel(itemId);
+  var cost = FORGE_COSTS[lvl];
+  G.gold -= cost.gold;
+  for(var i=0;i<cost.mats.length;i++){
+    var m = cost.mats[i];
+    G.inv[m.id] -= m.n;
+    if(G.inv[m.id] <= 0) delete G.inv[m.id];
+  }
+  if(!G.gearUpgrades) G.gearUpgrades={};
+  G.gearUpgrades[itemId] = lvl + 1;
+  save();
+  return true;
+}
+// === Worker system ===
+// Workers are hireable helpers that repeat skill actions at reduced speed/XP.
+// Max 5 workers with escalating hire costs.
+const WORKER_COSTS = [500, 1500, 4000, 10000, 25000];
+const WORKER_SPEED_MULT = 0.60;  // 60% of player speed
+const WORKER_XP_MULT    = 0.30;  // 30% XP
 // STATE
 const EQUIP_SLOTS = ['weaponR','weaponL','helmet','chest','boots','jewelry'];
 function freshEquip(){return{weaponR:null,weaponL:null,helmet:null,chest:null,boots:null,jewelry:null};}
@@ -957,7 +1023,11 @@ let G = {
   skills:{},inv:{},equip:freshEquip(),
   gold:0,hp:30,maxhp:30,baseHp:30,
   upgrades:{},tools:{},dungeonRewards:{},dungeonsDiscovered:{},
-  buffs:{},
+  workers:[],
+  gearUpgrades:{}, // maps itemId -> upgrade level (1-5)
+  forgeSlot:null,  // item currently assigned to the forge
+  foodLoadout:{},  // maps food item id -> desired qty in pouch (manual configuration)
+  potionLoadout:{}, // maps potion item id -> desired qty in potion belt (manual configuration)
   tab:'woodcutting',
   task:null,prog:0,dur:0,
   mhp:0,mmhp:0,mhit:0,
@@ -982,6 +1052,8 @@ function load(){
   if(!G.dungeonsDiscovered)G.dungeonsDiscovered={};
   if(!G.xpEarned)G.xpEarned={};
   if(!G.startedWithSword)G.startedWithSword=false;
+  if(!G.foodLoadout)G.foodLoadout={};
+  if(!G.potionLoadout)G.potionLoadout={};
   // Combat skill removal cleanup.
   // Preserve any HP ceiling the player already earned from the old combat-level maxhp
   // formula so existing saves don't lose progression. Anything above BASE_MAXHP becomes
@@ -991,6 +1063,9 @@ function load(){
   if(G.xpEarned&&G.xpEarned.combat) delete G.xpEarned.combat;
   if(G.tab==='combat') G.tab='woodcutting';
   if(typeof G.task==='string'&&G.task.indexOf('cb')===0){G.task=null;G.prog=0;}
+  // Hunting skill migration: wc4/wc5 moved from woodcutting to hunting (ht0/ht1).
+  if(G.task==='wc4'){G.task='ht0';G.prog=0;}
+  if(G.task==='wc5'){G.task='ht1';G.prog=0;}
   // Equipment slot expansion: migrate legacy single weapon/armour to new multi-slot layout.
   if(!G.equip) G.equip=freshEquip();
   if('weapon' in G.equip && !('weaponR' in G.equip)){
@@ -1017,19 +1092,20 @@ function load(){
       }
     }
   }
-  // Shop refactor: the old `spd_*` permanent shop upgrades are gone — temporary
-  // buff potions now live in their place. Drop legacy upgrade flags so the player
-  // doesn't keep an invisible permanent +15% bonus.
+  // Clean up legacy shop upgrade flags.
   if(G.upgrades){
     for(const k of Object.keys(G.upgrades)){
       if(k.indexOf('spd_')===0) delete G.upgrades[k];
     }
   }
-  if(!G.buffs) G.buffs={};
-  // Drop expired buffs on load so a long-offline player doesn't see ghost timers.
-  const _now=Date.now();
-  for(const k of Object.keys(G.buffs)){
-    if(!G.buffs[k]||(G.buffs[k].expires||0)<=_now) delete G.buffs[k];
+  // Migrate: remove legacy buff state, init workers, init forge upgrades
+  if(G.buffs) delete G.buffs;
+  if(!Array.isArray(G.workers)) G.workers=[];
+  if(!G.gearUpgrades) G.gearUpgrades={};
+  if(!G.hasOwnProperty('forgeSlot')) G.forgeSlot=null;
+  // Deactivate workers assigned to actions that no longer exist (e.g. removed gear recipes).
+  for(const w of G.workers){
+    if(w.action && !findAction(w.action)){w.action=null;w.skill=null;w.active=false;w.prog=0;}
   }
   // Trinket removal cleanup: drop legacy state and any trinket items in inventory
   if(G.trinkets)delete G.trinkets;
@@ -1068,88 +1144,12 @@ function xpPct(sk){
   if(l>=99)return 100;
   return Math.round(((x-XP[l])/(XP[nl]-XP[l]))*100);
 }
-// Buff helpers — temporary shop potions / consumables that grant time-limited boosts.
-function getActiveBuff(key){
-  const b=G.buffs&&G.buffs[key];
-  if(!b) return null;
-  if((b.expires||0)<=Date.now()){delete G.buffs[key];return null;}
-  return b;
-}
-// Returns a multiplier > 1 if a speed buff for this skill is active. The all-skills
-// buff stacks multiplicatively with the per-skill buff.
-function getBuffSpeedMult(sk){
-  let mult=1;
-  const all=getActiveBuff('spd_all');
-  if(all) mult*=(all.mult||1);
-  const own=getActiveBuff('spd_'+sk);
-  if(own) mult*=(own.mult||1);
-  return mult;
-}
-function getBuffXpMult(sk){
-  let mult=1;
-  const all=getActiveBuff('xp_all');
-  if(all) mult*=(all.mult||1);
-  const own=getActiveBuff('xp_'+sk);
-  if(own) mult*=(own.mult||1);
-  return mult;
-}
-function getBuffLootMult(){
-  const b=getActiveBuff('loot_dungeon');
-  return b?(b.mult||1):1;
-}
-window.getBuffLootMult=getBuffLootMult;
-function applyBuff(buffKey, mult, durationSec){
-  if(!G.buffs) G.buffs={};
-  const now=Date.now();
-  const cur=G.buffs[buffKey];
-  // If a buff of the same key is already active with the same or higher mult,
-  // extend its duration. Otherwise replace.
-  if(cur && (cur.expires||0)>now && (cur.mult||1)>=mult){
-    cur.expires = (cur.expires||now) + durationSec*1000;
-  } else {
-    G.buffs[buffKey] = {mult:mult, expires: now + durationSec*1000};
-  }
-}
-
 function getToolSpeedMult(sk){
-  // Lower = faster. Equipped tool gives a passive % boost; shop buffs stack on top.
+  // Lower = faster. Equipped tool gives a passive % boost.
   let mult=1;
   const tid=G.tools[sk];
   if(tid&&TOOL_BONUS[tid])mult=1-TOOL_BONUS[tid];
-  // Apply temporary speed buff (mult>1 means faster, so divide our multiplier).
-  const speedBuff=getBuffSpeedMult(sk);
-  if(speedBuff>1) mult=mult/speedBuff;
   return Math.max(0.05,mult);
-}
-
-// Renders the row of active buff pills above the action pages.
-const _BUFF_LABELS = {
-  spd_all:'⚡ All Speed',
-  xp_all:'📜 XP Boost',
-  loot_dungeon:'🦅 Lucky Loot',
-  spd_woodcutting:'🪓 Wood Speed',
-  spd_mining:'⛏️ Mine Speed',
-  spd_fishing:'🎣 Fish Speed',
-  spd_cooking:'🍳 Cook Speed',
-  spd_smithing:'🔨 Smith Speed',
-  spd_fletching:'🏹 Fletch Speed',
-  spd_crafting:'🧵 Craft Speed',
-  spd_magic:'✨ Magic Speed',
-};
-function renderActiveBuffs(){
-  const el=document.getElementById('active-buffs');if(!el)return;
-  if(!G.buffs){el.innerHTML='';return;}
-  const now=Date.now();
-  const pills=[];
-  for(const k of Object.keys(G.buffs)){
-    const b=G.buffs[k];
-    if(!b||(b.expires||0)<=now){delete G.buffs[k];continue;}
-    const left=Math.max(0,Math.ceil((b.expires-now)/1000));
-    const label=_BUFF_LABELS[k]||k;
-    const pct=Math.round(((b.mult||1)-1)*100);
-    pills.push('<div class="buff-pill"><span class="buff-ico">'+(label.split(' ')[0])+'</span>'+label.split(' ').slice(1).join(' ')+' +'+pct+'% <span class="buff-time">'+left+'s</span></div>');
-  }
-  el.innerHTML=pills.join('');
 }
 function getActiveToolBadge(sk){
   // Returns HTML for the active task bar showing equipped tool + bonus, or ''
@@ -1157,10 +1157,6 @@ function getActiveToolBadge(sk){
   if(tid&&ITEMS[tid]&&TOOL_BONUS[tid]){
     const pct=Math.round(TOOL_BONUS[tid]*100);
     return '<span class="tool-active" title="'+ITEMS[tid].name+' equipped"><span class="ta-ico">'+ITEMS[tid].icon+'</span>−'+pct+'%</span>';
-  }
-  const upKey='spd_'+sk.slice(0,4);
-  if(G.upgrades[upKey]){
-    return '<span class="tool-active" title="Shop tool upgrade"><span class="ta-ico">⚒</span>−15%</span>';
   }
   return '';
 }
@@ -1189,9 +1185,7 @@ function recomputeActiveTaskDur(forSk){
   updateActiveTaskBar();
 }
 function addXP(sk,amt){
-  // Apply any active XP buff before banking the gain.
-  const xpMult=getBuffXpMult(sk);
-  if(xpMult>1) amt=Math.round(amt*xpMult);
+  if(!G.skills[sk])G.skills[sk]={xp:0};
   const ol=slvl(sk);
   G.skills[sk].xp=(G.skills[sk].xp||0)+amt;
   if(!G.xpEarned)G.xpEarned={};
@@ -1206,7 +1200,8 @@ function addXP(sk,amt){
     if(!isUnlockLvl){
       rewards=grantLvlUpRewards(nl);
     }
-    showLvlUp(sk,nl,rewards,isUnlockLvl);
+    // Skip the level-up popup for dungeon-unlock levels — the discovery modal handles that moment
+    if(!isUnlockLvl) showLvlUp(sk,nl,rewards,false);
     log('<span class="ll">⭐ LEVEL UP! '+SKILLS[sk].name+' is now level '+nl+'!</span>');
     if(rewards.length){
       const earned=rewards.map(r=>(ITEMS[r.id]?.icon||'')+' +'+r.n+' '+(ITEMS[r.id]?.name||r.id)).join(' · ');
@@ -1268,7 +1263,7 @@ function getAtk(){
   let a=1;
   for(const slot of EQUIP_SLOTS){
     const id=G.equip[slot];
-    if(id&&ITEMS[id]) a+=(ITEMS[id].atk||0);
+    if(id&&ITEMS[id]){const s=getUpgradedStats(id);a+=(s.atk||0);}
   }
   return a;
 }
@@ -1276,7 +1271,7 @@ function getDef(){
   let d=0;
   for(const slot of EQUIP_SLOTS){
     const id=G.equip[slot];
-    if(id&&ITEMS[id]) d+=(ITEMS[id].def||0);
+    if(id&&ITEMS[id]){const s=getUpgradedStats(id);d+=(s.def||0);}
   }
   return d;
 }
@@ -1284,7 +1279,7 @@ function getHpBonus(){
   let h=0;
   for(const slot of EQUIP_SLOTS){
     const id=G.equip[slot];
-    if(id&&ITEMS[id]) h+=(ITEMS[id].hp||0);
+    if(id&&ITEMS[id]){const s=getUpgradedStats(id);h+=(s.hp||0);}
   }
   return h;
 }
@@ -1296,7 +1291,7 @@ function getDodge(){
   let d=BASE_DODGE;
   for(const slot of EQUIP_SLOTS){
     const id=G.equip[slot];
-    if(id&&ITEMS[id]) d+=(ITEMS[id].dodge||0);
+    if(id&&ITEMS[id]){const s=getUpgradedStats(id);d+=(s.dodge||0);}
   }
   return Math.min(MAX_DODGE,d);
 }
@@ -1310,6 +1305,60 @@ function recomputeMaxHp(){
 }
 // GAME LOOP
 let lastT=Date.now();
+// === Worker tick ===
+// Each worker independently tracks progress. On completion: consume materials,
+// grant prod items, grant reduced XP (30%), batch log every 3 completions.
+// Workers keep repeating until materials run out. Workers tick during dungeons.
+let _workerLogBatch={};
+function tickWorkers(dt){
+  if(document.hidden) return; // Pause workers when app is not visible — no offline leveling
+  if(!G.workers||!G.workers.length) return;
+  for(const w of G.workers){
+    if(!w.action||!w.active) continue;
+    const a=findAction(w.action);
+    if(!a){w.active=false;continue;}
+    const sk=findSkill(w.action);
+    if(!sk){w.active=false;continue;}
+    // Compute duration: base * worker speed penalty * tool bonus
+    const toolMult=getToolSpeedMult(sk);
+    const dur=Math.max(800,Math.floor(a.dur / WORKER_SPEED_MULT * toolMult));
+    w.dur=dur;
+    w.prog=(w.prog||0)+dt;
+    if(w.prog>=dur){
+      w.prog=0;
+      // Check & consume materials
+      if(a.need){
+        let canDo=true;
+        for(const c of a.need){if(!has(c.id,c.n)){canDo=false;break;}}
+        if(!canDo){w.active=false;continue;}
+        for(const c of a.need)take(c.id,c.n);
+      }
+      // Grant products
+      if(a.prod){for(const p of a.prod)give(p.id,p.n);}
+      // Grant reduced XP
+      const wxp=Math.max(1,Math.round(a.xp*WORKER_XP_MULT));
+      addXP(sk,wxp);
+      // Batch log: accumulate, emit every 3 completions
+      const bk=w.id+'_'+w.action;
+      if(!_workerLogBatch[bk])_workerLogBatch[bk]={count:0,xp:0,prod:[],sk:sk,action:a};
+      const b=_workerLogBatch[bk];
+      b.count++;b.xp+=wxp;
+      if(a.prod)a.prod.forEach(p=>{const e=b.prod.find(x=>x.id===p.id);if(e)e.n+=p.n;else b.prod.push({id:p.id,n:p.n});});
+      if(b.count>=3){
+        const desc=b.prod.map(p=>(ITEMS[p.id]?.icon||'')+(ITEMS[p.id]?.name||p.id)+'x'+p.n).join(', ');
+        log('👷 Worker: '+desc+' <span class="lx">(+'+b.xp+'xp '+SKILLS[b.sk].name+')</span>');
+        delete _workerLogBatch[bk];
+      }
+      // Check if next cycle is possible (pre-check materials for repeat)
+      if(a.need){
+        let canRepeat=true;
+        for(const c of a.need){if(!has(c.id,c.n)){canRepeat=false;break;}}
+        if(!canRepeat){w.active=false;}
+      }
+    }
+  }
+}
+
 function tick(){
   const now=Date.now(),dt=Math.min(now-lastT,500);lastT=now;
   if(G.task){
@@ -1318,13 +1367,127 @@ function tick(){
     const pct=Math.min(100,(G.prog/G.dur)*100);
     document.getElementById('task-prog').style.width=pct+'%';
   }
+  tickWorkers(dt);
   updateUI();
   if(Math.floor(now/8000)!==Math.floor((now-dt)/8000))save();
 }
 
+// === SKILL ENCOUNTER SYSTEM ===
+// Beasts thematically linked to each skill. 1-2% chance per task completion.
+const SKILL_ENCOUNTERS = {
+  woodcutting:{name:'Timber Wolf',icon:'🐺',hp:[10,28],dmg:[3,8],
+    drops:[{id:'logs',n:4,w:35},{id:'oak_log',n:2,w:25},{id:'arrow_shaft',n:6,w:22},{id:'feather',n:4,w:18}],
+    rareDrop:{id:'steel_axe',chance:0.04}},
+  mining:{name:'Cave Troll',icon:'🧌',hp:[14,34],dmg:[4,10],
+    drops:[{id:'copper_ore',n:4,w:32},{id:'iron_ore',n:2,w:28},{id:'coal',n:3,w:24},{id:'gold_ore',n:1,w:16}],
+    rareDrop:{id:'steel_pickaxe',chance:0.04}},
+  fishing:{name:'Sea Serpent',icon:'🐍',hp:[10,26],dmg:[3,7],
+    drops:[{id:'raw_shrimp',n:3,w:35},{id:'raw_sardine',n:2,w:28},{id:'raw_trout',n:2,w:22},{id:'raw_salmon',n:1,w:15}],
+    rareDrop:{id:'steel_rod',chance:0.04}},
+  hunting:{name:'Pack Leader',icon:'🦁',hp:[12,30],dmg:[4,9],
+    drops:[{id:'raw_meat',n:3,w:32},{id:'feather',n:4,w:26},{id:'cowhide',n:1,w:22},{id:'bones',n:2,w:20}],
+    rareDrop:{id:'steel_hunting_knife',chance:0.04}},
+  smithing:{name:'Iron Golem',icon:'🗿',hp:[16,40],dmg:[5,12],
+    drops:[{id:'copper_ore',n:3,w:30},{id:'iron_ore',n:2,w:28},{id:'coal',n:3,w:26},{id:'bronze_bar',n:1,w:16}],
+    rareDrop:{id:'steel_smith_hammer',chance:0.04}},
+  cooking:{name:'Kitchen Demon',icon:'👹',hp:[10,24],dmg:[3,7],
+    drops:[{id:'raw_meat',n:3,w:34},{id:'raw_shrimp',n:3,w:28},{id:'raw_sardine',n:2,w:22},{id:'c_meat',n:1,w:16}],
+    rareDrop:{id:'steel_skillet',chance:0.04}},
+  brewing:{name:'Toxic Slime',icon:'🫧',hp:[10,26],dmg:[3,8],
+    drops:[{id:'raw_shrimp',n:3,w:30},{id:'feather',n:5,w:28},{id:'bones',n:2,w:24},{id:'copper_ore',n:2,w:18}],
+    rareDrop:{id:'potion_healing',chance:0.06}},
+  fletching:{name:'Quill Beast',icon:'🦔',hp:[10,24],dmg:[3,7],
+    drops:[{id:'arrow_shaft',n:8,w:35},{id:'feather',n:6,w:30},{id:'logs',n:2,w:22},{id:'oak_log',n:1,w:13}],
+    rareDrop:{id:'steel_fletch_knife',chance:0.04}},
+  crafting:{name:'Silk Wraith',icon:'🕷️',hp:[8,22],dmg:[2,6],
+    drops:[{id:'leather',n:2,w:34},{id:'cowhide',n:1,w:28},{id:'feather',n:4,w:24},{id:'arrow_shaft',n:4,w:14}],
+    rareDrop:{id:'steel_needle',chance:0.04}},
+  magic:{name:'Arcane Elemental',icon:'⚡',hp:[12,28],dmg:[4,9],
+    drops:[{id:'feather',n:5,w:35},{id:'arrow_shaft',n:4,w:28},{id:'bones',n:3,w:22},{id:'gold_ore',n:1,w:15}],
+    rareDrop:{id:'apprentice_wand',chance:0.04}},
+};
+
+let _activeEncounter = null;
+
+function _encounterWeightedDrop(drops){
+  const total=drops.reduce((s,d)=>s+d.w,0);
+  let r=Math.random()*total;
+  for(const d of drops){r-=d.w;if(r<=0)return d;}
+  return drops[drops.length-1];
+}
+
+function triggerEncounter(sk){
+  if(_activeEncounter) return; // Already one active
+  const tmpl=SKILL_ENCOUNTERS[sk];if(!tmpl)return;
+  const lv=slvl(sk);
+  const t=(lv-1)/98; // 0..1 scaling with level
+  const beastHp=Math.round(tmpl.hp[0]+(tmpl.hp[1]-tmpl.hp[0])*t);
+  const beastDmg=Math.round(tmpl.dmg[0]+(tmpl.dmg[1]-tmpl.dmg[0])*t);
+  _activeEncounter={sk,tmpl,beastHp,beastDmg};
+  _showEncounterPopup();
+}
+
+function _showEncounterPopup(){
+  const enc=_activeEncounter;if(!enc)return;
+  const old=document.getElementById('encounter-overlay');if(old)old.remove();
+  const ov=document.createElement('div');ov.id='encounter-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9000;display:flex;align-items:center;justify-content:center;animation:dgFadeIn .3s ease';
+  ov.innerHTML=`
+    <div style="background:linear-gradient(180deg,#1a0f04,#120c03);border:2px solid #8B1A1A;border-radius:12px;padding:24px 20px;max-width:340px;width:90%;text-align:center;box-shadow:0 0 30px rgba(139,26,26,.5),0 0 60px rgba(0,0,0,.8)">
+      <div style="font-size:10px;color:#c04040;font-family:'Cinzel',serif;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">⚠ Encounter!</div>
+      <div style="font-size:52px;line-height:1;margin-bottom:8px;filter:drop-shadow(0 0 12px rgba(200,50,50,.6))">${enc.tmpl.icon}</div>
+      <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:#e87070;margin-bottom:4px">${enc.tmpl.name}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">A wild beast interrupts your work!</div>
+      <div style="font-size:11px;color:#c07070;margin-bottom:18px">HP: ${enc.beastHp} · DMG: ${enc.beastDmg}</div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button onclick="encounterFight()" style="background:linear-gradient(180deg,#4a1010,#2a0808);border:2px solid #c03030;border-radius:8px;color:#ff8080;font-family:'Cinzel',serif;font-size:13px;font-weight:700;padding:10px 20px;cursor:pointer;letter-spacing:1px;flex:1">⚔ Fight</button>
+        <button onclick="encounterFlee()" style="background:linear-gradient(180deg,#1a1206,#100e04);border:2px solid var(--bdr2);border-radius:8px;color:var(--text2);font-family:'Cinzel',serif;font-size:13px;padding:10px 20px;cursor:pointer;letter-spacing:1px;flex:1">🏃 Flee</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+function encounterFight(){
+  const enc=_activeEncounter;if(!enc)return;
+  // Remove the quick-encounter popup and hand off to the full dungeon prep screen.
+  // _activeEncounterData stays set on window so the prep+combat flow can reference it.
+  const ov=document.getElementById('encounter-overlay');if(ov)ov.remove();
+  window._activeEncounterData=enc;
+  if(typeof window._dgShowEncounterPrep==='function'){
+    window._dgShowEncounterPrep(enc);
+  }
+  // Note: _activeEncounter is intentionally left set here. It will be cleared by
+  // window._encounterFleeFromPrep (called from leaveDungeon) when the player leaves.
+}
+
+function encounterFlee(){
+  const enc=_activeEncounter;if(!enc)return;
+  log('🏃 Fled from '+enc.tmpl.icon+' '+enc.tmpl.name+'. Task resumed.');
+  _activeEncounter=null;
+  const ov=document.getElementById('encounter-overlay');if(ov)ov.remove();
+}
+
+function encounterClose(){
+  _activeEncounter=null;
+  const ov=document.getElementById('encounter-overlay');if(ov)ov.remove();
+}
+
+// Called by dungeon.js leaveDungeon() when leaving an encounter dungeon.
+// Only logs "fled" when the encounter was NOT already resolved (victory sets
+// window._activeEncounterData=null before leaveDungeon fires).
+window._encounterFleeFromPrep=function(){
+  const enc=window._activeEncounterData;
+  if(enc){
+    log('🏃 Fled from '+enc.tmpl.icon+' '+enc.tmpl.name+'. Task resumed.');
+  }
+  _activeEncounter=null;
+  window._activeEncounterData=null;
+};
+
 function completeTick(){
   const a=findAction(G.task);if(!a){stopTask();return;}
   const sk=findSkill(G.task);
+  if(!sk){console.error('completeTick: no skill for task',G.task);return;}
   // Check consumables
   if(a.need){
     for(const c of a.need){
@@ -1343,6 +1506,10 @@ function completeTick(){
   }
   showXPFloat(a.xp,sk);
   refreshButtons(G.tab);
+  // Random encounter: ~1.5% chance per task completion, skip if one already active
+  if(!_activeEncounter&&Math.random()<0.015){
+    triggerEncounter(sk);
+  }
 }
 
 function findAction(id){for(const arr of Object.values(ACTIONS))for(const a of arr)if(a.id===id)return a;return null;}
@@ -1377,7 +1544,7 @@ function startTask(id){
 function stopTask(){
   clearCombatLog();
   G.task=null;G.prog=0;G.critStacks=0;
-  document.getElementById('task-title').textContent='Idle — choose a skill and action below';
+  document.getElementById('task-title').textContent='Idle — choose a skill below';
   document.getElementById('task-prog').style.width='0%';
   document.getElementById('task-xp-lbl').textContent='';
   document.getElementById('task-dur-lbl').textContent='';
@@ -1407,10 +1574,6 @@ function updateUI(){
         toolSlot.textContent=ITEMS[equippedTool].icon;
         toolSlot.classList.add('filled');
         toolSlot.title=ITEMS[equippedTool].name+' (tap to change)';
-      } else if(G.upgrades[upKey]){
-        toolSlot.textContent='⚒';
-        toolSlot.classList.add('filled');
-        toolSlot.title='Shop tool equipped';
       } else {
         toolSlot.textContent='○';
         toolSlot.classList.remove('filled');
@@ -1441,6 +1604,8 @@ function updateUI(){
   document.getElementById('hm').style.width=hppc+'%';
   document.getElementById('hp-fill').style.width=hppc+'%';
   document.getElementById('hp-val').textContent=Math.ceil(G.hp)+'/'+G.maxhp;
+  const _stageHpFill=document.getElementById('stage-hp-fill');
+  if(_stageHpFill){_stageHpFill.style.width=hppc+'%';_stageHpFill.style.background=hppc>50?'#5ac85a':(hppc>20?'#f0a030':'#e03030');}
   const atk=getAtk(),def=getDef(),dodge=getDodge();
   document.getElementById('atk-val').textContent=atk;
   document.getElementById('def-val').textContent=def;
@@ -1449,33 +1614,98 @@ function updateUI(){
   document.getElementById('def-fill').style.width=Math.min(100,def*10)+'%';
   document.getElementById('dodge-fill').style.width=Math.min(100,(dodge/MAX_DODGE)*100)+'%';
   document.getElementById('gld').textContent='🪙 '+G.gold;
-  renderInv();renderEquip();renderSpellBar();renderActiveBuffs();
+  renderEquipInv();renderInv();renderEquip();renderSpellBar();renderForge();renderWorkers();
     updateCombatStatsPanel();updateStageMonsterHP();
   const cnt=Object.values(G.inv).filter(v=>v>0).length;
   document.getElementById('inv-count').textContent=cnt+'/28';
-  if(_shopTab==='sell')renderShopSell();
-  else if(_shopTab==='buy')buildShop();
 }
 
 function isEquippedAnywhere(id){
   for(const slot of EQUIP_SLOTS) if(G.equip[slot]===id) return true;
   return false;
 }
-function renderInv(){
-  const grid=document.getElementById('inv-grid');grid.innerHTML='';
-  // Scrolls live in the dedicated Spell Scrolls bar under the equipment — keep
-  // them out of the bag so the two inventories stay distinct.
-  const items=Object.entries(G.inv).filter(([id,v])=>v>0&&ITEMS[id]?.type!=='scroll');
+function isEquipItem(id){
+  const it=ITEMS[id];if(!it)return false;
+  return it.type==='armour'||it.type==='weapon'||it.type==='accessory';
+}
+function renderEquipInv(){
+  const grid=document.getElementById('equip-inv-grid');if(!grid)return;
+  const panel=document.getElementById('equip-inv-panel');
+  grid.innerHTML='';
+  const items=Object.entries(G.inv).filter(([id,v])=>v>0&&isEquipItem(id));
+  if(items.length===0){if(panel)panel.classList.remove('has-items');return;}
+  if(panel)panel.classList.add('has-items');
+  const cntEl=document.getElementById('equip-inv-count');
+  if(cntEl)cntEl.textContent=items.length+' item'+(items.length!==1?'s':'');
   items.forEach(([id,qty])=>{
     const it=ITEMS[id];if(!it)return;
     const d=document.createElement('div');d.className='iv-slot has';
-    if(it.slot){
-      d.dataset.rarity=getItemRarity(id);
-      if(isEquippedAnywhere(id)) d.classList.add('equipped');
+    d.dataset.rarity=getItemRarity(id);
+    if(isEquippedAnywhere(id)) d.classList.add('equipped');
+    const qtyStr=qty>1?'<span class="iv-qty">'+qty+'</span>':'';
+    d.innerHTML='<span class="iv-ico">'+it.icon+'</span><span class="iv-nm" style="color:'+rarityColor(id)+'">'+it.name+'</span>'+qtyStr;
+    d.onclick=()=>useItem(id);
+    grid.appendChild(d);
+  });
+}
+function autoEquipBest(){
+  if(!G.inv||!G.equip)return;
+  const score=id=>{const s=getUpgradedStats(id);return (s.atk||0)*2+(s.def||0)*1.5+(s.hp||0)*0.5+(s.dodge||0)*1;};
+  const allEquip=Object.entries(G.inv).filter(([id,v])=>v>0&&isEquipItem(id));
+  const changed=[];
+
+  // Armor/accessory slots — each slot is explicit on the item
+  for(const slot of ['helmet','chest','boots','jewelry']){
+    const candidates=allEquip.filter(([id])=>ITEMS[id]&&ITEMS[id].slot===slot);
+    if(!candidates.length)continue;
+    candidates.sort((a,b)=>score(b[0])-score(a[0]));
+    const bestId=candidates[0][0];
+    if(G.equip[slot]!==bestId){
+      const prev=G.equip[slot];
+      G.equip[slot]=bestId;
+      const it=ITEMS[bestId];
+      changed.push((it?it.icon+' '+it.name:bestId)+' → '+slot);
+      if(prev&&prev!==bestId&&!isEquippedAnywhere(prev)&&(G.inv[prev]===undefined))G.inv[prev]=(G.inv[prev]||0);
     }
+  }
+
+  // Weapon slots — score all weapons, assign best to weaponR, second-best to weaponL
+  const weapons=allEquip.filter(([id])=>ITEMS[id]&&ITEMS[id].type==='weapon');
+  weapons.sort((a,b)=>score(b[0])-score(a[0]));
+  const w1=weapons[0]?weapons[0][0]:null;
+  const w2=weapons[1]?weapons[1][0]:null;
+  if(w1&&G.equip.weaponR!==w1){
+    const prev=G.equip.weaponR;
+    G.equip.weaponR=w1;
+    const it=ITEMS[w1];
+    changed.push((it?it.icon+' '+it.name:w1)+' → right hand');
+    if(prev&&prev===w2){G.equip.weaponL=null;}
+  }
+  if(w2&&w2!==w1&&G.equip.weaponL!==w2){
+    G.equip.weaponL=w2;
+    const it=ITEMS[w2];
+    changed.push((it?it.icon+' '+it.name:w2)+' → left hand');
+  } else if(!w2&&G.equip.weaponL&&weapons.length<2){
+    G.equip.weaponL=null;
+  }
+
+  if(changed.length){
+    log('⚡ Auto-equip: '+changed.join(', ')+'.');
+  } else {
+    log('⚡ Already wearing best available gear.');
+  }
+  save();updateUI();renderEquip();renderEquipInv();
+}
+
+function renderInv(){
+  const grid=document.getElementById('inv-grid');grid.innerHTML='';
+  // Scrolls live in the dedicated Spell Scrolls bar; equipment has its own panel above.
+  const items=Object.entries(G.inv).filter(([id,v])=>v>0&&ITEMS[id]?.type!=='scroll'&&!isEquipItem(id));
+  items.forEach(([id,qty])=>{
+    const it=ITEMS[id];if(!it)return;
+    const d=document.createElement('div');d.className='iv-slot has';
     const qtyStr=qty>1?'<span class="iv-qty">'+(qty>=1000?(qty/1000).toFixed(1)+'k':qty)+'</span>':'';
-    const nameStyle=it.slot?' style="color:'+rarityColor(id)+'"':'';
-    d.innerHTML='<span class="iv-ico">'+it.icon+'</span><span class="iv-nm"'+nameStyle+'>'+it.name+'</span>'+qtyStr;
+    d.innerHTML='<span class="iv-ico">'+it.icon+'</span><span class="iv-nm">'+it.name+'</span>'+qtyStr;
     d.onclick=()=>useItem(id);
     grid.appendChild(d);
   });
@@ -1483,6 +1713,133 @@ function renderInv(){
   for(let i=0;i<Math.min(empty,28-items.length);i++){
     const d=document.createElement('div');d.className='iv-slot';grid.appendChild(d);
   }
+}
+
+// === Forge panel rendering ===
+function renderForge(){
+  const grid=document.getElementById('forge-grid');
+  const detail=document.getElementById('forge-detail');
+  if(!grid) return;
+  const isDungeonGear=id=>ITEMS[id]&&(ITEMS[id].type==='armour'||ITEMS[id].type==='accessory'||ITEMS[id].type==='weapon')&&ITEMS[id].slot&&!ITEMS[id].special;
+  // Validate slot — clear if item no longer in inventory or equipped
+  if(G.forgeSlot){
+    const inInv=G.inv&&G.inv[G.forgeSlot]>0;
+    const equipped=isEquippedAnywhere(G.forgeSlot);
+    if(!isDungeonGear(G.forgeSlot)||(!inInv&&!equipped)) G.forgeSlot=null;
+  }
+  let h='<div style="padding:10px;">';
+  if(!G.forgeSlot){
+    h+='<div style="display:flex;flex-direction:column;align-items:center;gap:8px;">';
+    h+='<div onclick="showForgePicker()" style="width:72px;height:72px;border:2px dashed var(--bdr2);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--bg2);gap:4px;transition:all .15s;">';
+    h+='<span style="font-size:26px;opacity:0.45;">⚒</span>';
+    h+='<span style="font-size:8px;color:var(--text3);font-family:Cinzel,serif;text-align:center;letter-spacing:.5px;">TAP TO ASSIGN</span>';
+    h+='</div>';
+    h+='<div style="color:#5a4830;font-size:11px;text-align:center;">Assign a gear piece to upgrade it.</div>';
+    h+='</div>';
+  } else {
+    const it=ITEMS[G.forgeSlot];
+    const lvl=getGearUpgradeLevel(G.forgeSlot);
+    const equipped=isEquippedAnywhere(G.forgeSlot);
+    h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">';
+    h+='<div style="width:64px;height:64px;border:2px solid '+rarityColor(G.forgeSlot)+';border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg2);flex-shrink:0;cursor:pointer;" onclick="showForgePicker()">';
+    h+='<span style="font-size:26px;">'+it.icon+'</span>';
+    if(lvl>0) h+='<span style="font-size:9px;color:#f0c040;font-weight:bold;">+'+lvl+'</span>';
+    h+='</div>';
+    h+='<div style="flex:1;min-width:0;">';
+    h+='<div style="color:'+rarityColor(G.forgeSlot)+';font-size:14px;font-weight:bold;font-family:Cinzel,serif;">'+it.name+(lvl>0?' +'+lvl:'')+'</div>';
+    h+='<div style="color:#9a7e50;font-size:10px;">'+it.slot+(equipped?' · equipped':'')+'</div>';
+    h+='</div>';
+    h+='<button onclick="G.forgeSlot=null;renderForge()" style="background:#1c1710;border:1px solid #3a2c18;color:#9a7e50;font-size:10px;border-radius:4px;padding:5px 9px;cursor:pointer;font-family:Cinzel,serif;flex-shrink:0;">✕ Remove</button>';
+    h+='</div>';
+  }
+  h+='</div>';
+  grid.innerHTML=h;
+  if(G.forgeSlot){
+    showForgeDetail(G.forgeSlot);
+    detail.style.display='block';
+  } else {
+    detail.style.display='none';
+  }
+}
+function showForgePicker(){
+  const isDungeonGear=id=>ITEMS[id]&&(ITEMS[id].type==='armour'||ITEMS[id].type==='accessory'||ITEMS[id].type==='weapon')&&ITEMS[id].slot&&!ITEMS[id].special;
+  const gearItems=[];
+  for(const slot of EQUIP_SLOTS){const id=G.equip[slot];if(id&&isDungeonGear(id)&&!gearItems.includes(id))gearItems.push(id);}
+  for(const [id,qty] of Object.entries(G.inv)){if(qty>0&&isDungeonGear(id)&&!gearItems.includes(id))gearItems.push(id);}
+  const existing=document.getElementById('forge-picker-overlay');if(existing)existing.remove();
+  const ov=document.createElement('div');ov.id='forge-picker-overlay';
+  ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.82);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  let h='<div style="background:#13100a;border:2px solid #3a2c18;border-radius:10px;width:100%;max-width:360px;max-height:80vh;overflow-y:auto;font-family:Cinzel,serif;">';
+  h+='<div style="padding:10px 12px;border-bottom:1px solid #3a2c18;display:flex;align-items:center;justify-content:space-between;">';
+  h+='<span style="color:#f0c040;font-size:13px;font-weight:bold;">Select Gear to Upgrade</span>';
+  h+='<span onclick="document.getElementById(\'forge-picker-overlay\').remove()" style="color:#9a7e50;font-size:22px;cursor:pointer;line-height:1;">&times;</span>';
+  h+='</div>';
+  if(gearItems.length===0){
+    h+='<div style="color:#5a4830;font-size:11px;text-align:center;padding:20px;">No gear found. Clear dungeons to earn gear!</div>';
+  } else {
+    h+='<div style="padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+    gearItems.forEach(id=>{
+      const it=ITEMS[id];if(!it)return;
+      const lvl=getGearUpgradeLevel(id);
+      h+='<div onclick="G.forgeSlot=\''+id+'\';document.getElementById(\'forge-picker-overlay\').remove();renderForge();" style="background:var(--bg2);border:2px solid '+rarityColor(id)+';border-radius:5px;aspect-ratio:1;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:4px;text-align:center;box-sizing:border-box;">';
+      h+='<span style="font-size:18px;">'+it.icon+'</span>';
+      h+='<span style="font-size:7px;color:'+rarityColor(id)+';line-height:1.1;margin-top:2px;">'+it.name+(lvl>0?' +'+lvl:'')+'</span>';
+      h+='</div>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  ov.innerHTML=h;
+  document.body.appendChild(ov);
+}
+function showForgeDetail(itemId){
+  const detail=document.getElementById('forge-detail');
+  if(!detail) return;
+  const it=ITEMS[itemId];if(!it){detail.style.display='none';return;}
+  const lvl=getGearUpgradeLevel(itemId);
+  const cur=getUpgradedStats(itemId);
+  let h='<div style="padding:8px;">';
+  // Current stats
+  h+='<div style="color:#e8d898;font-size:11px;margin-bottom:4px;">Current Stats:</div>';
+  h+='<div style="display:flex;gap:10px;color:#9a7e50;font-size:10px;margin-bottom:8px;">';
+  if(cur.atk) h+='<span>ATK '+cur.atk+'</span>';
+  if(cur.def) h+='<span>DEF '+cur.def+'</span>';
+  if(cur.hp) h+='<span>HP +'+cur.hp+'</span>';
+  if(cur.dodge) h+='<span>Dodge +'+cur.dodge+'%</span>';
+  h+='</div>';
+  if(lvl>=FORGE_MAX_LEVEL){
+    h+='<div style="color:#f0c040;font-size:12px;text-align:center;padding:8px;">✓ Max upgrade reached!</div>';
+  } else {
+    const cost=FORGE_COSTS[lvl];
+    const nextMult=1+(lvl+1)*FORGE_STAT_BONUS_PER_LEVEL;
+    const nxt={atk:Math.round((it.atk||0)*nextMult),def:Math.round((it.def||0)*nextMult),hp:Math.round((it.hp||0)*nextMult),dodge:Math.round((it.dodge||0)*nextMult)};
+    h+='<div style="color:#e8d898;font-size:11px;margin-bottom:4px;">Upgrade to +'+(lvl+1)+':</div>';
+    h+='<div style="display:flex;gap:10px;color:#5ac85a;font-size:10px;margin-bottom:6px;">';
+    if(nxt.atk) h+='<span>ATK '+cur.atk+' → '+nxt.atk+'</span>';
+    if(nxt.def) h+='<span>DEF '+cur.def+' → '+nxt.def+'</span>';
+    if(nxt.hp) h+='<span>HP '+cur.hp+' → '+nxt.hp+'</span>';
+    if(nxt.dodge) h+='<span>Dodge '+cur.dodge+'% → '+nxt.dodge+'%</span>';
+    h+='</div>';
+    h+='<div style="color:#9a7e50;font-size:10px;margin-bottom:6px;">Cost: ';
+    cost.mats.forEach((m,i)=>{
+      const mi=ITEMS[m.id];const have=(G.inv&&G.inv[m.id])||0;
+      const clr=have>=m.n?'#5ac85a':'#e03030';
+      h+=(i>0?', ':'')+'<span style="color:'+clr+'">'+(mi?mi.icon+' ':'')+m.n+'x '+(mi?mi.name:m.id)+'</span>';
+    });
+    h+=' + <span style="color:'+(G.gold>=cost.gold?'#5ac85a':'#e03030')+'">'+cost.gold+'g</span></div>';
+    const check=canForgeUpgrade(itemId);
+    h+='<button onclick="forgeUpgradeUI(\''+itemId+'\')" style="width:100%;padding:8px;border-radius:4px;font-family:Cinzel,serif;font-size:13px;font-weight:bold;cursor:'+(check.ok?'pointer':'not-allowed')+';border:2px solid '+(check.ok?'#f0c040':'#3a2c18')+';background:'+(check.ok?'linear-gradient(180deg,#f0c040,#c08020)':'#1c1710')+';color:'+(check.ok?'#0b0905':'#5a4830')+';">'+(check.ok?'⚒ Upgrade':'⚒ '+check.reason)+'</button>';
+  }
+  h+='</div>';
+  detail.innerHTML=h;
+  detail.style.display='block';
+}
+function forgeUpgradeUI(itemId){
+  if(!doForgeUpgrade(itemId)) return;
+  const it=ITEMS[itemId];
+  if(it&&typeof log==='function') log('⚒ <b>'+getGearDisplayName(itemId)+'</b> upgraded! Stats increased.');
+  updateUI();renderEquipInv();renderInv();renderEquip();renderForge();
 }
 
 // Canonical ordering for the spell bar (matches magic level progression).
@@ -1580,7 +1937,7 @@ function renderEquip(){
     if(id&&ITEMS[id]){
       const r=getItemRarity(id);
       el.dataset.rarity=r;
-      el.innerHTML='<span class="eq-icon">'+ITEMS[id].icon+'</span><span class="eq-name" style="color:'+RARITY[r].color+'">'+ITEMS[id].name+'</span>';
+      el.innerHTML='<span class="eq-icon">'+ITEMS[id].icon+'</span><span class="eq-name" style="color:'+RARITY[r].color+'">'+getGearDisplayName(id)+'</span>';
       el.classList.add('on');
     } else {
       delete el.dataset.rarity;
@@ -1629,6 +1986,9 @@ function buildSkills(){
       if(!document.body.classList.contains('combat-active')&&!dgOpen){
         const panel=document.getElementById('act-panel');
         if(panel&&typeof panel.scrollIntoView==='function'){
+          // Measure the sticky task strip so scroll-margin-top is always exact
+          const strip=document.getElementById('active-task-strip');
+          panel.style.scrollMarginTop=(strip?(strip.offsetHeight+4):56)+'px';
           panel.scrollIntoView({behavior:'smooth',block:'start'});
         }
       }
@@ -1674,23 +2034,26 @@ function buildSkills(){
     d.appendChild(flip);
     g.appendChild(d);
   }
-  // Dungeons toggle button (does not flip itself)
-  const dgBtn=document.createElement('div');
-  dgBtn.className='sk-card dg-btn-in-grid';dgBtn.id='sk-dungeon';
-  dgBtn.innerHTML='<div style="font-size:26px">🏰</div><div class="sk-name" style="color:var(--gold);font-size:11px;letter-spacing:1px">DUNGEONS</div>';
-  dgBtn.onclick=()=>toggleDungeonsMode();
-  g.appendChild(dgBtn);
 }
 
 function toggleDungeonsMode(){
   const g=document.getElementById('skills-grid');
   g.classList.toggle('dungeons-mode');
-  const btn=document.getElementById('sk-dungeon');
-  if(!btn)return;
   const isOn=g.classList.contains('dungeons-mode');
-  btn.innerHTML=isOn
-    ? '<div style="font-size:26px">📜</div><div class="sk-name" style="color:var(--gold);font-size:11px;letter-spacing:1px">SKILLS</div>'
-    : '<div style="font-size:26px">🏰</div><div class="sk-name" style="color:var(--gold);font-size:11px;letter-spacing:1px">DUNGEONS</div>';
+  const mainBtn=document.getElementById('dungeon-main-btn');
+  if(mainBtn){
+    const ico=mainBtn.querySelector('#dungeon-main-btn-ico');
+    const txt=mainBtn.querySelector('#dungeon-main-btn-txt');
+    if(isOn){
+      mainBtn.classList.add('dungeons-active');
+      if(ico)ico.textContent='📜';
+      if(txt)txt.textContent='BACK TO SKILLS';
+    } else {
+      mainBtn.classList.remove('dungeons-active');
+      if(ico)ico.textContent='🏰';
+      if(txt)txt.textContent='ENTER THE DUNGEONS';
+    }
+  }
 }
 
 function showSlotMenu(sk, slotType){
@@ -1711,11 +2074,6 @@ function showSlotMenu(sk, slotType){
       items.push({icon:it.icon,name:it.name+' (equipped)',desc:'+'+pct+'% '+SKILLS[sk].name+' speed · tap to unequip',equipped:true,action:()=>{
         give(current,1);delete G.tools[sk];log('Removed '+it.name+' from '+SKILLS[sk].name+' tool slot.');recomputeActiveTaskDur(sk);closeSlotMenu();
       }});
-    }
-    // Shop upgrade (permanent, separate)
-    if(G.upgrades[upKey]){
-      const shopItem=SHOP.find(s=>toolIds.includes(s.id));
-      items.push({icon:shopItem?shopItem.icon:'⚒',name:(shopItem?shopItem.name:'Tool')+' (shop)',desc:'Permanent shop upgrade · '+(shopItem?shopItem.eff:'+15% speed'),equipped:true,action:()=>closeSlotMenu()});
     }
     // Available tool items in inventory
     Object.entries(G.inv).filter(([id,q])=>q>0&&toolIds.includes(id)&&id!==current).forEach(([id])=>{
@@ -1856,11 +2214,37 @@ function buildActPage(sk){
     else if(a.mhp) meta='❤️×'+a.mhp+' hp';
     else meta='~'+(a.dur/1000).toFixed(1)+'s';
 
+    // For food & potion items, show combat effects so players know what they're crafting
+    let effectLine='';
+    if(a.prod&&a.prod.length>0){
+      const prodId=a.prod[0].id;
+      const prodItem=ITEMS[prodId];
+      if(prodItem&&prodItem.type==='food'){
+        const parts=['❤️ +'+prodItem.hp+' HP'];
+        const hasBuff=!!prodItem.foodBuff;
+        if(hasBuff){
+          const b=prodItem.foodBuff;
+          if(b.atk) parts.push('⚔ +'+b.atk+' ATK ('+b.turns+'t)');
+          if(b.def) parts.push('🛡 +'+b.def+' DEF ('+b.turns+'t)');
+          if(b.regen) parts.push('💚 +'+b.regen+'/turn ('+b.turns+'t)');
+          if(b.poisonImmune) parts.push('🌿 Anti-poison ('+b.poisonImmune+'t)');
+        }
+        effectLine='<span class="ab-effect'+(hasBuff?' has-buff':'')+'">'+parts.join(' · ')+'</span>';
+      } else if(prodItem&&prodItem.type==='potion'){
+        const parts=[];
+        if(prodItem.potionType==='buff') parts.push('⬆ +'+prodItem.value+' '+prodItem.stat.toUpperCase()+' ('+prodItem.turns+' turns)');
+        if(prodItem.potionType==='instant') parts.push('❤️ +'+prodItem.hp+' HP (instant)');
+        if(prodItem.potionType==='cure') parts.push('🌿 Cure poison · immune '+prodItem.immuneTurns+'t');
+        if(parts.length) effectLine='<span class="ab-effect is-potion">'+parts.join(' · ')+'</span>';
+      }
+    }
+
     html+='<button class="act-btn" data-id="'+a.id+'" data-req="'+a.req+'" onclick="actBtnTap(\''+a.id+'\',this)">'
       +'<span class="ab-icon">'+a.icon+'</span>'
       +'<span class="ab-name">'+a.name+'</span>'
       +'<span class="ab-req">Lv.'+a.req+' · +'+a.xp+'xp</span>'
       +'<span class="ab-meta">'+meta+'</span>'
+      +effectLine
       +'</button>';
   }
   return html+'</div>';
@@ -1883,15 +2267,44 @@ function showRecipeDetail(id){
   const prod=a.prod&&a.prod[0]&&ITEMS[a.prod[0].id];
   if(document.getElementById('recipe-detail-ov')) return;
 
-  // Build stats string for gear items
+  // Build stats / effect string for gear, food, and potions
   let statsHtml='';
-  if(prod&&(prod.def||prod.atk||prod.hp||prod.dodge)){
+  if(prod&&(prod.def||prod.atk||prod.hp||prod.dodge)&&prod.type!=='food'&&prod.type!=='potion'){
     const parts=[];
     if(prod.def)   parts.push('<span style="color:#88ddff;">DEF +'+prod.def+'</span>');
     if(prod.atk)   parts.push('<span style="color:#f0c040;">ATK +'+prod.atk+'</span>');
     if(prod.hp)    parts.push('<span style="color:#5ac85a;">HP +'+prod.hp+'</span>');
     if(prod.dodge) parts.push('<span style="color:#9b59b6;">DODGE +'+prod.dodge+'%</span>');
     statsHtml='<div style="font-size:12px;margin:6px 0 10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">'+parts.join('')+'</div>';
+  }
+  // Food combat effects
+  if(prod&&prod.type==='food'){
+    let fhtml='<div style="margin:8px 0 6px;padding:8px 12px;background:rgba(90,200,90,0.08);border:1px solid rgba(90,200,90,0.2);border-radius:6px;">';
+    fhtml+='<div style="font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Combat Effect (when eaten)</div>';
+    fhtml+='<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">';
+    fhtml+='<span style="color:#5ac85a;font-size:13px;font-weight:bold;">❤️ +'+prod.hp+' HP</span>';
+    if(prod.foodBuff){
+      const b=prod.foodBuff;
+      if(b.atk) fhtml+='<span style="color:#f0c040;font-size:13px;font-weight:bold;">⚔ +'+b.atk+' ATK <span style="font-size:10px;color:#9a7e50;">('+b.turns+' turns)</span></span>';
+      if(b.def) fhtml+='<span style="color:#88ddff;font-size:13px;font-weight:bold;">🛡 +'+b.def+' DEF <span style="font-size:10px;color:#9a7e50;">('+b.turns+' turns)</span></span>';
+      if(b.regen) fhtml+='<span style="color:#5ac85a;font-size:13px;font-weight:bold;">💚 +'+b.regen+' HP/turn <span style="font-size:10px;color:#9a7e50;">('+b.turns+' turns)</span></span>';
+      if(b.poisonImmune) fhtml+='<span style="color:#5ac85a;font-size:13px;font-weight:bold;">🌿 Poison Immune <span style="font-size:10px;color:#9a7e50;">('+b.poisonImmune+' turns)</span></span>';
+    }
+    fhtml+='</div>';
+    fhtml+='<div style="font-size:9px;color:#5a4830;margin-top:6px;text-align:center;">No enemy retaliation when eaten in combat</div>';
+    fhtml+='</div>';
+    statsHtml=fhtml;
+  }
+  // Potion effects
+  if(prod&&prod.type==='potion'){
+    let phtml='<div style="margin:8px 0 6px;padding:8px 12px;background:rgba(163,136,232,0.08);border:1px solid rgba(163,136,232,0.2);border-radius:6px;">';
+    phtml+='<div style="font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Potion Effect</div>';
+    phtml+='<div style="text-align:center;">';
+    if(prod.potionType==='buff') phtml+='<span style="color:#ffd966;font-size:13px;font-weight:bold;">⬆ +'+prod.value+' '+prod.stat.toUpperCase()+' <span style="font-size:10px;color:#9a7e50;">('+prod.turns+' turns)</span></span>';
+    if(prod.potionType==='instant') phtml+='<span style="color:#5ac85a;font-size:13px;font-weight:bold;">❤️ +'+prod.hp+' HP <span style="font-size:10px;color:#9a7e50;">(instant)</span></span>';
+    if(prod.potionType==='cure') phtml+='<span style="color:#5ac85a;font-size:13px;font-weight:bold;">🌿 Cure Poison + Immune <span style="font-size:10px;color:#9a7e50;">('+prod.immuneTurns+' turns)</span></span>';
+    phtml+='</div></div>';
+    statsHtml=phtml;
   }
 
   // Build ingredient rows
@@ -1977,79 +2390,6 @@ function refreshButtons(sk){
   });
 }
 
-function buildShop(){
-  const g=document.getElementById('shop-grid');
-  g.innerHTML='';
-  const now=Date.now();
-  SHOP.forEach(s=>{
-    const d=document.createElement('div');
-    d.className='sh-item';
-    let badge='';
-    if(s.buff){
-      const active=G.buffs&&G.buffs[s.buff];
-      if(active && (active.expires||0)>now){
-        const left=Math.max(0,Math.ceil(((active.expires)-now)/1000));
-        badge='<div class="sh-active">⏱ '+left+'s active</div>';
-        d.classList.add('owned');
-      }
-    }
-    d.innerHTML='<div class="sh-top"><span class="sh-icon">'+s.icon+'</span><span class="sh-name">'+s.name+'</span></div><div class="sh-price">🪙 '+s.cost+'</div><div class="sh-eff">'+s.eff+'</div>'+badge;
-    d.onclick=()=>buy(s);g.appendChild(d);
-  });
-}
-
-let _shopTab='buy';
-function setShopTab(tab){
-  _shopTab=tab;
-  document.getElementById('shop-tab-buy').classList.toggle('active',tab==='buy');
-  document.getElementById('shop-tab-sell').classList.toggle('active',tab==='sell');
-  const panel=document.getElementById('shop-panel');
-  if(panel)panel.classList.toggle('sell-mode',tab==='sell');
-  if(tab==='sell')renderShopSell();
-  else buildShop();
-}
-
-// Sort order for the sell list so related items stay grouped
-const _SELL_TYPE_ORDER={res:0,raw:1,food:2,weapon:3,armour:4,accessory:5,currency:6,tool:7,potion:8};
-
-function renderShopSell(){
-  const list=document.getElementById('shop-sell-list');if(!list)return;
-  list.innerHTML='';
-  const entries=Object.entries(G.inv)
-    .filter(([id,q])=>q>0&&ITEMS[id]&&canSell(id)&&sellValue(id)>0)
-    .map(([id,q])=>{
-      const it=ITEMS[id];
-      return{id,qty:q,it,price:sellValue(id)};
-    })
-    .sort((a,b)=>{
-      const ta=_SELL_TYPE_ORDER[a.it.type]??99;
-      const tb=_SELL_TYPE_ORDER[b.it.type]??99;
-      if(ta!==tb)return ta-tb;
-      return a.price-b.price;
-    });
-  if(!entries.length){
-    list.innerHTML='<div class="ss-empty">Nothing to sell right now — come back with some loot.</div>';
-    return;
-  }
-  entries.forEach(({id,qty,it,price})=>{
-    const row=document.createElement('div');row.className='ss-row';
-    const total=price*qty;
-    row.innerHTML=
-      '<span class="ss-ico">'+it.icon+'</span>'+
-      '<div class="ss-info">'+
-        '<div class="ss-name">'+it.name+'</div>'+
-        '<div class="ss-meta"><span class="ss-price">'+price+' gp</span> each · '+qty+' in bag · '+total+' gp total</div>'+
-      '</div>'+
-      '<div class="ss-btns">'+
-        '<button class="ss-btn" data-sell-one="'+id+'">Sell 1</button>'+
-        '<button class="ss-btn ss-all" data-sell-all="'+id+'">All</button>'+
-      '</div>';
-    list.appendChild(row);
-  });
-  // Wire up via delegated clicks to keep markup simple
-  list.querySelectorAll('[data-sell-one]').forEach(b=>{b.onclick=()=>sellOne(b.dataset.sellOne);});
-  list.querySelectorAll('[data-sell-all]').forEach(b=>{b.onclick=()=>sellStack(b.dataset.sellAll);});
-}
 // ACTIONS
 function useItem(id){
   const it=ITEMS[id];
@@ -2160,6 +2500,184 @@ function eatFood(){
   useItem(f[0][0]);
 }
 
+// === Worker UI ===
+function renderWorkers(){
+  const hdr=document.getElementById('workers-hdr');
+  const list=document.getElementById('workers-list');
+  if(!hdr||!list)return;
+  const max=WORKER_COSTS.length;
+  const count=G.workers.length;
+  hdr.textContent='Workers \u00b7 '+count+'/'+max;
+  let h='';
+  // Worker cards
+  G.workers.forEach((w,i)=>{
+    const a=w.action?findAction(w.action):null;
+    const sk=w.action?findSkill(w.action):null;
+    const skInfo=sk&&SKILLS[sk]?SKILLS[sk]:null;
+    const label=a?(skInfo?skInfo.icon+' ':'')+a.icon+' '+a.name:'Unassigned';
+    const status=!w.action?'Idle \u2014 tap Assign':(!w.active?'Idle \u2014 out of materials':'Working...');
+    const pct=w.dur>0?Math.min(100,(w.prog||0)/w.dur*100):0;
+    h+='<div class="wk-card">';
+    h+='<div class="wk-info">';
+    h+='<div class="wk-name">Worker '+(i+1)+': '+label+'</div>';
+    h+='<div class="wk-status">'+status+'</div>';
+    if(w.action&&w.active){
+      h+='<div class="wk-prog"><div class="wk-prog-fill" style="width:'+pct.toFixed(1)+'%"></div></div>';
+    }
+    h+='</div>';
+    h+='<button class="wk-btn" onclick="showWorkerAssign('+i+')">'+(w.action?'Reassign':'Assign')+'</button>';
+    h+='</div>';
+  });
+  // Hire button
+  if(count<max){
+    const cost=WORKER_COSTS[count];
+    h+='<div class="wk-hire"><button class="wk-hire-btn" onclick="hireWorker()"'+(G.gold<cost?' disabled':'')+'>Hire Worker \u00b7 \ud83e\ude99 '+cost+'</button></div>';
+  }
+  list.innerHTML=h;
+}
+
+let _workersActiveTab='workers';
+function switchWorkersTab(tab){
+  _workersActiveTab=tab;
+  const wList=document.getElementById('workers-list');
+  const wSell=document.getElementById('workers-sell-body');
+  const tabW=document.getElementById('wtab-workers');
+  const tabS=document.getElementById('wtab-sell');
+  if(!wList||!wSell)return;
+  if(tab==='sell'){
+    wList.style.display='none';
+    wSell.style.display='block';
+    tabS.classList.add('wtab-active');
+    tabW.classList.remove('wtab-active');
+    renderWorkersSell();
+  } else {
+    wList.style.display='block';
+    wSell.style.display='none';
+    tabW.classList.add('wtab-active');
+    tabS.classList.remove('wtab-active');
+    renderWorkers();
+  }
+}
+
+function renderWorkersSell(){
+  const el=document.getElementById('workers-sell-body');
+  if(!el)return;
+  const entries=Object.entries(G.inv)
+    .filter(([id,q])=>q>0&&ITEMS[id]&&canSell(id)&&sellValue(id)>0)
+    .map(([id,q])=>({id,qty:q,it:ITEMS[id],price:sellValue(id)}))
+    .sort((a,b)=>{
+      const ta=_SELL_TYPE_ORDER[a.it.type]??99;
+      const tb=_SELL_TYPE_ORDER[b.it.type]??99;
+      if(ta!==tb)return ta-tb;
+      return a.price-b.price;
+    });
+  let h='<div style="display:flex;gap:6px;padding:4px 0 8px;flex-wrap:wrap;">';
+  h+='<button class="inv-btn" onclick="sellAll();renderWorkersSell()">💰 Sell Resources</button>';
+  h+='</div>';
+  if(!entries.length){
+    h+='<div style="font-size:11px;color:#9a7e50;text-align:center;padding:8px;font-style:italic;">Nothing to sell.</div>';
+    el.innerHTML=h;return;
+  }
+  entries.forEach(({id,qty,it,price})=>{
+    h+='<div style="display:flex;align-items:center;gap:6px;padding:5px 6px;background:#0d0905;border:1px solid #251e14;border-radius:5px;margin-bottom:3px;">';
+    h+='<span style="font-size:16px;">'+it.icon+'</span>';
+    h+='<div style="flex:1;min-width:0;"><div style="font-size:10px;color:#e8d898;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+it.name+'</div>';
+    h+='<div style="font-size:9px;color:#9a7e50;">'+price+' gp each \u00b7 '+qty+' owned</div></div>';
+    h+='<button class="wk-btn" onclick="sellOne(\''+id+'\');renderWorkersSell()">Sell 1</button>';
+    h+='<button class="wk-btn" style="border-color:#f0c040;" onclick="sellStack(\''+id+'\');renderWorkersSell()">All</button>';
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+
+function hireWorker(){
+  const idx=G.workers.length;
+  if(idx>=WORKER_COSTS.length)return;
+  const cost=WORKER_COSTS[idx];
+  if(G.gold<cost){log('\u274c Need '+cost+' gp to hire a worker (have '+G.gold+').');return;}
+  G.gold-=cost;
+  G.workers.push({id:'w'+idx,skill:null,action:null,prog:0,dur:0,active:false});
+  log('\ud83d\udc77 Hired Worker '+(idx+1)+'! Assign them to a task.');
+  updateUI();
+}
+
+function showWorkerAssign(workerIdx){
+  const w=G.workers[workerIdx];if(!w)return;
+  // Build overlay: pick skill, then pick action
+  const existing=document.getElementById('wk-assign-overlay');
+  if(existing)existing.remove();
+  const ov=document.createElement('div');
+  ov.id='wk-assign-overlay';
+  ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(5,3,1,0.88);z-index:9500;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font-family:Cinzel,serif;';
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  const modal=document.createElement('div');
+  modal.style.cssText='background:linear-gradient(135deg,#0f0a04 0%,#1a1308 100%);border:2px solid #f0c040;border-radius:12px;padding:18px 14px 14px;max-width:360px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(240,192,64,.4);';
+  showWorkerSkillPicker(modal,ov,workerIdx);
+  ov.appendChild(modal);
+  document.body.appendChild(ov);
+}
+
+function showWorkerSkillPicker(modal,ov,workerIdx){
+  let h='<div style="color:#f0c040;font-size:14px;font-weight:700;margin-bottom:10px;text-align:center;">Assign Worker '+(workerIdx+1)+'</div>';
+  h+='<div style="color:#9a7e50;font-size:10px;text-align:center;margin-bottom:12px;">Choose a skill</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;">';
+  for(const sk of Object.keys(SKILLS)){
+    const s=SKILLS[sk];
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#1a1308;border:1px solid #3a2c18;border-radius:6px;cursor:pointer;" data-wk-skill="'+sk+'">';
+    h+='<span style="font-size:20px;">'+s.icon+'</span>';
+    h+='<span style="color:#e8d898;font-size:12px;font-weight:700;">'+s.name+'</span>';
+    h+='<span style="color:#9a7e50;font-size:10px;margin-left:auto;">Lvl '+slvl(sk)+'</span>';
+    h+='</div>';
+  }
+  h+='</div>';
+  modal.innerHTML=h;
+  modal.querySelectorAll('[data-wk-skill]').forEach(function(el){
+    el.onclick=function(){showWorkerActionPicker(modal,ov,workerIdx,el.dataset.wkSkill);};
+  });
+}
+
+function showWorkerActionPicker(modal,ov,workerIdx,sk){
+  const actions=ACTIONS[sk]||[];
+  const lvl=slvl(sk);
+  const s=SKILLS[sk];
+  let h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+  h+='<div style="cursor:pointer;color:#9a7e50;font-size:18px;" data-wk-back="1">\u2190</div>';
+  h+='<span style="font-size:20px;">'+s.icon+'</span>';
+  h+='<span style="color:#f0c040;font-size:14px;font-weight:700;">'+s.name+'</span>';
+  h+='</div>';
+  h+='<div style="color:#9a7e50;font-size:10px;text-align:center;margin-bottom:10px;">Choose an action for Worker '+(workerIdx+1)+'</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex:1;">';
+  const eligible=actions.filter(a=>lvl>=a.req);
+  if(!eligible.length){
+    h+='<div style="color:#9a7e50;font-size:11px;text-align:center;padding:16px;">No unlocked actions yet.</div>';
+  }
+  eligible.forEach(function(a){
+    const prodDesc=a.prod?a.prod.map(function(p){return(ITEMS[p.id]?ITEMS[p.id].icon:'')+' '+(ITEMS[p.id]?ITEMS[p.id].name:p.id);}).join(', '):'';
+    const needDesc=a.need?a.need.map(function(c){return(ITEMS[c.id]?ITEMS[c.id].icon:'')+c.n;}).join(' '):'';
+    h+='<div style="display:flex;align-items:center;gap:6px;padding:7px 8px;background:#1a1308;border:1px solid #3a2c18;border-radius:5px;cursor:pointer;" data-wk-action="'+a.id+'">';
+    h+='<span style="font-size:16px;">'+a.icon+'</span>';
+    h+='<div style="flex:1;min-width:0;">';
+    h+='<div style="color:#e8d898;font-size:11px;">'+a.name+'</div>';
+    h+='<div style="color:#9a7e50;font-size:9px;">'+(prodDesc||'')+(needDesc?' \u00b7 needs: '+needDesc:'')+'</div>';
+    h+='</div></div>';
+  });
+  h+='</div>';
+  modal.innerHTML=h;
+  modal.querySelector('[data-wk-back]').onclick=function(){showWorkerSkillPicker(modal,ov,workerIdx);};
+  modal.querySelectorAll('[data-wk-action]').forEach(function(el){
+    el.onclick=function(){
+      const w=G.workers[workerIdx];
+      w.action=el.dataset.wkAction;
+      w.skill=sk;
+      w.prog=0;w.dur=0;w.active=true;
+      ov.remove();
+      const a=findAction(w.action);
+      log('\ud83d\udc77 Worker '+(workerIdx+1)+' assigned to '+s.icon+' '+(a?a.name:w.action)+'.');
+      updateUI();
+    };
+  });
+}
+
 function sellAll(){
   let gold=0,sold=[];
   for(const[id,qty]of Object.entries(G.inv)){
@@ -2174,7 +2692,44 @@ function sellAll(){
   else log('Nothing to sell.');
 }
 
-// ===== Shop helpers =====
+// Sort order for the sell list so related items stay grouped
+const _SELL_TYPE_ORDER={res:0,raw:1,food:2,weapon:3,armour:4,accessory:5,currency:6,tool:7,potion:8};
+
+let _sellListOpen=false;
+function toggleSellList(){
+  _sellListOpen=!_sellListOpen;
+  const el=document.getElementById('inv-sell-list');
+  if(!el)return;
+  el.style.display=_sellListOpen?'block':'none';
+  if(_sellListOpen)renderSellList();
+}
+function renderSellList(){
+  const el=document.getElementById('inv-sell-list');if(!el)return;
+  if(!_sellListOpen){el.innerHTML='';return;}
+  const entries=Object.entries(G.inv)
+    .filter(([id,q])=>q>0&&ITEMS[id]&&canSell(id)&&sellValue(id)>0)
+    .map(([id,q])=>({id,qty:q,it:ITEMS[id],price:sellValue(id)}))
+    .sort((a,b)=>{
+      const ta=_SELL_TYPE_ORDER[a.it.type]??99;
+      const tb=_SELL_TYPE_ORDER[b.it.type]??99;
+      if(ta!==tb)return ta-tb;
+      return a.price-b.price;
+    });
+  if(!entries.length){el.innerHTML='<div style="font-size:11px;color:#9a7e50;text-align:center;padding:8px;font-style:italic;">Nothing to sell.</div>';return;}
+  let h='';
+  entries.forEach(({id,qty,it,price})=>{
+    h+='<div style="display:flex;align-items:center;gap:6px;padding:5px 6px;background:#0d0905;border:1px solid #251e14;border-radius:5px;margin-bottom:3px;">';
+    h+='<span style="font-size:16px;">'+it.icon+'</span>';
+    h+='<div style="flex:1;min-width:0;"><div style="font-size:10px;color:#e8d898;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+it.name+'</div>';
+    h+='<div style="font-size:9px;color:#9a7e50;">'+price+' gp each \u00b7 '+qty+' owned</div></div>';
+    h+='<button class="wk-btn" onclick="sellOne(\''+id+'\');renderSellList()">Sell 1</button>';
+    h+='<button class="wk-btn" style="border-color:#f0c040;" onclick="sellStack(\''+id+'\');renderSellList()">All</button>';
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+
+// ===== Sell helpers =====
 function canSell(id){
   const it=ITEMS[id];if(!it)return false;
   if(it.special)return false;
@@ -2199,7 +2754,6 @@ function sellOne(id){
   G.gold+=v;
   log('<span class="lg">💰 Sold '+it.icon+' '+it.name+' for '+v+' gp.</span>');
   updateUI();
-  renderShopSell();
 }
 
 function sellStack(id){
@@ -2212,22 +2766,8 @@ function sellStack(id){
   G.gold+=total;
   log('<span class="lg">💰 Sold '+it.icon+' '+it.name+' ×'+qty+' for '+total+' gp.</span>');
   updateUI();
-  renderShopSell();
 }
 
-function buy(s){
-  if(G.gold<s.cost){log('❌ Need '+s.cost+' gp (have '+G.gold+').');return;}
-  G.gold-=s.cost;
-  if(s.buff){
-    applyBuff(s.buff, s.mult, s.dur);
-    log('🧪 Drank '+s.icon+' <b>'+s.name+'</b> — '+s.eff);
-  } else if(s.up){
-    G.upgrades[s.up]=true;
-    log('✅ Purchased '+s.name+'! '+s.eff);
-  }
-  document.getElementById('shop-grid').innerHTML='';buildShop();
-  updateUI();
-}
 // CHARACTER ANIMATION
 function anim(){
   const ch=document.getElementById('char');
@@ -2292,6 +2832,11 @@ function anim(){
       al.style.animation='stir 1.2s ease-in-out infinite';
       ar.style.animation='stir 1.2s ease-in-out infinite .6s';
       prop.innerHTML='<div class="prop-tool" style="bottom:30px;right:48px">🧵</div>';
+      break;
+    case 'hunting':
+      al.style.animation='chop .7s ease-in-out infinite';
+      ar.style.animation='chop .7s ease-in-out infinite .35s';
+      prop.innerHTML='<div class="prop-tool" style="bottom:30px;right:50px">🎯</div>';
       break;
   }
 }
@@ -2666,9 +3211,9 @@ function updateCombatStatsPanel() {
         +'<div class="intro-sub">An Idle Adventure</div>'
         +'<div class="intro-text">'
         +'You awaken at the edge of a wild frontier with nothing but your <b>fists</b>.<br><br>'
-        +'Fish, mine, chop, and cook to survive. Smith your first weapon, craft armour, '
-        +'then venture into <b>dungeons</b> to battle creatures and claim rare loot.<br><br>'
-        +'Adventure, crafting, and glory await.'
+        +'Gather resources, cook food, and brew <b>potions</b> to survive. Venture into <b>dungeons</b> to earn weapons and armour. '
+        +'Upgrade your gear in the <b>Forge</b> using skill-crafted materials. Hire <b>workers</b> to gather while you fight.<br><br>'
+        +'Adventure, forging, and glory await.'
         +'</div>'
         +'<button class="intro-btn" onclick="dismissIntro()">Begin Adventure</button>'
         +'</div>';
@@ -2684,12 +3229,12 @@ function updateCombatStatsPanel() {
   load();
   giveStarterSword();
   if(!G.hasSeenIntro){showIntro();}
-      buildSkills();buildTabs();buildShop();
+      buildSkills();buildTabs();
   updateUI();anim();
   setInterval(tick,50);
   requestNotificationPermission();
-  log('🎮 <b>Welcome to RuneForge!</b> You start with nothing but your fists — smith a weapon as soon as you can.');
-  log('💡 Tip: Mine copper + tin → Smith a Bronze Bar → Smith a Bronze Sword. Fish + cook food before entering a Dungeon.');
+  log('🎮 <b>Welcome to RuneForge!</b> Gather resources → Cook food & brew potions → Craft spell scrolls → Enter dungeons for gear → Upgrade gear in the Forge → Hire workers to gather while you fight.');
+  log('💡 Tip: Fish + Cook food for dungeon heals. Brew potions for combat buffs. Craft upgrade materials for the Forge. All gear comes from dungeon drops!');
   if(G.task){
     const sk=findSkill(G.task);
     const a=findAction(G.task);
