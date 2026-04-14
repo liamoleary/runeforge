@@ -1749,24 +1749,6 @@
     else h+='<div style="font-size:26px;">💀</div><div style="color:#e03030;font-size:12px;">Defeated</div>';
     h+='</div></div>';
 
-    // === Action buttons ===
-    h+='<div style="display:flex;gap:4px;margin-bottom:6px;justify-content:center;flex-wrap:wrap;">';
-    if(!done){
-      h+='<button onclick="window._dgAttack(\'slash\')" style="flex:1;max-width:80px;padding:6px;background:#8B4513;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;font-weight:bold;" title="Normal attack">⚔ Slash</button>';
-      // Power button: preview the NEXT stack's stats so players know what they'll get.
-      var _curStacks=s.critStacks||0;
-      var _atMax=_curStacks>=MAX_POWER_STACKS;
-      var _previewProf=getPowerStackProfile(Math.min(MAX_POWER_STACKS,_curStacks+1));
-      var _powerTitle=_atMax
-        ? 'Max focus — slash now to unleash a guaranteed ×5 crit with +60% power bonus damage.'
-        : 'Focus Power: next stack → '+Math.round(_previewProf.critChance*100)+'% crit / ×'+_previewProf.critMult.toFixed(1)+' damage / +'+Math.round(_previewProf.bonusFrac*100)+'% flat bonus. Enemy still hits you this turn.';
-      var _powerLabel='⚡ Power'+(_curStacks>0?' ×'+_curStacks:'');
-      h+='<button onclick="window._dgAttack(\'power\')" style="flex:1;max-width:80px;padding:6px;background:'+(_curStacks>0?'#4a3010':'#251e14')+';border:1px solid '+(_curStacks>0?'#ffd966':'#3a2c18')+';color:'+(_curStacks>0?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="'+_powerTitle+'">'+_powerLabel+'</button>';
-      h+='<button onclick="window._dgFlee()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:#e03030;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Flee and keep collected loot">🏃 Flee</button>';
-    } else {
-      h+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+(s.victory?'🪓 Claim & Leave':s.fled?'🏃 Leave':'Leave Dungeon')+'</button>';
-    }
-    h+='</div>';
 
     // === Food Pouch bar — shows individual food items the player packed for this run ===
     if(!done){
@@ -1962,17 +1944,35 @@
       }
     }
 
-    // Combat log
-    h+='<div style="background:#0b0905;border:1px solid #251e14;border-radius:4px;padding:6px;max-height:120px;overflow-y:auto;font-size:11px;line-height:1.5;" id="dg-log">';
-    var st=Math.max(0,s.combatLog.length-8);
-    for(var i=st;i<s.combatLog.length;i++) h+='<div style="color:#9a7e50;">'+s.combatLog[i]+'</div>';
-    h+='</div>';
-
     var bodyEl=document.getElementById('dg-body');
     if(!bodyEl){var nb=document.createElement('div');nb.id='dg-body';content.appendChild(nb);bodyEl=nb;}
     bodyEl.innerHTML=h;
-    var logEl=document.getElementById('dg-log');
-    if(logEl) logEl.scrollTop=logEl.scrollHeight;
+
+    // === Bottom action bar ===
+    var actionsEl=document.getElementById('dg-actions');
+    if(actionsEl){
+      var ah='';
+      if(!done){
+        var _curStacks=s.critStacks||0;
+        var _atMax=_curStacks>=MAX_POWER_STACKS;
+        var _previewProf=getPowerStackProfile(Math.min(MAX_POWER_STACKS,_curStacks+1));
+        var _powerTitle=_atMax
+          ? 'Max focus — slash now to unleash a guaranteed ×5 crit with +60% power bonus damage.'
+          : 'Focus Power: next stack → '+Math.round(_previewProf.critChance*100)+'% crit / ×'+_previewProf.critMult.toFixed(1)+' damage / +'+Math.round(_previewProf.bonusFrac*100)+'% flat bonus. Enemy still hits you this turn.';
+        var _powerLabel='⚡ Power'+(_curStacks>0?' ×'+_curStacks:'');
+        ah+='<div style="display:flex;gap:8px;align-items:center;">';
+        ah+='<button onclick="window._dgFlee()" style="padding:8px 12px;background:#251e14;border:1px solid #3a2c18;color:#e03030;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Flee and keep collected loot">🏃 Flee</button>';
+        ah+='<button onclick="window._dgAttack(\'power\')" style="padding:8px 12px;background:'+(_curStacks>0?'#4a3010':'#251e14')+';border:1px solid '+(_curStacks>0?'#ffd966':'#3a2c18')+';color:'+(_curStacks>0?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="'+_powerTitle+'">'+_powerLabel+'</button>';
+        ah+='<div style="flex:1;"></div>';
+        ah+='<button onclick="window._dgAttack(\'slash\')" style="padding:8px 18px;background:#8B4513;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;" title="Normal attack">⚔ Slash</button>';
+        ah+='</div>';
+      } else {
+        ah+='<div style="display:flex;justify-content:center;">';
+        ah+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+(s.victory?'🪓 Claim & Leave':s.fled?'🏃 Leave':'Leave Dungeon')+'</button>';
+        ah+='</div>';
+      }
+      actionsEl.innerHTML=ah;
+    }
   }
 
   function createDungeonOverlay(){
@@ -1980,7 +1980,7 @@
     var ov=document.createElement('div');
     ov.id='dungeon-overlay';
     ov.style.cssText='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9998;justify-content:center;align-items:center;padding:12px;box-sizing:border-box;';
-    ov.innerHTML='<div id="dg-content" style="position:relative;background:#13100a;border:2px solid #3a2c18;border-radius:8px;padding:16px;width:360px;max-width:95vw;max-height:90vh;overflow-y:auto;font-family:Cinzel,serif;"><div id="dg-body"></div></div>';
+    ov.innerHTML='<div id="dg-content" style="position:relative;background:#13100a;border:2px solid #3a2c18;border-radius:8px;width:360px;max-width:95vw;max-height:90vh;overflow:hidden;font-family:Cinzel,serif;display:flex;flex-direction:column;"><div id="dg-body" style="flex:1;overflow-y:auto;padding:16px 16px 8px;"></div><div id="dg-actions" style="padding:10px 12px;background:#0f0a04;border-top:1px solid #3a2c18;flex-shrink:0;"></div></div>';
     ov.addEventListener('click',function(e){if(e.target===ov) leaveDungeon();});
     document.body.appendChild(ov);
   }
