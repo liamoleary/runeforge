@@ -143,6 +143,15 @@
       monsters:[{name:'Feral Boar',icon:'🐗'},{name:'Pack Wolf',icon:'🐺'},{name:'Charging Stag',icon:'🦌'},{name:'Cave Bear',icon:'🐻'},{name:'Alpha Predator',icon:'🦁'}],
       loot:[{id:'raw_meat',name:'Raw Meat',icon:'🥩',weight:28,min:2,max:5},{id:'feather',name:'Feathers',icon:'🪶',weight:20,min:2,max:5},{id:'cowhide',name:'Cowhide',icon:'🐄',weight:16,min:1,max:3},{id:'bones',name:'Bones',icon:'🦴',weight:22,min:2,max:5},{id:'venison',name:'Raw Venison',icon:'🦌',weight:10,min:1,max:2},{id:'antler',name:'Antler',icon:'🦌',weight:6,min:1,max:1},{id:'gold_coins',name:'Gold',icon:'🪙',weight:30,min:5,max:20}],
       gear:{helmet:{name:'Primal Headdress',icon:'🦌'},chest:{name:'Beasthide Tunic',icon:'🐻'},boots:{name:'Stalker Boots',icon:'🥾'},jewelry:{name:'Fang Necklace',icon:'🦷'}}
+    },
+    brewing:{
+      name:'Corrupted Fermentation Vaults',icon:'⚗️',
+      desc:'Subterranean vats of toxic brew spawn abominations where fermentation has gone terribly wrong.',
+      flavour:'A sour reek rises from the depths — something has been brewing far too long.',
+      discovery:'The stench reaches you first: something sharp and wrong, like a brew left to ferment for decades. Beneath the distillery floor, a grate leads down into vaulted chambers where the mash still churns — and moves.',
+      monsters:[{name:'Yeast Shambler',icon:'🫧'},{name:'Mash Crawler',icon:'🐛'},{name:'Putrid Hops Sprite',icon:'🌿'},{name:'Fermentation Wraith',icon:'👻'},{name:'Grothak the Over-Fermented',icon:'🧟'}],
+      loot:[{id:'raw_shrimp',name:'Raw Shrimp',icon:'🦐',weight:28,min:2,max:5},{id:'feather',name:'Feathers',icon:'🪶',weight:22,min:2,max:5},{id:'bones',name:'Bones',icon:'🦴',weight:18,min:2,max:4},{id:'copper_ore',name:'Copper Ore',icon:'🟫',weight:14,min:1,max:3},{id:'iron_ore',name:'Iron Ore',icon:'🔵',weight:8,min:1,max:2},{id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}],
+      gear:{helmet:{name:"Alchemist's Circlet",icon:'⚗️'},chest:{name:"Brewer's Vestments",icon:'🧪'},boots:{name:'Distillery Boots',icon:'🥾'},jewelry:{name:'Flask of Eternity',icon:'🫗'}}
     }
   };
 
@@ -226,6 +235,13 @@
       {resist:'magic'},
       {heal:4,healCD:3,resist:'physical'},
       {shield:true,shieldCD:4,shieldTurns:2,poison:2,poisonChance:0.5}
+    ],
+    brewing:[
+      {poison:1,poisonChance:0.5},
+      {poison:1,poisonChance:0.4},
+      {heal:3,healCD:3,poison:1,poisonChance:0.3},
+      {resist:'physical',poison:2,poisonChance:0.45},
+      {shield:true,shieldCD:3,shieldTurns:2,heal:6,healCD:3,poison:3,poisonChance:0.6}
     ]
   };
 
@@ -241,7 +257,8 @@
     fletching:   {def:0.8, hp:1.0, dodge:1.1, atk:1.5, theme:'Precise'},
     crafting:    {def:0.9, hp:1.0, dodge:1.3, atk:0.9, theme:'Silken'},
     magic:       {def:0.7, hp:1.0, dodge:0.9, atk:1.7, theme:'Arcane'},
-    hunting:     {def:0.9, hp:1.1, dodge:1.3, atk:1.0, theme:'Primal'}
+    hunting:     {def:0.9, hp:1.1, dodge:1.3, atk:1.0, theme:'Primal'},
+    brewing:     {def:0.8, hp:1.5, dodge:1.0, atk:0.8, theme:'Alchemical'}
   };
 
   function computeGearStats(slot, markIdx, sk){
@@ -386,7 +403,7 @@
   // Tier stats no longer rely on scaleDungeonMonsters() since the generator scales them.
   function scaleDungeonMonsters(d){ return d; }
 
-  // Generate 12 tier dungeons for each of the 8 skill themes (96 dungeons total).
+  // Generate 12 tier dungeons for each of the 10 skill themes (120 dungeons total).
   var DUNGEONS = generateAllDungeons();
 
   // Currently active dungeon definition (defaults to first woodcutting tier for legacy entry points)
