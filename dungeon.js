@@ -1702,6 +1702,16 @@
     var pHp=Math.max(0,(s.playerHp/s.playerMaxHp)*100);
     var mHp=mon?Math.max(0,(mon.hp/mon.maxhp)*100):0;
 
+    // Determine if a particular attack type is clearly superior for the current monster.
+    // Used to glow the recommended buttons so the player knows which attack is best.
+    var _physGlow=false,_magicGlow=false;
+    if(mon&&mon.hp>0&&!done){
+      if(mon.immune==='physical'||mon.flying) _magicGlow=true;      // physical useless → magic is best
+      else if(mon.immune==='magic') _physGlow=true;                  // magic blocked  → physical is best
+      else if(mon.resist==='physical') _magicGlow=true;             // physical resisted → magic preferred
+      else if(mon.resist==='magic') _physGlow=true;                 // magic resisted  → physical preferred
+    }
+
     var h='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
     h+='<div style="text-align:center;margin-bottom:8px;"><div style="color:#f0c040;font-family:Cinzel,serif;font-size:16px;">'+activeDungeon.icon+' '+activeDungeon.name+'</div><div style="color:#9a7e50;font-size:11px;">Room '+(Math.min(s.room+1,s.monsters.length))+'/'+s.monsters.length+(s.totalGold>0?' | 🪙 '+s.totalGold+' gold':'')+'</div></div>';
 
@@ -1827,9 +1837,12 @@
         if(scq>0){
           ownedTypes++;
           totalScrolls+=scq;
+          var _mShadow=_magicGlow
+            ? 'box-shadow:0 0 14px #c060ff,0 0 6px #a335ee,0 0 24px #a335ee88;border-color:#c060ff;animation:dg-pulse 1s ease-in-out infinite;'
+            : 'box-shadow:0 0 8px '+bclr+'44;';
           slotsHtml+='<button onclick="window._dgAttack(\'magic\',\''+scid+'\')" '
-           +'style="position:relative;background:#1a0e2a;border:2px solid '+bclr+';border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;box-shadow:0 0 8px '+bclr+'44;" '
-           +'title="'+sit.name+' · '+dmgTip+' dmg · '+scq+' owned">'
+           +'style="position:relative;background:#1a0e2a;border:2px solid '+bclr+';border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;'+_mShadow+'" '
+           +'title="'+sit.name+' · '+dmgTip+' dmg · '+scq+' owned'+(_magicGlow?' · ✨ BEST vs this enemy':'')+'">'
            +'<div style="font-size:20px;line-height:1;filter:drop-shadow(0 0 6px '+bclr+');">'+sit.icon+'</div>'
            +'<div style="font-size:8px;color:'+bclr+';font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">'+dmgTip+'</div>'
            +'<span style="position:absolute;bottom:1px;right:3px;font-size:8px;color:#f0c040;font-weight:bold;">'+(scq>=100?'99+':scq)+'</span>'
@@ -1963,11 +1976,16 @@
           ? 'Max focus — slash now to unleash a guaranteed ×5 crit with +60% power bonus damage.'
           : 'Focus Power: next stack → '+Math.round(_previewProf.critChance*100)+'% crit / ×'+_previewProf.critMult.toFixed(1)+' damage / +'+Math.round(_previewProf.bonusFrac*100)+'% flat bonus. Enemy still hits you this turn.';
         var _powerLabel='⚡ Power'+(_curStacks>0?' ×'+_curStacks:'');
+        var _pShadow=_physGlow?'box-shadow:0 0 14px #5ac85a,0 0 24px #5ac85a88;animation:dg-pulse 1s ease-in-out infinite;':'';
         ah+='<div style="display:flex;gap:8px;align-items:center;">';
         ah+='<button onclick="window._dgFlee()" style="padding:8px 12px;background:#251e14;border:1px solid #3a2c18;color:#e03030;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Flee and keep collected loot">🏃 Flee</button>';
-        ah+='<button onclick="window._dgAttack(\'power\')" style="padding:8px 12px;background:'+(_curStacks>0?'#4a3010':'#251e14')+';border:1px solid '+(_curStacks>0?'#ffd966':'#3a2c18')+';color:'+(_curStacks>0?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="'+_powerTitle+'">'+_powerLabel+'</button>';
+        var _pwrBorder=_curStacks>0?'#ffd966':(_physGlow?'#5ac85a':'#3a2c18');
+        var _pwrColor=_curStacks>0?'#ffd966':(_physGlow?'#5ac85a':'#c08020');
+        var _pwrShadow=(_physGlow&&_curStacks===0)?_pShadow:'';
+        ah+='<button onclick="window._dgAttack(\'power\')" style="padding:8px 12px;background:'+(_curStacks>0?'#4a3010':'#251e14')+';border:1px solid '+_pwrBorder+';color:'+_pwrColor+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;'+_pwrShadow+'" title="'+_powerTitle+(_physGlow?' · ⚔ BEST vs this enemy':'')+'">'+_powerLabel+'</button>';
         ah+='<div style="flex:1;"></div>';
-        ah+='<button onclick="window._dgAttack(\'slash\')" style="padding:8px 18px;background:#8B4513;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;" title="Normal attack">⚔ Slash</button>';
+        var _slashBorder=_physGlow?'#5ac85a':'#f0c040';
+        ah+='<button onclick="window._dgAttack(\'slash\')" style="padding:8px 18px;background:#8B4513;border:1px solid '+_slashBorder+';color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;'+_pShadow+'" title="Normal attack'+(_physGlow?' · ⚔ BEST vs this enemy':'')+'">⚔ Slash</button>';
         ah+='</div>';
       } else {
         ah+='<div style="display:flex;justify-content:center;">';
@@ -1980,6 +1998,13 @@
 
   function createDungeonOverlay(){
     if(document.getElementById('dungeon-overlay')) return;
+    // Inject pulse keyframe for attack-recommendation glow (once per page load).
+    if(!document.getElementById('dg-glow-style')){
+      var gs=document.createElement('style');
+      gs.id='dg-glow-style';
+      gs.textContent='@keyframes dg-pulse{0%,100%{filter:brightness(1.05)}50%{filter:brightness(1.45)}}';
+      document.head.appendChild(gs);
+    }
     var ov=document.createElement('div');
     ov.id='dungeon-overlay';
     ov.style.cssText='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9998;justify-content:center;align-items:center;padding:12px;box-sizing:border-box;';
