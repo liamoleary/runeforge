@@ -1742,14 +1742,12 @@
     }
     h+='</div>';
 
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">';
-    // Player column (with poison indicator if active)
+    // Player HP data kept here for use in the bottom player strip (dg-actions)
     var poisonBadge = (s.playerPoison>0 && s.playerPoisonTurns>0)
-      ? '<div style="color:#9b59b6;font-size:9px;margin-top:2px;">🧪 Poisoned (-'+s.playerPoison+'/turn · '+s.playerPoisonTurns+'t)</div>'
+      ? '<span style="color:#9b59b6;font-size:9px;">🧪 -'+s.playerPoison+'/turn · '+s.playerPoisonTurns+'t</span>'
       : '';
-    h+='<div style="flex:1;text-align:center;"><div style="font-size:26px;">🧍</div><div style="color:#e8d898;font-size:12px;">You</div><div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;"><div style="height:100%;width:'+pHp+'%;background:'+(pHp>30?'#5ac85a':'#e03030')+';transition:width 0.3s;"></div></div><div style="color:#9a7e50;font-size:10px;">'+s.playerHp+'/'+s.playerMaxHp+' HP</div>'+poisonBadge+'</div>';
-    h+='<div style="color:#f0c040;font-size:16px;font-family:Cinzel,serif;">VS</div>';
-    h+='<div style="flex:1;text-align:center;">';
+    // Monster panel — centred and full-width now that the player HP strip is at the bottom
+    h+='<div style="text-align:center;margin-bottom:12px;">';
     if(mon&&mon.hp>0) {
       // Build status badges for the monster
       var badges = [];
@@ -1761,13 +1759,17 @@
       if (mon.resist==='physical'&&mon.immune!=='physical') badges.push('<span style="color:#88ddff">⚔ Phys resist</span>');
       if (mon.heal)            badges.push('<span style="color:#5ac85a">💚 Heals</span>');
       if (mon.poison)          badges.push('<span style="color:#9b59b6">🧪 Poison</span>');
-      var badgesHtml = badges.length ? '<div style="font-size:8px;margin-top:2px;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">'+badges.join(' ')+'</div>' : '';
-      h+='<div style="font-size:26px;">'+mon.icon+'</div><div style="color:#e8d898;font-size:12px;">'+mon.name+'</div><div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;"><div style="height:100%;width:'+mHp+'%;background:#e03030;transition:width 0.3s;"></div></div><div style="color:#9a7e50;font-size:10px;">'+mon.hp+'/'+mon.maxhp+' HP</div>'+badgesHtml;
+      var badgesHtml = badges.length ? '<div style="font-size:9px;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">'+badges.join(' ')+'</div>' : '';
+      h+='<div style="font-size:38px;line-height:1;">'+mon.icon+'</div>'
+       +'<div style="color:#e8d898;font-size:14px;font-weight:bold;margin:3px 0;">'+mon.name+'</div>'
+       +'<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;margin:4px 8px;">'
+       +'<div style="height:100%;width:'+mHp+'%;background:#e03030;transition:width 0.3s;"></div></div>'
+       +'<div style="color:#9a7e50;font-size:10px;">'+mon.hp+'/'+mon.maxhp+' HP</div>'+badgesHtml;
     }
-    else if(s.victory) h+='<div style="font-size:26px;">🪓</div><div style="color:#f0c040;font-size:12px;">Victory!</div>';
-    else if(s.fled) h+='<div style="font-size:26px;">🏃</div><div style="color:#ffd966;font-size:12px;">Escaped!</div>';
-    else h+='<div style="font-size:26px;">💀</div><div style="color:#e03030;font-size:12px;">Defeated</div>';
-    h+='</div></div>';
+    else if(s.victory) h+='<div style="font-size:38px;">🪓</div><div style="color:#f0c040;font-size:14px;font-weight:bold;">Victory!</div>';
+    else if(s.fled)    h+='<div style="font-size:38px;">🏃</div><div style="color:#ffd966;font-size:14px;">Escaped!</div>';
+    else               h+='<div style="font-size:38px;">💀</div><div style="color:#e03030;font-size:14px;">Defeated</div>';
+    h+='</div>';
 
     // === Status warning banners — shown prominently when player needs immediate action ===
     if(!done){
@@ -2005,6 +2007,18 @@
     var actionsEl=document.getElementById('dg-actions');
     if(actionsEl){
       var ah='';
+      // Player avatar + HP bar — always shown at the very bottom of the screen
+      var _hpBarColor=pHp>30?'#5ac85a':'#e03030';
+      ah+='<div style="display:flex;align-items:center;gap:8px;padding-bottom:8px;margin-bottom:6px;border-bottom:1px solid #251e14;">';
+      ah+='<span style="font-size:24px;line-height:1;flex-shrink:0;">🧍</span>';
+      ah+='<div style="flex:1;">';
+      ah+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:8px;overflow:hidden;">'
+       +'<div style="height:100%;width:'+pHp+'%;background:'+_hpBarColor+';transition:width 0.3s;"></div></div>';
+      ah+='<div style="display:flex;align-items:center;gap:6px;margin-top:2px;">'
+       +'<span style="color:#9a7e50;font-size:9px;">'+s.playerHp+'/'+s.playerMaxHp+' HP</span>'
+       +poisonBadge+'</div>';
+      ah+='</div>';
+      ah+='</div>';
       if(!done){
         var _curStacks=s.critStacks||0;
         var _atMax=_curStacks>=MAX_POWER_STACKS;
