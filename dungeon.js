@@ -2035,7 +2035,8 @@
       var id = sk + '_t' + t;
       var d = DUNGEONS[id]; if(!d) continue;
       var req = DUNGEON_UNLOCK_LEVELS[id] || 3;
-      var unlocked = (lvl >= req);
+      var prevBeaten = (t === 1) || (typeof G !== 'undefined' && G.dungeonRewards && G.dungeonRewards[sk + '_t' + (t - 1)]);
+      var unlocked = (lvl >= req) && prevBeaten;
       var claimed = (typeof G!=='undefined' && G.dungeonRewards && G.dungeonRewards[id]);
       var rw = d.reward || {};
       var dropPct = rw.chance != null ? rw.chance : 50;
@@ -2046,7 +2047,9 @@
       var tierLabel = rw.tierLabel || (t<=4?'Tier 1 Gear':t<=8?'Tier 2 Gear':'Tier 3 Gear');
       var gearLine = '<div style="color:#e8d898;font-size:10px;margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span style="font-size:14px;">⚔</span><span style="color:'+rwClr+';font-weight:700;">'+tierLabel+'</span>'+(owned>0?'<span style="color:#5ac85a;font-size:9px;">×'+owned+'</span>':'')+'</div>';
       var statsLine = rw.eff ? '<div style="color:#5a4830;font-size:9px;margin-top:1px;">'+rw.eff+'</div>' : '';
-      var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:3px;display:flex;justify-content:space-between;gap:6px;"><span style="color:#ffd966;">⚔ '+dropPct+'% gear drop</span><span style="color:'+(unlocked?'#5ac85a':'#9a7e50')+';">'+(unlocked?'✓ Lvl '+req:'🔒 Lvl '+req)+'</span></div>';
+      var _lockHint = unlocked ? ('✓ Lvl '+req) : (!prevBeaten && lvl>=req ? ('🔒 Beat T'+(t-1)) : ('🔒 Lvl '+req));
+      var _lockClr = unlocked ? '#5ac85a' : '#9a7e50';
+      var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:3px;display:flex;justify-content:space-between;gap:6px;"><span style="color:#ffd966;">⚔ '+dropPct+'% gear drop</span><span style="color:'+_lockClr+';">'+_lockHint+'</span></div>';
       row.innerHTML =
         '<div style="min-width:34px;height:34px;border-radius:5px;background:#0b0604;border:1px solid #3a2c18;display:flex;align-items:center;justify-content:center;font-size:16px;color:#f0c040;font-weight:700;">'+t+'</div>' +
         '<div style="flex:1;min-width:0;">' +
@@ -2118,6 +2121,28 @@
       bodyL.innerHTML=hLock;
       document.getElementById('dungeon-overlay').style.display='flex';
       return;
+    }
+    // Previous-tier beat check: tier T > 1 requires tier T-1 to have been cleared
+    var _tierMatch = activeDungeon.id && activeDungeon.id.match(/_t(\d+)$/);
+    var _tierNum = _tierMatch ? parseInt(_tierMatch[1]) : 1;
+    if(_tierNum > 1){
+      var _prevId = activeDungeon.id.replace(/_t\d+$/, '_t' + (_tierNum - 1));
+      var _prevBeaten = typeof G !== 'undefined' && G.dungeonRewards && G.dungeonRewards[_prevId];
+      if(!_prevBeaten){
+        var hPrev='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
+        hPrev+='<div style="text-align:center;padding:20px 8px;">';
+        hPrev+='<div style="font-size:48px;margin-bottom:10px;filter:grayscale(1);opacity:0.5;">'+activeDungeon.icon+'</div>';
+        hPrev+='<div style="font-size:38px;margin-bottom:8px;">🔒</div>';
+        hPrev+='<div style="color:#f0c040;font-family:Cinzel,serif;font-size:16px;margin-bottom:6px;">Dungeon Locked</div>';
+        hPrev+='<div style="color:#9a7e50;font-size:12px;margin-bottom:14px;line-height:1.4;">You must defeat <b style="color:#e8d898;">Tier '+(_tierNum-1)+'</b> before entering this dungeon.</div>';
+        hPrev+='<div style="color:#5a4830;font-size:10px;line-height:1.4;">Complete the previous tier to unlock Tier '+_tierNum+'.</div>';
+        hPrev+='</div>';
+        var bodyPrev=document.getElementById('dg-body');
+        if(!bodyPrev){var nbPrev=document.createElement('div');nbPrev.id='dg-body';content.appendChild(nbPrev);bodyPrev=nbPrev;}
+        bodyPrev.innerHTML=hPrev;
+        document.getElementById('dungeon-overlay').style.display='flex';
+        return;
+      }
     }
     var check=canEnterDungeon();
     // Prefer the new multi-slot layout; fall back to the legacy single-weapon/armour fields.
