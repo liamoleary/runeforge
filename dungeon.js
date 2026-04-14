@@ -1769,6 +1769,21 @@
     else h+='<div style="font-size:26px;">💀</div><div style="color:#e03030;font-size:12px;">Defeated</div>';
     h+='</div></div>';
 
+    // === Status warning banners — shown prominently when player needs immediate action ===
+    if(!done){
+      var _isPoisoned=(s.playerPoison>0&&s.playerPoisonTurns>0);
+      var _isLowHp=(s.playerHp/s.playerMaxHp<0.2);
+      if(_isPoisoned){
+        h+='<div style="background:#2a0a3a;border:1px solid #9b59b6;border-radius:6px;padding:6px 10px;margin-bottom:8px;text-align:center;animation:dg-pulse 1s ease-in-out infinite;">'
+         +'<span style="color:#c060ff;font-size:11px;font-family:Cinzel,serif;font-weight:bold;">🧪 POISONED — use anti-poison food or a cure potion!</span>'
+         +'</div>';
+      }
+      if(_isLowHp){
+        h+='<div style="background:#3a0a0a;border:1px solid #e03030;border-radius:6px;padding:6px 10px;margin-bottom:8px;text-align:center;animation:dg-pulse 1s ease-in-out infinite;">'
+         +'<span style="color:#ff5555;font-size:11px;font-family:Cinzel,serif;font-weight:bold;">⚠️ CRITICAL HP — eat food or use a healing potion!</span>'
+         +'</div>';
+      }
+    }
 
     // === Food Pouch bar — shows individual food items the player packed for this run ===
     if(!done){
@@ -1790,11 +1805,22 @@
             if(_bp.regen) _efParts.push('+'+_bp.regen+'/turn ('+_bp.turns+'t)');
             if(_bp.poisonImmune) _efParts.push('🌿 Anti-poison ('+_bp.poisonImmune+'t)');
           }
+          // Glow logic: antidote food glows purple when poisoned, healing food glows red when HP is critical
+          var _curesPoison=(_pf.buff&&_pf.buff.poisonImmune);
+          var _healsHp=(_pf.hp>0);
           var _brdClr=_hasBuff?'#ffd966':'#5ac85a';
           var _effClr=_hasBuff?'#ffd966':'#5ac85a';
+          var _foodGlow='';
+          if(_isPoisoned&&_curesPoison){
+            _brdClr='#c060ff'; _effClr='#c060ff';
+            _foodGlow='box-shadow:0 0 14px #9b59b6,0 0 24px #9b59b688;animation:dg-pulse 1s ease-in-out infinite;';
+          } else if(_isLowHp&&_healsHp){
+            _brdClr='#e03030';
+            _foodGlow='box-shadow:0 0 14px #e03030,0 0 24px #e0303088;animation:dg-pulse 1s ease-in-out infinite;';
+          }
           h+='<button onclick="window._dgEat(\''+_pf.id+'\')" '
-           +'style="display:flex;align-items:center;gap:6px;width:100%;background:#1a1308;border:2px solid '+_brdClr+';border-radius:6px;padding:6px 8px;cursor:pointer;margin-bottom:4px;text-align:left;" '
-           +'title="Click to eat">'
+           +'style="display:flex;align-items:center;gap:6px;width:100%;background:#1a1308;border:2px solid '+_brdClr+';border-radius:6px;padding:6px 8px;cursor:pointer;margin-bottom:4px;text-align:left;'+_foodGlow+'" '
+           +'title="Click to eat'+(_isPoisoned&&_curesPoison?' · 🌿 CURES POISON':'')+(_isLowHp&&_healsHp?' · ⚠️ USE NOW':'')+'">'
            +'<span style="font-size:20px;flex-shrink:0;">'+_pf.icon+'</span>'
            +'<div style="flex:1;min-width:0;">'
            +'<div style="font-size:10px;color:#e8d898;font-weight:bold;font-family:Cinzel,serif;">'+_pf.name+'</div>'
@@ -1885,11 +1911,22 @@
           var pt=potions[pi2];
           var ptIt=pt.it||ITEMS[pt.id];
           var ptDesc=ptIt.potionType==='buff'?'+'+ptIt.value+' '+ptIt.stat.toUpperCase()+' ('+ptIt.turns+'t)':ptIt.potionType==='instant'?'+'+ptIt.hp+' HP':'Cure';
+          // Glow cure potions when poisoned; glow instant-heal potions when HP is critical
+          var _ptBorder='#20B2AA',_ptGlow='',_ptHint='';
+          if(_isPoisoned&&ptIt.potionType==='cure'){
+            _ptBorder='#c060ff';
+            _ptGlow='box-shadow:0 0 14px #9b59b6,0 0 24px #9b59b688;animation:dg-pulse 1s ease-in-out infinite;';
+            _ptHint=' · 🌿 CURES POISON';
+          } else if(_isLowHp&&ptIt.potionType==='instant'){
+            _ptBorder='#e03030';
+            _ptGlow='box-shadow:0 0 14px #e03030,0 0 24px #e0303088;animation:dg-pulse 1s ease-in-out infinite;';
+            _ptHint=' · ⚠️ USE NOW';
+          }
           h+='<button onclick="window._dgPotion(\''+pt.id+'\')" '
-           +'style="position:relative;background:#1a1308;border:2px solid #20B2AA;border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;" '
-           +'title="'+pt.name+' · '+ptDesc+' · '+pt.qty+' in pouch">'
+           +'style="position:relative;background:#1a1308;border:2px solid '+_ptBorder+';border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;'+_ptGlow+'" '
+           +'title="'+pt.name+' · '+ptDesc+' · '+pt.qty+' in pouch'+_ptHint+'">'
            +'<div style="font-size:20px;line-height:1;">'+pt.icon+'</div>'
-           +'<div style="font-size:8px;color:#20B2AA;font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">'+ptDesc+'</div>'
+           +'<div style="font-size:8px;color:'+_ptBorder+';font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">'+ptDesc+'</div>'
            +'<span style="position:absolute;bottom:1px;right:3px;font-size:8px;color:#5ac85a;font-weight:bold;">'+pt.qty+'</span>'
            +'</button>';
         }
