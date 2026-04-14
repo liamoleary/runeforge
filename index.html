@@ -61,13 +61,16 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 #dungeon-main-btn-ico{font-size:26px;line-height:1;filter:drop-shadow(0 0 8px rgba(240,192,64,.7))}
 #skills-grid:not(.dungeons-mode) .sk-back{pointer-events:none}
 #skills-grid.dungeons-mode .sk-front{pointer-events:none}
-#skills-panel #pages{display:none;padding:4px;animation:craftViewFadeIn .35s ease-out}
+#skills-panel{position:relative}
+#skills-panel #pages{display:none;padding:4px;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:craftViewFadeIn .28s ease-out}
+#skills-panel #pages::-webkit-scrollbar{width:4px}
+#skills-panel #pages::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
 #skills-panel.crafting-mode #skills-grid{display:none}
 #skills-panel.crafting-mode #pages{display:block}
 #skills-panel-hdr{display:flex;align-items:center;justify-content:space-between}
 #skills-panel-title{font-family:'Cinzel',serif}
 #skills-panel.crafting-mode #skills-panel-title{color:var(--gold)}
-@keyframes craftViewFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes craftViewFadeIn{from{opacity:0}to{opacity:1}}
 .sk-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .sk-icon{font-size:20px;width:26px;text-align:center;line-height:1}
 .sk-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text2);letter-spacing:.5px}
@@ -2067,24 +2070,36 @@ function openCraftingView(sk){
   if(!panel)return;
   // Dungeons-mode and crafting-mode are mutually exclusive
   if(grid&&grid.classList.contains('dungeons-mode'))grid.classList.remove('dungeons-mode');
+  // Capture the skills grid's exact height *before* hiding it so the
+  // crafting view can occupy the identical footprint. The rest of the
+  // dashboard (main CTA, panels below) must not shift.
+  const pages=document.getElementById('pages');
+  if(grid&&pages){
+    const gridH=grid.offsetHeight;
+    if(gridH>0){
+      pages.style.height=gridH+'px';
+      pages.style.maxHeight=gridH+'px';
+    }
+  }
   switchTab(sk);
   panel.classList.add('crafting-mode');
+  // Reset any prior scroll offset so the player starts at the top of the list.
+  if(pages) pages.scrollTop=0;
   const t=document.getElementById('skills-panel-title');
   const info=SKILLS[sk];
   if(t&&info)t.textContent=info.icon+' '+info.name;
   updateDungeonMainBtn();
-  // Scroll the panel into view so the player sees the new crafting list.
-  if(typeof panel.scrollIntoView==='function'){
-    const strip=document.getElementById('active-task-strip');
-    panel.style.scrollMarginTop=(strip?(strip.offsetHeight+4):56)+'px';
-    panel.scrollIntoView({behavior:'smooth',block:'start'});
-  }
 }
 
 function closeCraftingView(){
   const panel=document.getElementById('skills-panel');
   if(!panel)return;
   panel.classList.remove('crafting-mode');
+  const pages=document.getElementById('pages');
+  if(pages){
+    pages.style.height='';
+    pages.style.maxHeight='';
+  }
   const t=document.getElementById('skills-panel-title');
   if(t)t.textContent='Skills';
   updateDungeonMainBtn();
