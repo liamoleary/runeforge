@@ -2050,9 +2050,15 @@
       var tierLabel = rw.tierLabel || (t<=4?'Tier 1 Gear':t<=8?'Tier 2 Gear':'Tier 3 Gear');
       var gearLine = '<div style="color:#e8d898;font-size:10px;margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span style="font-size:14px;">⚔</span><span style="color:'+rwClr+';font-weight:700;">'+tierLabel+'</span>'+(owned>0?'<span style="color:#5ac85a;font-size:9px;">×'+owned+'</span>':'')+'</div>';
       var statsLine = rw.eff ? '<div style="color:#5a4830;font-size:9px;margin-top:1px;">'+rw.eff+'</div>' : '';
-      var _lockHint = unlocked ? ('✓ Lvl '+req) : (!prevBeaten && lvl>=req ? ('🔒 Beat T'+(t-1)) : ('🔒 Lvl '+req));
-      var _lockClr = unlocked ? '#5ac85a' : '#9a7e50';
-      var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:3px;display:flex;justify-content:space-between;gap:6px;"><span style="color:#ffd966;">⚔ '+dropPct+'% gear drop</span><span style="color:'+_lockClr+';">'+_lockHint+'</span></div>';
+      var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:2px;"><span style="color:#ffd966;">⚔ '+dropPct+'% gear drop</span></div>';
+      // Show both unlock requirements with individual pass/fail indicators
+      var lvlMet = lvl >= req;
+      var reqsHtml = '<span style="color:'+(lvlMet?'#5ac85a':'#e03030')+';font-size:9px;">'+(lvlMet?'✓':'🔒')+' Skill Lv.'+req+'</span>';
+      if(t > 1){
+        reqsHtml += '<span style="color:#3a2c18;font-size:9px;"> · </span>';
+        reqsHtml += '<span style="color:'+(prevBeaten?'#5ac85a':'#e03030')+';font-size:9px;">'+(prevBeaten?'✓ T'+(t-1)+' cleared':'🔒 Beat T'+(t-1)+' first')+'</span>';
+      }
+      var reqsLine = '<div style="margin-top:3px;display:flex;align-items:center;flex-wrap:wrap;gap:2px;">'+reqsHtml+'</div>';
       row.innerHTML =
         '<div style="min-width:34px;height:34px;border-radius:5px;background:#0b0604;border:1px solid #3a2c18;display:flex;align-items:center;justify-content:center;font-size:16px;color:#f0c040;font-weight:700;">'+t+'</div>' +
         '<div style="flex:1;min-width:0;">' +
@@ -2060,6 +2066,7 @@
           gearLine +
           statsLine +
           chanceLine +
+          reqsLine +
         '</div>';
       if(unlocked){
         (function(dungeonId){
