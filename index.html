@@ -17,7 +17,10 @@
 button,a,[onclick]{touch-action:manipulation}
 html,body{height:100%;overflow-x:hidden}
 body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,serif;font-size:15px}
-#hdr{position:sticky;top:0;z-index:200;background:linear-gradient(180deg,#140e04,#0e0a03);border-bottom:2px solid var(--bdr2);padding:6px 12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 18px rgba(180,120,0,.35)}
+#hdr{position:sticky;top:0;z-index:200;background:linear-gradient(180deg,#140e04,#0e0a03);border-bottom:2px solid var(--bdr2);padding:0;display:flex;flex-direction:column;align-items:stretch;box-shadow:0 2px 18px rgba(180,120,0,.35)}
+#hdr-top{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;}
+#active-task-strip{padding:4px 12px 6px;border-top:1px solid var(--bdr);background:rgba(0,0,0,.15);display:flex;flex-direction:column;gap:3px;}
+#active-task-strip-row{display:flex;align-items:center;gap:8px;}
 #logo{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--gold);letter-spacing:3px;text-shadow:0 0 14px rgba(240,192,64,.5)}
 #hdr-right{display:flex;align-items:center;gap:10px}
 .hpill{background:var(--bg2);border:1px solid var(--bdr);border-radius:20px;padding:3px 9px;font-size:12px;display:flex;align-items:center;gap:5px}
@@ -62,9 +65,7 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .xp-track{background:#0a0804;height:5px;border-radius:3px;overflow:hidden}
 .xp-fill{height:100%;border-radius:3px;transition:width .4s ease}
 .xp-label{font-size:9px;color:var(--text3);margin-top:2px}
-#act-panel .panel-hdr{}
-#task-box{margin:10px;background:var(--bg2);border:1px solid var(--bdr);border-radius:8px;padding:11px}
-#task-title{font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:7px}
+#task-title{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);margin-bottom:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #task-prog-wrap{background:#0a0804;height:9px;border-radius:5px;overflow:hidden}
 #task-prog{height:100%;border-radius:5px;transition:width .08s linear;background:linear-gradient(90deg,var(--gold),#ff9900)}
 #task-sub{font-size:11px;color:var(--text3);margin-top:4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
@@ -528,22 +529,26 @@ body.shake-hit #stage{animation:screenShake .35s ease}
 </head>
 <body>
 <div id="hdr">
-  <div id="logo">⚔ RuneForge</div>
-  <div id="hdr-right">
-    <div class="hpill">❤️ <div class="hpbar"><div class="hpbar-fill" id="hm"></div></div></div>
-    <div class="hpill" id="gld">🪙 0</div>
+  <div id="hdr-top">
+    <div id="logo">⚔ RuneForge</div>
+    <div id="hdr-right">
+      <div class="hpill">❤️ <div class="hpbar"><div class="hpbar-fill" id="hm"></div></div></div>
+      <div class="hpill" id="gld">🪙 0</div>
+    </div>
+  </div>
+  <div id="active-task-strip">
+    <div id="active-task-strip-row">
+      <div id="task-title">Idle — choose a skill below</div>
+      <button id="task-stop" onclick="stopTask()">■ Stop</button>
+    </div>
+    <div id="task-prog-wrap"><div id="task-prog"></div></div>
+    <div id="task-sub"><span id="task-xp-lbl"></span><span id="task-dur-lbl"></span></div>
   </div>
 </div>
 <div id="main">
   <div class="panel"><div class="panel-hdr">Skills</div><div id="skills-grid"></div></div>
 
   <div class="panel" id="act-panel">
-    <div class="panel-hdr"><span>Active Task</span><button id="task-stop" onclick="stopTask()">■ Stop</button></div>
-    <div id="task-box">
-      <div id="task-title">Idle — choose a skill and action below</div>
-      <div id="task-prog-wrap"><div id="task-prog"></div></div>
-      <div id="task-sub"><span id="task-xp-lbl"></span><span id="task-dur-lbl"></span></div>
-    </div>
     <div id="pages"></div>
   </div>
   <div class="panel">
@@ -1397,7 +1402,7 @@ function startTask(id){
 function stopTask(){
   clearCombatLog();
   G.task=null;G.prog=0;G.critStacks=0;
-  document.getElementById('task-title').textContent='Idle — choose a skill and action below';
+  document.getElementById('task-title').textContent='Idle — choose a skill below';
   document.getElementById('task-prog').style.width='0%';
   document.getElementById('task-xp-lbl').textContent='';
   document.getElementById('task-dur-lbl').textContent='';
