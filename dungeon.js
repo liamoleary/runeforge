@@ -360,7 +360,7 @@
       registerGearItem(gearItemId, gearName, gearBase.icon, slot, stats, markIdx);
 
       // Gear drop chance scales with tier: T1=40%, T12=70%.
-      var gearDropChance = Math.round(40 + 30 * (tier - 1) / 11);
+      var gearDropChance = Math.round(50 - 40 * (tier - 1) / 11);
       // Tier label for UI — don't reveal the specific item
       var tierLabel = tier <= 4 ? 'Tier 1 Gear' : tier <= 8 ? 'Tier 2 Gear' : 'Tier 3 Gear';
 
@@ -1329,7 +1329,12 @@
       }
     }
     if (dungeonState.playerHp <= 0){
-      dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
+      if(activeDungeon&&activeDungeon.isEncounter){
+        dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated and crawl away barely alive!</span>');
+        if(typeof window!=='undefined')window._activeEncounterData=null;
+      } else {
+        dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
+      }
       dungeonState.lootCollected = [];
       dungeonState.totalGold = 0;
       dungeonState.totalXp = 0;
@@ -1518,49 +1523,95 @@
       if(dungeonState.room+1>=dungeonState.monsters.length){
         dungeonState.room++;
         dungeonState.victory=true;
-        var rwd=activeDungeon.reward||{id:'gold_coins',name:'Gold',icon:'🪙',eff:'',chance:100};
-        if(typeof G!=='undefined'&&!G.dungeonRewards)G.dungeonRewards={};
-        var firstClear=(typeof G!=='undefined')&&!G.dungeonRewards[activeDungeon.id];
-        dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The dungeon falls silent. You are victorious!</span>');
 
-        // Gear drop roll — chance scales with tier (T1=40%, T12=70%).
-        var dropChance = (rwd.chance!=null) ? rwd.chance : 50;
-        var gotGearDrop = (Math.random()*100) < dropChance;
-        if(gotGearDrop){
-          dungeonState.combatLog.push('<span style="color:#ff8000;font-weight:bold">⚔ '+rwd.icon+' '+rwd.name+' obtained!</span>');
+        if(activeDungeon.isEncounter){
+          // === ENCOUNTER VICTORY — skip gear drop / dungeon tracking ===
+          var encD=activeDungeon.encounterData;
+          var encTmpl=encD?encD.tmpl:null;
+          dungeonState.combatLog.push('<span style="color:#5de05d;font-weight:bold">🏆 You defeated the '+activeDungeon.icon+' '+activeDungeon.name+'!</span>');
+          if(typeof G!=='undefined'&&encTmpl){
+            if(!G.inv)G.inv={};
+            var encLootLines=[];
+            // Drop 1-2 resource items
+            var encNumDrops=1+Math.floor(Math.random()*2);
+            var encSeen={};
+            for(var _edi=0;_edi<encNumDrops;_edi++){
+              var encDrop=_encWeightedDrop(encTmpl.drops);
+              encSeen[encDrop.id]=(encSeen[encDrop.id]||0)+encDrop.n;
+            }
+            for(var _edk in encSeen){
+              if(typeof give==='function')give(_edk,encSeen[_edk]);
+              var _edItem=ITEMS[_edk];
+              var _edLabel=(_edItem?_edItem.icon+' '+_edItem.name:_edk)+' ×'+encSeen[_edk];
+              encLootLines.push(_edLabel);
+              dungeonState.combatLog.push('<span style="color:#8ddf8d;">+ '+_edLabel+'</span>');
+            }
+            // Rare drop
+            if(encTmpl.rareDrop&&Math.random()<encTmpl.rareDrop.chance){
+              var _erItem=ITEMS[encTmpl.rareDrop.id];
+              if(typeof give==='function')give(encTmpl.rareDrop.id,1);
+              var _erLabel='✨ '+(_erItem?_erItem.icon+' '+_erItem.name:encTmpl.rareDrop.id);
+              encLootLines.push(_erLabel);
+              dungeonState.combatLog.push('<span style="color:#ffd966;font-weight:bold;">'+_erLabel+' — RARE DROP!</span>');
+            }
+            G.gold=(G.gold||0)+dungeonState.totalGold;
+            if(typeof save==='function')save();
+            if(typeof updateUI==='function')updateUI();
+            if(typeof renderInv==='function')renderInv();
+            if(typeof log==='function'){
+              var encMsg='⚔ Defeated '+activeDungeon.icon+' '+activeDungeon.name+'!';
+              if(encLootLines.length)encMsg+=' Got: '+encLootLines.join(', ');
+              log(encMsg);
+            }
+            // Mark encounter resolved so leaveDungeon flee-handler skips the fled log
+            if(typeof window!=='undefined')window._activeEncounterData=null;
+          }
         } else {
-          dungeonState.combatLog.push('<span style="color:#9a7e50">No gear this run ('+dropChance+'%). Keep going!</span>');
-        }
+          // === DUNGEON VICTORY ===
+          var rwd=activeDungeon.reward||{id:'gold_coins',name:'Gold',icon:'🪙',eff:'',chance:100};
+          if(typeof G!=='undefined'&&!G.dungeonRewards)G.dungeonRewards={};
+          var firstClear=(typeof G!=='undefined')&&!G.dungeonRewards[activeDungeon.id];
+          dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The dungeon falls silent. You are victorious!</span>');
 
-        var gotLevelPotion=Math.random()<DG.levelPotionChance;
-        if(gotLevelPotion) dungeonState.combatLog.push('<span style="color:#9b59b6;font-weight:bold">🧪 EXTREMELY RARE! Level Potion dropped!</span>');
-
-        if(typeof G!=='undefined'){
-          if(!G.inv) G.inv={};
+          // Gear drop roll — chance decreases with tier (T1=50%, T12=10%).
+          var dropChance = (rwd.chance!=null) ? rwd.chance : 50;
+          var gotGearDrop = (Math.random()*100) < dropChance;
           if(gotGearDrop){
-            G.inv[rwd.id]=(G.inv[rwd.id]||0)+1;
+            dungeonState.combatLog.push('<span style="color:#ff8000;font-weight:bold">⚔ '+rwd.icon+' '+rwd.name+' obtained!</span>');
+          } else {
+            dungeonState.combatLog.push('<span style="color:#9a7e50">No gear this run ('+dropChance+'%). Keep going!</span>');
           }
-          if(firstClear){
-            G.dungeonRewards[activeDungeon.id]=true;
-          }
-          if(gotLevelPotion) G.inv.level_potion=(G.inv.level_potion||0)+1;
-          G.gold=(G.gold||0)+dungeonState.totalGold;
-          dungeonState.lootCollected.forEach(function(d){
-            if(d.id==='gold_coins'){G.gold=(G.gold||0)+d.qty;}
-            else{G.inv[d.id]=(G.inv[d.id]||0)+d.qty;}
-          });
-          if(typeof save==='function') save();
-          if(typeof updateUI==='function') updateUI();
-          if(typeof renderInv==='function') renderInv();
-          if(typeof log==='function'){
-            var msg='<b>'+activeDungeon.name+' cleared!</b> +'+dungeonState.totalGold+' gold';
-            if(gotGearDrop) msg+=' + <span style="color:#ff8000">'+rwd.icon+' '+rwd.name+'</span>';
-            if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">🧪 Level Potion!</span>';
-            log(msg+' + loot!');
-          }
-          // First-victory popup fires only on the very first clear; pass whether gear actually dropped
-          if(firstClear){
-            (function(gd){setTimeout(function(){showFirstVictoryPopup(activeDungeon,rwd,gd);},700);})(gotGearDrop);
+
+          var gotLevelPotion=Math.random()<DG.levelPotionChance;
+          if(gotLevelPotion) dungeonState.combatLog.push('<span style="color:#9b59b6;font-weight:bold">🧪 EXTREMELY RARE! Level Potion dropped!</span>');
+
+          if(typeof G!=='undefined'){
+            if(!G.inv) G.inv={};
+            if(gotGearDrop){
+              G.inv[rwd.id]=(G.inv[rwd.id]||0)+1;
+            }
+            if(firstClear){
+              G.dungeonRewards[activeDungeon.id]=true;
+            }
+            if(gotLevelPotion) G.inv.level_potion=(G.inv.level_potion||0)+1;
+            G.gold=(G.gold||0)+dungeonState.totalGold;
+            dungeonState.lootCollected.forEach(function(d){
+              if(d.id==='gold_coins'){G.gold=(G.gold||0)+d.qty;}
+              else{G.inv[d.id]=(G.inv[d.id]||0)+d.qty;}
+            });
+            if(typeof save==='function') save();
+            if(typeof updateUI==='function') updateUI();
+            if(typeof renderInv==='function') renderInv();
+            if(typeof log==='function'){
+              var msg='<b>'+activeDungeon.name+' cleared!</b> +'+dungeonState.totalGold+' gold';
+              if(gotGearDrop) msg+=' + <span style="color:#ff8000">'+rwd.icon+' '+rwd.name+'</span>';
+              if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">🧪 Level Potion!</span>';
+              log(msg+' + loot!');
+            }
+            // First-victory popup fires only on the very first clear; pass whether gear actually dropped
+            if(firstClear){
+              (function(gd){setTimeout(function(){showFirstVictoryPopup(activeDungeon,rwd,gd);},700);})(gotGearDrop);
+            }
           }
         }
       } else {
@@ -1692,6 +1743,11 @@
   }
 
   function leaveDungeon(){
+    // If leaving an encounter dungeon, notify index.html so _activeEncounter is cleared
+    if(activeDungeon&&activeDungeon.isEncounter){
+      if(typeof window._encounterFleeFromPrep==='function')window._encounterFleeFromPrep();
+      activeDungeon=null;
+    }
     dungeonState=null;
     var ov=document.getElementById('dungeon-overlay');
     if(ov) ov.style.display='none';
@@ -1759,39 +1815,63 @@
     }
     h+='</div>';
 
-    // Player HP data kept here for use in the bottom player strip (dg-actions)
-    var poisonBadge = (s.playerPoison>0 && s.playerPoisonTurns>0)
-      ? '<span style="color:#9b59b6;font-size:9px;">🧪 -'+s.playerPoison+'/turn · '+s.playerPoisonTurns+'t</span>'
-      : '';
-    // Monster panel — centred and full-width now that the player HP strip is at the bottom
-    h+='<div style="text-align:center;margin-bottom:12px;">';
-    if(mon&&mon.hp>0) {
-      // Build status badges for the monster
-      var badges = [];
-      if (mon.shieldedTurns>0) badges.push('<span style="color:#88ddff">🛡 Shielded ('+mon.shieldedTurns+'t)</span>');
-      if (mon.flying)          badges.push('<span style="color:#ffd966">🪽 Flying</span>');
-      if (mon.immune==='magic')    badges.push('<span style="color:#a335ee">✨ Magic immune</span>');
-      if (mon.immune==='physical') badges.push('<span style="color:#88ddff">👻 Phys immune</span>');
-      if (mon.resist==='magic'&&mon.immune!=='magic')       badges.push('<span style="color:#a335ee">✨ Magic resist</span>');
-      if (mon.resist==='physical'&&mon.immune!=='physical') badges.push('<span style="color:#88ddff">⚔ Phys resist</span>');
-      if (mon.heal)            badges.push('<span style="color:#5ac85a">💚 Heals</span>');
-      if (mon.poison)          badges.push('<span style="color:#9b59b6">🧪 Poison</span>');
-      var badgesHtml = badges.length ? '<div style="font-size:9px;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">'+badges.join(' ')+'</div>' : '';
-      h+='<div style="font-size:38px;line-height:1;">'+mon.icon+'</div>'
-       +'<div style="color:#e8d898;font-size:14px;font-weight:bold;margin:3px 0;">'+mon.name+'</div>'
-       +'<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;margin:4px 8px;">'
-       +'<div style="height:100%;width:'+mHp+'%;background:#e03030;transition:width 0.3s;"></div></div>'
-       +'<div style="color:#9a7e50;font-size:10px;">'+mon.hp+'/'+mon.maxhp+' HP</div>'+badgesHtml;
-    }
-    else if(s.victory) h+='<div style="font-size:38px;">🪓</div><div style="color:#f0c040;font-size:14px;font-weight:bold;">Victory!</div>';
-    else if(s.fled)    h+='<div style="font-size:38px;">🏃</div><div style="color:#ffd966;font-size:14px;">Escaped!</div>';
-    else               h+='<div style="font-size:38px;">💀</div><div style="color:#e03030;font-size:14px;">Defeated</div>';
+    var _isPoisonedBattle=(s.playerPoison>0&&s.playerPoisonTurns>0);
+    var _isLowHpBattle=(s.playerHp/s.playerMaxHp<0.2)&&alive;
+    var _hpBarClr=_isLowHpBattle?'#e03030':(pHp>30?'#5ac85a':'#f0a030');
+
+    // === SIDE-BY-SIDE COMBAT PANEL: player (left) vs monster (right) ===
+    h+='<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;">';
+
+    // --- Player side (left) ---
+    h+='<div style="flex:1;text-align:center;background:#0f0a04;border:1px solid #251e14;border-radius:6px;padding:8px 6px;">';
+    var _playerIcon=alive?'🧍':'💀';
+    h+='<div style="font-size:30px;line-height:1;margin-bottom:3px;">'+_playerIcon+'</div>';
+    h+='<div style="color:#e8d898;font-size:10px;font-weight:bold;margin-bottom:4px;">You</div>';
+    h+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:3px;height:8px;overflow:hidden;margin:0 4px 3px;">'
+     +'<div style="height:100%;width:'+pHp+'%;background:'+_hpBarClr+';transition:width 0.3s;"></div></div>';
+    h+='<div style="color:#9a7e50;font-size:9px;">'+s.playerHp+'/'+s.playerMaxHp+'</div>';
+    if(_isPoisonedBattle) h+='<div style="color:#9b59b6;font-size:8px;margin-top:2px;">🧪 -'+s.playerPoison+'/turn</div>';
     h+='</div>';
 
+    // --- VS divider ---
+    h+='<div style="color:#5a4830;font-size:11px;font-family:Cinzel,serif;padding-top:20px;flex-shrink:0;font-weight:bold;">VS</div>';
+
+    // --- Monster side (right) ---
+    h+='<div style="flex:1;text-align:center;background:#0f0a04;border:1px solid #251e14;border-radius:6px;padding:8px 6px;">';
+    if(mon&&mon.hp>0){
+      var badges=[];
+      if(mon.shieldedTurns>0) badges.push('<span style="color:#88ddff;font-size:8px;">🛡'+mon.shieldedTurns+'t</span>');
+      if(mon.flying)          badges.push('<span style="color:#ffd966;font-size:8px;">🪽</span>');
+      if(mon.immune==='magic')    badges.push('<span style="color:#a335ee;font-size:8px;">✨ⓘ</span>');
+      if(mon.immune==='physical') badges.push('<span style="color:#88ddff;font-size:8px;">👻ⓘ</span>');
+      if(mon.resist==='magic'&&mon.immune!=='magic') badges.push('<span style="color:#a335ee;font-size:8px;">✨½</span>');
+      if(mon.resist==='physical'&&mon.immune!=='physical') badges.push('<span style="color:#88ddff;font-size:8px;">⚔½</span>');
+      if(mon.heal)  badges.push('<span style="color:#5ac85a;font-size:8px;">💚</span>');
+      if(mon.poison) badges.push('<span style="color:#9b59b6;font-size:8px;">🧪</span>');
+      h+='<div style="font-size:30px;line-height:1;margin-bottom:3px;">'+mon.icon+'</div>';
+      h+='<div style="color:#e8d898;font-size:10px;font-weight:bold;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+mon.name+'</div>';
+      h+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:3px;height:8px;overflow:hidden;margin:0 4px 3px;">'
+       +'<div style="height:100%;width:'+mHp+'%;background:#e03030;transition:width 0.3s;"></div></div>';
+      h+='<div style="color:#9a7e50;font-size:9px;">'+mon.hp+'/'+mon.maxhp+'</div>';
+      if(badges.length) h+='<div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:3px;">'+badges.join('')+'</div>';
+    } else if(s.victory){
+      h+='<div style="font-size:30px;line-height:1;margin-bottom:4px;">🪓</div>';
+      h+='<div style="color:#f0c040;font-size:11px;font-weight:bold;">Victory!</div>';
+    } else if(s.fled){
+      h+='<div style="font-size:30px;line-height:1;margin-bottom:4px;">🏃</div>';
+      h+='<div style="color:#ffd966;font-size:11px;">Escaped!</div>';
+    } else {
+      h+='<div style="font-size:30px;line-height:1;margin-bottom:4px;">💀</div>';
+      h+='<div style="color:#e03030;font-size:11px;">Defeated</div>';
+    }
+    h+='</div>';
+    h+='</div>'; // end VS row
+
     // === Status warning banners — shown prominently when player needs immediate action ===
+    var _isPoisoned=false,_isLowHp=false;
     if(!done){
-      var _isPoisoned=(s.playerPoison>0&&s.playerPoisonTurns>0);
-      var _isLowHp=(s.playerHp/s.playerMaxHp<0.2);
+      _isPoisoned=(s.playerPoison>0&&s.playerPoisonTurns>0);
+      _isLowHp=(s.playerHp/s.playerMaxHp<0.2)&&alive;
       if(_isPoisoned){
         h+='<div style="background:#2a0a3a;border:1px solid #9b59b6;border-radius:6px;padding:6px 10px;margin-bottom:8px;text-align:center;animation:dg-pulse 1s ease-in-out infinite;">'
          +'<span style="color:#c060ff;font-size:11px;font-family:Cinzel,serif;font-weight:bold;">🧪 POISONED — use anti-poison food or a cure potion!</span>'
@@ -2024,18 +2104,6 @@
     var actionsEl=document.getElementById('dg-actions');
     if(actionsEl){
       var ah='';
-      // Player avatar + HP bar — always shown at the very bottom of the screen
-      var _hpBarColor=pHp>30?'#5ac85a':'#e03030';
-      ah+='<div style="display:flex;align-items:center;gap:8px;padding-bottom:8px;margin-bottom:6px;border-bottom:1px solid #251e14;">';
-      ah+='<span style="font-size:24px;line-height:1;flex-shrink:0;">🧍</span>';
-      ah+='<div style="flex:1;">';
-      ah+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:8px;overflow:hidden;">'
-       +'<div style="height:100%;width:'+pHp+'%;background:'+_hpBarColor+';transition:width 0.3s;"></div></div>';
-      ah+='<div style="display:flex;align-items:center;gap:6px;margin-top:2px;">'
-       +'<span style="color:#9a7e50;font-size:9px;">'+s.playerHp+'/'+s.playerMaxHp+' HP</span>'
-       +poisonBadge+'</div>';
-      ah+='</div>';
-      ah+='</div>';
       if(!done){
         var _curStacks=s.critStacks||0;
         var _atMax=_curStacks>=MAX_POWER_STACKS;
@@ -2057,7 +2125,8 @@
         ah+='</div>';
       } else {
         ah+='<div style="display:flex;justify-content:center;">';
-        ah+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+(s.victory?'🪓 Claim & Leave':s.fled?'🏃 Leave':'Leave Dungeon')+'</button>';
+        var _leaveLabel=s.victory?(activeDungeon&&activeDungeon.isEncounter?'▶ Resume Task':'🪓 Claim & Leave'):s.fled?'🏃 Leave':'Leave Dungeon';
+        ah+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+_leaveLabel+'</button>';
         ah+='</div>';
       }
       actionsEl.innerHTML=ah;
@@ -2140,10 +2209,19 @@
       var rwClr = rarityClr(rw.id);
       var row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid '+(unlocked?'#3a2c18':'#1c1710')+';border-radius:7px;background:'+(unlocked?'#1a1308':'#0d0905')+';cursor:'+(unlocked?'pointer':'default')+';opacity:'+(unlocked?'1':'0.6')+';transition:all .15s;';
-      var tierLabel = rw.tierLabel || (t<=4?'Tier 1 Gear':t<=8?'Tier 2 Gear':'Tier 3 Gear');
-      var gearLine = '<div style="color:#e8d898;font-size:10px;margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span style="font-size:14px;">⚔</span><span style="color:'+rwClr+';font-weight:700;">'+tierLabel+'</span>'+(owned>0?'<span style="color:#5ac85a;font-size:9px;">×'+owned+'</span>':'')+'</div>';
-      var statsLine = rw.eff ? '<div style="color:#5a4830;font-size:9px;margin-top:1px;">'+rw.eff+'</div>' : '';
-      var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:2px;"><span style="color:#ffd966;">⚔ '+dropPct+'% gear drop</span></div>';
+      var rwItem = (typeof ITEMS !== 'undefined' && rw.id) ? ITEMS[rw.id] : null;
+      var gearIcon = rwItem ? rwItem.icon : '⚔';
+      var gearName = rwItem ? rwItem.name : (rw.tierLabel || 'Gear');
+      var gearStatParts = [];
+      if(rwItem){
+        if(rwItem.atk)   gearStatParts.push('ATK +'+rwItem.atk);
+        if(rwItem.def)   gearStatParts.push('DEF +'+rwItem.def);
+        if(rwItem.hp)    gearStatParts.push('HP +'+rwItem.hp);
+        if(rwItem.dodge) gearStatParts.push('DODGE +'+rwItem.dodge+'%');
+      }
+      var gearLine = '<div style="color:#e8d898;font-size:10px;margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span style="font-size:14px;">'+gearIcon+'</span><span style="color:'+rwClr+';font-weight:700;">'+gearName+'</span>'+(owned>0?'<span style="color:#5ac85a;font-size:9px;">×'+owned+'</span>':'')+'</div>';
+      var statsLine = gearStatParts.length ? '<div style="color:#9a7e50;font-size:9px;margin-top:1px;">'+gearStatParts.join(' · ')+'</div>' : (rw.eff ? '<div style="color:#5a4830;font-size:9px;margin-top:1px;">'+rw.eff+'</div>' : '');
+      var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:2px;"><span style="color:#ffd966;">'+dropPct+'% drop chance</span></div>';
       // Show both unlock requirements with individual pass/fail indicators
       var lvlMet = lvl >= req;
       var reqsHtml = '<span style="color:'+(lvlMet?'#5ac85a':'#e03030')+';font-size:9px;">'+(lvlMet?'✓':'🔒')+' Skill Lv.'+req+'</span>';
@@ -2174,6 +2252,194 @@
     document.body.appendChild(ov);
   }
 
+  // === ENCOUNTER HELPERS ===
+
+  // Weighted random drop from encounter template
+  function _encWeightedDrop(drops){
+    var total=drops.reduce(function(s,d){return s+d.w;},0);
+    var r=Math.random()*total;
+    for(var i=0;i<drops.length;i++){r-=drops[i].w;if(r<=0)return drops[i];}
+    return drops[drops.length-1];
+  }
+
+  // Show a full dungeon-style prep screen for a random encounter.
+  // Called from index.html's encounterFight() instead of simulating combat.
+  function showEncounterPrep(enc){
+    if(!enc)return;
+    var old=document.getElementById('encounter-overlay');if(old)old.remove();
+    createDungeonOverlay();
+    // Clear any stale action-bar buttons (e.g. leftover "Claim & Leave")
+    var actEl=document.getElementById('dg-actions');if(actEl)actEl.innerHTML='';
+    var tmpl=enc.tmpl;
+
+    var h='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
+
+    // Creature header
+    h+='<div style="text-align:center;margin-bottom:12px;">';
+    h+='<div style="font-size:10px;color:#c04040;font-family:Cinzel,serif;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">⚠ Wild Encounter!</div>';
+    h+='<div style="font-size:48px;margin-bottom:6px;filter:drop-shadow(0 0 12px rgba(200,50,50,.4));">'+tmpl.icon+'</div>';
+    h+='<div style="font-family:Cinzel,serif;font-size:18px;font-weight:700;color:#e87070;margin-bottom:4px;">'+tmpl.name+'</div>';
+    h+='<div style="font-size:11px;color:#c07070;margin-bottom:4px;">HP: '+enc.beastHp+' · DMG: '+enc.beastDmg+'</div>';
+    h+='<div style="font-size:10px;color:#9a7e50;">A wild beast interrupts your work!</div>';
+    h+='</div>';
+
+    // Food loadout
+    var _allFoods=getFoodList().sort(function(a,b){return b.hp-a.hp;});
+    var _loadout=G.foodLoadout||{};
+    var _slotsUsed=0;for(var _lk in _loadout){if(_loadout[_lk]>0&&(G.inv[_lk]||0)>0)_slotsUsed++;}
+    var _lootTotal=0;for(var _lk2 in _loadout){_lootTotal+=Math.min(_loadout[_lk2]||0,G.inv[_lk2]||0);}
+    h+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;padding:10px;margin-bottom:10px;">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    h+='<div style="color:#f0c040;font-size:11px;letter-spacing:1px;">🍖 FOOD POUCH <span style="color:#9a7e50;font-weight:normal;font-size:10px;">('+_slotsUsed+' types · '+_lootTotal+' items)</span></div>';
+    h+='<div style="display:flex;gap:4px;">';
+    h+='<button onclick="window._dgAutoLoadout();window._dgShowEncounterPrep(window._activeEncounterData)" style="padding:3px 8px;background:#251a06;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-size:9px;font-family:Cinzel,serif;">Auto-Fill</button>';
+    h+='<button onclick="window._dgClearLoadout();window._dgShowEncounterPrep(window._activeEncounterData)" style="padding:3px 8px;background:#251e14;border:1px solid #5a4830;color:#9a7e50;border-radius:4px;cursor:pointer;font-size:9px;font-family:Cinzel,serif;">Clear</button>';
+    h+='</div></div>';
+    if(_allFoods.length===0){
+      h+='<div style="color:#5a4830;font-size:10px;font-style:italic;">No food — you\'ll fight hungry!</div>';
+    } else {
+      for(var _fi=0;_fi<_allFoods.length;_fi++){
+        var _af=_allFoods[_fi];var _it=ITEMS[_af.id];
+        var _lqty=_loadout[_af.id]||0;var _maxQty=Math.min(_af.qty,FOOD_PER_SLOT);var _canAdd=_lqty<_maxQty;
+        var _efParts=['+'+_af.hp+' HP'];var _hasBuff=_it&&_it.foodBuff;
+        if(_hasBuff){var _b=_it.foodBuff;if(_b.atk)_efParts.push('+'+_b.atk+' ATK ('+_b.turns+'t)');if(_b.def)_efParts.push('+'+_b.def+' DEF ('+_b.turns+'t)');if(_b.regen)_efParts.push('+'+_b.regen+' HP/t ('+_b.turns+'t)');}
+        h+='<div style="display:flex;align-items:center;gap:8px;background:'+(_lqty>0?'#1a1308':'#0b0805')+';border:1px solid '+(_lqty>0?(_hasBuff?'#ffd966':'#5ac85a'):'#3a2c18')+';border-radius:6px;padding:6px 8px;margin-bottom:6px;">';
+        h+='<span style="font-size:18px;flex-shrink:0;">'+_af.icon+'</span>';
+        h+='<div style="flex:1;min-width:0;"><div style="color:#e8d898;font-size:11px;font-weight:bold;">'+_af.name+'</div>';
+        h+='<div style="color:'+(_hasBuff?'#ffd966':'#5ac85a')+';font-size:9px;">'+_efParts.join(' · ')+'</div>';
+        h+='<div style="color:#5a4830;font-size:9px;">'+_af.qty+' in inv · max '+_maxQty+'</div></div>';
+        h+='<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">';
+        h+='<button onclick="window._dgSetLoadout(\''+_af.id+'\',-1);window._dgShowEncounterPrep(window._activeEncounterData)" style="width:22px;height:22px;background:#251e14;border:1px solid #5a4830;color:#e8d898;border-radius:4px;cursor:pointer;font-size:13px;line-height:1;padding:0;"'+(_lqty<=0?' disabled style="width:22px;height:22px;background:#1a1308;border:1px solid #2b2112;color:#3a2c18;border-radius:4px;cursor:not-allowed;font-size:13px;line-height:1;padding:0;"':'')+'>−</button>';
+        h+='<span style="color:'+(_lqty>0?'#f0c040':'#5a4830')+';font-size:13px;font-weight:bold;min-width:16px;text-align:center;">'+_lqty+'</span>';
+        h+='<button onclick="window._dgSetLoadout(\''+_af.id+'\',1);window._dgShowEncounterPrep(window._activeEncounterData)" style="width:22px;height:22px;background:'+(_canAdd?'#251a06':'#1a1308')+';border:1px solid '+(_canAdd?'#f0c040':'#2b2112')+';color:'+(_canAdd?'#f0c040':'#3a2c18')+';border-radius:4px;cursor:'+(_canAdd?'pointer':'not-allowed')+';font-size:13px;line-height:1;padding:0;"'+(!_canAdd?' disabled':'')+'>+</button>';
+        h+='</div></div>';
+      }
+    }
+    h+='<div style="color:#5a4830;font-size:9px;font-style:italic;margin-top:4px;">Eating during combat is safe — no retaliation.</div>';
+    h+='</div>';
+
+    // Potion loadout
+    var _allPotions=getPotionList();
+    var _potLoadout=G.potionLoadout||{};
+    var _potSlotsUsed=0;for(var _pk in _potLoadout){if(_potLoadout[_pk]>0&&(G.inv[_pk]||0)>0)_potSlotsUsed++;}
+    var _potTotal=0;for(var _pk2 in _potLoadout){_potTotal+=Math.min(_potLoadout[_pk2]||0,G.inv[_pk2]||0);}
+    h+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;padding:10px;margin-bottom:10px;">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    h+='<div style="color:#20B2AA;font-size:11px;letter-spacing:1px;">⚗️ POTION BELT <span style="color:#9a7e50;font-weight:normal;font-size:10px;">('+_potSlotsUsed+'/'+POTION_POUCH_SLOTS+' slots · '+_potTotal+' items)</span></div>';
+    h+='<div style="display:flex;gap:4px;">';
+    h+='<button onclick="window._dgAutoPotionLoadout();window._dgShowEncounterPrep(window._activeEncounterData)" style="padding:3px 8px;background:#0a1a18;border:1px solid #20B2AA;color:#20B2AA;border-radius:4px;cursor:pointer;font-size:9px;font-family:Cinzel,serif;">Auto-Fill</button>';
+    h+='<button onclick="window._dgClearPotionLoadout();window._dgShowEncounterPrep(window._activeEncounterData)" style="padding:3px 8px;background:#251e14;border:1px solid #5a4830;color:#9a7e50;border-radius:4px;cursor:pointer;font-size:9px;font-family:Cinzel,serif;">Clear</button>';
+    h+='</div></div>';
+    if(_allPotions.length===0){
+      h+='<div style="color:#5a4830;font-size:10px;font-style:italic;">No potions — brew some in Herbalism!</div>';
+    } else {
+      for(var _pi=0;_pi<_allPotions.length;_pi++){
+        var _ap=_allPotions[_pi];var _pit=_ap.it;
+        var _plqty=_potLoadout[_ap.id]||0;var _pmaxQty=Math.min(_ap.qty,POTION_PER_SLOT);
+        var _pcanAdd=_plqty<_pmaxQty&&(_plqty>0||_potSlotsUsed<POTION_POUCH_SLOTS);
+        var _pefParts=[];
+        if(_pit.potionType==='buff')_pefParts.push('+'+_pit.value+' '+_pit.stat.toUpperCase()+' ('+_pit.turns+'t)');
+        else if(_pit.potionType==='instant'&&_pit.hp)_pefParts.push('+'+_pit.hp+' HP');
+        else if(_pit.potionType==='cure')_pefParts.push('Cure '+(_pit.cures||'poison')+' + immune ('+(_pit.immuneTurns||5)+'t)');
+        h+='<div style="display:flex;align-items:center;gap:8px;background:'+(_plqty>0?'#0a1a18':'#0b0805')+';border:1px solid '+(_plqty>0?'#20B2AA':'#3a2c18')+';border-radius:6px;padding:6px 8px;margin-bottom:6px;">';
+        h+='<span style="font-size:18px;flex-shrink:0;">'+_ap.icon+'</span>';
+        h+='<div style="flex:1;min-width:0;"><div style="color:#e8d898;font-size:11px;font-weight:bold;">'+_ap.name+'</div>';
+        h+='<div style="color:#20B2AA;font-size:9px;">'+_pefParts.join(' · ')+'</div>';
+        h+='<div style="color:#5a4830;font-size:9px;">'+_ap.qty+' in inv · max '+_pmaxQty+'</div></div>';
+        h+='<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">';
+        h+='<button onclick="window._dgSetPotionLoadout(\''+_ap.id+'\',-1);window._dgShowEncounterPrep(window._activeEncounterData)" style="width:22px;height:22px;background:#251e14;border:1px solid #5a4830;color:#e8d898;border-radius:4px;cursor:pointer;font-size:13px;line-height:1;padding:0;"'+(_plqty<=0?' disabled style="width:22px;height:22px;background:#1a1308;border:1px solid #2b2112;color:#3a2c18;border-radius:4px;cursor:not-allowed;font-size:13px;line-height:1;padding:0;"':'')+'>−</button>';
+        h+='<span style="color:'+(_plqty>0?'#20B2AA':'#5a4830')+';font-size:13px;font-weight:bold;min-width:16px;text-align:center;">'+_plqty+'</span>';
+        h+='<button onclick="window._dgSetPotionLoadout(\''+_ap.id+'\',1);window._dgShowEncounterPrep(window._activeEncounterData)" style="width:22px;height:22px;background:'+(_pcanAdd?'#0a1a18':'#1a1308')+';border:1px solid '+(_pcanAdd?'#20B2AA':'#2b2112')+';color:'+(_pcanAdd?'#20B2AA':'#3a2c18')+';border-radius:4px;cursor:'+(_pcanAdd?'pointer':'not-allowed')+';font-size:13px;line-height:1;padding:0;"'+(!_pcanAdd?' disabled':'')+'>+</button>';
+        h+='</div></div>';
+      }
+    }
+    h+='<div style="color:#5a4830;font-size:9px;font-style:italic;margin-top:4px;">Drinking potions costs a combat turn.</div>';
+    h+='</div>';
+
+    // Possible drops
+    h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;">';
+    h+='<div style="color:#8bc34a;font-size:11px;margin-bottom:6px;letter-spacing:1px;">POSSIBLE DROPS</div>';
+    if(tmpl.drops&&tmpl.drops.length){
+      tmpl.drops.forEach(function(d){
+        var di=ITEMS[d.id];if(!di)return;
+        h+='<div style="color:#9a7e50;font-size:10px;margin-bottom:2px;">'+di.icon+' '+di.name+' ×'+d.n+'</div>';
+      });
+    }
+    if(tmpl.rareDrop){
+      var _rdi=ITEMS[tmpl.rareDrop.id];
+      if(_rdi){
+        var _rclr='#ff8000';
+        try{if(typeof window.RARITY==='object'&&typeof window.getItemRarity==='function')_rclr=window.RARITY[window.getItemRarity(tmpl.rareDrop.id)].color;}catch(e){}
+        h+='<div style="color:'+_rclr+';font-size:10px;font-weight:700;margin-bottom:2px;">✨ '+_rdi.icon+' '+_rdi.name+' <span style="color:#9a7e50;font-weight:normal;">('+Math.round(tmpl.rareDrop.chance*100)+'% chance)</span></div>';
+      }
+    }
+    h+='</div>';
+
+    h+='<div id="dg-msg" style="display:none;text-align:center;font-size:11px;margin-bottom:6px;"></div>';
+    h+='<div style="display:flex;gap:8px;">';
+    h+='<button onclick="window._dgStartEncounterBattle(window._activeEncounterData)" style="flex:1;padding:9px 20px;background:linear-gradient(180deg,#4a1010,#2a0808);border:2px solid #c03030;color:#ff8080;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:700;letter-spacing:1px;">⚔ Fight!</button>';
+    h+='<button onclick="window._dgLeave()" style="padding:9px 16px;background:#251e14;border:1px solid #5a4830;color:#9a7e50;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;">🏃 Flee</button>';
+    h+='</div>';
+
+    var bodyEl=document.getElementById('dg-body');
+    if(!bodyEl){var nb=document.createElement('div');nb.id='dg-body';document.getElementById('dg-content').appendChild(nb);bodyEl=nb;}
+    bodyEl.innerHTML=h;
+    document.getElementById('dungeon-overlay').style.display='flex';
+  }
+
+  // Start the full dungeon combat for an encounter.
+  // Bypasses canEnterDungeon() so food is not required (encounter is forced on you).
+  function startEncounterBattle(enc){
+    if(!enc)return;
+    var tmpl=enc.tmpl;
+    // Build a minimal dungeon-like object
+    activeDungeon={
+      id:'_encounter',
+      isEncounter:true,
+      encounterData:enc,
+      name:tmpl.name,
+      icon:tmpl.icon,
+      desc:'A wild encounter!',
+      flavour:tmpl.name+' leaps at you!',
+      tier:null,
+      skill:enc.sk,
+      reward:null,
+      loot:[],
+      rooms:[{
+        name:tmpl.name,icon:tmpl.icon,
+        hp:enc.beastHp,maxhp:enc.beastHp,
+        dmg:[enc.beastDmg,enc.beastDmg],xp:tmpl.xp||0,
+        weak:null,resist:null,immune:null,
+        flying:false,poison:0,poisonChance:0,
+        heal:0,healCD:0,shield:false,shieldCD:0,shieldTurns:0
+      }]
+    };
+    if(typeof stopTask==='function')stopTask();
+    dungeonState={
+      dungeonId:'_encounter',room:0,
+      playerHp:G.hp,playerMaxHp:G.maxhp,
+      monsters:[{
+        name:tmpl.name,icon:tmpl.icon,
+        hp:enc.beastHp,maxhp:enc.beastHp,
+        dmg:[enc.beastDmg,enc.beastDmg],xp:tmpl.xp||0,
+        weak:null,resist:null,immune:null,flying:false,
+        poison:0,poisonChance:0,
+        heal:0,healCD:0,healCounter:0,
+        shield:false,shieldCD:0,shieldTurns:0,shieldCounter:0,shieldedTurns:0
+      }],
+      combatLog:[],totalXp:0,totalGold:0,lootCollected:[],
+      playerPoison:0,playerPoisonTurns:0,
+      potionBuffs:{atk:0,atkTurns:0,def:0,defTurns:0,dodge:0,dodgeTurns:0},
+      foodPouch:buildFoodPouch(),
+      potionPouch:buildPotionPouch(),
+      foodBuffs:{atk:0,atkTurns:0,def:0,defTurns:0,regen:0,regenTurns:0},
+      poisonImmuneTurns:0,victory:false,fled:false,critStacks:0,
+      bgTaskSkill:null,bgTaskAction:null,bgTaskProg:0,bgTaskDur:0
+    };
+    dungeonState.combatLog.push('<span style="color:#e87070;font-weight:bold">'+tmpl.icon+' '+tmpl.name+' leaps at you from the shadows!</span>');
+    renderDungeon();
+  }
+
   window._dgAttack=dungeonAttack;
   window._dgShowEntry=showDungeonEntry;
   window._dgShowTierPicker=showTierPicker;
@@ -2189,6 +2455,8 @@
   window._dgSetPotionLoadout=dungeonSetPotionLoadout;
   window._dgClearPotionLoadout=dungeonClearPotionLoadout;
   window._dgAutoPotionLoadout=dungeonAutoPotionLoadout;
+  window._dgShowEncounterPrep=showEncounterPrep;
+  window._dgStartEncounterBattle=startEncounterBattle;
   // Apply the tier scaling once up front so all downstream code reads scaled HP/dmg.
   Object.keys(DUNGEONS).forEach(function(k){ DUNGEONS[k] = scaleDungeonMonsters(DUNGEONS[k]); });
   window.DUNGEONS=DUNGEONS;
@@ -2204,6 +2472,8 @@
     if(dungeonId && !DUNGEONS[dungeonId] && DUNGEONS[dungeonId+'_t1']) dungeonId = dungeonId+'_t1';
     if(dungeonId && DUNGEONS[dungeonId]) activeDungeon=DUNGEONS[dungeonId];
     createDungeonOverlay();
+    // Always clear stale action-bar content (e.g. leftover "Claim & Leave" from a previous run)
+    var _actBar=document.getElementById('dg-actions');if(_actBar)_actBar.innerHTML='';
     var content=document.getElementById('dg-content');
     // Lock check: skill must reach the dungeon's unlock level before the dungeon opens
     var dungeonSkill = activeDungeon.skill || activeDungeon.id;
@@ -2382,6 +2652,7 @@
     var hasFlying=false, hasMagicImmune=false, hasPhysImmune=false;
     var hasMagicResist=false, hasPhysResist=false;
     var hasShield=false, hasHeal=false, hasPoison=false;
+    var hasBowRequired=false; // creature that is BOTH flying AND magic-immune — only bow works
     roomList.forEach(function(r){
       if(r.flying) hasFlying=true;
       if(r.immune==='magic') hasMagicImmune=true;
@@ -2391,9 +2662,23 @@
       if(r.shield) hasShield=true;
       if(r.heal) hasHeal=true;
       if(r.poison) hasPoison=true;
+      if(r.flying&&r.immune==='magic') hasBowRequired=true;
     });
+
+    // === CRITICAL BOW WARNING — shown ABOVE the briefing, very prominently ===
+    if(hasBowRequired){
+      h+='<div style="background:linear-gradient(135deg,#3a0808,#1c0404);border:2px solid #ff3333;border-radius:6px;padding:12px 14px;margin-bottom:10px;text-align:center;">';
+      h+='<div style="font-size:20px;margin-bottom:4px;">🚨🏹🚨</div>';
+      h+='<div style="color:#ff3333;font-family:Cinzel,serif;font-size:13px;font-weight:900;letter-spacing:1px;margin-bottom:6px;text-transform:uppercase;">BOW REQUIRED!</div>';
+      h+='<div style="color:#ff8080;font-size:11px;line-height:1.5;">This dungeon contains enemies that are <b>BOTH flying 🪽 AND magic-immune ✨</b>.</div>';
+      h+='<div style="color:#ffaaaa;font-size:10px;margin-top:4px;line-height:1.5;">Melee cannot reach them. Magic is blocked. <b>A 🏹 bow and arrows are your ONLY option!</b></div>';
+      h+='<div style="color:#ff6666;font-size:10px;margin-top:6px;font-style:italic;">Craft arrows (Fletching) and equip a bow before entering.</div>';
+      h+='</div>';
+    }
+
     var recos=[];
-    if (hasFlying)        recos.push({clr:'#ffd966',txt:'🪽 Flying enemies — bring a 🏹 bow (or ✨ magic) to hit them.'});
+    if (hasFlying&&!hasBowRequired) recos.push({clr:'#ffd966',txt:'🪽 Flying enemies — bring a 🏹 bow (or ✨ magic) to hit them.'});
+    if (hasFlying&&hasBowRequired)  recos.push({clr:'#ff6666',txt:'🪽 Flying + magic-immune enemies — 🏹 bow ONLY (magic is blocked, melee can\'t reach).'});
     if (hasPhysImmune)    recos.push({clr:'#a335ee',txt:'👻 Physical-immune enemies — only ✨ magic can damage them.'});
     if (hasMagicImmune)   recos.push({clr:'#88ddff',txt:'✨ Magic-immune enemies — bring a ⚔ physical weapon.'});
     if (hasShield)        recos.push({clr:'#88ddff',txt:'🛡 Shielded enemies will block damage for a few turns at a time. Power-stack crits to break through.'});
@@ -2420,9 +2705,19 @@
     var rwdRarityClr = '#ff8000';
     try { if(typeof window.RARITY==='object'&&window.getItemRarity) rwdRarityClr = window.RARITY[window.getItemRarity(rwd.id)].color; } catch(e){}
     var rwdOwned = (typeof G!=='undefined'&&G.inv&&G.inv[rwd.id]) ? G.inv[rwd.id] : 0;
-    var entryTierLabel2 = rwd.tierLabel || 'Gear';
-    h+='<div style="display:flex;justify-content:space-between;color:'+rwdRarityClr+';font-size:10px;margin-bottom:2px;font-weight:700;"><span>⚔ '+entryTierLabel2+(rwdOwned>0?' <span style="color:#5ac85a;font-weight:400;">×'+rwdOwned+'</span>':'')+'</span><span style="color:#ffd966;">'+rwdChance+'%</span></div>';
-    if(rwd.eff) h+='<div style="font-size:9px;color:#5a4830;margin-bottom:2px;padding-left:6px;">'+rwd.eff+'</div>';
+    var rwdItem = (typeof ITEMS !== 'undefined' && rwd.id) ? ITEMS[rwd.id] : null;
+    var rwdDisplayName = rwdItem ? rwdItem.name : (rwd.tierLabel || 'Gear');
+    var rwdDisplayIcon = rwdItem ? rwdItem.icon : '⚔';
+    var rwdStatParts = [];
+    if(rwdItem){
+      if(rwdItem.atk)   rwdStatParts.push('ATK +'+rwdItem.atk);
+      if(rwdItem.def)   rwdStatParts.push('DEF +'+rwdItem.def);
+      if(rwdItem.hp)    rwdStatParts.push('HP +'+rwdItem.hp);
+      if(rwdItem.dodge) rwdStatParts.push('DODGE +'+rwdItem.dodge+'%');
+    }
+    h+='<div style="display:flex;justify-content:space-between;color:'+rwdRarityClr+';font-size:10px;margin-bottom:2px;font-weight:700;"><span>'+rwdDisplayIcon+' '+rwdDisplayName+(rwdOwned>0?' <span style="color:#5ac85a;font-weight:400;">×'+rwdOwned+'</span>':'')+'</span><span style="color:#ffd966;">'+rwdChance+'%</span></div>';
+    if(rwdStatParts.length) h+='<div style="font-size:9px;color:#9a7e50;margin-bottom:2px;padding-left:6px;">'+rwdStatParts.join(' · ')+'</div>';
+    else if(rwd.eff) h+='<div style="font-size:9px;color:#5a4830;margin-bottom:2px;padding-left:6px;">'+rwd.eff+'</div>';
     h+='<div style="display:flex;justify-content:space-between;color:#9b59b6;font-size:10px;"><span>🧪 Level Potion</span><span>2%</span></div>';
     h+='</div></div>';
 

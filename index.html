@@ -51,10 +51,10 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .sk-back.locked .dg-lock-hint{display:block}
 .sk-card.sk-active .sk-front{background:#241c0c;box-shadow:inset 0 0 16px rgba(240,192,64,.08)}
 .dg-btn-in-grid{background:linear-gradient(180deg,#2a1f0f,#1a1308) !important;border:1px solid var(--gold) !important;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:9px 10px !important;min-height:86px}
-@keyframes dungeonBtnShimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+@keyframes dungeonBtnShimmer{0%,72%{background-position:200% center;opacity:0}78%{opacity:1}92%{opacity:1;background-position:-200% center}100%{opacity:0;background-position:-200% center}}
 @keyframes dungeonBtnGlow{0%,100%{box-shadow:0 0 14px rgba(240,192,64,.45),0 0 30px rgba(240,192,64,.2),inset 0 0 12px rgba(240,192,64,.08)}50%{box-shadow:0 0 22px rgba(240,192,64,.7),0 0 45px rgba(240,192,64,.35),inset 0 0 18px rgba(240,192,64,.15)}}
 #dungeon-main-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:16px 20px;background:linear-gradient(90deg,#1a1206,#2a1c08,#1a1206);border:2px solid var(--gold);border-radius:10px;cursor:pointer;font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--gold);letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 16px rgba(240,192,64,.6);animation:dungeonBtnGlow 2.4s ease-in-out infinite;position:relative;overflow:hidden;transition:transform .15s}
-#dungeon-main-btn::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent 0%,rgba(240,192,64,.18) 40%,rgba(255,220,100,.32) 50%,rgba(240,192,64,.18) 60%,transparent 100%);background-size:200% 100%;animation:dungeonBtnShimmer 2.8s linear infinite;pointer-events:none}
+#dungeon-main-btn::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent 0%,rgba(240,192,64,.18) 40%,rgba(255,220,100,.32) 50%,rgba(240,192,64,.18) 60%,transparent 100%);background-size:200% 100%;animation:dungeonBtnShimmer 14s linear infinite;pointer-events:none}
 #dungeon-main-btn:active{transform:scale(.97)}
 #dungeon-main-btn.dungeons-active{background:linear-gradient(90deg,#0e0a04,#1a1208,#0e0a04);color:var(--text2);text-shadow:none;animation:none;box-shadow:0 0 8px rgba(240,192,64,.2),inset 0 0 6px rgba(0,0,0,.4)}
 #dungeon-main-btn.dungeons-active::before{display:none}
@@ -450,6 +450,14 @@ body.combat-active #combat-log{display:block}
 .cs-item.cs-total .cs-value{color:var(--gold);font-size:15px}
 .cs-total-label{font-size:7px;color:var(--text3);text-align:center;padding:0 4px;line-height:1.2}
 
+/* Player HP bar on stage (below character) */
+#stage-hp{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  width:52px;height:5px;background:#1c1710;border:1px solid #3a2c18;
+  border-radius:3px;overflow:hidden;z-index:5;pointer-events:none;
+}
+#stage-hp-fill{height:100%;background:#5ac85a;transition:width .3s,background .3s;border-radius:3px;width:100%}
+
 /* Monster HP bar on stage */
 #stage-monster-hp{
   display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);
@@ -587,7 +595,7 @@ body.shake-hit #stage{animation:screenShake .35s ease}
       <div id="spell-row-grid"></div>
     </div>
   </div>
-  <div class="panel" id="equip-inv-panel"><div class="panel-hdr"><span>Equipment</span><span id="equip-inv-count" style="color:var(--text3);font-size:10px">0 items</span></div><div id="equip-inv-grid"></div></div>
+  <div class="panel" id="equip-inv-panel"><div class="panel-hdr" style="display:flex;align-items:center;justify-content:space-between;"><span>Equipment <span id="equip-inv-count" style="color:var(--text3);font-size:10px">0 items</span></span><button onclick="autoEquipBest()" style="padding:3px 9px;background:#1a1a08;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-size:10px;font-family:Cinzel,serif;font-weight:bold;" title="Automatically equip the highest-scoring gear in each slot">⚡ Best in Slot</button></div><div id="equip-inv-grid"></div></div>
   <div class="panel"><div class="panel-hdr"><span>Inventory</span><span id="inv-count">0/28</span></div><div id="inv-grid"></div>
     <div id="inv-btns">
       <button class="inv-btn" onclick="sellAll()">💰 Sell Resources</button>
@@ -615,7 +623,7 @@ body.shake-hit #stage{animation:screenShake .35s ease}
 <div id="stage"><div id="combat-log"><div class="combat-log-hdr">Combat Log</div><div id="combat-log-inner"></div></div><div id="scene"><div id="ground"></div><div id="prop"></div>
   <div id="stage-monster-hp"><div class="smhp-name"></div><div class="smhp-bar"><div class="smhp-fill"></div></div><div class="smhp-text"></div></div>
  <div id="char"><div class="c-head"><div class="c-el"></div><div class="c-er"></div><div class="c-mouth"></div><div class="c-helm" id="chelm"></div></div><div class="c-body" id="cbody"></div><div class="c-belt"></div><div class="c-al" id="cal"></div><div class="c-ar" id="car"></div><div class="c-ll" id="cll"></div><div class="c-lr" id="clr"></div><div class="c-boot-l"></div><div class="c-boot-r"></div></div>
-
+<div id="stage-hp"><div id="stage-hp-fill"></div></div>
 <div id="hit-vignette"></div>
 <div id="combat-stats-panel">
  <div class="cs-row">
@@ -1303,6 +1311,7 @@ let lastT=Date.now();
 // Workers keep repeating until materials run out. Workers tick during dungeons.
 let _workerLogBatch={};
 function tickWorkers(dt){
+  if(document.hidden) return; // Pause workers when app is not visible — no offline leveling
   if(!G.workers||!G.workers.length) return;
   for(const w of G.workers){
     if(!w.action||!w.active) continue;
@@ -1440,65 +1449,15 @@ function _showEncounterPopup(){
 
 function encounterFight(){
   const enc=_activeEncounter;if(!enc)return;
-  const ov=document.getElementById('encounter-overlay');
-  // Resolve combat: simulate rounds until beast dies or player hits 0 HP
-  let bHp=enc.beastHp;
-  let playerHpLost=0;
-  let rounds=0;
-  const playerAtk=getAtk(),playerDef=getDef();
-  while(bHp>0&&rounds<30){
-    // Player attacks
-    const pDmg=Math.max(1,playerAtk+Math.floor(Math.random()*3)-1);
-    bHp-=pDmg;
-    if(bHp>0){
-      // Beast attacks, mitigated by defence
-      const bDmg=Math.max(0,enc.beastDmg-Math.floor(playerDef*0.5)+Math.floor(Math.random()*3)-1);
-      playerHpLost+=bDmg;
-    }
-    rounds++;
+  // Remove the quick-encounter popup and hand off to the full dungeon prep screen.
+  // _activeEncounterData stays set on window so the prep+combat flow can reference it.
+  const ov=document.getElementById('encounter-overlay');if(ov)ov.remove();
+  window._activeEncounterData=enc;
+  if(typeof window._dgShowEncounterPrep==='function'){
+    window._dgShowEncounterPrep(enc);
   }
-  const won=bHp<=0;
-  // Apply HP loss
-  const actualLost=Math.min(playerHpLost,G.hp-1);
-  G.hp=Math.max(1,G.hp-actualLost);
-  let lootMsg='';
-  const lootLines=[];
-  if(won){
-    // Drop 1-2 resource items
-    const numDrops=1+Math.floor(Math.random()*2);
-    const seenDrops={};
-    for(let i=0;i<numDrops;i++){
-      const drop=_encounterWeightedDrop(enc.tmpl.drops);
-      seenDrops[drop.id]=(seenDrops[drop.id]||0)+drop.n;
-    }
-    for(const[id,n] of Object.entries(seenDrops)){
-      give(id,n);
-      lootLines.push((ITEMS[id]?.icon||'')+(ITEMS[id]?.name||id)+'×'+n);
-    }
-    // Rare drop check
-    if(enc.tmpl.rareDrop&&Math.random()<enc.tmpl.rareDrop.chance){
-      const rId=enc.tmpl.rareDrop.id;
-      give(rId,1);
-      lootLines.push('✨ <b style="color:'+rarityColor(rId)+'">'+(ITEMS[rId]?.icon||'')+(ITEMS[rId]?.name||rId)+'</b>');
-    }
-    lootMsg=lootLines.length?'<div style="margin-top:6px;font-size:11px;color:#8ddf8d">Drops: '+lootLines.join(', ')+'</div>':'';
-    log('⚔ Defeated '+enc.tmpl.icon+' '+enc.tmpl.name+'! '+(lootLines.length?'Got: '+lootLines.join(', '):'')+' (−'+Math.round(actualLost)+' HP)');
-  } else {
-    log('⚔ Fought '+enc.tmpl.icon+' '+enc.tmpl.name+' and barely survived! −'+Math.round(actualLost)+' HP');
-  }
-  const resultHtml=won
-    ? `<div style="color:#5de05d;font-family:'Cinzel',serif;font-size:15px;font-weight:700;margin-bottom:4px">🏆 Victory!</div><div style="font-size:11px;color:var(--text2)">Defeated in ${rounds} round${rounds>1?'s':''}. Lost ${Math.round(actualLost)} HP.</div>${lootMsg}`
-    : `<div style="color:#e07070;font-family:'Cinzel',serif;font-size:15px;font-weight:700;margin-bottom:4px">💀 Barely Survived</div><div style="font-size:11px;color:var(--text2)">Lost ${Math.round(actualLost)} HP but held on!</div>`;
-  if(ov){
-    ov.querySelector('div').innerHTML=`
-      <div style="font-size:42px;margin-bottom:10px;opacity:.6">${enc.tmpl.icon}</div>
-      ${resultHtml}
-      <div style="margin-top:14px">
-        <button onclick="encounterClose()" style="background:linear-gradient(180deg,#2a1c08,#1a1208);border:2px solid var(--gold);border-radius:8px;color:var(--gold);font-family:'Cinzel',serif;font-size:13px;padding:10px 24px;cursor:pointer;width:100%">Resume Task ▶</button>
-      </div>`;
-  }
-  _activeEncounter=null;
-  updateUI();
+  // Note: _activeEncounter is intentionally left set here. It will be cleared by
+  // window._encounterFleeFromPrep (called from leaveDungeon) when the player leaves.
 }
 
 function encounterFlee(){
@@ -1512,6 +1471,18 @@ function encounterClose(){
   _activeEncounter=null;
   const ov=document.getElementById('encounter-overlay');if(ov)ov.remove();
 }
+
+// Called by dungeon.js leaveDungeon() when leaving an encounter dungeon.
+// Only logs "fled" when the encounter was NOT already resolved (victory sets
+// window._activeEncounterData=null before leaveDungeon fires).
+window._encounterFleeFromPrep=function(){
+  const enc=window._activeEncounterData;
+  if(enc){
+    log('🏃 Fled from '+enc.tmpl.icon+' '+enc.tmpl.name+'. Task resumed.');
+  }
+  _activeEncounter=null;
+  window._activeEncounterData=null;
+};
 
 function completeTick(){
   const a=findAction(G.task);if(!a){stopTask();return;}
@@ -1633,6 +1604,8 @@ function updateUI(){
   document.getElementById('hm').style.width=hppc+'%';
   document.getElementById('hp-fill').style.width=hppc+'%';
   document.getElementById('hp-val').textContent=Math.ceil(G.hp)+'/'+G.maxhp;
+  const _stageHpFill=document.getElementById('stage-hp-fill');
+  if(_stageHpFill){_stageHpFill.style.width=hppc+'%';_stageHpFill.style.background=hppc>50?'#5ac85a':(hppc>20?'#f0a030':'#e03030');}
   const atk=getAtk(),def=getDef(),dodge=getDodge();
   document.getElementById('atk-val').textContent=atk;
   document.getElementById('def-val').textContent=def;
@@ -1675,6 +1648,55 @@ function renderEquipInv(){
     grid.appendChild(d);
   });
 }
+function autoEquipBest(){
+  if(!G.inv||!G.equip)return;
+  const score=id=>{const s=getUpgradedStats(id);return (s.atk||0)*2+(s.def||0)*1.5+(s.hp||0)*0.5+(s.dodge||0)*1;};
+  const allEquip=Object.entries(G.inv).filter(([id,v])=>v>0&&isEquipItem(id));
+  const changed=[];
+
+  // Armor/accessory slots — each slot is explicit on the item
+  for(const slot of ['helmet','chest','boots','jewelry']){
+    const candidates=allEquip.filter(([id])=>ITEMS[id]&&ITEMS[id].slot===slot);
+    if(!candidates.length)continue;
+    candidates.sort((a,b)=>score(b[0])-score(a[0]));
+    const bestId=candidates[0][0];
+    if(G.equip[slot]!==bestId){
+      const prev=G.equip[slot];
+      G.equip[slot]=bestId;
+      const it=ITEMS[bestId];
+      changed.push((it?it.icon+' '+it.name:bestId)+' → '+slot);
+      if(prev&&prev!==bestId&&!isEquippedAnywhere(prev)&&(G.inv[prev]===undefined))G.inv[prev]=(G.inv[prev]||0);
+    }
+  }
+
+  // Weapon slots — score all weapons, assign best to weaponR, second-best to weaponL
+  const weapons=allEquip.filter(([id])=>ITEMS[id]&&ITEMS[id].type==='weapon');
+  weapons.sort((a,b)=>score(b[0])-score(a[0]));
+  const w1=weapons[0]?weapons[0][0]:null;
+  const w2=weapons[1]?weapons[1][0]:null;
+  if(w1&&G.equip.weaponR!==w1){
+    const prev=G.equip.weaponR;
+    G.equip.weaponR=w1;
+    const it=ITEMS[w1];
+    changed.push((it?it.icon+' '+it.name:w1)+' → right hand');
+    if(prev&&prev===w2){G.equip.weaponL=null;}
+  }
+  if(w2&&w2!==w1&&G.equip.weaponL!==w2){
+    G.equip.weaponL=w2;
+    const it=ITEMS[w2];
+    changed.push((it?it.icon+' '+it.name:w2)+' → left hand');
+  } else if(!w2&&G.equip.weaponL&&weapons.length<2){
+    G.equip.weaponL=null;
+  }
+
+  if(changed.length){
+    log('⚡ Auto-equip: '+changed.join(', ')+'.');
+  } else {
+    log('⚡ Already wearing best available gear.');
+  }
+  save();updateUI();renderEquip();renderEquipInv();
+}
+
 function renderInv(){
   const grid=document.getElementById('inv-grid');grid.innerHTML='';
   // Scrolls live in the dedicated Spell Scrolls bar; equipment has its own panel above.
