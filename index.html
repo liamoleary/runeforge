@@ -94,7 +94,6 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .act-btn .ab-effect{font-size:10px;color:#5ac85a;font-weight:bold;margin-top:3px;background:rgba(90,200,90,0.1);border:1px solid rgba(90,200,90,0.25);border-radius:4px;padding:2px 6px;line-height:1.3}
 .act-btn .ab-effect.has-buff{color:#ffd966;background:rgba(255,217,102,0.1);border-color:rgba(255,217,102,0.25)}
 .act-btn .ab-effect.is-potion{color:#a388e8;background:rgba(163,136,232,0.1);border-color:rgba(163,136,232,0.25)}
-#act-panel{scroll-margin-top:52px;}
 #char-panel{}
 #char-stats{display:flex;gap:8px;padding:10px 12px}
 .stat-box{flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:6px;padding:8px;text-align:center}
@@ -1775,6 +1774,9 @@ function buildSkills(){
       if(!document.body.classList.contains('combat-active')&&!dgOpen){
         const panel=document.getElementById('act-panel');
         if(panel&&typeof panel.scrollIntoView==='function'){
+          // Measure the sticky task strip so scroll-margin-top is always exact
+          const strip=document.getElementById('active-task-strip');
+          panel.style.scrollMarginTop=(strip?(strip.offsetHeight+4):56)+'px';
           panel.scrollIntoView({behavior:'smooth',block:'start'});
         }
       }
