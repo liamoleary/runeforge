@@ -169,6 +169,10 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 .wk-hire-btn{background:rgba(240,192,64,.08);border:1px solid var(--gold);color:var(--gold);font-family:'Cinzel',serif;font-size:11px;padding:7px 16px;border-radius:5px;cursor:pointer}
 .wk-hire-btn:active{transform:scale(.95)}
 .wk-hire-btn:disabled{opacity:.4;cursor:default}
+#workers-tab-bar{display:flex;gap:4px;padding:4px 8px 6px;}
+.wtab{flex:1;background:var(--bg1);border:1px solid var(--bdr);color:var(--text3);font-family:'Cinzel',serif;font-size:11px;padding:6px 8px;cursor:pointer;border-radius:5px;transition:all .15s;}
+.wtab.wtab-active{background:rgba(240,192,64,.1);border-color:var(--gold);color:var(--gold);}
+.wtab:active{transform:scale(.95);}
 #log-inner{padding:6px 10px;max-height:140px;overflow-y:auto}
 #log-inner::-webkit-scrollbar{width:3px}
 #log-inner::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
@@ -580,7 +584,12 @@ body.shake-hit #stage{animation:screenShake .35s ease}
   </div>
   <div class="panel" id="workers-panel">
     <div class="panel-hdr" id="workers-hdr">Workers · 0/0</div>
+    <div id="workers-tab-bar">
+      <button id="wtab-workers" class="wtab wtab-active" onclick="switchWorkersTab('workers')">⚒ Workers</button>
+      <button id="wtab-sell" class="wtab" onclick="switchWorkersTab('sell')">💰 Sell Items</button>
+    </div>
     <div id="workers-list"></div>
+    <div id="workers-sell-body" style="display:none;padding:4px 8px 8px;"></div>
   </div>
   <div class="panel" id="log-panel"><div class="panel-hdr">Activity Log</div><div id="log-inner"></div></div>
 </div>
@@ -2270,6 +2279,60 @@ function renderWorkers(){
     h+='<div class="wk-hire"><button class="wk-hire-btn" onclick="hireWorker()"'+(G.gold<cost?' disabled':'')+'>Hire Worker \u00b7 \ud83e\ude99 '+cost+'</button></div>';
   }
   list.innerHTML=h;
+}
+
+let _workersActiveTab='workers';
+function switchWorkersTab(tab){
+  _workersActiveTab=tab;
+  const wList=document.getElementById('workers-list');
+  const wSell=document.getElementById('workers-sell-body');
+  const tabW=document.getElementById('wtab-workers');
+  const tabS=document.getElementById('wtab-sell');
+  if(!wList||!wSell)return;
+  if(tab==='sell'){
+    wList.style.display='none';
+    wSell.style.display='block';
+    tabS.classList.add('wtab-active');
+    tabW.classList.remove('wtab-active');
+    renderWorkersSell();
+  } else {
+    wList.style.display='block';
+    wSell.style.display='none';
+    tabW.classList.add('wtab-active');
+    tabS.classList.remove('wtab-active');
+    renderWorkers();
+  }
+}
+
+function renderWorkersSell(){
+  const el=document.getElementById('workers-sell-body');
+  if(!el)return;
+  const entries=Object.entries(G.inv)
+    .filter(([id,q])=>q>0&&ITEMS[id]&&canSell(id)&&sellValue(id)>0)
+    .map(([id,q])=>({id,qty:q,it:ITEMS[id],price:sellValue(id)}))
+    .sort((a,b)=>{
+      const ta=_SELL_TYPE_ORDER[a.it.type]??99;
+      const tb=_SELL_TYPE_ORDER[b.it.type]??99;
+      if(ta!==tb)return ta-tb;
+      return a.price-b.price;
+    });
+  let h='<div style="display:flex;gap:6px;padding:4px 0 8px;flex-wrap:wrap;">';
+  h+='<button class="inv-btn" onclick="sellAll();renderWorkersSell()">💰 Sell Resources</button>';
+  h+='</div>';
+  if(!entries.length){
+    h+='<div style="font-size:11px;color:#9a7e50;text-align:center;padding:8px;font-style:italic;">Nothing to sell.</div>';
+    el.innerHTML=h;return;
+  }
+  entries.forEach(({id,qty,it,price})=>{
+    h+='<div style="display:flex;align-items:center;gap:6px;padding:5px 6px;background:#0d0905;border:1px solid #251e14;border-radius:5px;margin-bottom:3px;">';
+    h+='<span style="font-size:16px;">'+it.icon+'</span>';
+    h+='<div style="flex:1;min-width:0;"><div style="font-size:10px;color:#e8d898;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+it.name+'</div>';
+    h+='<div style="font-size:9px;color:#9a7e50;">'+price+' gp each \u00b7 '+qty+' owned</div></div>';
+    h+='<button class="wk-btn" onclick="sellOne(\''+id+'\');renderWorkersSell()">Sell 1</button>';
+    h+='<button class="wk-btn" style="border-color:#f0c040;" onclick="sellStack(\''+id+'\');renderWorkersSell()">All</button>';
+    h+='</div>';
+  });
+  el.innerHTML=h;
 }
 
 function hireWorker(){
