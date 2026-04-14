@@ -1175,7 +1175,8 @@ function addXP(sk,amt){
     if(!isUnlockLvl){
       rewards=grantLvlUpRewards(nl);
     }
-    showLvlUp(sk,nl,rewards,isUnlockLvl);
+    // Skip the level-up popup for dungeon-unlock levels — the discovery modal handles that moment
+    if(!isUnlockLvl) showLvlUp(sk,nl,rewards,false);
     log('<span class="ll">⭐ LEVEL UP! '+SKILLS[sk].name+' is now level '+nl+'!</span>');
     if(rewards.length){
       const earned=rewards.map(r=>(ITEMS[r.id]?.icon||'')+' +'+r.n+' '+(ITEMS[r.id]?.name||r.id)).join(' · ');
