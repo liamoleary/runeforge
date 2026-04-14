@@ -36,6 +36,8 @@
     if(!ITEMS.steel_smith_hammer) ITEMS.steel_smith_hammer = {name:'Steel Smith Hammer',icon:'🔨',sell:250,type:'tool',rarity:'rare'};
     if(!ITEMS.steel_fletch_knife) ITEMS.steel_fletch_knife = {name:'Steel Fletching Knife',icon:'🔪',sell:250,type:'tool',rarity:'rare'};
     if(!ITEMS.steel_needle) ITEMS.steel_needle = {name:'Steel Needle',icon:'🪡',sell:250,type:'tool',rarity:'rare'};
+    if(!ITEMS.hunting_knife) ITEMS.hunting_knife = {name:'Hunting Knife',icon:'🔪',sell:80,type:'tool',rarity:'common'};
+    if(!ITEMS.steel_hunting_knife) ITEMS.steel_hunting_knife = {name:'Steel Hunting Knife',icon:'🔪',sell:250,type:'tool',rarity:'rare'};
     if(!ITEMS.apprentice_wand) ITEMS.apprentice_wand = {name:'Apprentice Wand',icon:'🪄',sell:250,type:'tool',rarity:'rare'};
     if(!ITEMS.steel_shield) ITEMS.steel_shield = {name:'Steel Shield',icon:'🛡️',sell:250,type:'armour',def:5,hp:12,slot:'offhand',rarity:'rare'};
     // Legacy themed dungeon-boss armour (kept so old saves still know about them).
@@ -132,6 +134,24 @@
       monsters:[{name:'Wisp',icon:'✨'},{name:'Animated Tome',icon:'📖'},{name:'Rune Spectre',icon:'🔯'},{name:'Mana Leech',icon:'💧'},{name:'Vault Keeper',icon:'🧙'}],
       loot:[{id:'feather',name:'Feathers',icon:'🪶',weight:30,min:3,max:8},{id:'bones',name:'Bones',icon:'🦴',weight:25,min:2,max:5},{id:'arrow_shaft',name:'Arrow Shafts',icon:'↑',weight:18,min:2,max:5},{id:'gold_ore',name:'Gold Ore',icon:'💛',weight:6,min:1,max:1},{id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}],
       gear:{helmet:{name:'Arcanist Circlet',icon:'🔮'},chest:{name:'Rune-Woven Robe',icon:'🧙'},boots:{name:'Whispering Slippers',icon:'🥾'},jewelry:{name:'Vault Keeper Ring',icon:'💍'}}
+    },
+    hunting:{
+      name:'Savage Wilds',icon:'🎯',
+      desc:'Untamed wilderness where predators rule and prey must fight to survive.',
+      flavour:'A low growl echoes through the brush.',
+      discovery:'Following a trail of massive paw prints into dense forest, you stumble upon a hunting ground where beasts have grown bold and territorial. Something primal watches from the shadows.',
+      monsters:[{name:'Feral Boar',icon:'🐗'},{name:'Pack Wolf',icon:'🐺'},{name:'Charging Stag',icon:'🦌'},{name:'Cave Bear',icon:'🐻'},{name:'Alpha Predator',icon:'🦁'}],
+      loot:[{id:'raw_meat',name:'Raw Meat',icon:'🥩',weight:28,min:2,max:5},{id:'feather',name:'Feathers',icon:'🪶',weight:20,min:2,max:5},{id:'cowhide',name:'Cowhide',icon:'🐄',weight:16,min:1,max:3},{id:'bones',name:'Bones',icon:'🦴',weight:22,min:2,max:5},{id:'venison',name:'Raw Venison',icon:'🦌',weight:10,min:1,max:2},{id:'antler',name:'Antler',icon:'🦌',weight:6,min:1,max:1},{id:'gold_coins',name:'Gold',icon:'🪙',weight:30,min:5,max:20}],
+      gear:{helmet:{name:'Primal Headdress',icon:'🦌'},chest:{name:'Beasthide Tunic',icon:'🐻'},boots:{name:'Stalker Boots',icon:'🥾'},jewelry:{name:'Fang Necklace',icon:'🦷'}}
+    },
+    brewing:{
+      name:'Corrupted Fermentation Vaults',icon:'⚗️',
+      desc:'Subterranean vats of toxic brew spawn abominations where fermentation has gone terribly wrong.',
+      flavour:'A sour reek rises from the depths — something has been brewing far too long.',
+      discovery:'The stench reaches you first: something sharp and wrong, like a brew left to ferment for decades. Beneath the distillery floor, a grate leads down into vaulted chambers where the mash still churns — and moves.',
+      monsters:[{name:'Yeast Shambler',icon:'🫧'},{name:'Mash Crawler',icon:'🐛'},{name:'Putrid Hops Sprite',icon:'🌿'},{name:'Fermentation Wraith',icon:'👻'},{name:'Grothak the Over-Fermented',icon:'🧟'}],
+      loot:[{id:'raw_shrimp',name:'Raw Shrimp',icon:'🦐',weight:28,min:2,max:5},{id:'feather',name:'Feathers',icon:'🪶',weight:22,min:2,max:5},{id:'bones',name:'Bones',icon:'🦴',weight:18,min:2,max:4},{id:'copper_ore',name:'Copper Ore',icon:'🟫',weight:14,min:1,max:3},{id:'iron_ore',name:'Iron Ore',icon:'🔵',weight:8,min:1,max:2},{id:'gold_coins',name:'Gold',icon:'🪙',weight:35,min:5,max:20}],
+      gear:{helmet:{name:"Alchemist's Circlet",icon:'⚗️'},chest:{name:"Brewer's Vestments",icon:'🧪'},boots:{name:'Distillery Boots',icon:'🥾'},jewelry:{name:'Flask of Eternity',icon:'🫗'}}
     }
   };
 
@@ -208,6 +228,20 @@
       {immune:'physical'},
       {heal:4,healCD:3},
       {shield:true,shieldCD:4,shieldTurns:2,immune:'magic'}
+    ],
+    hunting:[
+      {},
+      {poison:1,poisonChance:0.3},
+      {resist:'magic'},
+      {heal:4,healCD:3,resist:'physical'},
+      {shield:true,shieldCD:4,shieldTurns:2,poison:2,poisonChance:0.5}
+    ],
+    brewing:[
+      {poison:1,poisonChance:0.5},
+      {poison:1,poisonChance:0.4},
+      {heal:3,healCD:3,poison:1,poisonChance:0.3},
+      {resist:'physical',poison:2,poisonChance:0.45},
+      {shield:true,shieldCD:3,shieldTurns:2,heal:6,healCD:3,poison:3,poisonChance:0.6}
     ]
   };
 
@@ -222,7 +256,9 @@
     smithing:    {def:1.6, hp:1.3, dodge:0.5, atk:0.8, theme:'Heavy'},
     fletching:   {def:0.8, hp:1.0, dodge:1.1, atk:1.5, theme:'Precise'},
     crafting:    {def:0.9, hp:1.0, dodge:1.3, atk:0.9, theme:'Silken'},
-    magic:       {def:0.7, hp:1.0, dodge:0.9, atk:1.7, theme:'Arcane'}
+    magic:       {def:0.7, hp:1.0, dodge:0.9, atk:1.7, theme:'Arcane'},
+    hunting:     {def:0.9, hp:1.1, dodge:1.3, atk:1.0, theme:'Primal'},
+    brewing:     {def:0.8, hp:1.5, dodge:1.0, atk:0.8, theme:'Alchemical'}
   };
 
   function computeGearStats(slot, markIdx, sk){
@@ -254,27 +290,8 @@
     if(stats.dodge) parts.push('DODGE +'+stats.dodge+'%');
     return parts.join(' · ');
   }
-  // Drop chance per tier — generous on tier 1, painful on tier 12.
-  // Tier 1≈50% → tier 12≈8% (curve: 50 * 0.85^(t-1))
-  function dropChanceForTier(tier){
-    return Math.max(5, Math.round(50 * Math.pow(0.85, tier - 1)));
-  }
   // Mark I → rare, Mark II → epic, Mark III → legendary.
   var GEAR_MARK_RARITIES = ['rare','epic','legendary'];
-
-  // Per-skill shard themes — each skill's dungeon drops a themed crafting component
-  // instead of finished gear. The shard is combined with skill materials to forge the item.
-  var SHARD_THEMES = {
-    woodcutting: {prefix:'grove',      icon:'🌿', name:'Grove'},
-    mining:      {prefix:'deepstone',  icon:'💎', name:'Deepstone'},
-    fishing:     {prefix:'reef',       icon:'🪸', name:'Reef'},
-    cooking:     {prefix:'ember',      icon:'🔥', name:'Ember'},
-    smithing:    {prefix:'forge',      icon:'⚒️', name:'Forge'},
-    fletching:   {prefix:'hollow',     icon:'🏹', name:'Hollow'},
-    crafting:    {prefix:'silkweave',  icon:'🕸️', name:'Silkweave'},
-    magic:       {prefix:'arcane',     icon:'🔮', name:'Arcane'},
-  };
-  var SHARD_MARK_NAMES = ['Basic','Refined','Masterwork'];
 
   function registerGearItem(id, name, icon, slot, stats, markIdx){
     if (typeof ITEMS === 'undefined' || ITEMS[id]) return;
@@ -339,22 +356,13 @@
       var gearItemId = sk + '_' + slot + '_mk' + (markIdx + 1);
       var gearName = gearBase.name + ' ' + GEAR_MARKS[markIdx];
       var stats = computeGearStats(slot, markIdx, sk);
-      // Keep gear item registered so crafting recipes can reference it.
+      // Register gear item — dungeons drop gear directly now.
       registerGearItem(gearItemId, gearName, gearBase.icon, slot, stats, markIdx);
 
-      // Dungeons now drop a crafting shard rather than finished gear.
-      // All 4 tiers within a mark share the same shard (mk1 for tiers 1-4, etc.).
-      // Players combine the shard with skill materials (in the matching skill tab)
-      // to forge the themed gear piece for that specific tier.
-      var shardTheme = SHARD_THEMES[sk] || {prefix: sk, icon: '💎', name: sk};
-      var shardId   = shardTheme.prefix + '_shard_mk' + (markIdx + 1);
-      var shardName = SHARD_MARK_NAMES[markIdx] + ' ' + shardTheme.name + ' Shard';
-      // Shard drop rate: generous early (60% at T1) and scales down (≈12% at T12).
-      // More forgiving than old gear drops because players still need to gather materials.
-      var shardChance = Math.min(80, Math.round(60 * Math.pow(0.88, tier - 1)));
-      // Craft hint shown in UI: what this shard forges and where.
-      var skCap = sk.charAt(0).toUpperCase() + sk.slice(1);
-      var craftHint = skCap + ' tab \u2192 ' + gearName;
+      // Gear drop chance scales with tier: T1=40%, T12=70%.
+      var gearDropChance = Math.round(40 + 30 * (tier - 1) / 11);
+      // Tier label for UI — don't reveal the specific item
+      var tierLabel = tier <= 4 ? 'Tier 1 Gear' : tier <= 8 ? 'Tier 2 Gear' : 'Tier 3 Gear';
 
       out[id] = {
         id: id,
@@ -368,16 +376,13 @@
         discovery: theme.discovery,
         rooms: rooms,
         reward: {
-          id: shardId,
-          icon: shardTheme.icon,
-          name: shardName,
-          eff: craftHint,
-          chance: shardChance,
-          // Craft target — the gear piece unlocked by this tier's recipe
-          craftItem: gearItemId,
-          craftIcon: gearBase.icon,
-          craftName: gearName,
-          craftEff:  gearEffLabel(stats)
+          id: gearItemId,
+          icon: gearBase.icon,
+          name: gearName,
+          eff: gearEffLabel(stats),
+          chance: gearDropChance,
+          tierLabel: tierLabel,
+          rarity: GEAR_MARK_RARITIES[markIdx] || 'rare'
         },
         loot: theme.loot
       };
@@ -398,7 +403,7 @@
   // Tier stats no longer rely on scaleDungeonMonsters() since the generator scales them.
   function scaleDungeonMonsters(d){ return d; }
 
-  // Generate 12 tier dungeons for each of the 8 skill themes (96 dungeons total).
+  // Generate 12 tier dungeons for each of the 10 skill themes (120 dungeons total).
   var DUNGEONS = generateAllDungeons();
 
   // Currently active dungeon definition (defaults to first woodcutting tier for legacy entry points)
@@ -409,6 +414,10 @@
     levelPotionChance: 0.02,
     goldPerRoom: [3, 8]
   };
+
+  // Food pouch: limits how much food you can bring into a dungeon run.
+  var FOOD_POUCH_SLOTS = 20;  // max different food types (covers all cooking recipes)
+  var FOOD_PER_SLOT    = 5;   // max stack per slot
 
   function getFoodCount(){
     var c=0;
@@ -426,6 +435,160 @@
     return f;
   }
 
+  // Build a food pouch snapshot. Uses G.foodLoadout if configured, otherwise auto-fills
+  // from inventory sorted by HP (highest first).
+  function buildFoodPouch(){
+    var pouch=[];
+    var inv=G.inv||{};
+    var loadout=G.foodLoadout||{};
+    var hasLoadout=Object.keys(loadout).some(function(k){return loadout[k]>0&&inv[k]>0;});
+    if(hasLoadout){
+      // Use manual loadout — respect the player's choices, cap at what's in inventory
+      for(var lid in loadout){
+        if(pouch.length>=FOOD_POUCH_SLOTS) break;
+        if(!loadout[lid]||loadout[lid]<=0) continue;
+        if(!ITEMS[lid]||ITEMS[lid].type!=='food') continue;
+        var avail=inv[lid]||0;
+        if(avail<=0) continue;
+        var it=ITEMS[lid];
+        pouch.push({
+          id:lid,name:it.name,icon:it.icon,
+          hp:it.hp,qty:Math.min(loadout[lid],avail,FOOD_PER_SLOT),
+          buff:it.foodBuff||null
+        });
+      }
+    } else {
+      // Auto-fill: highest-HP foods first
+      var foods=getFoodList().sort(function(a,b){return b.hp-a.hp;});
+      for(var i=0;i<foods.length&&pouch.length<FOOD_POUCH_SLOTS;i++){
+        var it2=ITEMS[foods[i].id];
+        pouch.push({
+          id:foods[i].id,name:foods[i].name,icon:foods[i].icon,
+          hp:foods[i].hp,qty:Math.min(foods[i].qty,FOOD_PER_SLOT),
+          buff:it2.foodBuff||null
+        });
+      }
+    }
+    return pouch;
+  }
+
+  // Adjust how many of a food the player wants in their loadout, then refresh the entry UI.
+  function dungeonSetLoadout(foodId, delta){
+    if(!G.foodLoadout) G.foodLoadout={};
+    var inv=G.inv||{};
+    var cur=G.foodLoadout[foodId]||0;
+    var avail=inv[foodId]||0;
+    // Count slots already used (excluding this food)
+    var slotsUsed=0;
+    for(var k in G.foodLoadout){if(k!==foodId&&G.foodLoadout[k]>0)slotsUsed++;}
+    var next=Math.max(0,Math.min(FOOD_PER_SLOT,avail,cur+delta));
+    if(next===0) delete G.foodLoadout[foodId];
+    else G.foodLoadout[foodId]=next;
+    if(typeof save==='function') save();
+    // Re-render the entry screen to reflect the change
+    if(typeof activeDungeon!=='undefined') showDungeonEntry(activeDungeon.id);
+  }
+
+  // Clear all loadout slots and auto-fill next time
+  function dungeonClearLoadout(){
+    G.foodLoadout={};
+    if(typeof save==='function') save();
+    if(typeof activeDungeon!=='undefined') showDungeonEntry(activeDungeon.id);
+  }
+
+  // Auto-fill loadout: pick top foods by HP up to slot limit
+  function dungeonAutoLoadout(){
+    G.foodLoadout={};
+    var foods=getFoodList().sort(function(a,b){return b.hp-a.hp;});
+    for(var i=0;i<foods.length;i++){
+      G.foodLoadout[foods[i].id]=Math.min(foods[i].qty,FOOD_PER_SLOT);
+    }
+    if(typeof save==='function') save();
+    if(typeof activeDungeon!=='undefined') showDungeonEntry(activeDungeon.id);
+  }
+
+  function getPouchFoodCount(){
+    if(!dungeonState||!dungeonState.foodPouch) return 0;
+    var c=0;
+    for(var i=0;i<dungeonState.foodPouch.length;i++) c+=dungeonState.foodPouch[i].qty;
+    return c;
+  }
+
+  // Potion pouch: limits how many potions you can bring into a dungeon run.
+  var POTION_POUCH_SLOTS = 3;   // max different potion types
+  var POTION_PER_SLOT    = 3;   // max stack per slot
+
+  function getPotionList(){
+    var p=[];
+    if(typeof G==='undefined') return p;
+    var inv=G.inv||{};
+    for(var k in inv){if(ITEMS[k]&&ITEMS[k].type==='potion'&&!ITEMS[k].special&&inv[k]>0) p.push({id:k,name:ITEMS[k].name,icon:ITEMS[k].icon,qty:inv[k],it:ITEMS[k]});}
+    return p;
+  }
+
+  function buildPotionPouch(){
+    var pouch=[];
+    var inv=G.inv||{};
+    var loadout=G.potionLoadout||{};
+    var hasLoadout=Object.keys(loadout).some(function(k){return loadout[k]>0&&inv[k]>0;});
+    if(hasLoadout){
+      for(var lid in loadout){
+        if(pouch.length>=POTION_POUCH_SLOTS) break;
+        if(!loadout[lid]||loadout[lid]<=0) continue;
+        if(!ITEMS[lid]||ITEMS[lid].type!=='potion'||ITEMS[lid].special) continue;
+        var avail=inv[lid]||0;
+        if(avail<=0) continue;
+        var it=ITEMS[lid];
+        pouch.push({id:lid,name:it.name,icon:it.icon,qty:Math.min(loadout[lid],avail,POTION_PER_SLOT),it:it});
+      }
+    } else {
+      // Auto-fill: pick potions from inventory
+      var potions=getPotionList();
+      for(var i=0;i<potions.length&&pouch.length<POTION_POUCH_SLOTS;i++){
+        pouch.push({id:potions[i].id,name:potions[i].name,icon:potions[i].icon,qty:Math.min(potions[i].qty,POTION_PER_SLOT),it:potions[i].it});
+      }
+    }
+    return pouch;
+  }
+
+  function dungeonSetPotionLoadout(potionId, delta){
+    if(!G.potionLoadout) G.potionLoadout={};
+    var inv=G.inv||{};
+    var cur=G.potionLoadout[potionId]||0;
+    var avail=inv[potionId]||0;
+    var slotsUsed=0;
+    for(var k in G.potionLoadout){if(k!==potionId&&G.potionLoadout[k]>0)slotsUsed++;}
+    var next=Math.max(0,Math.min(POTION_PER_SLOT,avail,cur+delta));
+    if(next>0&&cur===0&&slotsUsed>=POTION_POUCH_SLOTS) next=0;
+    if(next===0) delete G.potionLoadout[potionId];
+    else G.potionLoadout[potionId]=next;
+    if(typeof save==='function') save();
+    if(typeof activeDungeon!=='undefined') showDungeonEntry(activeDungeon.id);
+  }
+
+  function dungeonClearPotionLoadout(){
+    G.potionLoadout={};
+    if(typeof save==='function') save();
+    if(typeof activeDungeon!=='undefined') showDungeonEntry(activeDungeon.id);
+  }
+
+  function dungeonAutoPotionLoadout(){
+    G.potionLoadout={};
+    var potions=getPotionList();
+    for(var i=0;i<potions.length&&i<POTION_POUCH_SLOTS;i++){
+      G.potionLoadout[potions[i].id]=Math.min(potions[i].qty,POTION_PER_SLOT);
+    }
+    if(typeof save==='function') save();
+    if(typeof activeDungeon!=='undefined') showDungeonEntry(activeDungeon.id);
+  }
+
+  function getPouchPotionCount(){
+    if(!dungeonState||!dungeonState.potionPouch) return 0;
+    var c=0;
+    for(var i=0;i<dungeonState.potionPouch.length;i++) c+=dungeonState.potionPouch[i].qty;
+    return c;
+  }
+
   var ATK_SLOTS = ['weaponR','weaponL','jewelry'];
   var DEF_SLOTS = ['weaponR','weaponL','helmet','chest','boots','jewelry'];
 
@@ -435,10 +598,17 @@
     if(typeof G==='undefined'||!G.equip) return b;
     for (var i=0;i<ATK_SLOTS.length;i++){
       var id=G.equip[ATK_SLOTS[i]];
-      if(id&&ITEMS[id]) b+=ITEMS[id].atk||0;
+      if(id&&ITEMS[id]){
+        var s=typeof getUpgradedStats==='function'?getUpgradedStats(id):{atk:ITEMS[id].atk||0};
+        b+=s.atk||0;
+      }
     }
     // Legacy fallback for saves that still use the old single-weapon field
     if(G.equip.weapon&&ITEMS[G.equip.weapon]) b+=ITEMS[G.equip.weapon].atk||0;
+    // Add potion buffs during dungeon runs (turn-limited)
+    if(dungeonState&&dungeonState.potionBuffs&&dungeonState.potionBuffs.atkTurns>0) b+=dungeonState.potionBuffs.atk||0;
+    // Add temporary food buffs
+    if(dungeonState&&dungeonState.foodBuffs&&dungeonState.foodBuffs.atkTurns>0) b+=dungeonState.foodBuffs.atk||0;
     return b;
   }
 
@@ -447,9 +617,16 @@
     if(typeof G==='undefined'||!G.equip) return b;
     for (var i=0;i<DEF_SLOTS.length;i++){
       var id=G.equip[DEF_SLOTS[i]];
-      if(id&&ITEMS[id]) b+=ITEMS[id].def||0;
+      if(id&&ITEMS[id]){
+        var s=typeof getUpgradedStats==='function'?getUpgradedStats(id):{def:ITEMS[id].def||0};
+        b+=s.def||0;
+      }
     }
     if(G.equip.armour&&ITEMS[G.equip.armour]) b+=ITEMS[G.equip.armour].def||0;
+    // Add potion buffs during dungeon runs (turn-limited)
+    if(dungeonState&&dungeonState.potionBuffs&&dungeonState.potionBuffs.defTurns>0) b+=dungeonState.potionBuffs.def||0;
+    // Add temporary food buffs
+    if(dungeonState&&dungeonState.foodBuffs&&dungeonState.foodBuffs.defTurns>0) b+=dungeonState.foodBuffs.def||0;
     return b;
   }
 
@@ -474,8 +651,13 @@
     if(typeof G==='undefined'||!G.equip) return d;
     for (var i=0;i<DEF_SLOTS.length;i++){
       var id=G.equip[DEF_SLOTS[i]];
-      if(id&&ITEMS[id]&&ITEMS[id].dodge) d+=ITEMS[id].dodge;
+      if(id&&ITEMS[id]){
+        var s=typeof getUpgradedStats==='function'?getUpgradedStats(id):{dodge:ITEMS[id].dodge||0};
+        d+=s.dodge||0;
+      }
     }
+    // Add potion buffs during dungeon runs (turn-limited)
+    if(dungeonState&&dungeonState.potionBuffs&&dungeonState.potionBuffs.dodgeTurns>0) d+=dungeonState.potionBuffs.dodge||0;
     return Math.min(70,d);
   }
 
@@ -539,6 +721,11 @@
       totalGold:0,
       lootCollected:[],
       playerPoison:0,playerPoisonTurns:0,
+      potionBuffs:{atk:0,atkTurns:0,def:0,defTurns:0,dodge:0,dodgeTurns:0}, // turn-limited potion buffs
+      foodPouch:buildFoodPouch(), // limited food brought into dungeon
+      potionPouch:buildPotionPouch(), // limited potions brought into dungeon
+      foodBuffs:{atk:0,atkTurns:0,def:0,defTurns:0,regen:0,regenTurns:0}, // temp food buffs
+      poisonImmuneTurns:0,
       victory:false,
       fled:false,
       critStacks:0,
@@ -910,56 +1097,66 @@
   }
 
   // === FIRST-VICTORY REWARD POPUP ===
-  function showFirstVictoryPopup(dungeon, reward){
+  function showFirstVictoryPopup(dungeon, reward, gotGear){
     // Don't double-show
     if(document.getElementById('dg-victory-popup'))return;
     var ov=document.createElement('div');
     ov.id='dg-victory-popup';
-    ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle,rgba(20,12,4,0.85) 0%,rgba(0,0,0,0.95) 100%);z-index:10000;display:flex;align-items:center;justify-content:center;animation:dgFadeIn 0.35s ease-out;overflow:hidden;padding:20px;box-sizing:border-box;';
 
-    var modal=document.createElement('div');
-    modal.style.cssText='position:relative;background:linear-gradient(135deg,#1a1308 0%,#2a1f0c 100%);border:3px solid #f0c040;border-radius:14px;padding:28px 30px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 0 50px rgba(240,192,64,0.55),0 0 100px rgba(240,192,64,0.25);animation:dgVictoryPop 0.7s cubic-bezier(0.2,1.3,0.6,1) forwards;font-family:Cinzel,serif;z-index:2;';
-    var craftLinePopup = reward.craftName
-      ? '<div style="margin-top:6px;font-size:12px;color:#9a7e50;font-family:Arial,sans-serif;">\u2192 forge <span style="color:#f0c040;">'+reward.craftIcon+' '+reward.craftName+'</span><br><span style="color:#5a4830;font-size:11px;">'+(reward.craftEff||'')+'</span></div>'
-      : '';
-    modal.innerHTML=
-      '<div style="color:#f0c040;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;font-weight:700;">⚔ First Victory ⚔</div>'+
-      '<div style="color:#e8d898;font-size:18px;margin-bottom:14px;">'+dungeon.name+'</div>'+
-      '<div style="font-size:72px;line-height:1;margin-bottom:8px;display:inline-block;animation:dgRewardSpin 0.9s ease-out forwards,dgRewardGlow 2.2s ease-in-out 0.9s infinite;">'+reward.icon+'</div>'+
-      '<div style="color:#0070dd;font-size:20px;font-weight:700;margin-bottom:2px;text-shadow:0 0 12px rgba(0,112,221,0.5);">'+reward.name+'</div>'+
-      '<div style="color:#9a7e50;font-size:11px;margin-bottom:4px;font-family:Arial,sans-serif;">Crafting component obtained</div>'+
-      craftLinePopup+
-      '<div style="margin-top:18px;"></div>'+
-      '<button id="dg-victory-claim" style="background:linear-gradient(180deg,#f0c040,#c08020);border:2px solid #f0c040;color:#0b0905;padding:11px 28px;font-family:Cinzel,serif;font-size:14px;font-weight:700;border-radius:6px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;box-shadow:0 0 18px rgba(240,192,64,0.55);">Craft It!</button>';
-
-    ov.appendChild(modal);
-    document.body.appendChild(ov);
-
-    // Spawn fireworks across the screen
-    var fwColors=['#f0c040','#ffd966','#ff6644','#5ac85a','#88ddff','#cc88ff','#ff88cc','#ffaa00'];
-    function fwRandom(){return fwColors[Math.floor(Math.random()*fwColors.length)];}
-    // Initial burst wave
-    for(var i=0;i<10;i++){
-      (function(idx){
-        setTimeout(function(){if(ov.parentNode)spawnFireworkBurst(ov,fwRandom());},idx*180);
-      })(i);
-    }
-    // Continuous fireworks for ~4s
-    var interval=setInterval(function(){
-      if(!ov.parentNode){clearInterval(interval);return;}
-      spawnFireworkBurst(ov,fwRandom());
-    },380);
-    setTimeout(function(){clearInterval(interval);},4200);
-
-    function dismiss(){
-      clearInterval(interval);
-      if(ov.parentNode){
-        ov.style.animation='dgFadeIn 0.25s ease-out reverse';
-        setTimeout(function(){if(ov.parentNode)ov.remove();},250);
+    if(gotGear){
+      // === POSITIVE: gear obtained — gold/fireworks ===
+      ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle,rgba(20,12,4,0.85) 0%,rgba(0,0,0,0.95) 100%);z-index:10000;display:flex;align-items:center;justify-content:center;animation:dgFadeIn 0.35s ease-out;overflow:hidden;padding:20px;box-sizing:border-box;';
+      var modal=document.createElement('div');
+      modal.style.cssText='position:relative;background:linear-gradient(135deg,#1a1308 0%,#2a1f0c 100%);border:3px solid #f0c040;border-radius:14px;padding:28px 30px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 0 50px rgba(240,192,64,0.55),0 0 100px rgba(240,192,64,0.25);animation:dgVictoryPop 0.7s cubic-bezier(0.2,1.3,0.6,1) forwards;font-family:Cinzel,serif;z-index:2;';
+      var statsLine=reward.eff?'<div style="margin-top:6px;font-size:11px;color:#9a7e50;font-family:Arial,sans-serif;">'+reward.eff+'</div>':'';
+      modal.innerHTML=
+        '<div style="color:#f0c040;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;font-weight:700;">⚔ First Victory ⚔</div>'+
+        '<div style="color:#e8d898;font-size:18px;margin-bottom:14px;">'+dungeon.name+'</div>'+
+        '<div style="font-size:72px;line-height:1;margin-bottom:8px;display:inline-block;animation:dgRewardSpin 0.9s ease-out forwards,dgRewardGlow 2.2s ease-in-out 0.9s infinite;">'+reward.icon+'</div>'+
+        '<div style="color:#ff8000;font-size:20px;font-weight:700;margin-bottom:2px;text-shadow:0 0 12px rgba(255,128,0,0.5);">'+reward.name+'</div>'+
+        '<div style="color:#9a7e50;font-size:11px;margin-bottom:4px;font-family:Arial,sans-serif;">Gear obtained!</div>'+
+        statsLine+
+        '<div style="margin-top:18px;"></div>'+
+        '<button id="dg-victory-claim" style="background:linear-gradient(180deg,#f0c040,#c08020);border:2px solid #f0c040;color:#0b0905;padding:11px 28px;font-family:Cinzel,serif;font-size:14px;font-weight:700;border-radius:6px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;box-shadow:0 0 18px rgba(240,192,64,0.55);">Equip It!</button>';
+      ov.appendChild(modal);
+      document.body.appendChild(ov);
+      // Fireworks
+      var fwColors=['#f0c040','#ffd966','#ff6644','#5ac85a','#88ddff','#cc88ff','#ff88cc','#ffaa00'];
+      function fwRandom(){return fwColors[Math.floor(Math.random()*fwColors.length)];}
+      for(var i=0;i<10;i++){
+        (function(idx){setTimeout(function(){if(ov.parentNode)spawnFireworkBurst(ov,fwRandom());},idx*180);})(i);
       }
+      var interval=setInterval(function(){if(!ov.parentNode){clearInterval(interval);return;}spawnFireworkBurst(ov,fwRandom());},380);
+      setTimeout(function(){clearInterval(interval);},4200);
+      function dismiss(){
+        clearInterval(interval);
+        if(ov.parentNode){ov.style.animation='dgFadeIn 0.25s ease-out reverse';setTimeout(function(){if(ov.parentNode)ov.remove();},250);}
+      }
+      document.getElementById('dg-victory-claim').onclick=dismiss;
+      ov.addEventListener('click',function(e){if(e.target===ov)dismiss();});
+
+    } else {
+      // === NEGATIVE: dungeon cleared but no gear drop — greys & reds ===
+      ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:10000;display:flex;align-items:center;justify-content:center;animation:dgFadeIn 0.3s ease-out;padding:20px;box-sizing:border-box;';
+      var modal2=document.createElement('div');
+      modal2.style.cssText='background:linear-gradient(135deg,#110d0d 0%,#1a1010 100%);border:2px solid #5a2020;border-radius:14px;padding:24px 28px 20px;max-width:320px;width:100%;text-align:center;animation:dgVictoryPop 0.5s cubic-bezier(0.2,1.2,0.6,1) forwards;font-family:Cinzel,serif;box-shadow:0 0 30px rgba(120,20,20,0.4);';
+      var dropPct=reward.chance!=null?reward.chance:50;
+      modal2.innerHTML=
+        '<div style="color:#6b3030;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">Dungeon Cleared</div>'+
+        '<div style="color:#8a6a6a;font-size:16px;margin-bottom:16px;">'+dungeon.name+'</div>'+
+        '<div style="font-size:54px;line-height:1;margin-bottom:10px;filter:grayscale(1) brightness(0.5);">'+reward.icon+'</div>'+
+        '<div style="color:#c03030;font-size:17px;font-weight:700;margin-bottom:4px;">No Gear This Run</div>'+
+        '<div style="color:#5a3838;font-size:11px;margin-bottom:14px;font-family:Arial,sans-serif;">'+reward.name+' · '+dropPct+'% drop chance</div>'+
+        '<div style="color:#4a3030;font-size:10px;margin-bottom:16px;font-family:Arial,sans-serif;line-height:1.5;">The dungeon has been cleared. Run it again to try for the gear drop.</div>'+
+        '<button id="dg-victory-claim" style="background:#2a1010;border:1px solid #5a2020;color:#a04040;padding:9px 24px;font-family:Cinzel,serif;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;">Continue</button>';
+      ov.appendChild(modal2);
+      document.body.appendChild(ov);
+      function dismiss2(){
+        if(ov.parentNode){ov.style.animation='dgFadeIn 0.25s ease-out reverse';setTimeout(function(){if(ov.parentNode)ov.remove();},250);}
+      }
+      document.getElementById('dg-victory-claim').onclick=dismiss2;
+      ov.addEventListener('click',function(e){if(e.target===ov)dismiss2();});
     }
-    document.getElementById('dg-victory-claim').onclick=dismiss;
-    ov.addEventListener('click',function(e){if(e.target===ov)dismiss();});
   }
 
   function spawnFireworkBurst(parent,color){
@@ -1045,6 +1242,26 @@
 
   // Apply end-of-turn effects: tick poison, cool down monster shields, refresh heals.
   function tickStatusEffects(mon){
+    // Tick food buffs (ATK, DEF duration, regen)
+    if(dungeonState.foodBuffs){
+      var fb=dungeonState.foodBuffs;
+      if(fb.atkTurns>0){fb.atkTurns--;if(fb.atkTurns<=0){fb.atk=0;dungeonState.combatLog.push('<span style="color:#5a4830;">🌶️ Food ATK buff fades.</span>');}}
+      if(fb.defTurns>0){fb.defTurns--;if(fb.defTurns<=0){fb.def=0;dungeonState.combatLog.push('<span style="color:#5a4830;">🌶️ Food DEF buff fades.</span>');}}
+      if(fb.regen>0&&fb.regenTurns>0){
+        var regenAmt=Math.min(fb.regen,dungeonState.playerMaxHp-dungeonState.playerHp);
+        if(regenAmt>0){dungeonState.playerHp+=regenAmt;showDungeonDmgFloat(regenAmt,'heal','left');dungeonState.combatLog.push('<span style="color:#5ac85a;">🍲 Food regen heals <b>'+regenAmt+'</b> HP ('+fb.regenTurns+'t left)</span>');}
+        fb.regenTurns--;if(fb.regenTurns<=0){fb.regen=0;dungeonState.combatLog.push('<span style="color:#5a4830;">🍲 Food regen fades.</span>');}
+      }
+    }
+    // Tick potion buffs (ATK, DEF, Dodge durations)
+    if(dungeonState.potionBuffs){
+      var pb=dungeonState.potionBuffs;
+      if(pb.atkTurns>0){pb.atkTurns--;if(pb.atkTurns<=0){pb.atk=0;dungeonState.combatLog.push('<span style="color:#5a4830;">💪 Strength potion wears off.</span>');}}
+      if(pb.defTurns>0){pb.defTurns--;if(pb.defTurns<=0){pb.def=0;dungeonState.combatLog.push('<span style="color:#5a4830;">🛡️ Defence potion wears off.</span>');}}
+      if(pb.dodgeTurns>0){pb.dodgeTurns--;if(pb.dodgeTurns<=0){pb.dodge=0;dungeonState.combatLog.push('<span style="color:#5a4830;">🏃 Dodge potion wears off.</span>');}}
+    }
+    // Tick down poison immunity from antidote or food
+    if (dungeonState.poisonImmuneTurns > 0) dungeonState.poisonImmuneTurns--;
     // Player poison DoT
     if (dungeonState.playerPoison > 0 && dungeonState.playerPoisonTurns > 0){
       var pp = dungeonState.playerPoison;
@@ -1101,11 +1318,15 @@
     showDungeonDmgFloat(ad,'enemy-hit','left');
     showDungeonHitFX('left','hit');
     dungeonState.combatLog.push(mon.icon+' '+mon.name+' hits you for <span style="color:#e03030">'+ad+'</span> damage.');
-    // Poison-on-hit chance
+    // Poison-on-hit chance (blocked by antidote immunity)
     if (mon.poison && mon.poisonChance && Math.random() < mon.poisonChance){
-      dungeonState.playerPoison = Math.max(dungeonState.playerPoison, mon.poison);
-      dungeonState.playerPoisonTurns = Math.max(dungeonState.playerPoisonTurns, 4);
-      dungeonState.combatLog.push('<span style="color:#9b59b6;">🧪 Poisoned! '+mon.poison+' damage / turn for 4 turns.</span>');
+      if(dungeonState.poisonImmuneTurns>0){
+        dungeonState.combatLog.push('<span style="color:#5ac85a;">🧪 Poison resisted! (Antidote active)</span>');
+      } else {
+        dungeonState.playerPoison = Math.max(dungeonState.playerPoison, mon.poison);
+        dungeonState.playerPoisonTurns = Math.max(dungeonState.playerPoisonTurns, 4);
+        dungeonState.combatLog.push('<span style="color:#9b59b6;">🧪 Poisoned! '+mon.poison+' damage / turn for 4 turns.</span>');
+      }
     }
     if (dungeonState.playerHp <= 0){
       dungeonState.combatLog.push('<span style="color:#e03030;font-weight:bold">You have been defeated! All dungeon loot is lost.</span>');
@@ -1302,18 +1523,13 @@
         var firstClear=(typeof G!=='undefined')&&!G.dungeonRewards[activeDungeon.id];
         dungeonState.combatLog.push('<span style="color:#f0c040;font-weight:bold">The dungeon falls silent. You are victorious!</span>');
 
-        // Roll for the crafting shard drop. Nothing is ever guaranteed — early tiers are
-        // generous, later tiers are rare. The Hunter's Eye buff (loot_dungeon) bumps
-        // the chance multiplicatively if active.
-        var dropChance = (rwd.chance!=null) ? rwd.chance : 60;
-        var lootBuff = (typeof window.getBuffLootMult === 'function') ? window.getBuffLootMult() : 1;
-        if (lootBuff > 1) dropChance = Math.min(95, Math.round(dropChance * lootBuff));
-        var gotDrop = (Math.random()*100) < dropChance;
-        if(gotDrop){
-          var craftMsg = rwd.craftName ? ' <span style="color:#9a7e50;font-size:10px;">(\u2192 forge '+rwd.craftIcon+' '+rwd.craftName+' in the skill tab)</span>' : '';
-          dungeonState.combatLog.push('<span style="color:#0070dd;font-weight:bold">🎁 '+rwd.icon+' '+rwd.name+' obtained!</span>'+craftMsg);
+        // Gear drop roll — chance scales with tier (T1=40%, T12=70%).
+        var dropChance = (rwd.chance!=null) ? rwd.chance : 50;
+        var gotGearDrop = (Math.random()*100) < dropChance;
+        if(gotGearDrop){
+          dungeonState.combatLog.push('<span style="color:#ff8000;font-weight:bold">⚔ '+rwd.icon+' '+rwd.name+' obtained!</span>');
         } else {
-          dungeonState.combatLog.push('<span style="color:#9a7e50">No shard this run ('+dropChance+'% · '+rwd.icon+' '+rwd.name+'). Run it again!</span>');
+          dungeonState.combatLog.push('<span style="color:#9a7e50">No gear this run ('+dropChance+'%). Keep going!</span>');
         }
 
         var gotLevelPotion=Math.random()<DG.levelPotionChance;
@@ -1321,7 +1537,7 @@
 
         if(typeof G!=='undefined'){
           if(!G.inv) G.inv={};
-          if(gotDrop){
+          if(gotGearDrop){
             G.inv[rwd.id]=(G.inv[rwd.id]||0)+1;
           }
           if(firstClear){
@@ -1338,13 +1554,13 @@
           if(typeof renderInv==='function') renderInv();
           if(typeof log==='function'){
             var msg='<b>'+activeDungeon.name+' cleared!</b> +'+dungeonState.totalGold+' gold';
-            if(gotDrop) msg+=' + <span style="color:#0070dd">'+rwd.icon+' '+rwd.name+'</span>'+(rwd.craftName?' <span style="color:#9a7e50;font-size:10px;">(\u2192 '+rwd.craftName+')</span>':'');
+            if(gotGearDrop) msg+=' + <span style="color:#ff8000">'+rwd.icon+' '+rwd.name+'</span>';
             if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">🧪 Level Potion!</span>';
             log(msg+' + loot!');
           }
-          // First-victory popup with fireworks fires only on the very first clear
+          // First-victory popup fires only on the very first clear; pass whether gear actually dropped
           if(firstClear){
-            setTimeout(function(){showFirstVictoryPopup(activeDungeon,rwd);},700);
+            (function(gd){setTimeout(function(){showFirstVictoryPopup(activeDungeon,rwd,gd);},700);})(gotGearDrop);
           }
         }
       } else {
@@ -1369,19 +1585,80 @@
     renderDungeon();
   }
 
-  function dungeonEat(){
+  function dungeonEat(foodId){
     if(!dungeonState||dungeonState.victory||dungeonState.fled||dungeonState.playerHp<=0) return;
-    var foods=getFoodList();
-    if(foods.length===0){showDungeonMessage('No food left!','#e03030');return;}
-    var f=foods[0],healed=Math.min(f.hp,dungeonState.playerMaxHp-dungeonState.playerHp);
-    if(healed<=0){showDungeonMessage('Already at full HP!','#ffd966');return;}
-    // Apply heal first
-    dungeonState.playerHp=Math.min(dungeonState.playerMaxHp,dungeonState.playerHp+f.hp);
-    showDungeonDmgFloat(healed,'heal','left');
-    G.inv[f.id]--;
-    if(G.inv[f.id]<=0) delete G.inv[f.id];
-    dungeonState.combatLog.push('You eat '+f.icon+' '+f.name+' and heal <span style="color:#5ac85a">'+healed+'</span> HP.');
-    // Eating leaves you open — the current monster takes a swing at you.
+    if(!dungeonState.foodPouch||!dungeonState.foodPouch.length){showDungeonMessage('No food in pouch!','#e03030');return;}
+    // Find the requested food in the pouch
+    var slot=null;
+    for(var i=0;i<dungeonState.foodPouch.length;i++){
+      if(dungeonState.foodPouch[i].id===foodId&&dungeonState.foodPouch[i].qty>0){slot=dungeonState.foodPouch[i];break;}
+    }
+    if(!slot){showDungeonMessage('No food left!','#e03030');return;}
+    var hasBuff=!!slot.buff;
+    var healed=Math.min(slot.hp,dungeonState.playerMaxHp-dungeonState.playerHp);
+    if(healed<=0&&!hasBuff){showDungeonMessage('Already at full HP!','#ffd966');return;}
+    // Apply heal
+    dungeonState.playerHp=Math.min(dungeonState.playerMaxHp,dungeonState.playerHp+slot.hp);
+    if(healed>0) showDungeonDmgFloat(healed,'heal','left');
+    // Consume from pouch and inventory
+    slot.qty--;
+    if(G.inv[slot.id]){G.inv[slot.id]--;if(G.inv[slot.id]<=0) delete G.inv[slot.id];}
+    // Build log message
+    var logParts=['You eat '+slot.icon+' '+slot.name];
+    if(healed>0) logParts.push('heal <span style="color:#5ac85a">'+healed+'</span> HP');
+    // Apply food buff
+    if(hasBuff){
+      var b=slot.buff;
+      if(b.atk){dungeonState.foodBuffs.atk=b.atk;dungeonState.foodBuffs.atkTurns=b.turns||3;}
+      if(b.def){dungeonState.foodBuffs.def=b.def;dungeonState.foodBuffs.defTurns=b.turns||3;}
+      if(b.regen){dungeonState.foodBuffs.regen=b.regen;dungeonState.foodBuffs.regenTurns=b.turns||4;}
+      if(b.poisonImmune){dungeonState.poisonImmuneTurns=Math.max(dungeonState.poisonImmuneTurns,b.poisonImmune);dungeonState.playerPoison=0;dungeonState.playerPoisonTurns=0;}
+      var bp=[];
+      if(b.atk) bp.push('+'+b.atk+' ATK');
+      if(b.def) bp.push('+'+b.def+' DEF');
+      if(b.regen) bp.push('+'+b.regen+' HP/turn');
+      if(b.poisonImmune) bp.push('Poison Immune');
+      if(bp.length) logParts.push('<span style="color:#ffd966;">'+bp.join(', ')+' ('+(b.turns||b.poisonImmune)+'t)</span>');
+    }
+    dungeonState.combatLog.push(logParts.join(' · ')+'.');
+    // Eating from your food pouch is SAFE — no monster retaliation!
+    // Status effects still tick (poison, shields, monster heals).
+    var mon=dungeonState.monsters[dungeonState.room];
+    if(mon&&mon.hp>0) tickStatusEffects(mon);
+    if(dungeonState&&dungeonState.playerHp>0) G.hp=dungeonState.playerHp;
+    renderDungeon();
+  }
+
+  function dungeonPotion(potionId){
+    if(!dungeonState||dungeonState.victory||dungeonState.fled||dungeonState.playerHp<=0) return;
+    if(typeof ITEMS==='undefined'||!ITEMS[potionId]||ITEMS[potionId].type!=='potion') return;
+    // Use potion from pouch if available, otherwise fall back to inventory
+    var slot=null;
+    if(dungeonState.potionPouch){
+      for(var i=0;i<dungeonState.potionPouch.length;i++){
+        if(dungeonState.potionPouch[i].id===potionId&&dungeonState.potionPouch[i].qty>0){slot=dungeonState.potionPouch[i];break;}
+      }
+    }
+    if(!slot){showDungeonMessage('No potions left!','#e03030');return;}
+    var pot=ITEMS[potionId];
+    slot.qty--;
+    if(G.inv[potionId]){G.inv[potionId]--;if(G.inv[potionId]<=0) delete G.inv[potionId];}
+    if(pot.potionType==='buff'){
+      dungeonState.potionBuffs[pot.stat]=pot.value;
+      dungeonState.potionBuffs[pot.stat+'Turns']=pot.turns||5;
+      dungeonState.combatLog.push('<span style="color:#ffd966;">'+pot.icon+' You drink '+pot.name+'! +'+pot.value+' '+pot.stat.toUpperCase()+' for '+pot.turns+' turns.</span>');
+    } else if(pot.potionType==='instant'&&pot.hp){
+      var healed=Math.min(pot.hp,dungeonState.playerMaxHp-dungeonState.playerHp);
+      dungeonState.playerHp=Math.min(dungeonState.playerMaxHp,dungeonState.playerHp+pot.hp);
+      showDungeonDmgFloat(healed,'heal','left');
+      dungeonState.combatLog.push('<span style="color:#5ac85a;">'+pot.icon+' You drink '+pot.name+'! Healed <b>'+healed+'</b> HP.</span>');
+    } else if(pot.potionType==='cure'){
+      dungeonState.playerPoison=0;
+      dungeonState.playerPoisonTurns=0;
+      dungeonState.poisonImmuneTurns=pot.immuneTurns||5;
+      dungeonState.combatLog.push('<span style="color:#5ac85a;">'+pot.icon+' You drink '+pot.name+'! Poison cured, immune for '+dungeonState.poisonImmuneTurns+' turns.</span>');
+    }
+    // Using a potion costs your turn — monster retaliates
     var mon=dungeonState.monsters[dungeonState.room];
     if(mon&&mon.hp>0){
       monsterRetaliate(mon);
@@ -1442,6 +1719,16 @@
     var pHp=Math.max(0,(s.playerHp/s.playerMaxHp)*100);
     var mHp=mon?Math.max(0,(mon.hp/mon.maxhp)*100):0;
 
+    // Determine if a particular attack type is clearly superior for the current monster.
+    // Used to glow the recommended buttons so the player knows which attack is best.
+    var _physGlow=false,_magicGlow=false;
+    if(mon&&mon.hp>0&&!done){
+      if(mon.immune==='physical'||mon.flying) _magicGlow=true;      // physical useless → magic is best
+      else if(mon.immune==='magic') _physGlow=true;                  // magic blocked  → physical is best
+      else if(mon.resist==='physical') _magicGlow=true;             // physical resisted → magic preferred
+      else if(mon.resist==='magic') _physGlow=true;                 // magic resisted  → physical preferred
+    }
+
     var h='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
     h+='<div style="text-align:center;margin-bottom:8px;"><div style="color:#f0c040;font-family:Cinzel,serif;font-size:16px;">'+activeDungeon.icon+' '+activeDungeon.name+'</div><div style="color:#9a7e50;font-size:11px;">Room '+(Math.min(s.room+1,s.monsters.length))+'/'+s.monsters.length+(s.totalGold>0?' | 🪙 '+s.totalGold+' gold':'')+'</div></div>';
 
@@ -1472,14 +1759,12 @@
     }
     h+='</div>';
 
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">';
-    // Player column (with poison indicator if active)
+    // Player HP data kept here for use in the bottom player strip (dg-actions)
     var poisonBadge = (s.playerPoison>0 && s.playerPoisonTurns>0)
-      ? '<div style="color:#9b59b6;font-size:9px;margin-top:2px;">🧪 Poisoned (-'+s.playerPoison+'/turn · '+s.playerPoisonTurns+'t)</div>'
+      ? '<span style="color:#9b59b6;font-size:9px;">🧪 -'+s.playerPoison+'/turn · '+s.playerPoisonTurns+'t</span>'
       : '';
-    h+='<div style="flex:1;text-align:center;"><div style="font-size:26px;">🧍</div><div style="color:#e8d898;font-size:12px;">You</div><div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;"><div style="height:100%;width:'+pHp+'%;background:'+(pHp>30?'#5ac85a':'#e03030')+';transition:width 0.3s;"></div></div><div style="color:#9a7e50;font-size:10px;">'+s.playerHp+'/'+s.playerMaxHp+' HP</div>'+poisonBadge+'</div>';
-    h+='<div style="color:#f0c040;font-size:16px;font-family:Cinzel,serif;">VS</div>';
-    h+='<div style="flex:1;text-align:center;">';
+    // Monster panel — centred and full-width now that the player HP strip is at the bottom
+    h+='<div style="text-align:center;margin-bottom:12px;">';
     if(mon&&mon.hp>0) {
       // Build status badges for the monster
       var badges = [];
@@ -1491,34 +1776,82 @@
       if (mon.resist==='physical'&&mon.immune!=='physical') badges.push('<span style="color:#88ddff">⚔ Phys resist</span>');
       if (mon.heal)            badges.push('<span style="color:#5ac85a">💚 Heals</span>');
       if (mon.poison)          badges.push('<span style="color:#9b59b6">🧪 Poison</span>');
-      var badgesHtml = badges.length ? '<div style="font-size:8px;margin-top:2px;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">'+badges.join(' ')+'</div>' : '';
-      h+='<div style="font-size:26px;">'+mon.icon+'</div><div style="color:#e8d898;font-size:12px;">'+mon.name+'</div><div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;"><div style="height:100%;width:'+mHp+'%;background:#e03030;transition:width 0.3s;"></div></div><div style="color:#9a7e50;font-size:10px;">'+mon.hp+'/'+mon.maxhp+' HP</div>'+badgesHtml;
+      var badgesHtml = badges.length ? '<div style="font-size:9px;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">'+badges.join(' ')+'</div>' : '';
+      h+='<div style="font-size:38px;line-height:1;">'+mon.icon+'</div>'
+       +'<div style="color:#e8d898;font-size:14px;font-weight:bold;margin:3px 0;">'+mon.name+'</div>'
+       +'<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:10px;overflow:hidden;margin:4px 8px;">'
+       +'<div style="height:100%;width:'+mHp+'%;background:#e03030;transition:width 0.3s;"></div></div>'
+       +'<div style="color:#9a7e50;font-size:10px;">'+mon.hp+'/'+mon.maxhp+' HP</div>'+badgesHtml;
     }
-    else if(s.victory) h+='<div style="font-size:26px;">🪓</div><div style="color:#f0c040;font-size:12px;">Victory!</div>';
-    else if(s.fled) h+='<div style="font-size:26px;">🏃</div><div style="color:#ffd966;font-size:12px;">Escaped!</div>';
-    else h+='<div style="font-size:26px;">💀</div><div style="color:#e03030;font-size:12px;">Defeated</div>';
-    h+='</div></div>';
-
-    // === Action buttons ===
-    h+='<div style="display:flex;gap:4px;margin-bottom:6px;justify-content:center;flex-wrap:wrap;">';
-    if(!done){
-      var fc=getFoodCount();
-      h+='<button onclick="window._dgAttack(\'slash\')" style="flex:1;max-width:80px;padding:6px;background:#8B4513;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;font-weight:bold;" title="Normal attack">⚔ Slash</button>';
-      // Power button: preview the NEXT stack's stats so players know what they'll get.
-      var _curStacks=s.critStacks||0;
-      var _atMax=_curStacks>=MAX_POWER_STACKS;
-      var _previewProf=getPowerStackProfile(Math.min(MAX_POWER_STACKS,_curStacks+1));
-      var _powerTitle=_atMax
-        ? 'Max focus — slash now to unleash a guaranteed ×5 crit with +60% power bonus damage.'
-        : 'Focus Power: next stack → '+Math.round(_previewProf.critChance*100)+'% crit / ×'+_previewProf.critMult.toFixed(1)+' damage / +'+Math.round(_previewProf.bonusFrac*100)+'% flat bonus. Enemy still hits you this turn.';
-      var _powerLabel='⚡ Power'+(_curStacks>0?' ×'+_curStacks:'');
-      h+='<button onclick="window._dgAttack(\'power\')" style="flex:1;max-width:80px;padding:6px;background:'+(_curStacks>0?'#4a3010':'#251e14')+';border:1px solid '+(_curStacks>0?'#ffd966':'#3a2c18')+';color:'+(_curStacks>0?'#ffd966':'#c08020')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="'+_powerTitle+'">'+_powerLabel+'</button>';
-      h+='<button onclick="window._dgEat()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:'+(fc>0?'#5ac85a':'#5a4830')+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Eat food to heal (no damage taken)">🍖 Eat('+fc+')</button>';
-      h+='<button onclick="window._dgFlee()" style="flex:1;max-width:80px;padding:6px;background:#251e14;border:1px solid #3a2c18;color:#e03030;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Flee and keep collected loot">🏃 Flee</button>';
-    } else {
-      h+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+(s.victory?'🪓 Claim & Leave':s.fled?'🏃 Leave':'Leave Dungeon')+'</button>';
-    }
+    else if(s.victory) h+='<div style="font-size:38px;">🪓</div><div style="color:#f0c040;font-size:14px;font-weight:bold;">Victory!</div>';
+    else if(s.fled)    h+='<div style="font-size:38px;">🏃</div><div style="color:#ffd966;font-size:14px;">Escaped!</div>';
+    else               h+='<div style="font-size:38px;">💀</div><div style="color:#e03030;font-size:14px;">Defeated</div>';
     h+='</div>';
+
+    // === Status warning banners — shown prominently when player needs immediate action ===
+    if(!done){
+      var _isPoisoned=(s.playerPoison>0&&s.playerPoisonTurns>0);
+      var _isLowHp=(s.playerHp/s.playerMaxHp<0.2);
+      if(_isPoisoned){
+        h+='<div style="background:#2a0a3a;border:1px solid #9b59b6;border-radius:6px;padding:6px 10px;margin-bottom:8px;text-align:center;animation:dg-pulse 1s ease-in-out infinite;">'
+         +'<span style="color:#c060ff;font-size:11px;font-family:Cinzel,serif;font-weight:bold;">🧪 POISONED — use anti-poison food or a cure potion!</span>'
+         +'</div>';
+      }
+      if(_isLowHp){
+        h+='<div style="background:#3a0a0a;border:1px solid #e03030;border-radius:6px;padding:6px 10px;margin-bottom:8px;text-align:center;animation:dg-pulse 1s ease-in-out infinite;">'
+         +'<span style="color:#ff5555;font-size:11px;font-family:Cinzel,serif;font-weight:bold;">⚠️ CRITICAL HP — eat food or use a healing potion!</span>'
+         +'</div>';
+      }
+    }
+
+    // === Food Pouch bar — shows individual food items the player packed for this run ===
+    if(!done){
+      var _pouch=s.foodPouch||[];
+      var _pouchUsed=0;for(var _pi=0;_pi<_pouch.length;_pi++){if(_pouch[_pi].qty>0)_pouchUsed++;}
+      h+='<div style="margin-bottom:8px;">';
+      h+='<div style="font-family:Cinzel,serif;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;text-align:center;">🍖 Food Pouch <span style="color:#3a2c18;">('+_pouchUsed+' items · no retaliation)</span></div>';
+      var _slotIdx=0;
+      for(var _fi=0;_fi<_pouch.length;_fi++){
+        var _pf=_pouch[_fi];
+        if(_pf.qty>0){
+          // Build effect parts shown directly on the button
+          var _efParts=['+'+_pf.hp+' HP'];
+          var _hasBuff=!!_pf.buff;
+          if(_hasBuff){
+            var _bp=_pf.buff;
+            if(_bp.atk) _efParts.push('+'+_bp.atk+' ATK ('+_bp.turns+'t)');
+            if(_bp.def) _efParts.push('+'+_bp.def+' DEF ('+_bp.turns+'t)');
+            if(_bp.regen) _efParts.push('+'+_bp.regen+'/turn ('+_bp.turns+'t)');
+            if(_bp.poisonImmune) _efParts.push('🌿 Anti-poison ('+_bp.poisonImmune+'t)');
+          }
+          // Glow logic: antidote food glows purple when poisoned, healing food glows red when HP is critical
+          var _curesPoison=(_pf.buff&&_pf.buff.poisonImmune);
+          var _healsHp=(_pf.hp>0);
+          var _brdClr=_hasBuff?'#ffd966':'#5ac85a';
+          var _effClr=_hasBuff?'#ffd966':'#5ac85a';
+          var _foodGlow='';
+          if(_isPoisoned&&_curesPoison){
+            _brdClr='#c060ff'; _effClr='#c060ff';
+            _foodGlow='box-shadow:0 0 14px #9b59b6,0 0 24px #9b59b688;animation:dg-pulse 1s ease-in-out infinite;';
+          } else if(_isLowHp&&_healsHp){
+            _brdClr='#e03030';
+            _foodGlow='box-shadow:0 0 14px #e03030,0 0 24px #e0303088;animation:dg-pulse 1s ease-in-out infinite;';
+          }
+          h+='<button onclick="window._dgEat(\''+_pf.id+'\')" '
+           +'style="display:flex;align-items:center;gap:6px;width:100%;background:#1a1308;border:2px solid '+_brdClr+';border-radius:6px;padding:6px 8px;cursor:pointer;margin-bottom:4px;text-align:left;'+_foodGlow+'" '
+           +'title="Click to eat'+(_isPoisoned&&_curesPoison?' · 🌿 CURES POISON':'')+(_isLowHp&&_healsHp?' · ⚠️ USE NOW':'')+'">'
+           +'<span style="font-size:20px;flex-shrink:0;">'+_pf.icon+'</span>'
+           +'<div style="flex:1;min-width:0;">'
+           +'<div style="font-size:10px;color:#e8d898;font-weight:bold;font-family:Cinzel,serif;">'+_pf.name+'</div>'
+           +'<div style="font-size:9px;color:'+_effClr+';">'+_efParts.join(' · ')+'</div>'
+           +'</div>'
+           +'<span style="background:#0b0604;border:1px solid #3a2c18;border-radius:4px;padding:1px 6px;font-size:10px;color:#f0c040;font-weight:bold;flex-shrink:0;">×'+_pf.qty+'</span>'
+           +'</button>';
+          _slotIdx++;
+        }
+      }
+      h+='</div>';
+    }
 
     // === Spell bar — always renders all canonical scroll slots in combat so the
     // player can see which scrolls they own, which are empty, and which are still
@@ -1549,9 +1882,12 @@
         if(scq>0){
           ownedTypes++;
           totalScrolls+=scq;
+          var _mShadow=_magicGlow
+            ? 'box-shadow:0 0 14px #c060ff,0 0 6px #a335ee,0 0 24px #a335ee88;border-color:#c060ff;animation:dg-pulse 1s ease-in-out infinite;'
+            : 'box-shadow:0 0 8px '+bclr+'44;';
           slotsHtml+='<button onclick="window._dgAttack(\'magic\',\''+scid+'\')" '
-           +'style="position:relative;background:#1a0e2a;border:2px solid '+bclr+';border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;box-shadow:0 0 8px '+bclr+'44;" '
-           +'title="'+sit.name+' · '+dmgTip+' dmg · '+scq+' owned">'
+           +'style="position:relative;background:#1a0e2a;border:2px solid '+bclr+';border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;'+_mShadow+'" '
+           +'title="'+sit.name+' · '+dmgTip+' dmg · '+scq+' owned'+(_magicGlow?' · ✨ BEST vs this enemy':'')+'">'
            +'<div style="font-size:20px;line-height:1;filter:drop-shadow(0 0 6px '+bclr+');">'+sit.icon+'</div>'
            +'<div style="font-size:8px;color:'+bclr+';font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">'+dmgTip+'</div>'
            +'<span style="position:absolute;bottom:1px;right:3px;font-size:8px;color:#f0c040;font-weight:bold;">'+(scq>=100?'99+':scq)+'</span>'
@@ -1578,6 +1914,59 @@
       h+='</div>';
     }
 
+    // === Potion bar — shows potions from potion pouch ===
+    if(!done){
+      var potions=[];
+      if(s.potionPouch){
+        for(var pi3=0;pi3<s.potionPouch.length;pi3++){
+          if(s.potionPouch[pi3].qty>0) potions.push(s.potionPouch[pi3]);
+        }
+      }
+      if(potions.length>0){
+        h+='<div style="margin-bottom:8px;">';
+        h+='<div style="font-family:Cinzel,serif;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;text-align:center;">⚗️ Potions</div>';
+        h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">';
+        for(var pi2=0;pi2<potions.length;pi2++){
+          var pt=potions[pi2];
+          var ptIt=pt.it||ITEMS[pt.id];
+          var ptDesc=ptIt.potionType==='buff'?'+'+ptIt.value+' '+ptIt.stat.toUpperCase()+' ('+ptIt.turns+'t)':ptIt.potionType==='instant'?'+'+ptIt.hp+' HP':'Cure';
+          // Glow cure potions when poisoned; glow instant-heal potions when HP is critical
+          var _ptBorder='#20B2AA',_ptGlow='',_ptHint='';
+          if(_isPoisoned&&ptIt.potionType==='cure'){
+            _ptBorder='#c060ff';
+            _ptGlow='box-shadow:0 0 14px #9b59b6,0 0 24px #9b59b688;animation:dg-pulse 1s ease-in-out infinite;';
+            _ptHint=' · 🌿 CURES POISON';
+          } else if(_isLowHp&&ptIt.potionType==='instant'){
+            _ptBorder='#e03030';
+            _ptGlow='box-shadow:0 0 14px #e03030,0 0 24px #e0303088;animation:dg-pulse 1s ease-in-out infinite;';
+            _ptHint=' · ⚠️ USE NOW';
+          }
+          h+='<button onclick="window._dgPotion(\''+pt.id+'\')" '
+           +'style="position:relative;background:#1a1308;border:2px solid '+_ptBorder+';border-radius:6px;padding:5px 7px 4px;cursor:pointer;min-width:44px;text-align:center;'+_ptGlow+'" '
+           +'title="'+pt.name+' · '+ptDesc+' · '+pt.qty+' in pouch'+_ptHint+'">'
+           +'<div style="font-size:20px;line-height:1;">'+pt.icon+'</div>'
+           +'<div style="font-size:8px;color:'+_ptBorder+';font-family:Cinzel,serif;font-weight:bold;line-height:1.1;">'+ptDesc+'</div>'
+           +'<span style="position:absolute;bottom:1px;right:3px;font-size:8px;color:#5ac85a;font-weight:bold;">'+pt.qty+'</span>'
+           +'</button>';
+        }
+        h+='</div>';
+        h+='</div>';
+      }
+      // Active potion + food buffs display
+      var buffs=s.potionBuffs||{};
+      var fb=s.foodBuffs||{};
+      var buffParts=[];
+      if(buffs.atk>0&&buffs.atkTurns>0) buffParts.push('<span style="color:#f0c040;">💪+'+buffs.atk+' ATK ('+buffs.atkTurns+'t)</span>');
+      if(buffs.def>0&&buffs.defTurns>0) buffParts.push('<span style="color:#4488dd;">🛡️+'+buffs.def+' DEF ('+buffs.defTurns+'t)</span>');
+      if(buffs.dodge>0&&buffs.dodgeTurns>0) buffParts.push('<span style="color:#ffd966;">🏃+'+buffs.dodge+'% Dodge ('+buffs.dodgeTurns+'t)</span>');
+      if(fb.atk>0&&fb.atkTurns>0) buffParts.push('<span style="color:#f0c040;">🌶️+'+fb.atk+' ATK ('+fb.atkTurns+'t)</span>');
+      if(fb.def>0&&fb.defTurns>0) buffParts.push('<span style="color:#4488dd;">🌶️+'+fb.def+' DEF ('+fb.defTurns+'t)</span>');
+      if(fb.regen>0&&fb.regenTurns>0) buffParts.push('<span style="color:#5ac85a;">🍲+'+fb.regen+' regen ('+fb.regenTurns+'t)</span>');
+      if(s.poisonImmuneTurns>0) buffParts.push('<span style="color:#5ac85a;">Poison Immune ('+s.poisonImmuneTurns+'t)</span>');
+      if(buffParts.length>0){
+        h+='<div style="text-align:center;font-size:9px;color:#9a7e50;margin-bottom:6px;">Active: '+buffParts.join(' · ')+'</div>';
+      }
+    }
 
     // Equipment stats
     if(!done){
@@ -1627,25 +2016,67 @@
       }
     }
 
-    // Combat log
-    h+='<div style="background:#0b0905;border:1px solid #251e14;border-radius:4px;padding:6px;max-height:120px;overflow-y:auto;font-size:11px;line-height:1.5;" id="dg-log">';
-    var st=Math.max(0,s.combatLog.length-8);
-    for(var i=st;i<s.combatLog.length;i++) h+='<div style="color:#9a7e50;">'+s.combatLog[i]+'</div>';
-    h+='</div>';
-
     var bodyEl=document.getElementById('dg-body');
     if(!bodyEl){var nb=document.createElement('div');nb.id='dg-body';content.appendChild(nb);bodyEl=nb;}
     bodyEl.innerHTML=h;
-    var logEl=document.getElementById('dg-log');
-    if(logEl) logEl.scrollTop=logEl.scrollHeight;
+
+    // === Bottom action bar ===
+    var actionsEl=document.getElementById('dg-actions');
+    if(actionsEl){
+      var ah='';
+      // Player avatar + HP bar — always shown at the very bottom of the screen
+      var _hpBarColor=pHp>30?'#5ac85a':'#e03030';
+      ah+='<div style="display:flex;align-items:center;gap:8px;padding-bottom:8px;margin-bottom:6px;border-bottom:1px solid #251e14;">';
+      ah+='<span style="font-size:24px;line-height:1;flex-shrink:0;">🧍</span>';
+      ah+='<div style="flex:1;">';
+      ah+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;height:8px;overflow:hidden;">'
+       +'<div style="height:100%;width:'+pHp+'%;background:'+_hpBarColor+';transition:width 0.3s;"></div></div>';
+      ah+='<div style="display:flex;align-items:center;gap:6px;margin-top:2px;">'
+       +'<span style="color:#9a7e50;font-size:9px;">'+s.playerHp+'/'+s.playerMaxHp+' HP</span>'
+       +poisonBadge+'</div>';
+      ah+='</div>';
+      ah+='</div>';
+      if(!done){
+        var _curStacks=s.critStacks||0;
+        var _atMax=_curStacks>=MAX_POWER_STACKS;
+        var _previewProf=getPowerStackProfile(Math.min(MAX_POWER_STACKS,_curStacks+1));
+        var _powerTitle=_atMax
+          ? 'Max focus — slash now to unleash a guaranteed ×5 crit with +60% power bonus damage.'
+          : 'Focus Power: next stack → '+Math.round(_previewProf.critChance*100)+'% crit / ×'+_previewProf.critMult.toFixed(1)+' damage / +'+Math.round(_previewProf.bonusFrac*100)+'% flat bonus. Enemy still hits you this turn.';
+        var _powerLabel='⚡ Power'+(_curStacks>0?' ×'+_curStacks:'');
+        var _pShadow=_physGlow?'box-shadow:0 0 14px #5ac85a,0 0 24px #5ac85a88;animation:dg-pulse 1s ease-in-out infinite;':'';
+        ah+='<div style="display:flex;gap:8px;align-items:center;">';
+        ah+='<button onclick="window._dgFlee()" style="padding:8px 12px;background:#251e14;border:1px solid #3a2c18;color:#e03030;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;" title="Flee and keep collected loot">🏃 Flee</button>';
+        var _pwrBorder=_curStacks>0?'#ffd966':(_physGlow?'#5ac85a':'#3a2c18');
+        var _pwrColor=_curStacks>0?'#ffd966':(_physGlow?'#5ac85a':'#c08020');
+        var _pwrShadow=(_physGlow&&_curStacks===0)?_pShadow:'';
+        ah+='<button onclick="window._dgAttack(\'power\')" style="padding:8px 12px;background:'+(_curStacks>0?'#4a3010':'#251e14')+';border:1px solid '+_pwrBorder+';color:'+_pwrColor+';border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:11px;'+_pwrShadow+'" title="'+_powerTitle+(_physGlow?' · ⚔ BEST vs this enemy':'')+'">'+_powerLabel+'</button>';
+        ah+='<div style="flex:1;"></div>';
+        var _slashBorder=_physGlow?'#5ac85a':'#f0c040';
+        ah+='<button onclick="window._dgAttack(\'slash\')" style="padding:8px 18px;background:#8B4513;border:1px solid '+_slashBorder+';color:#f0c040;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;'+_pShadow+'" title="Normal attack'+(_physGlow?' · ⚔ BEST vs this enemy':'')+'">⚔ Slash</button>';
+        ah+='</div>';
+      } else {
+        ah+='<div style="display:flex;justify-content:center;">';
+        ah+='<button onclick="window._dgLeave()" style="padding:8px 20px;background:#f0c040;border:none;color:#0b0905;border-radius:4px;cursor:pointer;font-family:Cinzel,serif;font-size:13px;font-weight:bold;">'+(s.victory?'🪓 Claim & Leave':s.fled?'🏃 Leave':'Leave Dungeon')+'</button>';
+        ah+='</div>';
+      }
+      actionsEl.innerHTML=ah;
+    }
   }
 
   function createDungeonOverlay(){
     if(document.getElementById('dungeon-overlay')) return;
+    // Inject pulse keyframe for attack-recommendation glow (once per page load).
+    if(!document.getElementById('dg-glow-style')){
+      var gs=document.createElement('style');
+      gs.id='dg-glow-style';
+      gs.textContent='@keyframes dg-pulse{0%,100%{filter:brightness(1.05)}50%{filter:brightness(1.45)}}';
+      document.head.appendChild(gs);
+    }
     var ov=document.createElement('div');
     ov.id='dungeon-overlay';
     ov.style.cssText='display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9998;justify-content:center;align-items:center;padding:12px;box-sizing:border-box;';
-    ov.innerHTML='<div id="dg-content" style="position:relative;background:#13100a;border:2px solid #3a2c18;border-radius:8px;padding:16px;width:360px;max-width:95vw;max-height:90vh;overflow-y:auto;font-family:Cinzel,serif;"><div id="dg-body"></div></div>';
+    ov.innerHTML='<div id="dg-content" style="position:relative;background:#13100a;border:2px solid #3a2c18;border-radius:8px;width:360px;max-width:95vw;max-height:90vh;overflow:hidden;font-family:Cinzel,serif;display:flex;flex-direction:column;"><div id="dg-body" style="flex:1;overflow-y:auto;padding:16px 16px 8px;"></div><div id="dg-actions" style="padding:10px 12px;background:#0f0a04;border-top:1px solid #3a2c18;flex-shrink:0;"></div></div>';
     ov.addEventListener('click',function(e){if(e.target===ov) leaveDungeon();});
     document.body.appendChild(ov);
   }
@@ -1700,7 +2131,8 @@
       var id = sk + '_t' + t;
       var d = DUNGEONS[id]; if(!d) continue;
       var req = DUNGEON_UNLOCK_LEVELS[id] || 3;
-      var unlocked = (lvl >= req);
+      var prevBeaten = (t === 1) || (typeof G !== 'undefined' && G.dungeonRewards && G.dungeonRewards[sk + '_t' + (t - 1)]);
+      var unlocked = (lvl >= req) && prevBeaten;
       var claimed = (typeof G!=='undefined' && G.dungeonRewards && G.dungeonRewards[id]);
       var rw = d.reward || {};
       var dropPct = rw.chance != null ? rw.chance : 50;
@@ -1708,22 +2140,26 @@
       var rwClr = rarityClr(rw.id);
       var row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid '+(unlocked?'#3a2c18':'#1c1710')+';border-radius:7px;background:'+(unlocked?'#1a1308':'#0d0905')+';cursor:'+(unlocked?'pointer':'default')+';opacity:'+(unlocked?'1':'0.6')+';transition:all .15s;';
-      var rewardLine = '<div style="color:#e8d898;font-size:10px;margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span style="font-size:14px;">'+rw.icon+'</span><span style="color:'+rwClr+';font-weight:700;">'+(rw.name||'Reward')+'</span>'+(owned>0?'<span style="color:#5ac85a;font-size:9px;">×'+owned+'</span>':'')+'</div>';
-      // Craft path — show what gear piece the shard can be forged into
-      var craftOwnedTP = (rw.craftItem && typeof G!=='undefined'&&G.inv&&G.inv[rw.craftItem]) ? G.inv[rw.craftItem] : 0;
-      var craftLine = rw.craftName
-        ? '<div style="font-size:9px;color:#9a7e50;margin-top:2px;display:flex;align-items:center;gap:3px;flex-wrap:wrap;"><span>\u2b3b</span><span style="font-size:12px;">'+rw.craftIcon+'</span><span style="color:#f0c040;">'+rw.craftName+'</span>'+(craftOwnedTP>0?'<span style="color:#5ac85a;font-size:9px;">×'+craftOwnedTP+'</span>':'')+'</div>'
-        : '';
-      var statsLine = rw.craftEff ? '<div style="color:#5a4830;font-size:9px;margin-top:1px;">'+rw.craftEff+'</div>' : '';
-      var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:3px;display:flex;justify-content:space-between;gap:6px;"><span style="color:#88ddff;">💎 '+dropPct+'% drop</span><span style="color:'+(unlocked?'#5ac85a':'#9a7e50')+';">'+(unlocked?'✓ Lvl '+req:'🔒 Lvl '+req)+'</span></div>';
+      var tierLabel = rw.tierLabel || (t<=4?'Tier 1 Gear':t<=8?'Tier 2 Gear':'Tier 3 Gear');
+      var gearLine = '<div style="color:#e8d898;font-size:10px;margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span style="font-size:14px;">⚔</span><span style="color:'+rwClr+';font-weight:700;">'+tierLabel+'</span>'+(owned>0?'<span style="color:#5ac85a;font-size:9px;">×'+owned+'</span>':'')+'</div>';
+      var statsLine = rw.eff ? '<div style="color:#5a4830;font-size:9px;margin-top:1px;">'+rw.eff+'</div>' : '';
+      var chanceLine = '<div style="color:#9a7e50;font-size:9px;margin-top:2px;"><span style="color:#ffd966;">⚔ '+dropPct+'% gear drop</span></div>';
+      // Show both unlock requirements with individual pass/fail indicators
+      var lvlMet = lvl >= req;
+      var reqsHtml = '<span style="color:'+(lvlMet?'#5ac85a':'#e03030')+';font-size:9px;">'+(lvlMet?'✓':'🔒')+' Skill Lv.'+req+'</span>';
+      if(t > 1){
+        reqsHtml += '<span style="color:#3a2c18;font-size:9px;"> · </span>';
+        reqsHtml += '<span style="color:'+(prevBeaten?'#5ac85a':'#e03030')+';font-size:9px;">'+(prevBeaten?'✓ T'+(t-1)+' cleared':'🔒 Beat T'+(t-1)+' first')+'</span>';
+      }
+      var reqsLine = '<div style="margin-top:3px;display:flex;align-items:center;flex-wrap:wrap;gap:2px;">'+reqsHtml+'</div>';
       row.innerHTML =
         '<div style="min-width:34px;height:34px;border-radius:5px;background:#0b0604;border:1px solid #3a2c18;display:flex;align-items:center;justify-content:center;font-size:16px;color:#f0c040;font-weight:700;">'+t+'</div>' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="color:#e8d898;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(unlocked?'':'🔒 ')+'Tier '+t+(claimed?' <span style="color:#5ac85a;font-size:10px;">cleared</span>':'')+'</div>' +
-          rewardLine +
-          craftLine +
+          gearLine +
           statsLine +
           chanceLine +
+          reqsLine +
         '</div>';
       if(unlocked){
         (function(dungeonId){
@@ -1742,10 +2178,17 @@
   window._dgShowEntry=showDungeonEntry;
   window._dgShowTierPicker=showTierPicker;
   window._dgEat=dungeonEat;
+  window._dgPotion=dungeonPotion;
   window._dgFlee=dungeonFlee;
   window._dgLeave=leaveDungeon;
   window._dgStart=startDungeon;
   window._dgShowDiscovery=showDungeonDiscoveryPopup;
+  window._dgSetLoadout=dungeonSetLoadout;
+  window._dgClearLoadout=dungeonClearLoadout;
+  window._dgAutoLoadout=dungeonAutoLoadout;
+  window._dgSetPotionLoadout=dungeonSetPotionLoadout;
+  window._dgClearPotionLoadout=dungeonClearPotionLoadout;
+  window._dgAutoPotionLoadout=dungeonAutoPotionLoadout;
   // Apply the tier scaling once up front so all downstream code reads scaled HP/dmg.
   Object.keys(DUNGEONS).forEach(function(k){ DUNGEONS[k] = scaleDungeonMonsters(DUNGEONS[k]); });
   window.DUNGEONS=DUNGEONS;
@@ -1782,6 +2225,28 @@
       document.getElementById('dungeon-overlay').style.display='flex';
       return;
     }
+    // Previous-tier beat check: tier T > 1 requires tier T-1 to have been cleared
+    var _tierMatch = activeDungeon.id && activeDungeon.id.match(/_t(\d+)$/);
+    var _tierNum = _tierMatch ? parseInt(_tierMatch[1]) : 1;
+    if(_tierNum > 1){
+      var _prevId = activeDungeon.id.replace(/_t\d+$/, '_t' + (_tierNum - 1));
+      var _prevBeaten = typeof G !== 'undefined' && G.dungeonRewards && G.dungeonRewards[_prevId];
+      if(!_prevBeaten){
+        var hPrev='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
+        hPrev+='<div style="text-align:center;padding:20px 8px;">';
+        hPrev+='<div style="font-size:48px;margin-bottom:10px;filter:grayscale(1);opacity:0.5;">'+activeDungeon.icon+'</div>';
+        hPrev+='<div style="font-size:38px;margin-bottom:8px;">🔒</div>';
+        hPrev+='<div style="color:#f0c040;font-family:Cinzel,serif;font-size:16px;margin-bottom:6px;">Dungeon Locked</div>';
+        hPrev+='<div style="color:#9a7e50;font-size:12px;margin-bottom:14px;line-height:1.4;">You must defeat <b style="color:#e8d898;">Tier '+(_tierNum-1)+'</b> before entering this dungeon.</div>';
+        hPrev+='<div style="color:#5a4830;font-size:10px;line-height:1.4;">Complete the previous tier to unlock Tier '+_tierNum+'.</div>';
+        hPrev+='</div>';
+        var bodyPrev=document.getElementById('dg-body');
+        if(!bodyPrev){var nbPrev=document.createElement('div');nbPrev.id='dg-body';content.appendChild(nbPrev);bodyPrev=nbPrev;}
+        bodyPrev.innerHTML=hPrev;
+        document.getElementById('dungeon-overlay').style.display='flex';
+        return;
+      }
+    }
     var check=canEnterDungeon();
     // Prefer the new multi-slot layout; fall back to the legacy single-weapon/armour fields.
     var mainW=(G.equip&&(G.equip.weaponR||G.equip.weaponL||G.equip.weapon));
@@ -1796,14 +2261,119 @@
     var h='<div onclick="window._dgLeave()" style="position:absolute;top:8px;right:12px;color:#9a7e50;font-size:22px;cursor:pointer;z-index:10;line-height:1;">&times;</div>';
     var tierLbl = activeDungeon.tier ? ('Tier '+activeDungeon.tier+' · ') : '';
     h+='<div style="text-align:center;"><div style="font-size:32px;margin-bottom:6px;">'+activeDungeon.icon+'</div><div style="color:#f0c040;font-size:18px;font-family:Cinzel,serif;margin-bottom:2px;">'+activeDungeon.name+'</div><div style="color:#9a7e50;font-size:11px;margin-bottom:12px;">'+tierLbl+'5 Rooms · Unlock Lvl '+unlockLvl+'</div></div>';
-    var craftArrow = rwd.craftName ? (' \u2192 forge <span style="color:#f0c040;">'+rwd.craftIcon+' '+rwd.craftName+'</span> in the '+activeDungeon.skill.charAt(0).toUpperCase()+activeDungeon.skill.slice(1)+' tab') : '';
-    h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">'+(activeDungeon.desc||'')+' Clear all <b>5 creatures</b> to earn <span style="color:#0070dd;">'+rwd.icon+' '+rwd.name+'</span>'+craftArrow+'.<br><span style="color:#9a7e50;font-size:10px;">⚔ Slash or ⚡ Power Attack! 🍖 Eating leaves you open — dodge gear helps. 🏃 Flee to keep loot.</span></div>';
+    var entryTierLabel = rwd.tierLabel || 'Gear';
+    h+='<div style="color:#e8d898;font-size:12px;margin-bottom:12px;line-height:1.5;text-align:center;">'+(activeDungeon.desc||'')+' Clear all <b>5 creatures</b> for a chance at <span style="color:#ff8000;">'+entryTierLabel+'</span>.<br><span style="color:#9a7e50;font-size:10px;">⚔ Slash or ⚡ Power Attack! 🍖 Food + 🧪 Potions heal and buff. 🏃 Flee to keep loot.</span></div>';
 
     h+='<div style="background:#1c1710;border:1px solid #251e14;border-radius:4px;padding:10px;margin-bottom:10px;">';
     h+='<div style="color:#f0c040;font-size:11px;margin-bottom:6px;letter-spacing:1px;">REQUIREMENTS</div>';
-    h+='<div style="color:'+(wpn?'#5ac85a':'#e0a040')+';font-size:11px;margin-bottom:3px;">'+(wpn?'✓ Weapon equipped ('+wpn.icon+' '+wpn.name+')':'⚠ No weapon — fighting with fists (very weak)')+'</div>';
+    h+='<div style="color:'+(wpn?'#5ac85a':'#e0a040')+';font-size:11px;margin-bottom:3px;">'+(wpn?'✓ Weapon equipped ('+wpn.icon+' '+wpn.name+')':'⚠ No weapon — weapons come from dungeon drops!')+'</div>';
     h+='<div style="color:'+(fc>=DG.minFood?'#5ac85a':'#e03030')+';font-size:11px;margin-bottom:3px;">'+(fc>=DG.minFood?'✓':'✗')+' '+DG.minFood+'+ food (have: '+fc+')</div>';
     h+='<div style="color:#9a7e50;font-size:10px;margin-top:6px;">'+(arm?arm.icon+' '+arm.name:'No armour')+'</div>';
+    h+='</div>';
+
+    // === FOOD LOADOUT CONFIGURATOR ===
+    // Shows all food in inventory; player sets how many of each goes in the pouch.
+    var _allFoods=getFoodList().sort(function(a,b){return b.hp-a.hp;});
+    var _loadout=G.foodLoadout||{};
+    var _slotsUsed=0;for(var _lk in _loadout){if(_loadout[_lk]>0&&(G.inv[_lk]||0)>0)_slotsUsed++;}
+    var _lootTotal=0;for(var _lk2 in _loadout){_lootTotal+=Math.min(_loadout[_lk2]||0,G.inv[_lk2]||0);}
+    h+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;padding:10px;margin-bottom:10px;">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    h+='<div style="color:#f0c040;font-size:11px;letter-spacing:1px;">🍖 FOOD POUCH <span style="color:#9a7e50;font-weight:normal;font-size:10px;">('+_slotsUsed+' types · '+_lootTotal+' items)</span></div>';
+    h+='<div style="display:flex;gap:4px;">';
+    h+='<button onclick="window._dgAutoLoadout()" style="padding:3px 8px;background:#251a06;border:1px solid #f0c040;color:#f0c040;border-radius:4px;cursor:pointer;font-size:9px;font-family:Cinzel,serif;">Auto-Fill</button>';
+    h+='<button onclick="window._dgClearLoadout()" style="padding:3px 8px;background:#251e14;border:1px solid #5a4830;color:#9a7e50;border-radius:4px;cursor:pointer;font-size:9px;font-family:Cinzel,serif;">Clear</button>';
+    h+='</div></div>';
+    if(_allFoods.length===0){
+      h+='<div style="color:#5a4830;font-size:10px;font-style:italic;">No food in inventory — cook some food first!</div>';
+    } else {
+      // One row per food type in inventory
+      for(var _fi2=0;_fi2<_allFoods.length;_fi2++){
+        var _af=_allFoods[_fi2];
+        var _it=ITEMS[_af.id];
+        var _lqty=_loadout[_af.id]||0;
+        var _maxQty=Math.min(_af.qty,FOOD_PER_SLOT);
+        var _canAdd=_lqty<_maxQty;
+        // Build effect description
+        var _efParts=['+'+_af.hp+' HP'];
+        var _hasBuff=_it&&_it.foodBuff;
+        if(_hasBuff){
+          var _b=_it.foodBuff;
+          if(_b.atk) _efParts.push('+'+_b.atk+' ATK ('+_b.turns+'t)');
+          if(_b.def) _efParts.push('+'+_b.def+' DEF ('+_b.turns+'t)');
+          if(_b.regen) _efParts.push('+'+_b.regen+' HP/turn ('+_b.turns+'t)');
+          if(_b.poisonImmune) _efParts.push('🌿 Anti-poison ('+_b.poisonImmune+'t)');
+        }
+        var _brdClr=_lqty>0?(_hasBuff?'#ffd966':'#5ac85a'):'#3a2c18';
+        var _bgClr=_lqty>0?'#1a1308':'#0b0805';
+        h+='<div style="display:flex;align-items:center;gap:8px;background:'+_bgClr+';border:1px solid '+_brdClr+';border-radius:6px;padding:6px 8px;margin-bottom:6px;">';
+        // Food icon + name + effects
+        h+='<span style="font-size:18px;flex-shrink:0;">'+_af.icon+'</span>';
+        h+='<div style="flex:1;min-width:0;">';
+        h+='<div style="color:#e8d898;font-size:11px;font-weight:bold;">'+_af.name+'</div>';
+        h+='<div style="color:'+(_hasBuff?'#ffd966':'#5ac85a')+';font-size:9px;">'+_efParts.join(' · ')+'</div>';
+        h+='<div style="color:#5a4830;font-size:9px;">'+_af.qty+' in inventory · max '+_maxQty+' per run</div>';
+        h+='</div>';
+        // Qty controls
+        h+='<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">';
+        h+='<button onclick="window._dgSetLoadout(\''+_af.id+'\',-1)" style="width:22px;height:22px;background:#251e14;border:1px solid #5a4830;color:#e8d898;border-radius:4px;cursor:pointer;font-size:13px;line-height:1;padding:0;"'
+          +(_lqty<=0?' disabled style="width:22px;height:22px;background:#1a1308;border:1px solid #2b2112;color:#3a2c18;border-radius:4px;cursor:not-allowed;font-size:13px;line-height:1;padding:0;"':'')+'>−</button>';
+        h+='<span style="color:'+(_lqty>0?'#f0c040':'#5a4830')+';font-size:13px;font-weight:bold;min-width:16px;text-align:center;">'+_lqty+'</span>';
+        h+='<button onclick="window._dgSetLoadout(\''+_af.id+'\',1)" style="width:22px;height:22px;background:'+(_canAdd?'#251a06':'#1a1308')+';border:1px solid '+(_canAdd?'#f0c040':'#2b2112')+';color:'+(_canAdd?'#f0c040':'#3a2c18')+';border-radius:4px;cursor:'+(_canAdd?'pointer':'not-allowed')+';font-size:13px;line-height:1;padding:0;"'
+          +(!_canAdd?' disabled':'')+'>+</button>';
+        h+='</div>';
+        h+='</div>';
+      }
+    }
+    h+='<div style="color:#5a4830;font-size:9px;font-style:italic;margin-top:4px;">Eating during combat is safe — no enemy retaliation. Bring any food you have, up to '+FOOD_PER_SLOT+' of each type.</div>';
+    h+='</div>';
+
+    // === POTION LOADOUT CONFIGURATOR ===
+    var _allPotions=getPotionList();
+    var _potLoadout=G.potionLoadout||{};
+    var _potSlotsUsed=0;for(var _pk in _potLoadout){if(_potLoadout[_pk]>0&&(G.inv[_pk]||0)>0)_potSlotsUsed++;}
+    var _potTotal=0;for(var _pk2 in _potLoadout){_potTotal+=Math.min(_potLoadout[_pk2]||0,G.inv[_pk2]||0);}
+    h+='<div style="background:#1c1710;border:1px solid #3a2c18;border-radius:4px;padding:10px;margin-bottom:10px;">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    h+='<div style="color:#20B2AA;font-size:11px;letter-spacing:1px;">⚗️ POTION BELT <span style="color:#9a7e50;font-weight:normal;font-size:10px;">('+_potSlotsUsed+'/'+POTION_POUCH_SLOTS+' slots · '+_potTotal+' items)</span></div>';
+    h+='<div style="display:flex;gap:4px;">';
+    h+='<button onclick="window._dgAutoPotionLoadout()" style="padding:3px 8px;background:#0a1a18;border:1px solid #20B2AA;color:#20B2AA;border-radius:4px;cursor:pointer;font-size:9px;font-family:Cinzel,serif;">Auto-Fill</button>';
+    h+='<button onclick="window._dgClearPotionLoadout()" style="padding:3px 8px;background:#251e14;border:1px solid #5a4830;color:#9a7e50;border-radius:4px;cursor:pointer;font-size:9px;font-family:Cinzel,serif;">Clear</button>';
+    h+='</div></div>';
+    if(_allPotions.length===0){
+      h+='<div style="color:#5a4830;font-size:10px;font-style:italic;">No potions in inventory — brew some potions first!</div>';
+    } else {
+      for(var _pi=0;_pi<_allPotions.length;_pi++){
+        var _ap=_allPotions[_pi];
+        var _pit=_ap.it;
+        var _plqty=_potLoadout[_ap.id]||0;
+        var _pmaxQty=Math.min(_ap.qty,POTION_PER_SLOT);
+        var _pcanAdd=_plqty<_pmaxQty&&(_plqty>0||_potSlotsUsed<POTION_POUCH_SLOTS);
+        // Build effect description
+        var _pefParts=[];
+        if(_pit.potionType==='buff') _pefParts.push('+'+_pit.value+' '+_pit.stat.toUpperCase()+' ('+_pit.turns+'t)');
+        else if(_pit.potionType==='instant'&&_pit.hp) _pefParts.push('+'+_pit.hp+' HP');
+        else if(_pit.potionType==='cure') _pefParts.push('Cure '+(_pit.cures||'poison')+' + immune ('+(_pit.immuneTurns||5)+'t)');
+        var _pbrdClr=_plqty>0?'#20B2AA':'#3a2c18';
+        var _pbgClr=_plqty>0?'#0a1a18':'#0b0805';
+        h+='<div style="display:flex;align-items:center;gap:8px;background:'+_pbgClr+';border:1px solid '+_pbrdClr+';border-radius:6px;padding:6px 8px;margin-bottom:6px;">';
+        h+='<span style="font-size:18px;flex-shrink:0;">'+_ap.icon+'</span>';
+        h+='<div style="flex:1;min-width:0;">';
+        h+='<div style="color:#e8d898;font-size:11px;font-weight:bold;">'+_ap.name+'</div>';
+        h+='<div style="color:#20B2AA;font-size:9px;">'+_pefParts.join(' · ')+'</div>';
+        h+='<div style="color:#5a4830;font-size:9px;">'+_ap.qty+' in inventory · max '+_pmaxQty+' per run</div>';
+        h+='</div>';
+        h+='<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">';
+        h+='<button onclick="window._dgSetPotionLoadout(\''+_ap.id+'\',-1)" style="width:22px;height:22px;background:#251e14;border:1px solid #5a4830;color:#e8d898;border-radius:4px;cursor:pointer;font-size:13px;line-height:1;padding:0;"'
+          +(_plqty<=0?' disabled style="width:22px;height:22px;background:#1a1308;border:1px solid #2b2112;color:#3a2c18;border-radius:4px;cursor:not-allowed;font-size:13px;line-height:1;padding:0;"':'')+'>−</button>';
+        h+='<span style="color:'+(_plqty>0?'#20B2AA':'#5a4830')+';font-size:13px;font-weight:bold;min-width:16px;text-align:center;">'+_plqty+'</span>';
+        h+='<button onclick="window._dgSetPotionLoadout(\''+_ap.id+'\',1)" style="width:22px;height:22px;background:'+(_pcanAdd?'#0a1a18':'#1a1308')+';border:1px solid '+(_pcanAdd?'#20B2AA':'#2b2112')+';color:'+(_pcanAdd?'#20B2AA':'#3a2c18')+';border-radius:4px;cursor:'+(_pcanAdd?'pointer':'not-allowed')+';font-size:13px;line-height:1;padding:0;"'
+          +(!_pcanAdd?' disabled':'')+'>+</button>';
+        h+='</div>';
+        h+='</div>';
+      }
+    }
+    h+='<div style="color:#5a4830;font-size:9px;font-style:italic;margin-top:4px;">Drinking potions costs a turn — enemy retaliates! Max '+POTION_POUCH_SLOTS+' types, '+POTION_PER_SLOT+' each.</div>';
     h+='</div>';
 
     // === TACTICAL RECOMMENDATIONS ===
@@ -1847,14 +2417,12 @@
     h+='<div style="border-top:1px solid #251e14;margin-top:6px;padding-top:6px;">';
     var claimed=(typeof G!=='undefined'&&G.dungeonRewards&&G.dungeonRewards[activeDungeon.id]);
     var rwdChance = (rwd.chance != null) ? rwd.chance : 50;
-    var rwdRarityClr = '#f0c040';
+    var rwdRarityClr = '#ff8000';
     try { if(typeof window.RARITY==='object'&&window.getItemRarity) rwdRarityClr = window.RARITY[window.getItemRarity(rwd.id)].color; } catch(e){}
     var rwdOwned = (typeof G!=='undefined'&&G.inv&&G.inv[rwd.id]) ? G.inv[rwd.id] : 0;
-    h+='<div style="display:flex;justify-content:space-between;color:'+rwdRarityClr+';font-size:10px;margin-bottom:2px;font-weight:700;"><span>'+rwd.icon+' '+rwd.name+(rwdOwned>0?' <span style="color:#5ac85a;font-weight:400;">×'+rwdOwned+'</span>':'')+'</span><span style="color:#88ddff;">💎 '+rwdChance+'%</span></div>';
-    if(rwd.craftName){
-      var craftOwnedEntry=(typeof G!=='undefined'&&G.inv&&G.inv[rwd.craftItem])?G.inv[rwd.craftItem]:0;
-      h+='<div style="font-size:9px;color:#9a7e50;margin-bottom:2px;padding-left:6px;">⬌ Combine in skill tab \u2192 <span style="color:#f0c040;">'+rwd.craftIcon+' '+rwd.craftName+'</span>'+(rwd.craftEff?' <span style="color:#5a4830;">('+rwd.craftEff+')</span>':'')+(craftOwnedEntry>0?' <span style="color:#5ac85a;">×'+craftOwnedEntry+'</span>':'')+'</div>';
-    }
+    var entryTierLabel2 = rwd.tierLabel || 'Gear';
+    h+='<div style="display:flex;justify-content:space-between;color:'+rwdRarityClr+';font-size:10px;margin-bottom:2px;font-weight:700;"><span>⚔ '+entryTierLabel2+(rwdOwned>0?' <span style="color:#5ac85a;font-weight:400;">×'+rwdOwned+'</span>':'')+'</span><span style="color:#ffd966;">'+rwdChance+'%</span></div>';
+    if(rwd.eff) h+='<div style="font-size:9px;color:#5a4830;margin-bottom:2px;padding-left:6px;">'+rwd.eff+'</div>';
     h+='<div style="display:flex;justify-content:space-between;color:#9b59b6;font-size:10px;"><span>🧪 Level Potion</span><span>2%</span></div>';
     h+='</div></div>';
 
@@ -1888,7 +2456,7 @@
   function initDungeon(){
     // Combat skill has been removed, so there is no longer a combat tab or page to hijack.
     if(typeof log==='function') setTimeout(function(){
-      log('🏰 The <b>Dungeon</b> awaits! Smith a weapon and bring food — or brave it with bare fists.');
+      log('🏰 The <b>Dungeon</b> awaits! Bring food and potions. All gear comes from dungeon drops — upgrade it in the Forge!');
     },2000);
   }
 
