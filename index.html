@@ -1001,6 +1001,7 @@ let G = {
   upgrades:{},tools:{},dungeonRewards:{},dungeonsDiscovered:{},
   workers:[],
   gearUpgrades:{}, // maps itemId -> upgrade level (1-5)
+  forgeSlot:null,  // item currently assigned to the forge
   foodLoadout:{},  // maps food item id -> desired qty in pouch (manual configuration)
   potionLoadout:{}, // maps potion item id -> desired qty in potion belt (manual configuration)
   tab:'woodcutting',
@@ -1077,6 +1078,7 @@ function load(){
   if(G.buffs) delete G.buffs;
   if(!Array.isArray(G.workers)) G.workers=[];
   if(!G.gearUpgrades) G.gearUpgrades={};
+  if(!G.hasOwnProperty('forgeSlot')) G.forgeSlot=null;
   // Deactivate workers assigned to actions that no longer exist (e.g. removed gear recipes).
   for(const w of G.workers){
     if(w.action && !findAction(w.action)){w.action=null;w.skill=null;w.active=false;w.prog=0;}
@@ -1507,36 +1509,78 @@ function renderForge(){
   const grid=document.getElementById('forge-grid');
   const detail=document.getElementById('forge-detail');
   if(!grid) return;
-  // Collect dungeon gear in inventory (type armour/accessory/weapon, not legacy skill-produced, not tools)
-  const gearItems=[];
   const isDungeonGear=id=>ITEMS[id]&&(ITEMS[id].type==='armour'||ITEMS[id].type==='accessory'||ITEMS[id].type==='weapon')&&ITEMS[id].slot&&!ITEMS[id].special;
-  // Include equipped gear
-  for(const slot of EQUIP_SLOTS){
-    const id=G.equip[slot];
-    if(id&&isDungeonGear(id)&&gearItems.indexOf(id)===-1) gearItems.push(id);
+  // Validate slot — clear if item no longer in inventory or equipped
+  if(G.forgeSlot){
+    const inInv=G.inv&&G.inv[G.forgeSlot]>0;
+    const equipped=isEquippedAnywhere(G.forgeSlot);
+    if(!isDungeonGear(G.forgeSlot)||(!inInv&&!equipped)) G.forgeSlot=null;
   }
-  // Include inventory gear
-  for(const [id,qty] of Object.entries(G.inv)){
-    if(qty>0&&isDungeonGear(id)&&gearItems.indexOf(id)===-1) gearItems.push(id);
+  let h='<div style="padding:10px;">';
+  if(!G.forgeSlot){
+    h+='<div style="display:flex;flex-direction:column;align-items:center;gap:8px;">';
+    h+='<div onclick="showForgePicker()" style="width:72px;height:72px;border:2px dashed var(--bdr2);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--bg2);gap:4px;transition:all .15s;">';
+    h+='<span style="font-size:26px;opacity:0.45;">⚒</span>';
+    h+='<span style="font-size:8px;color:var(--text3);font-family:Cinzel,serif;text-align:center;letter-spacing:.5px;">TAP TO ASSIGN</span>';
+    h+='</div>';
+    h+='<div style="color:#5a4830;font-size:11px;text-align:center;">Assign a gear piece to upgrade it.</div>';
+    h+='</div>';
+  } else {
+    const it=ITEMS[G.forgeSlot];
+    const lvl=getGearUpgradeLevel(G.forgeSlot);
+    const equipped=isEquippedAnywhere(G.forgeSlot);
+    h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">';
+    h+='<div style="width:64px;height:64px;border:2px solid '+rarityColor(G.forgeSlot)+';border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg2);flex-shrink:0;cursor:pointer;" onclick="showForgePicker()">';
+    h+='<span style="font-size:26px;">'+it.icon+'</span>';
+    if(lvl>0) h+='<span style="font-size:9px;color:#f0c040;font-weight:bold;">+'+lvl+'</span>';
+    h+='</div>';
+    h+='<div style="flex:1;min-width:0;">';
+    h+='<div style="color:'+rarityColor(G.forgeSlot)+';font-size:14px;font-weight:bold;font-family:Cinzel,serif;">'+it.name+(lvl>0?' +'+lvl:'')+'</div>';
+    h+='<div style="color:#9a7e50;font-size:10px;">'+it.slot+(equipped?' · equipped':'')+'</div>';
+    h+='</div>';
+    h+='<button onclick="G.forgeSlot=null;renderForge()" style="background:#1c1710;border:1px solid #3a2c18;color:#9a7e50;font-size:10px;border-radius:4px;padding:5px 9px;cursor:pointer;font-family:Cinzel,serif;flex-shrink:0;">✕ Remove</button>';
+    h+='</div>';
   }
-  if(gearItems.length===0){
-    grid.innerHTML='<div style="color:#5a4830;font-size:11px;padding:8px;text-align:center;">No dungeon gear found. Clear dungeons to earn gear!</div>';
+  h+='</div>';
+  grid.innerHTML=h;
+  if(G.forgeSlot){
+    showForgeDetail(G.forgeSlot);
+    detail.style.display='block';
+  } else {
     detail.style.display='none';
-    return;
   }
-  grid.innerHTML='';
-  gearItems.forEach(id=>{
-    const it=ITEMS[id];if(!it)return;
-    const lvl=getGearUpgradeLevel(id);
-    const d=document.createElement('div');
-    d.className='iv-slot has';
-    d.dataset.rarity=it.rarity||'common';
-    if(isEquippedAnywhere(id)) d.classList.add('equipped');
-    const lvlTag=lvl>0?'<span style="color:#f0c040;font-size:9px;font-weight:bold;"> +'+lvl+'</span>':'';
-    d.innerHTML='<span class="iv-ico">'+it.icon+'</span><span class="iv-nm" style="color:'+rarityColor(id)+'">'+it.name+lvlTag+'</span>';
-    d.onclick=()=>showForgeDetail(id);
-    grid.appendChild(d);
-  });
+}
+function showForgePicker(){
+  const isDungeonGear=id=>ITEMS[id]&&(ITEMS[id].type==='armour'||ITEMS[id].type==='accessory'||ITEMS[id].type==='weapon')&&ITEMS[id].slot&&!ITEMS[id].special;
+  const gearItems=[];
+  for(const slot of EQUIP_SLOTS){const id=G.equip[slot];if(id&&isDungeonGear(id)&&!gearItems.includes(id))gearItems.push(id);}
+  for(const [id,qty] of Object.entries(G.inv)){if(qty>0&&isDungeonGear(id)&&!gearItems.includes(id))gearItems.push(id);}
+  const existing=document.getElementById('forge-picker-overlay');if(existing)existing.remove();
+  const ov=document.createElement('div');ov.id='forge-picker-overlay';
+  ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.82);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  let h='<div style="background:#13100a;border:2px solid #3a2c18;border-radius:10px;width:100%;max-width:360px;max-height:80vh;overflow-y:auto;font-family:Cinzel,serif;">';
+  h+='<div style="padding:10px 12px;border-bottom:1px solid #3a2c18;display:flex;align-items:center;justify-content:space-between;">';
+  h+='<span style="color:#f0c040;font-size:13px;font-weight:bold;">Select Gear to Upgrade</span>';
+  h+='<span onclick="document.getElementById(\'forge-picker-overlay\').remove()" style="color:#9a7e50;font-size:22px;cursor:pointer;line-height:1;">&times;</span>';
+  h+='</div>';
+  if(gearItems.length===0){
+    h+='<div style="color:#5a4830;font-size:11px;text-align:center;padding:20px;">No gear found. Clear dungeons to earn gear!</div>';
+  } else {
+    h+='<div style="padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+    gearItems.forEach(id=>{
+      const it=ITEMS[id];if(!it)return;
+      const lvl=getGearUpgradeLevel(id);
+      h+='<div onclick="G.forgeSlot=\''+id+'\';document.getElementById(\'forge-picker-overlay\').remove();renderForge();" style="background:var(--bg2);border:2px solid '+rarityColor(id)+';border-radius:5px;aspect-ratio:1;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:4px;text-align:center;box-sizing:border-box;">';
+      h+='<span style="font-size:18px;">'+it.icon+'</span>';
+      h+='<span style="font-size:7px;color:'+rarityColor(id)+';line-height:1.1;margin-top:2px;">'+it.name+(lvl>0?' +'+lvl:'')+'</span>';
+      h+='</div>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  ov.innerHTML=h;
+  document.body.appendChild(ov);
 }
 function showForgeDetail(itemId){
   const detail=document.getElementById('forge-detail');
@@ -1544,25 +1588,19 @@ function showForgeDetail(itemId){
   const it=ITEMS[itemId];if(!it){detail.style.display='none';return;}
   const lvl=getGearUpgradeLevel(itemId);
   const cur=getUpgradedStats(itemId);
-  const equipped=isEquippedAnywhere(itemId);
   let h='<div style="padding:8px;">';
-  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
-  h+='<span style="font-size:28px;">'+it.icon+'</span>';
-  h+='<div><div style="color:'+rarityColor(itemId)+';font-size:14px;font-weight:bold;">'+getGearDisplayName(itemId)+'</div>';
-  h+='<div style="color:#9a7e50;font-size:10px;">'+it.slot+(equipped?' (equipped)':'')+'</div></div></div>';
   // Current stats
-  h+='<div style="color:#e8d898;font-size:11px;margin-bottom:6px;">Current Stats:</div>';
+  h+='<div style="color:#e8d898;font-size:11px;margin-bottom:4px;">Current Stats:</div>';
   h+='<div style="display:flex;gap:10px;color:#9a7e50;font-size:10px;margin-bottom:8px;">';
   if(cur.atk) h+='<span>ATK '+cur.atk+'</span>';
   if(cur.def) h+='<span>DEF '+cur.def+'</span>';
   if(cur.hp) h+='<span>HP +'+cur.hp+'</span>';
   if(cur.dodge) h+='<span>Dodge +'+cur.dodge+'%</span>';
   h+='</div>';
-  if(lvl >= FORGE_MAX_LEVEL){
-    h+='<div style="color:#f0c040;font-size:12px;text-align:center;padding:8px;">Max upgrade reached!</div>';
+  if(lvl>=FORGE_MAX_LEVEL){
+    h+='<div style="color:#f0c040;font-size:12px;text-align:center;padding:8px;">✓ Max upgrade reached!</div>';
   } else {
     const cost=FORGE_COSTS[lvl];
-    // Preview next level stats
     const nextMult=1+(lvl+1)*FORGE_STAT_BONUS_PER_LEVEL;
     const nxt={atk:Math.round((it.atk||0)*nextMult),def:Math.round((it.def||0)*nextMult),hp:Math.round((it.hp||0)*nextMult),dodge:Math.round((it.dodge||0)*nextMult)};
     h+='<div style="color:#e8d898;font-size:11px;margin-bottom:4px;">Upgrade to +'+(lvl+1)+':</div>';
@@ -1572,7 +1610,6 @@ function showForgeDetail(itemId){
     if(nxt.hp) h+='<span>HP '+cur.hp+' → '+nxt.hp+'</span>';
     if(nxt.dodge) h+='<span>Dodge '+cur.dodge+'% → '+nxt.dodge+'%</span>';
     h+='</div>';
-    // Cost
     h+='<div style="color:#9a7e50;font-size:10px;margin-bottom:6px;">Cost: ';
     cost.mats.forEach((m,i)=>{
       const mi=ITEMS[m.id];const have=(G.inv&&G.inv[m.id])||0;
@@ -1583,7 +1620,6 @@ function showForgeDetail(itemId){
     const check=canForgeUpgrade(itemId);
     h+='<button onclick="forgeUpgradeUI(\''+itemId+'\')" style="width:100%;padding:8px;border-radius:4px;font-family:Cinzel,serif;font-size:13px;font-weight:bold;cursor:'+(check.ok?'pointer':'not-allowed')+';border:2px solid '+(check.ok?'#f0c040':'#3a2c18')+';background:'+(check.ok?'linear-gradient(180deg,#f0c040,#c08020)':'#1c1710')+';color:'+(check.ok?'#0b0905':'#5a4830')+';">'+(check.ok?'⚒ Upgrade':'⚒ '+check.reason)+'</button>';
   }
-  h+='<button onclick="document.getElementById(\'forge-detail\').style.display=\'none\'" style="width:100%;padding:6px;margin-top:6px;border:1px solid #3a2c18;background:#1c1710;color:#9a7e50;border-radius:4px;cursor:pointer;font-size:11px;">Close</button>';
   h+='</div>';
   detail.innerHTML=h;
   detail.style.display='block';
@@ -1593,7 +1629,6 @@ function forgeUpgradeUI(itemId){
   const it=ITEMS[itemId];
   if(it&&typeof log==='function') log('⚒ <b>'+getGearDisplayName(itemId)+'</b> upgraded! Stats increased.');
   updateUI();renderInv();renderEquip();renderForge();
-  showForgeDetail(itemId);
 }
 
 // Canonical ordering for the spell bar (matches magic level progression).
