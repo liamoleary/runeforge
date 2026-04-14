@@ -1080,54 +1080,66 @@
   }
 
   // === FIRST-VICTORY REWARD POPUP ===
-  function showFirstVictoryPopup(dungeon, reward){
+  function showFirstVictoryPopup(dungeon, reward, gotGear){
     // Don't double-show
     if(document.getElementById('dg-victory-popup'))return;
     var ov=document.createElement('div');
     ov.id='dg-victory-popup';
-    ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle,rgba(20,12,4,0.85) 0%,rgba(0,0,0,0.95) 100%);z-index:10000;display:flex;align-items:center;justify-content:center;animation:dgFadeIn 0.35s ease-out;overflow:hidden;padding:20px;box-sizing:border-box;';
 
-    var modal=document.createElement('div');
-    modal.style.cssText='position:relative;background:linear-gradient(135deg,#1a1308 0%,#2a1f0c 100%);border:3px solid #f0c040;border-radius:14px;padding:28px 30px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 0 50px rgba(240,192,64,0.55),0 0 100px rgba(240,192,64,0.25);animation:dgVictoryPop 0.7s cubic-bezier(0.2,1.3,0.6,1) forwards;font-family:Cinzel,serif;z-index:2;';
-    var statsLine = reward.eff ? '<div style="margin-top:6px;font-size:11px;color:#9a7e50;font-family:Arial,sans-serif;">'+reward.eff+'</div>' : '';
-    modal.innerHTML=
-      '<div style="color:#f0c040;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;font-weight:700;">⚔ First Victory ⚔</div>'+
-      '<div style="color:#e8d898;font-size:18px;margin-bottom:14px;">'+dungeon.name+'</div>'+
-      '<div style="font-size:72px;line-height:1;margin-bottom:8px;display:inline-block;animation:dgRewardSpin 0.9s ease-out forwards,dgRewardGlow 2.2s ease-in-out 0.9s infinite;">'+reward.icon+'</div>'+
-      '<div style="color:#ff8000;font-size:20px;font-weight:700;margin-bottom:2px;text-shadow:0 0 12px rgba(255,128,0,0.5);">'+reward.name+'</div>'+
-      '<div style="color:#9a7e50;font-size:11px;margin-bottom:4px;font-family:Arial,sans-serif;">Gear obtained!</div>'+
-      statsLine+
-      '<div style="margin-top:18px;"></div>'+
-      '<button id="dg-victory-claim" style="background:linear-gradient(180deg,#f0c040,#c08020);border:2px solid #f0c040;color:#0b0905;padding:11px 28px;font-family:Cinzel,serif;font-size:14px;font-weight:700;border-radius:6px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;box-shadow:0 0 18px rgba(240,192,64,0.55);">Equip It!</button>';
-
-    ov.appendChild(modal);
-    document.body.appendChild(ov);
-
-    // Spawn fireworks across the screen
-    var fwColors=['#f0c040','#ffd966','#ff6644','#5ac85a','#88ddff','#cc88ff','#ff88cc','#ffaa00'];
-    function fwRandom(){return fwColors[Math.floor(Math.random()*fwColors.length)];}
-    // Initial burst wave
-    for(var i=0;i<10;i++){
-      (function(idx){
-        setTimeout(function(){if(ov.parentNode)spawnFireworkBurst(ov,fwRandom());},idx*180);
-      })(i);
-    }
-    // Continuous fireworks for ~4s
-    var interval=setInterval(function(){
-      if(!ov.parentNode){clearInterval(interval);return;}
-      spawnFireworkBurst(ov,fwRandom());
-    },380);
-    setTimeout(function(){clearInterval(interval);},4200);
-
-    function dismiss(){
-      clearInterval(interval);
-      if(ov.parentNode){
-        ov.style.animation='dgFadeIn 0.25s ease-out reverse';
-        setTimeout(function(){if(ov.parentNode)ov.remove();},250);
+    if(gotGear){
+      // === POSITIVE: gear obtained — gold/fireworks ===
+      ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle,rgba(20,12,4,0.85) 0%,rgba(0,0,0,0.95) 100%);z-index:10000;display:flex;align-items:center;justify-content:center;animation:dgFadeIn 0.35s ease-out;overflow:hidden;padding:20px;box-sizing:border-box;';
+      var modal=document.createElement('div');
+      modal.style.cssText='position:relative;background:linear-gradient(135deg,#1a1308 0%,#2a1f0c 100%);border:3px solid #f0c040;border-radius:14px;padding:28px 30px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 0 50px rgba(240,192,64,0.55),0 0 100px rgba(240,192,64,0.25);animation:dgVictoryPop 0.7s cubic-bezier(0.2,1.3,0.6,1) forwards;font-family:Cinzel,serif;z-index:2;';
+      var statsLine=reward.eff?'<div style="margin-top:6px;font-size:11px;color:#9a7e50;font-family:Arial,sans-serif;">'+reward.eff+'</div>':'';
+      modal.innerHTML=
+        '<div style="color:#f0c040;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;font-weight:700;">⚔ First Victory ⚔</div>'+
+        '<div style="color:#e8d898;font-size:18px;margin-bottom:14px;">'+dungeon.name+'</div>'+
+        '<div style="font-size:72px;line-height:1;margin-bottom:8px;display:inline-block;animation:dgRewardSpin 0.9s ease-out forwards,dgRewardGlow 2.2s ease-in-out 0.9s infinite;">'+reward.icon+'</div>'+
+        '<div style="color:#ff8000;font-size:20px;font-weight:700;margin-bottom:2px;text-shadow:0 0 12px rgba(255,128,0,0.5);">'+reward.name+'</div>'+
+        '<div style="color:#9a7e50;font-size:11px;margin-bottom:4px;font-family:Arial,sans-serif;">Gear obtained!</div>'+
+        statsLine+
+        '<div style="margin-top:18px;"></div>'+
+        '<button id="dg-victory-claim" style="background:linear-gradient(180deg,#f0c040,#c08020);border:2px solid #f0c040;color:#0b0905;padding:11px 28px;font-family:Cinzel,serif;font-size:14px;font-weight:700;border-radius:6px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;box-shadow:0 0 18px rgba(240,192,64,0.55);">Equip It!</button>';
+      ov.appendChild(modal);
+      document.body.appendChild(ov);
+      // Fireworks
+      var fwColors=['#f0c040','#ffd966','#ff6644','#5ac85a','#88ddff','#cc88ff','#ff88cc','#ffaa00'];
+      function fwRandom(){return fwColors[Math.floor(Math.random()*fwColors.length)];}
+      for(var i=0;i<10;i++){
+        (function(idx){setTimeout(function(){if(ov.parentNode)spawnFireworkBurst(ov,fwRandom());},idx*180);})(i);
       }
+      var interval=setInterval(function(){if(!ov.parentNode){clearInterval(interval);return;}spawnFireworkBurst(ov,fwRandom());},380);
+      setTimeout(function(){clearInterval(interval);},4200);
+      function dismiss(){
+        clearInterval(interval);
+        if(ov.parentNode){ov.style.animation='dgFadeIn 0.25s ease-out reverse';setTimeout(function(){if(ov.parentNode)ov.remove();},250);}
+      }
+      document.getElementById('dg-victory-claim').onclick=dismiss;
+      ov.addEventListener('click',function(e){if(e.target===ov)dismiss();});
+
+    } else {
+      // === NEGATIVE: dungeon cleared but no gear drop — greys & reds ===
+      ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:10000;display:flex;align-items:center;justify-content:center;animation:dgFadeIn 0.3s ease-out;padding:20px;box-sizing:border-box;';
+      var modal2=document.createElement('div');
+      modal2.style.cssText='background:linear-gradient(135deg,#110d0d 0%,#1a1010 100%);border:2px solid #5a2020;border-radius:14px;padding:24px 28px 20px;max-width:320px;width:100%;text-align:center;animation:dgVictoryPop 0.5s cubic-bezier(0.2,1.2,0.6,1) forwards;font-family:Cinzel,serif;box-shadow:0 0 30px rgba(120,20,20,0.4);';
+      var dropPct=reward.chance!=null?reward.chance:50;
+      modal2.innerHTML=
+        '<div style="color:#6b3030;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">Dungeon Cleared</div>'+
+        '<div style="color:#8a6a6a;font-size:16px;margin-bottom:16px;">'+dungeon.name+'</div>'+
+        '<div style="font-size:54px;line-height:1;margin-bottom:10px;filter:grayscale(1) brightness(0.5);">'+reward.icon+'</div>'+
+        '<div style="color:#c03030;font-size:17px;font-weight:700;margin-bottom:4px;">No Gear This Run</div>'+
+        '<div style="color:#5a3838;font-size:11px;margin-bottom:14px;font-family:Arial,sans-serif;">'+reward.name+' · '+dropPct+'% drop chance</div>'+
+        '<div style="color:#4a3030;font-size:10px;margin-bottom:16px;font-family:Arial,sans-serif;line-height:1.5;">The dungeon has been cleared. Run it again to try for the gear drop.</div>'+
+        '<button id="dg-victory-claim" style="background:#2a1010;border:1px solid #5a2020;color:#a04040;padding:9px 24px;font-family:Cinzel,serif;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;">Continue</button>';
+      ov.appendChild(modal2);
+      document.body.appendChild(ov);
+      function dismiss2(){
+        if(ov.parentNode){ov.style.animation='dgFadeIn 0.25s ease-out reverse';setTimeout(function(){if(ov.parentNode)ov.remove();},250);}
+      }
+      document.getElementById('dg-victory-claim').onclick=dismiss2;
+      ov.addEventListener('click',function(e){if(e.target===ov)dismiss2();});
     }
-    document.getElementById('dg-victory-claim').onclick=dismiss;
-    ov.addEventListener('click',function(e){if(e.target===ov)dismiss();});
   }
 
   function spawnFireworkBurst(parent,color){
@@ -1529,9 +1541,9 @@
             if(gotLevelPotion) msg+=' + <span style="color:#9b59b6">🧪 Level Potion!</span>';
             log(msg+' + loot!');
           }
-          // First-victory popup with fireworks fires only on the very first clear
+          // First-victory popup fires only on the very first clear; pass whether gear actually dropped
           if(firstClear){
-            setTimeout(function(){showFirstVictoryPopup(activeDungeon,rwd);},700);
+            (function(gd){setTimeout(function(){showFirstVictoryPopup(activeDungeon,rwd,gd);},700);})(gotGearDrop);
           }
         }
       } else {
