@@ -61,6 +61,13 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,s
 #dungeon-main-btn-ico{font-size:26px;line-height:1;filter:drop-shadow(0 0 8px rgba(240,192,64,.7))}
 #skills-grid:not(.dungeons-mode) .sk-back{pointer-events:none}
 #skills-grid.dungeons-mode .sk-front{pointer-events:none}
+#skills-panel #pages{display:none;padding:4px;animation:craftViewFadeIn .35s ease-out}
+#skills-panel.crafting-mode #skills-grid{display:none}
+#skills-panel.crafting-mode #pages{display:block}
+#skills-panel-hdr{display:flex;align-items:center;justify-content:space-between}
+#skills-panel-title{font-family:'Cinzel',serif}
+#skills-panel.crafting-mode #skills-panel-title{color:var(--gold)}
+@keyframes craftViewFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .sk-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .sk-icon{font-size:20px;width:26px;text-align:center;line-height:1}
 .sk-name{font-family:'Cinzel',serif;font-size:10px;color:var(--text2);letter-spacing:.5px}
@@ -563,15 +570,15 @@ body.shake-hit #stage{animation:screenShake .35s ease}
   <div id="task-sub"><span id="task-xp-lbl"></span><span id="task-dur-lbl"></span></div>
 </div>
 <div id="main">
-  <div class="panel"><div class="panel-hdr">Skills</div><div id="skills-grid"></div></div>
-  <button id="dungeon-main-btn" onclick="toggleDungeonsMode()">
+  <div class="panel" id="skills-panel">
+    <div class="panel-hdr" id="skills-panel-hdr"><span id="skills-panel-title">Skills</span></div>
+    <div id="skills-grid"></div>
+    <div id="pages"></div>
+  </div>
+  <button id="dungeon-main-btn" onclick="dungeonMainBtnTap()">
     <span id="dungeon-main-btn-ico">🏰</span>
     <span id="dungeon-main-btn-txt">ENTER THE DUNGEONS</span>
   </button>
-
-  <div class="panel" id="act-panel">
-    <div id="pages"></div>
-  </div>
   <div class="panel">
     <div class="panel-hdr">Character</div>
     <div id="char-stats">
@@ -1669,23 +1676,30 @@ function autoEquipBest(){
     }
   }
 
-  // Weapon slots — score all weapons, assign best to weaponR, second-best to weaponL
-  const weapons=allEquip.filter(([id])=>ITEMS[id]&&ITEMS[id].type==='weapon');
+  // Weapon slots — right hand gets the best main-hand weapon.
+  // Left hand picks the best available offhand: shield/offhand items and
+  // additional weapons compete for the slot, highest score wins.
+  const weapons=allEquip.filter(([id])=>ITEMS[id]&&ITEMS[id].slot==='hand');
+  const offhands=allEquip.filter(([id])=>ITEMS[id]&&ITEMS[id].slot==='offhand');
   weapons.sort((a,b)=>score(b[0])-score(a[0]));
   const w1=weapons[0]?weapons[0][0]:null;
-  const w2=weapons[1]?weapons[1][0]:null;
   if(w1&&G.equip.weaponR!==w1){
-    const prev=G.equip.weaponR;
     G.equip.weaponR=w1;
     const it=ITEMS[w1];
     changed.push((it?it.icon+' '+it.name:w1)+' → right hand');
-    if(prev&&prev===w2){G.equip.weaponL=null;}
   }
-  if(w2&&w2!==w1&&G.equip.weaponL!==w2){
-    G.equip.weaponL=w2;
-    const it=ITEMS[w2];
-    changed.push((it?it.icon+' '+it.name:w2)+' → left hand');
-  } else if(!w2&&G.equip.weaponL&&weapons.length<2){
+  // Candidates for left hand: any offhand items plus any weapons other than the one in weaponR
+  const leftCandidates=[
+    ...offhands,
+    ...weapons.filter(([id])=>id!==G.equip.weaponR)
+  ];
+  leftCandidates.sort((a,b)=>score(b[0])-score(a[0]));
+  const leftBest=leftCandidates[0]?leftCandidates[0][0]:null;
+  if(leftBest&&G.equip.weaponL!==leftBest){
+    G.equip.weaponL=leftBest;
+    const it=ITEMS[leftBest];
+    changed.push((it?it.icon+' '+it.name:leftBest)+' → left hand');
+  } else if(!leftBest&&G.equip.weaponL){
     G.equip.weaponL=null;
   }
 
@@ -1978,20 +1992,15 @@ function buildSkills(){
     top.appendChild(slots);
     front.appendChild(top);front.appendChild(trk);front.appendChild(lbl);
     front.onclick=()=>{
-      switchTab(sk);
-      // Auto-scroll to the action options so players see what they can make.
-      // Skipped during combat or when the dungeon overlay is visible.
+      // Tap a skill card → flip the skills panel into the crafting view
+      // for that skill. Skipped during combat or when the dungeon overlay is visible.
       const dgOv=document.getElementById('dungeon-overlay');
       const dgOpen=dgOv&&dgOv.style.display&&dgOv.style.display!=='none';
-      if(!document.body.classList.contains('combat-active')&&!dgOpen){
-        const panel=document.getElementById('act-panel');
-        if(panel&&typeof panel.scrollIntoView==='function'){
-          // Measure the sticky task strip so scroll-margin-top is always exact
-          const strip=document.getElementById('active-task-strip');
-          panel.style.scrollMarginTop=(strip?(strip.offsetHeight+4):56)+'px';
-          panel.scrollIntoView({behavior:'smooth',block:'start'});
-        }
+      if(document.body.classList.contains('combat-active')||dgOpen){
+        switchTab(sk);
+        return;
       }
+      openCraftingView(sk);
     };
     // BACK (themed dungeon line for this skill — 12 tiers, opens via tier picker)
     const back=document.createElement('div');back.className='sk-back';
@@ -2038,22 +2047,84 @@ function buildSkills(){
 
 function toggleDungeonsMode(){
   const g=document.getElementById('skills-grid');
-  g.classList.toggle('dungeons-mode');
-  const isOn=g.classList.contains('dungeons-mode');
-  const mainBtn=document.getElementById('dungeon-main-btn');
-  if(mainBtn){
-    const ico=mainBtn.querySelector('#dungeon-main-btn-ico');
-    const txt=mainBtn.querySelector('#dungeon-main-btn-txt');
-    if(isOn){
-      mainBtn.classList.add('dungeons-active');
-      if(ico)ico.textContent='📜';
-      if(txt)txt.textContent='BACK TO SKILLS';
-    } else {
-      mainBtn.classList.remove('dungeons-active');
-      if(ico)ico.textContent='🏰';
-      if(txt)txt.textContent='ENTER THE DUNGEONS';
-    }
+  // Leaving the crafting view if it was open — dungeons mode needs the skills grid visible.
+  const panel=document.getElementById('skills-panel');
+  if(panel&&panel.classList.contains('crafting-mode')){
+    panel.classList.remove('crafting-mode');
+    const t=document.getElementById('skills-panel-title');
+    if(t)t.textContent='Skills';
   }
+  g.classList.toggle('dungeons-mode');
+  updateDungeonMainBtn();
+}
+
+// Open the crafting detail view for a specific skill. The skills grid flips
+// out and the skill's action buttons fill the panel. The main CTA becomes
+// "BACK TO SKILLS" to take the player back to the overview.
+function openCraftingView(sk){
+  const panel=document.getElementById('skills-panel');
+  const grid=document.getElementById('skills-grid');
+  if(!panel)return;
+  // Dungeons-mode and crafting-mode are mutually exclusive
+  if(grid&&grid.classList.contains('dungeons-mode'))grid.classList.remove('dungeons-mode');
+  switchTab(sk);
+  panel.classList.add('crafting-mode');
+  const t=document.getElementById('skills-panel-title');
+  const info=SKILLS[sk];
+  if(t&&info)t.textContent=info.icon+' '+info.name;
+  updateDungeonMainBtn();
+  // Scroll the panel into view so the player sees the new crafting list.
+  if(typeof panel.scrollIntoView==='function'){
+    const strip=document.getElementById('active-task-strip');
+    panel.style.scrollMarginTop=(strip?(strip.offsetHeight+4):56)+'px';
+    panel.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+}
+
+function closeCraftingView(){
+  const panel=document.getElementById('skills-panel');
+  if(!panel)return;
+  panel.classList.remove('crafting-mode');
+  const t=document.getElementById('skills-panel-title');
+  if(t)t.textContent='Skills';
+  updateDungeonMainBtn();
+}
+
+// Single place that keeps the main CTA button label/icon in sync with
+// whichever view is currently active (skills, dungeons, crafting detail).
+function updateDungeonMainBtn(){
+  const mainBtn=document.getElementById('dungeon-main-btn');
+  if(!mainBtn)return;
+  const ico=mainBtn.querySelector('#dungeon-main-btn-ico');
+  const txt=mainBtn.querySelector('#dungeon-main-btn-txt');
+  const panel=document.getElementById('skills-panel');
+  const grid=document.getElementById('skills-grid');
+  const inCrafting=panel&&panel.classList.contains('crafting-mode');
+  const inDungeons=grid&&grid.classList.contains('dungeons-mode');
+  if(inCrafting){
+    mainBtn.classList.add('dungeons-active');
+    if(ico)ico.textContent='\u2B05';
+    if(txt)txt.textContent='BACK TO SKILLS';
+  } else if(inDungeons){
+    mainBtn.classList.add('dungeons-active');
+    if(ico)ico.textContent='\ud83d\udcdc';
+    if(txt)txt.textContent='BACK TO SKILLS';
+  } else {
+    mainBtn.classList.remove('dungeons-active');
+    if(ico)ico.textContent='\ud83c\udff0';
+    if(txt)txt.textContent='ENTER THE DUNGEONS';
+  }
+}
+
+// Dispatcher for the single shared CTA button. Closes whichever back-view
+// is currently active, or toggles into dungeons mode from the default view.
+function dungeonMainBtnTap(){
+  const panel=document.getElementById('skills-panel');
+  if(panel&&panel.classList.contains('crafting-mode')){
+    closeCraftingView();
+    return;
+  }
+  toggleDungeonsMode();
 }
 
 function showSlotMenu(sk, slotType){
@@ -2250,9 +2321,13 @@ function buildActPage(sk){
   return html+'</div>';
 }
 
-// Tap handler — show recipe detail when cant-afford, else start task
+// Tap handler — show recipe detail when locked or missing materials, else start task.
+// The detail overlay always explains *why* the player can't do the action yet.
 function actBtnTap(id, btn){
-  if(btn.classList.contains('locked')) return;
+  if(btn.classList.contains('locked')){
+    showRecipeDetail(id);
+    return;
+  }
   if(btn.classList.contains('cant-afford')){
     showRecipeDetail(id);
   } else {
@@ -2263,9 +2338,13 @@ function actBtnTap(id, btn){
 // Recipe detail modal — shows full ingredient breakdown with have/need counts
 function showRecipeDetail(id){
   const a=findAction(id);
-  if(!a||!a.need) return;
+  if(!a) return;
   const prod=a.prod&&a.prod[0]&&ITEMS[a.prod[0].id];
   if(document.getElementById('recipe-detail-ov')) return;
+  const sk=findSkill(id);
+  const skInfo=sk?SKILLS[sk]:null;
+  const curLvl=sk?slvl(sk):0;
+  const locked=curLvl<a.req;
 
   // Build stats / effect string for gear, food, and potions
   let statsHtml='';
@@ -2307,31 +2386,70 @@ function showRecipeDetail(id){
     statsHtml=phtml;
   }
 
-  // Build ingredient rows
+  // Build ingredient rows (gathering actions have no `need` list).
   let rowsHtml='';
-  let canCraft=true;
-  for(const c of a.need){
-    const item=ITEMS[c.id]||{name:c.id,icon:'?'};
-    const have=G.inv[c.id]||0;
-    const ok=have>=c.n;
-    if(!ok) canCraft=false;
-    const haveClr=ok?'#5ac85a':'#e03030';
-    const needExtra=ok?'':' <span style="color:#e03030;">(-'+(c.n-have)+')</span>';
-    // Highlight shard entries
-    const isShard=/_shard_mk\d$/.test(c.id);
-    const mkMatch=isShard&&c.id.match(/_shard_mk(\d)$/);
-    const shardClr=isShard?(SHARD_RARITY_CLR['mk'+(mkMatch&&mkMatch[1])]||'#f0c040'):'';
-    const nameStyle=isShard?'font-weight:700;color:'+shardClr+';':'color:#e8d898;';
-    rowsHtml+='<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 8px;border-bottom:1px solid #1c1710;">'
-      +'<div style="display:flex;align-items:center;gap:8px;">'
-        +'<span style="font-size:18px;width:22px;text-align:center;">'+item.icon+'</span>'
-        +'<span style="'+nameStyle+'font-size:12px;">'+item.name+'</span>'
-      +'</div>'
-      +'<div style="text-align:right;font-size:11px;white-space:nowrap;">'
-        +'<span style="color:'+haveClr+';font-weight:700;">'+have+'/'+c.n+'</span>'
-        +needExtra
-      +'</div>'
-    +'</div>';
+  let canAfford=true;
+  if(a.need&&a.need.length){
+    for(const c of a.need){
+      const item=ITEMS[c.id]||{name:c.id,icon:'?'};
+      const have=G.inv[c.id]||0;
+      const ok=have>=c.n;
+      if(!ok) canAfford=false;
+      const haveClr=ok?'#5ac85a':'#e03030';
+      const needExtra=ok?'':' <span style="color:#e03030;">(-'+(c.n-have)+')</span>';
+      // Highlight shard entries
+      const isShard=/_shard_mk\d$/.test(c.id);
+      const mkMatch=isShard&&c.id.match(/_shard_mk(\d)$/);
+      const shardClr=isShard?(SHARD_RARITY_CLR['mk'+(mkMatch&&mkMatch[1])]||'#f0c040'):'';
+      const nameStyle=isShard?'font-weight:700;color:'+shardClr+';':'color:#e8d898;';
+      rowsHtml+='<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 8px;border-bottom:1px solid #1c1710;">'
+        +'<div style="display:flex;align-items:center;gap:8px;">'
+          +'<span style="font-size:18px;width:22px;text-align:center;">'+item.icon+'</span>'
+          +'<span style="'+nameStyle+'font-size:12px;">'+item.name+'</span>'
+        +'</div>'
+        +'<div style="text-align:right;font-size:11px;white-space:nowrap;">'
+          +'<span style="color:'+haveClr+';font-weight:700;">'+have+'/'+c.n+'</span>'
+          +needExtra
+        +'</div>'
+      +'</div>';
+    }
+  }
+
+  // Explain *why* the action is blocked when it is. The banner is the first
+  // thing the player sees — they tapped a locked/red button for a reason.
+  let blockedBanner='';
+  if(locked){
+    const skName=skInfo?skInfo.name:'skill';
+    const skIcon=skInfo?skInfo.icon:'';
+    blockedBanner=
+      '<div style="margin:8px 16px 4px;padding:10px 12px;background:rgba(224,48,48,0.08);border:1px solid rgba(224,48,48,0.35);border-radius:6px;">'
+        +'<div style="font-size:12px;color:#e03030;font-weight:700;display:flex;align-items:center;gap:6px;">\ud83d\udd12 Locked</div>'
+        +'<div style="font-size:11px;color:#e8d898;margin-top:3px;">Requires '+skIcon+' '+skName+' <b>Lv.'+a.req+'</b> \u2014 you are Lv.'+curLvl+'.</div>'
+        +'<div style="font-size:10px;color:#9a7e50;margin-top:3px;">Train '+skName+' '+(a.req-curLvl)+' more level'+(a.req-curLvl===1?'':'s')+' to unlock.</div>'
+      +'</div>';
+  } else if(!canAfford){
+    blockedBanner=
+      '<div style="margin:8px 16px 4px;padding:10px 12px;background:rgba(224,48,48,0.08);border:1px solid rgba(224,48,48,0.35);border-radius:6px;">'
+        +'<div style="font-size:12px;color:#e03030;font-weight:700;display:flex;align-items:center;gap:6px;">\u26a0 Missing ingredients</div>'
+        +'<div style="font-size:11px;color:#e8d898;margin-top:3px;">Gather the red items below before you can craft this.</div>'
+      +'</div>';
+  }
+
+  const canCraftNow=!locked&&canAfford;
+  const ingredientsBlock=(a.need&&a.need.length)
+    ?'<div style="padding:4px 0 8px;">'
+      +'<div style="padding:4px 16px 6px;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:1px;">Ingredients needed</div>'
+      +rowsHtml
+    +'</div>'
+    :'<div style="padding:6px 16px 10px;font-size:10px;color:#5a4830;text-align:center;font-style:italic;">Gathering action \u2014 no ingredients required.</div>';
+
+  let footerHtml;
+  if(canCraftNow){
+    footerHtml='<button onclick="document.getElementById(\'recipe-detail-ov\').remove();startTask(\''+id+'\')" style="width:100%;padding:10px;background:#2a1808;border:2px solid #f0c040;color:#f0c040;font-family:Cinzel,serif;font-size:13px;font-weight:700;border-radius:6px;cursor:pointer;">\u2692 Start Now</button>';
+  } else if(locked){
+    footerHtml='<div style="text-align:center;color:#5a4830;font-size:11px;">Keep training '+(skInfo?skInfo.name:'this skill')+' to unlock.</div>';
+  } else {
+    footerHtml='<div style="text-align:center;color:#5a4830;font-size:11px;">Gather the missing ingredients above</div>';
   }
 
   const ov=document.createElement('div');
@@ -2340,23 +2458,17 @@ function showRecipeDetail(id){
   ov.innerHTML=
     '<div style="background:#13100a;border:2px solid #3a2c18;border-radius:10px;max-width:380px;width:100%;max-height:85vh;overflow-y:auto;font-family:Cinzel,serif;">'
       +'<div style="padding:14px 16px 10px;border-bottom:1px solid #3a2c18;display:flex;align-items:center;gap:10px;">'
-        +'<span style="font-size:28px;">'+(prod?prod.icon:a.icon)+'</span>'
+        +'<span style="font-size:28px;'+(locked?'filter:grayscale(1);opacity:.6;':'')+'">'+(prod?prod.icon:a.icon)+'</span>'
         +'<div style="flex:1;">'
           +'<div style="color:#f0c040;font-size:14px;font-weight:700;">'+a.name+'</div>'
           +'<div style="color:#9a7e50;font-size:10px;margin-top:1px;">Lv.'+a.req+' · +'+a.xp+' xp · '+(a.dur/1000).toFixed(1)+'s</div>'
         +'</div>'
         +'<div onclick="document.getElementById(\'recipe-detail-ov\').remove()" style="color:#9a7e50;font-size:22px;cursor:pointer;line-height:1;padding:0 4px;">&times;</div>'
       +'</div>'
+      +blockedBanner
       +(statsHtml?'<div style="padding:0 16px;">'+statsHtml+'</div>':'')
-      +'<div style="padding:4px 0 8px;">'
-        +'<div style="padding:4px 16px 6px;font-size:9px;color:#5a4830;text-transform:uppercase;letter-spacing:1px;">Ingredients needed</div>'
-        +rowsHtml
-      +'</div>'
-      +'<div style="padding:10px 16px;">'
-        +(canCraft
-          ?'<button onclick="document.getElementById(\'recipe-detail-ov\').remove();startTask(\''+id+'\')" style="width:100%;padding:10px;background:#2a1808;border:2px solid #f0c040;color:#f0c040;font-family:Cinzel,serif;font-size:13px;font-weight:700;border-radius:6px;cursor:pointer;">⚒ Craft Now</button>'
-          :'<div style="text-align:center;color:#5a4830;font-size:11px;">Gather the missing ingredients above</div>')
-      +'</div>'
+      +ingredientsBlock
+      +'<div style="padding:10px 16px;">'+footerHtml+'</div>'
     +'</div>';
   ov.onclick=e=>{if(e.target===ov)ov.remove();};
   document.body.appendChild(ov);
@@ -2653,17 +2765,45 @@ function showWorkerActionPicker(modal,ov,workerIdx,sk){
   }
   eligible.forEach(function(a){
     const prodDesc=a.prod?a.prod.map(function(p){return(ITEMS[p.id]?ITEMS[p.id].icon:'')+' '+(ITEMS[p.id]?ITEMS[p.id].name:p.id);}).join(', '):'';
-    const needDesc=a.need?a.need.map(function(c){return(ITEMS[c.id]?ITEMS[c.id].icon:'')+c.n;}).join(' '):'';
-    h+='<div style="display:flex;align-items:center;gap:6px;padding:7px 8px;background:#1a1308;border:1px solid #3a2c18;border-radius:5px;cursor:pointer;" data-wk-action="'+a.id+'">';
+    // Check ingredient availability — if the recipe needs materials the
+    // player doesn't currently have, disable selection so they can't
+    // assign a worker to a recipe that would immediately be idle.
+    let missing=false;
+    let needDesc='';
+    if(a.need&&a.need.length){
+      needDesc=a.need.map(function(c){
+        const have=G.inv[c.id]||0;
+        const ok=have>=c.n;
+        if(!ok) missing=true;
+        const clr=ok?'#9a7e50':'#e03030';
+        return '<span style="color:'+clr+';">'+(ITEMS[c.id]?ITEMS[c.id].icon:'')+c.n+' ('+have+')</span>';
+      }).join(' ');
+    }
+    const disabled=missing;
+    const disStyle=disabled?'opacity:.45;cursor:not-allowed;border-color:#5a1a1a;background:#1a0f08;':'cursor:pointer;';
+    h+='<div style="display:flex;align-items:center;gap:6px;padding:7px 8px;background:#1a1308;border:1px solid #3a2c18;border-radius:5px;'+disStyle+'"'
+      +(disabled?' data-wk-missing="1"':' data-wk-action="'+a.id+'"')+'>';
     h+='<span style="font-size:16px;">'+a.icon+'</span>';
     h+='<div style="flex:1;min-width:0;">';
     h+='<div style="color:#e8d898;font-size:11px;">'+a.name+'</div>';
     h+='<div style="color:#9a7e50;font-size:9px;">'+(prodDesc||'')+(needDesc?' \u00b7 needs: '+needDesc:'')+'</div>';
+    if(disabled){
+      h+='<div style="color:#e03030;font-size:9px;margin-top:2px;">\u26a0 Missing ingredients \u2014 gather them first</div>';
+    }
     h+='</div></div>';
   });
   h+='</div>';
   modal.innerHTML=h;
   modal.querySelector('[data-wk-back]').onclick=function(){showWorkerSkillPicker(modal,ov,workerIdx);};
+  modal.querySelectorAll('[data-wk-missing]').forEach(function(el){
+    el.onclick=function(){
+      // Shake / flash to indicate it can't be selected
+      el.style.transition='transform .12s';
+      el.style.transform='translateX(4px)';
+      setTimeout(function(){el.style.transform='translateX(-4px)';},120);
+      setTimeout(function(){el.style.transform='';},240);
+    };
+  });
   modal.querySelectorAll('[data-wk-action]').forEach(function(el){
     el.onclick=function(){
       const w=G.workers[workerIdx];
