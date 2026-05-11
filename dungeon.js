@@ -147,7 +147,8 @@ function defaultState() {
     hp: BASE_HP,
     mana: 25,
     gold: 0,
-    stats: { strength: 0, intellect: 0, defence: 0, mana: 0 },
+    stats:   { strength: 0, intellect: 0, defence: 0, mana: 0 }, // current stat level
+    statXp:  { strength: 0, intellect: 0, defence: 0, mana: 0 }, // progress toward next
     resources: {},
     weapon: null,
     spellbook: {},   // { spellKey: true } — unlocked
@@ -157,6 +158,24 @@ function defaultState() {
     busy: false,
     inDungeon: false
   };
+}
+
+function statXpThreshold(level) {
+  return 30 + level * 20;
+}
+function statXpPerKill(monster) {
+  return Math.max(2, (monster.tier || 1) * 5);
+}
+function awardStatXp(stat, amount) {
+  if (!G.statXp) G.statXp = { strength: 0, intellect: 0, defence: 0, mana: 0 };
+  G.statXp[stat] = (G.statXp[stat] || 0) + amount;
+  let leveled = 0;
+  while (G.statXp[stat] >= statXpThreshold(G.stats[stat])) {
+    G.statXp[stat] -= statXpThreshold(G.stats[stat]);
+    G.stats[stat] += 1;
+    leveled += 1;
+  }
+  return leveled;
 }
 
 const G = window.G = defaultState();
@@ -217,6 +236,7 @@ function load() {
     if (typeof s !== 'object' || s === null || !s.hero) return;
     Object.assign(G, defaultState(), s);
     if (!G.stats) G.stats = { strength: 0, intellect: 0, defence: 0, mana: 0 };
+    if (!G.statXp) G.statXp = { strength: 0, intellect: 0, defence: 0, mana: 0 };
     if (!G.resources) G.resources = {};
     if (!G.spellbook) G.spellbook = {};
     if (!Array.isArray(G.loadout)) G.loadout = [];
@@ -357,8 +377,32 @@ function render() {
   $('stat-intellect').textContent = G.stats.intellect;
   $('stat-defence').textContent = G.stats.defence;
   $('stat-mana').textContent = G.stats.mana;
+  renderStatXpBars();
 
   renderMonsters();
+}
+
+function renderStatXpBars() {
+  ['strength', 'intellect', 'defence', 'mana'].forEach(function (s) {
+    const tile = document.querySelector('.stat-tile[data-stat="' + s + '"]');
+    if (!tile) return;
+    let mini = tile.querySelector('.xp-mini');
+    let label = tile.querySelector('.xp-mini-val');
+    if (!mini) {
+      mini = document.createElement('div');
+      mini.className = 'xp-mini';
+      mini.innerHTML = '<div class="xp-mini-fill"></div>';
+      tile.appendChild(mini);
+      label = document.createElement('div');
+      label.className = 'xp-mini-val';
+      tile.appendChild(label);
+    }
+    const have = (G.statXp && G.statXp[s]) || 0;
+    const need = statXpThreshold(G.stats[s]);
+    const fill = mini.querySelector('.xp-mini-fill');
+    fill.style.width = Math.min(100, (have / need) * 100) + '%';
+    label.textContent = have + ' / ' + need;
+  });
 }
 
 function renderMonsters() {
@@ -373,13 +417,14 @@ function renderMonsters() {
     const dropList = Object.keys(m.drops).map(function (k) {
       return RESOURCES[k] ? RESOURCES[k].icon : '?';
     }).join(' ');
+    const sxp = statXpPerKill(m);
     card.innerHTML =
       '<div class="mc-icon">' + m.icon + '</div>' +
       '<div class="mc-name">' + m.name + '</div>' +
       '<div class="mc-tier">Tier ' + m.tier + '</div>' +
       '<div class="mc-meta">' +
         '<span>+XP ' + m.xp + '</span>' +
-        '<span class="mm-stat">+' + m.trains.slice(0, 3).toUpperCase() + '</span>' +
+        '<span class="mm-stat">+' + sxp + ' ' + m.trains.slice(0, 3).toUpperCase() + '</span>' +
       '</div>' +
       '<div class="mc-meta"><span>' + dropList + '</span></div>' +
       (locked ? '<div class="mc-lock">Lv ' + tierUnlockLevel(m.tier) + '+</div>' : '');
@@ -417,11 +462,19 @@ function playerAttack() {
   return { dmg: dmg, crit: crit };
 }
 
+// Element synergy: spells of element X gain ×(1 + weapon.X% / 200).
+// A 100%-fire weapon gives fire spells ×1.5; 50% gives ×1.25.
+function spellElementBonus(elKey) {
+  if (!elKey || !G.weapon) return 1;
+  const pct = G.weapon.elements[elKey] || 0;
+  return 1 + (pct / 200);
+}
 function spellDamage(spell) {
-  const raw = spell.power * (8 + G.stats.intellect * 2 + G.stats.mana * 0.5);
+  const elBonus = spellElementBonus(spell.element);
+  const raw = spell.power * (8 + G.stats.intellect * 2 + G.stats.mana * 0.5) * elBonus;
   const crit = Math.random() < 0.10;
   const dmg = Math.max(1, Math.round(raw * (0.9 + Math.random() * 0.25) * (crit ? 1.8 : 1)));
-  return { dmg: dmg, crit: crit };
+  return { dmg: dmg, crit: crit, bonus: elBonus };
 }
 
 // Pick best (highest power) affordable damage spell from loadout.
@@ -461,46 +514,85 @@ function startCombat(monKey) {
   }
   const m = MONSTERS[monKey];
   const h = HEROES[G.hero];
-  // Rest before the fight: full mana, ready to cast.
+  // Rest before the fight: full mana.
   G.mana = maxMana();
   combatState = {
     monKey: monKey, mon: m,
     monHp: m.hp, monMax: m.hp,
     youHp: G.hp
   };
-  $('cmb-you-port').textContent = h.portrait;
-  $('cmb-you-name').textContent = h.name;
-  $('cmb-foe-port').textContent = m.icon;
-  $('cmb-foe-name').textContent = m.name;
-  $('cmb-log').innerHTML = '';
-  $('cmb-flee').style.display = '';
-  $('cmb-flee').disabled = false;
-  $('cmb-close').style.display = 'none';
+  $('hunt-you-sprite').textContent = h.portrait;
+  $('hunt-you-name').textContent = h.name;
+  $('hunt-foe-sprite').textContent = m.icon;
+  $('hunt-foe-sprite').className = 'sprite entering';
+  setTimeout(function () { $('hunt-foe-sprite').className = 'sprite'; }, 460);
+  $('hunt-foe-name').textContent = m.name;
+  $('hunt-log').innerHTML = '';
+  $('hunt-flee').style.display = '';
+  $('hunt-flee').disabled = false;
+  $('hunt-continue').style.display = 'none';
+  $('hunt-panel').classList.add('combat-mode');
+  $('hunt-title').textContent = 'Battle';
+  $('hunt-hint').textContent = m.name + ' · Tier ' + m.tier;
   updateCombatBars();
   G.busy = true;
-  $('combat-stage').classList.add('active');
   cmbLog('<span class="you">A wild ' + m.name + ' appears!</span>');
-  scheduleCombatTick(700);
+  scheduleCombatTick(550);
 }
 
 function updateCombatBars() {
   if (!combatState) return;
-  $('cmb-you-fill').style.width = Math.max(0, (combatState.youHp / maxHp()) * 100) + '%';
-  $('cmb-you-hp').textContent = combatState.youHp + ' / ' + maxHp();
-  $('cmb-foe-fill').style.width = Math.max(0, (combatState.monHp / combatState.monMax) * 100) + '%';
-  $('cmb-foe-hp').textContent = combatState.monHp + ' / ' + combatState.monMax;
-  const mpFill = $('cmb-you-mp-fill');
-  if (mpFill) mpFill.style.width = Math.max(0, (G.mana / maxMana()) * 100) + '%';
-  const mpTxt = $('cmb-you-mp');
-  if (mpTxt) mpTxt.textContent = 'MP ' + G.mana + ' / ' + maxMana();
+  $('hunt-you-hp-fill').style.width = Math.max(0, (combatState.youHp / maxHp()) * 100) + '%';
+  $('hunt-you-mp-fill').style.width = Math.max(0, (G.mana / maxMana()) * 100) + '%';
+  $('hunt-foe-hp-fill').style.width = Math.max(0, (combatState.monHp / combatState.monMax) * 100) + '%';
+  $('hunt-foe-hpval').textContent = Math.max(0, combatState.monHp) + ' / ' + combatState.monMax;
 }
 
 function cmbLog(html) {
-  const el = $('cmb-log');
+  const el = $('hunt-log');
+  if (!el) return;
   const p = document.createElement('p');
   p.innerHTML = html;
   el.appendChild(p);
   el.scrollTop = el.scrollHeight;
+  while (el.children.length > 30) el.removeChild(el.firstChild);
+}
+
+// ---- Sprite & FX helpers (work for any arena) ----
+
+function _animSprite(spriteEl, cls, ms) {
+  if (!spriteEl) return;
+  spriteEl.classList.remove(cls);
+  void spriteEl.offsetWidth;
+  spriteEl.classList.add(cls);
+  setTimeout(function () { spriteEl.classList.remove(cls); }, ms || 600);
+}
+
+function fxFloat(arenaEl, side, text, kind) {
+  if (!arenaEl) return;
+  const d = document.createElement('div');
+  d.className = 'fx-dmg ' + side + (kind ? ' ' + kind : '');
+  d.textContent = text;
+  arenaEl.appendChild(d);
+  setTimeout(function () { try { arenaEl.removeChild(d); } catch(e) {} }, 950);
+}
+function fxProjectile(arenaEl, dir, glyph, color) {
+  if (!arenaEl) return;
+  const d = document.createElement('div');
+  d.className = 'fx-proj ' + (dir === 'right' ? 'toFoe' : 'toYou');
+  d.textContent = glyph;
+  if (color) d.style.color = color;
+  arenaEl.appendChild(d);
+  setTimeout(function () { try { arenaEl.removeChild(d); } catch(e) {} }, 560);
+}
+
+const ELEMENT_GLYPH = {
+  fire: '🔥', water: '💧', earth: '🪨', ice: '❄️',
+  lightning: '⚡', arcane: '✨', physical: '✦'
+};
+
+function spellGlyph(spell) {
+  return spell.icon || ELEMENT_GLYPH[spell.element] || '✨';
 }
 
 function scheduleCombatTick(delay) {
@@ -510,7 +602,9 @@ function scheduleCombatTick(delay) {
 
 function combatTick() {
   if (!combatState) return;
-  const m = combatState.mon;
+  const arena = $('hunt-arena');
+  const youSprite = $('hunt-you-sprite');
+  const foeSprite = $('hunt-foe-sprite');
 
   // 1. Emergency heal at <20% HP.
   const hpPct = combatState.youHp / maxHp();
@@ -521,56 +615,73 @@ function combatTick() {
       G.mana -= s.cost;
       const heal = Math.round(maxHp() * s.healPct);
       combatState.youHp = Math.min(maxHp(), combatState.youHp + heal);
-      cmbLog('<span class="you">You cast ' + s.icon + ' ' + s.name + '</span> — restored ' + heal + ' HP');
+      _animSprite(youSprite, 'cast', 500);
+      fxFloat(arena, 'you', '+' + heal, 'heal');
+      cmbLog('<span class="heal">You cast ' + s.icon + ' ' + s.name + '</span> — restored ' + heal + ' HP');
       updateCombatBars();
-      // Foe still gets to swing.
-      setTimeout(function () { foeSwing(); }, 380);
+      setTimeout(huntFoeSwing, 520);
       return;
     }
   }
 
-  // 2. Weapon attack.
+  // 2. Weapon attack — melee animation.
   const p = playerAttack();
   combatState.monHp -= p.dmg;
-  $('cmb-foe').classList.add('hit');
-  setTimeout(function () { $('cmb-foe').classList.remove('hit'); }, 380);
+  _animSprite(youSprite, 'melee-right', 550);
+  setTimeout(function () {
+    _animSprite(foeSprite, 'hit', 400);
+    fxFloat(arena, 'foe', String(p.dmg) + (p.crit ? '!' : ''), p.crit ? 'crit' : '');
+  }, 230);
   cmbLog('<span class="you">You strike</span> for ' + p.dmg + (p.crit ? ' <span class="crit">CRIT!</span>' : ''));
   updateCombatBars();
-  if (combatState.monHp <= 0) return finishCombat(true);
+  if (combatState.monHp <= 0) return setTimeout(function () { finishCombat(true); }, 500);
 
-  // 3. Damage spell — strongest affordable.
+  // 3. Damage spell — projectile FX.
   const dmgKey = pickDamageSpell();
   if (dmgKey) {
     const s = SPELLS[dmgKey];
     G.mana -= s.cost;
     const sd = spellDamage(s);
     combatState.monHp -= sd.dmg;
-    cmbLog('<span class="you">You cast ' + s.icon + ' ' + s.name + '</span> — ' + sd.dmg + ' ' + s.element + ' dmg' + (sd.crit ? ' <span class="crit">CRIT!</span>' : ''));
-    $('cmb-foe').classList.add('hit');
-    setTimeout(function () { $('cmb-foe').classList.remove('hit'); }, 380);
-    updateCombatBars();
-    if (combatState.monHp <= 0) return finishCombat(true);
+    setTimeout(function () {
+      _animSprite(youSprite, 'cast', 500);
+      fxProjectile(arena, 'right', spellGlyph(s), EL_COLORS[s.element]);
+    }, 560);
+    setTimeout(function () {
+      _animSprite(foeSprite, 'hit', 400);
+      fxFloat(arena, 'foe', String(sd.dmg) + (sd.crit ? '!' : ''), sd.crit ? 'crit' : '');
+    }, 1000);
+    cmbLog('<span class="spell">You cast ' + s.icon + ' ' + s.name + '</span> — ' + sd.dmg + ' ' + s.element + (sd.bonus > 1.001 ? ' (×' + sd.bonus.toFixed(2) + ')' : '') + (sd.crit ? ' <span class="crit">CRIT!</span>' : ''));
+    setTimeout(updateCombatBars, 1050);
+    if (combatState.monHp <= 0) return setTimeout(function () { finishCombat(true); }, 1200);
+    setTimeout(huntFoeSwing, 1200);
+    return;
   }
 
-  // 4. Foe swings.
-  setTimeout(foeSwing, 420);
+  setTimeout(huntFoeSwing, 700);
 }
 
-function foeSwing() {
+function huntFoeSwing() {
   if (!combatState) return;
+  const arena = $('hunt-arena');
+  const youSprite = $('hunt-you-sprite');
+  const foeSprite = $('hunt-foe-sprite');
   const m = combatState.mon;
   const mh = monsterAttack(m);
   combatState.youHp -= mh.dmg;
-  $('cmb-you').classList.add('hit');
-  setTimeout(function () { $('cmb-you').classList.remove('hit'); }, 380);
+
+  _animSprite(foeSprite, 'melee-left', 550);
+  setTimeout(function () {
+    _animSprite(youSprite, 'hit', 400);
+    fxFloat(arena, 'you', String(mh.dmg), '');
+  }, 230);
   cmbLog('<span class="mon">' + m.name + ' hits</span> for ' + mh.dmg);
 
-  // End-of-round mana regen.
   G.mana = Math.min(maxMana(), G.mana + manaRegenPerTurn());
-
   updateCombatBars();
-  if (combatState.youHp <= 0) return finishCombat(false);
-  scheduleCombatTick(560);
+
+  if (combatState.youHp <= 0) return setTimeout(function () { finishCombat(false); }, 500);
+  scheduleCombatTick(640);
 }
 
 function finishCombat(won) {
@@ -582,11 +693,13 @@ function finishCombat(won) {
 
   if (won) {
     cmbLog('<span class="win">' + m.name + ' defeated!</span>');
+    _animSprite($('hunt-foe-sprite'), 'dying', 900);
     G.gold += m.gold;
     G.xp += m.xp;
-    G.stats[m.trains] += 1;
+    const sxp = statXpPerKill(m);
+    const leveled = awardStatXp(m.trains, sxp);
+    if (leveled > 0) bumpStat(m.trains);
     G.monstersDefeated[monKey] = (G.monstersDefeated[monKey] || 0) + 1;
-    bumpStat(m.trains);
     const drops = [];
     for (const k in m.drops) {
       const lo = m.drops[k][0], hi = m.drops[k][1];
@@ -596,26 +709,29 @@ function finishCombat(won) {
         drops.push(q + '× ' + (RESOURCES[k] ? RESOURCES[k].name : k));
       }
     }
-    cmbLog('<span class="you">+' + m.xp + ' XP, +' + m.gold + ' gold, +1 ' + m.trains + '</span>');
+    cmbLog('<span class="you">+' + m.xp + ' XP, +' + m.gold + ' gold, +' + sxp + ' ' + m.trains + '-training' + (leveled > 0 ? '  <span class="crit">(+' + leveled + ' ' + m.trains.toUpperCase() + '!)</span>' : '') + '</span>');
     if (drops.length) cmbLog('<span class="you">Found: ' + drops.join(', ') + '</span>');
-    log('Defeated <b>' + m.name + '</b> — +' + m.xp + ' XP, +' + m.gold + ' ⚜, <span class="stat">+1 ' + m.trains + '</span>' + (drops.length ? ', ' + drops.join(', ') : ''), 'gold');
+    log('Defeated <b>' + m.name + '</b> — +' + m.xp + ' XP, +' + m.gold + ' ⚜, +' + sxp + ' ' + m.trains + '-training' + (leveled ? ' <span class="stat">(+' + leveled + ' ' + m.trains + ')</span>' : '') + (drops.length ? ', ' + drops.join(', ') : ''), 'gold');
     checkLevelUp();
   } else {
     cmbLog('<span class="lose">You were defeated by ' + m.name + '.</span>');
+    _animSprite($('hunt-you-sprite'), 'dying', 900);
     G.hp = Math.max(1, Math.floor(maxHp() * 0.25));
     G.gold = Math.max(0, G.gold - Math.floor(m.gold * 0.5));
     log('Defeated by <b>' + m.name + '</b> — limped home with ' + G.hp + ' HP.', 'red');
   }
 
-  $('cmb-flee').style.display = 'none';
-  $('cmb-close').style.display = '';
+  $('hunt-flee').style.display = 'none';
+  $('hunt-continue').style.display = '';
   save();
 }
 
 function closeCombat() {
-  $('combat-stage').classList.remove('active');
   combatState = null;
   G.busy = false;
+  $('hunt-panel').classList.remove('combat-mode');
+  $('hunt-title').textContent = 'Hunting Grounds';
+  $('hunt-hint').textContent = 'Tap to engage';
   render();
 }
 
@@ -625,8 +741,8 @@ function fleeCombat() {
   G.hp = Math.max(1, combatState.youHp - 3);
   cmbLog('<span class="lose">You fled.</span>');
   combatState = null;
-  $('cmb-flee').style.display = 'none';
-  $('cmb-close').style.display = '';
+  $('hunt-flee').style.display = 'none';
+  $('hunt-continue').style.display = '';
   log('Fled the fight.', 'red');
   save();
 }
@@ -813,11 +929,15 @@ function openDungeon() {
     xpGained: 0,
     goldGained: 0,
     drops: {},
-    statGains: { strength: 0, intellect: 0, defence: 0, mana: 0 },
+    statXpGains: { strength: 0, intellect: 0, defence: 0, mana: 0 },
+    statLevelGains: { strength: 0, intellect: 0, defence: 0, mana: 0 },
     youHp: G.hp,
     foe: null,
     fled: false
   };
+  const h = HEROES[G.hero];
+  $('dun-you-sprite').textContent = h.portrait;
+  $('dun-you-name').textContent = h.name;
   $('dun-log').innerHTML = '';
   show('screen-dungeon');
   spawnDungeonFoe();
@@ -848,38 +968,35 @@ function spawnDungeonFoe() {
   };
   dungeonState.foe = foe;
   $('dun-phase').textContent = 'Phase ' + dungeonState.phase;
-  const ico = $('dun-mon-icon');
+  const ico = $('dun-foe-sprite');
   ico.textContent = foe.icon;
-  ico.classList.remove('fade');
-  $('dun-mon-name').textContent = foe.name;
+  _animSprite(ico, 'entering', 460);
+  $('dun-foe-name').textContent = foe.name;
   refreshDungeonBars();
   $('dun-kills').textContent = dungeonState.kills;
   $('dun-gold').textContent = dungeonState.goldGained;
   $('dun-xp').textContent = dungeonState.xpGained;
-  dungeonLog('<span style="color:var(--gold)">Phase ' + dungeonState.phase + '</span> — a ' + foe.name + ' blocks your path.');
-  scheduleDungeonTick(650);
+  dungeonLog('<span class="you">Phase ' + dungeonState.phase + '</span> — a ' + foe.name + ' blocks your path.');
+  scheduleDungeonTick(620);
 }
 
 function refreshDungeonBars() {
   if (!dungeonState) return;
   const f = dungeonState.foe;
-  $('dun-you-fill').style.width = Math.max(0, (dungeonState.youHp / maxHp()) * 100) + '%';
-  $('dun-you-val').textContent = dungeonState.youHp + ' / ' + maxHp();
-  $('dun-foe-fill').style.width = Math.max(0, (f.hp / f.max) * 100) + '%';
-  $('dun-foe-val').textContent = f.hp + ' / ' + f.max;
-  const mpFill = $('dun-mp-fill');
-  if (mpFill) mpFill.style.width = Math.max(0, (G.mana / maxMana()) * 100) + '%';
-  const mpVal = $('dun-mp-val');
-  if (mpVal) mpVal.textContent = G.mana + ' / ' + maxMana();
+  $('dun-you-hp-fill').style.width = Math.max(0, (dungeonState.youHp / maxHp()) * 100) + '%';
+  $('dun-you-mp-fill').style.width = Math.max(0, (G.mana / maxMana()) * 100) + '%';
+  $('dun-foe-hp-fill').style.width = Math.max(0, (f.hp / f.max) * 100) + '%';
+  $('dun-foe-hpval').textContent = Math.max(0, f.hp) + ' / ' + f.max;
 }
 
 function dungeonLog(html) {
   const el = $('dun-log');
+  if (!el) return;
   const p = document.createElement('p');
   p.innerHTML = html;
   el.appendChild(p);
   el.scrollTop = el.scrollHeight;
-  while (el.children.length > 24) el.removeChild(el.firstChild);
+  while (el.children.length > 30) el.removeChild(el.firstChild);
 }
 
 function scheduleDungeonTick(delay) {
@@ -889,6 +1006,9 @@ function scheduleDungeonTick(delay) {
 
 function dungeonTick() {
   if (!dungeonState || dungeonState.fled) return;
+  const arena = $('dun-arena');
+  const youSprite = $('dun-you-sprite');
+  const foeSprite = $('dun-foe-sprite');
   const foe = dungeonState.foe;
 
   // 1. Emergency heal.
@@ -900,9 +1020,11 @@ function dungeonTick() {
       G.mana -= s.cost;
       const heal = Math.round(maxHp() * s.healPct);
       dungeonState.youHp = Math.min(maxHp(), dungeonState.youHp + heal);
-      dungeonLog('<span style="color:#aef0ae">You cast ' + s.icon + ' ' + s.name + '</span> — +' + heal + ' HP');
+      _animSprite(youSprite, 'cast', 500);
+      fxFloat(arena, 'you', '+' + heal, 'heal');
+      dungeonLog('<span class="heal">You cast ' + s.icon + ' ' + s.name + '</span> — +' + heal + ' HP');
       refreshDungeonBars();
-      setTimeout(dungeonFoeSwing, 360);
+      setTimeout(dungeonFoeSwing, 520);
       return;
     }
   }
@@ -910,9 +1032,14 @@ function dungeonTick() {
   // 2. Weapon swing.
   const p = playerAttack();
   foe.hp -= p.dmg;
-  dungeonLog('<span style="color:var(--gold)">You hit</span> ' + foe.name + ' for ' + p.dmg + (p.crit ? ' <span style="color:#ffd966">CRIT!</span>' : ''));
+  _animSprite(youSprite, 'melee-right', 550);
+  setTimeout(function () {
+    _animSprite(foeSprite, 'hit', 400);
+    fxFloat(arena, 'foe', String(p.dmg) + (p.crit ? '!' : ''), p.crit ? 'crit' : '');
+  }, 230);
+  dungeonLog('<span class="you">You hit</span> ' + foe.name + ' for ' + p.dmg + (p.crit ? ' <span class="crit">CRIT!</span>' : ''));
   refreshDungeonBars();
-  if (foe.hp <= 0) return dungeonFoeDown(foe);
+  if (foe.hp <= 0) return setTimeout(function () { dungeonFoeDown(foe); }, 480);
 
   // 3. Damage spell.
   const dmgKey = pickDamageSpell();
@@ -921,34 +1048,55 @@ function dungeonTick() {
     G.mana -= s.cost;
     const sd = spellDamage(s);
     foe.hp -= sd.dmg;
-    dungeonLog('<span style="color:#8ed6ff">You cast ' + s.icon + ' ' + s.name + '</span> — ' + sd.dmg + ' ' + s.element + (sd.crit ? ' <span style="color:#ffd966">CRIT!</span>' : ''));
-    refreshDungeonBars();
-    if (foe.hp <= 0) return dungeonFoeDown(foe);
+    setTimeout(function () {
+      _animSprite(youSprite, 'cast', 500);
+      fxProjectile(arena, 'right', spellGlyph(s), EL_COLORS[s.element]);
+    }, 560);
+    setTimeout(function () {
+      _animSprite(foeSprite, 'hit', 400);
+      fxFloat(arena, 'foe', String(sd.dmg) + (sd.crit ? '!' : ''), sd.crit ? 'crit' : '');
+    }, 1000);
+    dungeonLog('<span class="spell">You cast ' + s.icon + ' ' + s.name + '</span> — ' + sd.dmg + ' ' + s.element + (sd.bonus > 1.001 ? ' (×' + sd.bonus.toFixed(2) + ')' : '') + (sd.crit ? ' <span class="crit">CRIT!</span>' : ''));
+    setTimeout(refreshDungeonBars, 1050);
+    if (foe.hp <= 0) return setTimeout(function () { dungeonFoeDown(foe); }, 1200);
+    setTimeout(dungeonFoeSwing, 1200);
+    return;
   }
 
-  // 4. Foe swing + regen.
-  setTimeout(dungeonFoeSwing, 360);
+  setTimeout(dungeonFoeSwing, 700);
 }
 
 function dungeonFoeSwing() {
   if (!dungeonState || dungeonState.fled) return;
+  const arena = $('dun-arena');
+  const youSprite = $('dun-you-sprite');
+  const foeSprite = $('dun-foe-sprite');
   const foe = dungeonState.foe;
   const mh = monsterAttack(foe);
   dungeonState.youHp -= mh.dmg;
-  dungeonLog('<span style="color:#f08080">' + foe.name + ' hits</span> you for ' + mh.dmg);
+
+  _animSprite(foeSprite, 'melee-left', 550);
+  setTimeout(function () {
+    _animSprite(youSprite, 'hit', 400);
+    fxFloat(arena, 'you', String(mh.dmg), '');
+  }, 230);
+  dungeonLog('<span class="mon">' + foe.name + ' hits</span> you for ' + mh.dmg);
   G.mana = Math.min(maxMana(), G.mana + manaRegenPerTurn());
   refreshDungeonBars();
-  if (dungeonState.youHp <= 0) return endDungeon(false);
-  scheduleDungeonTick(520);
+  if (dungeonState.youHp <= 0) return setTimeout(function () { endDungeon(false); }, 500);
+  scheduleDungeonTick(640);
 }
 
 function dungeonFoeDown(foe) {
-  dungeonLog('<span style="color:var(--green)">' + foe.name + ' falls.</span>');
-  $('dun-mon-icon').classList.add('fade');
+  dungeonLog('<span class="win">' + foe.name + ' falls.</span>');
+  _animSprite($('dun-foe-sprite'), 'dying', 900);
   dungeonState.kills += 1;
   dungeonState.xpGained += foe.xp;
   dungeonState.goldGained += foe.gold;
-  dungeonState.statGains[foe.trains] += 1;
+  const sxp = statXpPerKill(foe);
+  dungeonState.statXpGains[foe.trains] = (dungeonState.statXpGains[foe.trains] || 0) + sxp;
+  const leveled = awardStatXp(foe.trains, sxp);
+  if (leveled > 0) dungeonState.statLevelGains[foe.trains] += leveled;
   for (const k in foe.drops) {
     const lo = foe.drops[k][0], hi = foe.drops[k][1];
     const q = rng(lo, hi);
@@ -958,9 +1106,9 @@ function dungeonFoeDown(foe) {
     dungeonState.phase += 1;
     dungeonState.youHp = Math.min(maxHp(), dungeonState.youHp + Math.floor(maxHp() * 0.12));
     G.mana = Math.min(maxMana(), G.mana + Math.floor(maxMana() * 0.30));
-    dungeonLog('<span style="color:var(--gold)">You recover — Phase ' + dungeonState.phase + ' begins.</span>');
+    dungeonLog('<span class="you">You recover — Phase ' + dungeonState.phase + ' begins.</span>');
   }
-  setTimeout(spawnDungeonFoe, 600);
+  setTimeout(spawnDungeonFoe, 800);
 }
 
 function fleeDungeon() {
@@ -977,7 +1125,7 @@ function endDungeon(survived) {
   G.hp = Math.max(1, ds.youHp);
   G.xp += ds.xpGained;
   G.gold += ds.goldGained;
-  for (const s in ds.statGains) G.stats[s] += ds.statGains[s];
+  // Stat XP/levels already awarded incrementally in dungeonFoeDown.
   for (const k in ds.drops) G.resources[k] = (G.resources[k] || 0) + ds.drops[k];
   const newBest = ds.phase > G.dungeonBest;
   if (newBest) G.dungeonBest = ds.phase;
@@ -1002,10 +1150,14 @@ function showResults(survived, ds, newBest) {
   lines.push(['Foes felled', ds.kills]);
   lines.push(['XP gained', '+' + ds.xpGained]);
   lines.push(['Gold gained', '+' + ds.goldGained + ' ⚜']);
-  const sgains = Object.entries(ds.statGains)
+  const sxpGains = Object.entries(ds.statXpGains)
     .filter(function (kv) { return kv[1] > 0; })
     .map(function (kv) { return '+' + kv[1] + ' ' + kv[0]; });
-  if (sgains.length) lines.push(['Stat training', sgains.join(', ')]);
+  if (sxpGains.length) lines.push(['Stat training', sxpGains.join(', ')]);
+  const slvls = Object.entries(ds.statLevelGains || {})
+    .filter(function (kv) { return kv[1] > 0; })
+    .map(function (kv) { return '+' + kv[1] + ' ' + kv[0]; });
+  if (slvls.length) lines.push(['Stat level-ups', slvls.join(', ')]);
   const dropsTxt = Object.entries(ds.drops).map(function (kv) {
     return kv[1] + '× ' + (RESOURCES[kv[0]] ? RESOURCES[kv[0]].name : kv[0]);
   });
@@ -1077,13 +1229,20 @@ function renderSpellbook() {
     knownKeys.forEach(function (k) {
       const s = SPELLS[k];
       const equipped = loadoutHas(k);
+      let synergy = '';
+      if (s.kind === 'damage') {
+        const bonus = spellElementBonus(s.element);
+        if (bonus > 1.001) {
+          synergy = ' <span style="color:#ffd966;font-weight:700;">×' + bonus.toFixed(2) + '</span>';
+        }
+      }
       const btn = document.createElement('button');
       btn.className = 'spell-btn' + (s.kind === 'heal' ? ' heal' : '') + (equipped ? ' equipped' : '');
       btn.innerHTML =
         '<div class="si">' + s.icon + '</div>' +
         '<div class="sd">' +
           '<div class="sn">' + s.name + (equipped ? '  ✓' : '') + '</div>' +
-          '<div class="sm">' + s.cost + ' MP · ' + (s.kind === 'heal' ? '+' + Math.round(s.healPct * 100) + '% HP' : (s.element + ' dmg')) + '</div>' +
+          '<div class="sm">' + s.cost + ' MP · ' + (s.kind === 'heal' ? '+' + Math.round(s.healPct * 100) + '% HP' : (s.element + ' dmg' + synergy)) + '</div>' +
           '<div class="se">' + s.desc + '</div>' +
         '</div>';
       btn.onclick = function () {
@@ -1153,8 +1312,8 @@ function wire() {
   $('btn-dungeon').onclick = openDungeon;
   $('forge-back').onclick = function () { show('screen-hub'); render(); };
   $('spellbook-back').onclick = function () { show('screen-hub'); render(); };
-  $('cmb-flee').onclick = fleeCombat;
-  $('cmb-close').onclick = closeCombat;
+  $('hunt-flee').onclick = fleeCombat;
+  $('hunt-continue').onclick = closeCombat;
   $('dun-flee').onclick = fleeDungeon;
   $('result-continue').onclick = function () { show('screen-hub'); render(); };
 }
