@@ -226,6 +226,7 @@ body {
 }
 .hp-bar .fill { height: 100%; border-radius: 3px; transition: width .3s; }
 .hp-bar.hp .fill { background: linear-gradient(90deg, #c02020, #f03030); }
+.hp-bar.mp .fill { background: linear-gradient(90deg, #2070dd, #4dc3ff); }
 .hp-bar.xp .fill { background: linear-gradient(90deg, var(--gold), #ff9900); }
 .hp-bar .val { font-size: 10px; color: var(--text); min-width: 44px; text-align: right; }
 
@@ -262,6 +263,7 @@ body {
 
 /* ===== Action row ===== */
 #action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#action-row .full { grid-column: 1 / -1; }
 .action-btn {
   background: linear-gradient(180deg, #2a1f0f, #1a1308);
   border: 1.5px solid var(--bdr2);
@@ -348,7 +350,224 @@ body {
   text-transform: uppercase;
 }
 
-/* ===== Combat overlay ===== */
+/* ===== Inline Arena (used by hunt + dungeon) ===== */
+.arena {
+  position: relative;
+  height: 150px;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.0) 0%, rgba(0,0,0,.45) 100%),
+    radial-gradient(ellipse at center, #2a1d08 0%, #0a0703 75%);
+  border-bottom: 1px solid var(--bdr);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 12px 18px 14px;
+}
+.arena::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0; height: 14px;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .6));
+  pointer-events: none;
+}
+.fighter {
+  width: 90px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+.fighter .sprite {
+  font-size: 48px;
+  display: inline-block;
+  line-height: 1;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .55));
+  transition: transform .15s ease;
+}
+.fighter .nm {
+  font-size: 10px;
+  font-family: 'Cinzel', serif;
+  color: var(--text2);
+  letter-spacing: .5px;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fighter .bar {
+  width: 84px;
+  height: 6px;
+  background: #0a0804;
+  border: 1px solid var(--bdr);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 2px auto;
+}
+.fighter .bar .fill { height: 100%; transition: width .3s; }
+.fighter .bar.hp .fill { background: linear-gradient(90deg, #c02020, #f03030); }
+.fighter .bar.mp .fill { background: linear-gradient(90deg, #2070dd, #4dc3ff); }
+.fighter .bar-val { font-size: 8px; color: var(--text3); }
+.foe-resist {
+  font-size: 9px;
+  font-family: 'Cinzel', serif;
+  letter-spacing: .3px;
+  margin-top: 2px;
+  min-height: 12px;
+  line-height: 1.1;
+}
+.foe-resist .r-resist { color: #8ed6ff; }
+.foe-resist .r-weak   { color: #ff8080; }
+
+/* Sprite animations */
+.sprite.melee-right { animation: meleeRight .55s ease; }
+.sprite.melee-left  { animation: meleeLeft  .55s ease; }
+@keyframes meleeRight {
+  0%   { transform: translateX(0) scale(1); }
+  35%  { transform: translateX(180px) scale(1.1); }
+  55%  { transform: translateX(160px) scale(.95); }
+  100% { transform: translateX(0) scale(1); }
+}
+@keyframes meleeLeft {
+  0%   { transform: translateX(0) scale(1); }
+  35%  { transform: translateX(-180px) scale(1.1); }
+  55%  { transform: translateX(-160px) scale(.95); }
+  100% { transform: translateX(0) scale(1); }
+}
+.sprite.cast { animation: cast .5s ease; }
+@keyframes cast {
+  0%   { transform: scale(1); filter: drop-shadow(0 4px 6px rgba(0,0,0,.55)); }
+  40%  { transform: scale(1.16); filter: drop-shadow(0 0 14px rgba(190, 200, 255, .8)); }
+  100% { transform: scale(1); }
+}
+.sprite.hit { animation: hitShake .42s ease; }
+@keyframes hitShake {
+  0%, 100% { transform: translateX(0); filter: brightness(1); }
+  20% { transform: translateX(-5px); filter: brightness(1.8); }
+  40% { transform: translateX(4px); filter: brightness(.7); }
+  60% { transform: translateX(-3px); filter: brightness(1.4); }
+  80% { transform: translateX(2px); }
+}
+.sprite.dying { animation: dying .9s ease forwards; }
+@keyframes dying {
+  0%   { opacity: 1; transform: scale(1); }
+  60%  { opacity: .6; transform: scale(.8) translateY(8px); }
+  100% { opacity: 0; transform: scale(.4) translateY(20px); }
+}
+.sprite.entering { animation: entering .45s ease; }
+@keyframes entering {
+  0%   { opacity: 0; transform: scale(.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Projectile/aura effects */
+.fx-proj {
+  position: absolute;
+  top: 32%;
+  font-size: 32px;
+  pointer-events: none;
+  z-index: 3;
+  filter: drop-shadow(0 0 10px currentColor);
+}
+.fx-proj.toFoe { animation: projRight .5s ease forwards; }
+.fx-proj.toYou { animation: projLeft  .5s ease forwards; }
+@keyframes projRight {
+  0%   { left: 18%;  opacity: 0; transform: scale(.4) rotate(0deg); }
+  20%  { opacity: 1; transform: scale(1) rotate(40deg); }
+  85%  { left: 70%;  opacity: 1; transform: scale(1.1) rotate(180deg); }
+  100% { left: 75%;  opacity: 0; transform: scale(1.4) rotate(220deg); }
+}
+@keyframes projLeft {
+  0%   { right: 18%; opacity: 0; transform: scale(.4) rotate(0deg); }
+  20%  { opacity: 1; transform: scale(1) rotate(-40deg); }
+  85%  { right: 70%; opacity: 1; transform: scale(1.1) rotate(-180deg); }
+  100% { right: 75%; opacity: 0; transform: scale(1.4) rotate(-220deg); }
+}
+
+/* Floating damage / heal numbers */
+.fx-dmg {
+  position: absolute;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 17px;
+  pointer-events: none;
+  z-index: 4;
+  color: #ff8080;
+  text-shadow: 0 0 6px rgba(0, 0, 0, .9);
+  animation: dmgFloat .9s ease forwards;
+}
+.fx-dmg.crit { color: #ffd966; font-size: 22px; text-shadow: 0 0 10px rgba(255, 217, 102, .8); }
+.fx-dmg.heal { color: #6fdc6f; }
+.fx-dmg.you  { left: 18%; }
+.fx-dmg.foe  { right: 18%; }
+@keyframes dmgFloat {
+  0%   { opacity: 0; transform: translateY(0); }
+  15%  { opacity: 1; transform: translateY(-12px); }
+  100% { opacity: 0; transform: translateY(-50px); }
+}
+
+/* Arena log + actions */
+.arena-log {
+  background: rgba(0, 0, 0, .35);
+  border-top: 1px solid var(--bdr);
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--text2);
+  max-height: 92px;
+  overflow-y: auto;
+  font-family: 'Crimson Text', serif;
+}
+.arena-log p { margin-bottom: 2px; line-height: 1.4; }
+.arena-log .you { color: var(--gold); }
+.arena-log .mon { color: #f08080; }
+.arena-log .crit { color: #ffd966; font-weight: bold; }
+.arena-log .heal { color: #aef0ae; }
+.arena-log .spell { color: #8ed6ff; }
+.arena-log .win { color: var(--green); font-weight: bold; }
+.arena-log .lose { color: var(--red); font-weight: bold; }
+.arena-actions {
+  display: flex; gap: 8px;
+  padding: 8px 10px 10px;
+}
+.arena-actions button {
+  flex: 1;
+  background: var(--bg2);
+  border: 1px solid var(--bdr2);
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+.arena-actions button:active { transform: scale(.96); }
+
+/* Hunt panel mode toggle */
+#hunt-combat { display: none; }
+#hunt-panel.combat-mode #monster-grid { display: none; }
+#hunt-panel.combat-mode #hunt-combat { display: block; }
+
+/* Stat XP bar (under each stat tile) */
+.stat-tile .xp-mini {
+  height: 3px;
+  background: #0a0804;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.stat-tile .xp-mini .xp-mini-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6b4f22, var(--gold));
+  transition: width .35s;
+  width: 0%;
+}
+.stat-tile .xp-mini-val {
+  font-size: 7px;
+  color: var(--text3);
+  margin-top: 1px;
+  letter-spacing: .3px;
+}
+
+/* ===== Combat overlay (legacy modal — kept hidden) ===== */
 #combat-stage {
   position: fixed; inset: 0;
   background: radial-gradient(ellipse at center, #1a0e04 0%, rgba(0, 0, 0, .92) 75%);
@@ -445,6 +664,106 @@ body {
 }
 #cmb-actions button:disabled { opacity: .35; cursor: not-allowed; }
 #cmb-actions button:active:not(:disabled) { transform: scale(.96); }
+
+/* ===== Spellbook screen ===== */
+#sb-mana-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(90deg, #0e1424, #0a0e1c);
+  border-bottom: 1px solid var(--bdr);
+}
+#sb-mana-bar .lbl {
+  font-family: 'Cinzel', serif; font-size: 12px;
+  color: #8ed6ff; letter-spacing: 1px;
+}
+#sb-mana-bar .track {
+  flex: 1; height: 10px; background: #050a14;
+  border: 1px solid var(--bdr); border-radius: 5px; overflow: hidden;
+}
+#sb-mana-bar .fill {
+  height: 100%; background: linear-gradient(90deg, #2070dd, #4dc3ff);
+  transition: width .3s;
+}
+#sb-mana-bar .val { font-size: 11px; color: #cfe9ff; font-family: 'Cinzel', serif; min-width: 64px; text-align: right; }
+.sb-section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 12px 12px 6px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.sb-section-title .hint { font-size: 9px; color: var(--text3); letter-spacing: .5px; text-transform: none; font-family: 'Crimson Text', serif; font-style: italic; }
+#sb-loadout {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 0 10px 6px;
+}
+.sb-slot {
+  background: var(--bg2);
+  border: 2px dashed var(--bdr);
+  border-radius: 8px;
+  padding: 6px 4px;
+  min-height: 68px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  text-align: center;
+}
+.sb-slot.filled { border-style: solid; border-color: var(--bdr2); background: #1c1710; }
+.sb-slot:active { transform: scale(.95); }
+.sb-slot .ico { font-size: 22px; line-height: 1; }
+.sb-slot .nm { font-size: 9px; font-family: 'Cinzel', serif; color: var(--gold); line-height: 1.1; }
+.sb-slot .ct { font-size: 9px; color: #8ed6ff; }
+.sb-slot.empty .ico { color: var(--text3); opacity: .5; }
+.sb-slot.empty .nm { color: var(--text3); }
+.sb-slot.heal.filled { border-color: #6fcc6f; box-shadow: inset 0 0 6px rgba(120, 220, 120, .15); }
+.sb-slot.heal .nm { color: #aef0ae; }
+
+#sb-known, #sb-locked {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 0 10px 10px;
+}
+.spell-btn {
+  background: var(--bg2);
+  border: 1.5px solid var(--bdr);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all .15s;
+}
+.spell-btn:active { transform: scale(.96); }
+.spell-btn:disabled { opacity: .45; cursor: not-allowed; }
+.spell-btn.equipped { border-color: var(--gold); background: #1f1808; }
+.spell-btn.heal { border-color: rgba(120, 220, 120, .35); }
+.spell-btn.heal.equipped { border-color: #6fcc6f; background: #0e1c0e; }
+.spell-btn .si {
+  font-size: 22px; width: 28px; text-align: center;
+}
+.spell-btn .sd { flex: 1; min-width: 0; }
+.spell-btn .sn {
+  font-family: 'Cinzel', serif; font-size: 11px;
+  color: var(--gold); line-height: 1.1;
+}
+.spell-btn.heal .sn { color: #aef0ae; }
+.spell-btn .sm { font-size: 10px; color: #8ed6ff; }
+.spell-btn .se {
+  font-size: 9px; color: var(--text2);
+  margin-top: 2px;
+  line-height: 1.2;
+}
+.spell-btn .lock-lvl {
+  font-size: 10px;
+  color: var(--text3);
+  font-family: 'Cinzel', serif;
+  letter-spacing: .5px;
+}
 
 /* ===== Forge screen ===== */
 #screen-forge .panel-body { padding: 14px 12px; }
@@ -757,6 +1076,11 @@ body {
             <div class="track"><div class="fill" id="hp-hp-fill" style="width:100%"></div></div>
             <span class="val" id="hp-hp-val">50 / 50</span>
           </div>
+          <div class="hp-bar mp">
+            <span class="label">MP</span>
+            <div class="track"><div class="fill" id="hp-mp-fill" style="width:100%"></div></div>
+            <span class="val" id="hp-mp-val">25 / 25</span>
+          </div>
           <div class="hp-bar xp">
             <span class="label">XP</span>
             <div class="track"><div class="fill" id="hp-xp-fill" style="width:0%"></div></div>
@@ -791,15 +1115,38 @@ body {
 
     <div id="action-row">
       <button class="action-btn" id="btn-forge"><span class="ab-icon">🔨</span><span>Forge</span></button>
-      <button class="action-btn dungeon" id="btn-dungeon"><span class="ab-icon">🏰</span><span>Dungeon</span></button>
+      <button class="action-btn" id="btn-spellbook"><span class="ab-icon">📖</span><span>Spells</span></button>
+      <button class="action-btn dungeon full" id="btn-dungeon"><span class="ab-icon">🏰</span><span>Enter Dungeon</span></button>
     </div>
 
-    <div class="panel">
+    <div class="panel" id="hunt-panel">
       <div class="panel-hdr">
-        <span>Hunting Grounds</span>
-        <span style="font-size:10px;color:var(--text3);">Tap to engage</span>
+        <span id="hunt-title">Hunting Grounds</span>
+        <span style="font-size:10px;color:var(--text3);" id="hunt-hint">Tap to engage</span>
       </div>
       <div id="monster-grid"></div>
+      <div id="hunt-combat">
+        <div class="arena" id="hunt-arena">
+          <div class="fighter you">
+            <div class="sprite" id="hunt-you-sprite">🗿</div>
+            <div class="nm" id="hunt-you-name">You</div>
+            <div class="bar hp"><div class="fill" id="hunt-you-hp-fill" style="width:100%"></div></div>
+            <div class="bar mp"><div class="fill" id="hunt-you-mp-fill" style="width:100%"></div></div>
+          </div>
+          <div class="fighter foe">
+            <div class="sprite" id="hunt-foe-sprite">👺</div>
+            <div class="nm" id="hunt-foe-name">Foe</div>
+            <div class="foe-resist" id="hunt-foe-resist"></div>
+            <div class="bar hp"><div class="fill" id="hunt-foe-hp-fill" style="width:100%"></div></div>
+            <div class="bar-val" id="hunt-foe-hpval">0 / 0</div>
+          </div>
+        </div>
+        <div class="arena-log" id="hunt-log"></div>
+        <div class="arena-actions">
+          <button id="hunt-flee">FLEE</button>
+          <button id="hunt-continue" style="display:none;">CONTINUE</button>
+        </div>
+      </div>
     </div>
 
     <div id="log"></div>
@@ -827,33 +1174,61 @@ body {
     </div>
   </div>
 
+  <!-- ============== SPELLBOOK ============== -->
+  <div id="screen-spellbook" class="screen">
+    <div class="panel">
+      <div class="panel-hdr">
+        <span>Spellbook</span>
+        <button id="spellbook-back" style="background:var(--bg2);border:1px solid var(--bdr);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;padding:3px 10px;border-radius:4px;cursor:pointer;">← BACK</button>
+      </div>
+      <div id="sb-mana-bar">
+        <span class="lbl">MANA</span>
+        <div class="track"><div class="fill" id="sb-mp-fill" style="width:100%"></div></div>
+        <span class="val" id="sb-mp-val">25 / 25</span>
+      </div>
+      <div class="sb-section-title">
+        <span>Loadout — 4 slots</span>
+        <span class="hint">Tap to remove · heals auto-cast under 20% HP</span>
+      </div>
+      <div id="sb-loadout"></div>
+      <div class="sb-section-title">
+        <span>Known Spells</span>
+        <span class="hint">Tap to equip</span>
+      </div>
+      <div id="sb-known"></div>
+      <div class="sb-section-title" id="sb-locked-title" style="display:none;"><span>Locked</span></div>
+      <div id="sb-locked"></div>
+    </div>
+  </div>
+
   <!-- ============== DUNGEON ============== -->
   <div id="screen-dungeon" class="screen">
-    <div id="dun-stage">
-      <div id="dun-phase">Phase 1</div>
-      <div id="dun-stats">
-        <span>Kills <b id="dun-kills">0</b></span>
-        <span>Gold <b id="dun-gold">0</b></span>
-        <span>XP <b id="dun-xp">0</b></span>
+    <div class="panel">
+      <div class="panel-hdr">
+        <span id="dun-phase">Phase 1</span>
+        <span id="dun-stats" style="font-size:10px;color:var(--text3);">
+          Kills <b id="dun-kills" style="color:var(--gold);">0</b>
+          · Gold <b id="dun-gold" style="color:var(--gold);">0</b>
+          · XP <b id="dun-xp" style="color:var(--gold);">0</b>
+        </span>
       </div>
-      <div id="dun-monster">
-        <div id="dun-mon-icon">👹</div>
-        <div id="dun-mon-name">Foe</div>
-      </div>
-      <div id="dun-bars">
-        <div class="dun-bar you">
-          <span class="label">You</span>
-          <div class="track"><div class="fill" id="dun-you-fill" style="width:100%"></div></div>
-          <span class="val" id="dun-you-val">50 / 50</span>
+      <div class="arena" id="dun-arena">
+        <div class="fighter you">
+          <div class="sprite" id="dun-you-sprite">🗿</div>
+          <div class="nm" id="dun-you-name">You</div>
+          <div class="bar hp"><div class="fill" id="dun-you-hp-fill" style="width:100%"></div></div>
+          <div class="bar mp"><div class="fill" id="dun-you-mp-fill" style="width:100%"></div></div>
         </div>
-        <div class="dun-bar foe">
-          <span class="label">Foe</span>
-          <div class="track"><div class="fill" id="dun-foe-fill" style="width:100%"></div></div>
-          <span class="val" id="dun-foe-val">10 / 10</span>
+        <div class="fighter foe">
+          <div class="sprite" id="dun-foe-sprite">👹</div>
+          <div class="nm" id="dun-foe-name">Foe</div>
+          <div class="foe-resist" id="dun-foe-resist"></div>
+          <div class="bar hp"><div class="fill" id="dun-foe-hp-fill" style="width:100%"></div></div>
+          <div class="bar-val" id="dun-foe-hpval">0 / 0</div>
         </div>
       </div>
-      <div id="dun-log"></div>
-      <div id="dun-actions">
+      <div class="arena-log" id="dun-log"></div>
+      <div class="arena-actions">
         <button id="dun-flee">FLEE</button>
       </div>
     </div>
@@ -866,33 +1241,6 @@ body {
     <button id="result-continue">RETURN TO HUB</button>
   </div>
 
-</div>
-
-<!-- ============== COMBAT (vs monster from hub) ============== -->
-<div id="combat-stage">
-  <div class="arena">
-    <div class="cmb-row" id="cmb-you">
-      <div class="portrait" id="cmb-you-port">🗿</div>
-      <div class="info">
-        <div class="name" id="cmb-you-name">You</div>
-        <div class="hp-row"><div class="hp-fill" id="cmb-you-fill" style="width:100%"></div></div>
-        <div class="hp-text" id="cmb-you-hp">50 / 50</div>
-      </div>
-    </div>
-    <div class="cmb-row" id="cmb-foe">
-      <div class="portrait" id="cmb-foe-port">👺</div>
-      <div class="info">
-        <div class="name" id="cmb-foe-name">Goblin</div>
-        <div class="hp-row"><div class="hp-fill" id="cmb-foe-fill" style="width:100%"></div></div>
-        <div class="hp-text" id="cmb-foe-hp">15 / 15</div>
-      </div>
-    </div>
-    <div id="cmb-log"></div>
-    <div id="cmb-actions">
-      <button id="cmb-flee">FLEE</button>
-      <button id="cmb-close" style="display:none;">CONTINUE</button>
-    </div>
-  </div>
 </div>
 
 <div id="toast"></div>
