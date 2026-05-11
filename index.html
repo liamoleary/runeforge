@@ -406,6 +406,16 @@ body {
 .fighter .bar.hp .fill { background: linear-gradient(90deg, #c02020, #f03030); }
 .fighter .bar.mp .fill { background: linear-gradient(90deg, #2070dd, #4dc3ff); }
 .fighter .bar-val { font-size: 8px; color: var(--text3); }
+.foe-resist {
+  font-size: 9px;
+  font-family: 'Cinzel', serif;
+  letter-spacing: .3px;
+  margin-top: 2px;
+  min-height: 12px;
+  line-height: 1.1;
+}
+.foe-resist .r-resist { color: #8ed6ff; }
+.foe-resist .r-weak   { color: #ff8080; }
 
 /* Sprite animations */
 .sprite.melee-right { animation: meleeRight .55s ease; }
@@ -1126,6 +1136,7 @@ body {
           <div class="fighter foe">
             <div class="sprite" id="hunt-foe-sprite">👺</div>
             <div class="nm" id="hunt-foe-name">Foe</div>
+            <div class="foe-resist" id="hunt-foe-resist"></div>
             <div class="bar hp"><div class="fill" id="hunt-foe-hp-fill" style="width:100%"></div></div>
             <div class="bar-val" id="hunt-foe-hpval">0 / 0</div>
           </div>
@@ -1211,6 +1222,7 @@ body {
         <div class="fighter foe">
           <div class="sprite" id="dun-foe-sprite">👹</div>
           <div class="nm" id="dun-foe-name">Foe</div>
+          <div class="foe-resist" id="dun-foe-resist"></div>
           <div class="bar hp"><div class="fill" id="dun-foe-hp-fill" style="width:100%"></div></div>
           <div class="bar-val" id="dun-foe-hpval">0 / 0</div>
         </div>

@@ -66,26 +66,31 @@ const HEROES = {
 };
 
 // Each monster: tier (level gate), HP, attack, defence, XP, gold reward,
-// drops (item -> [min,max]), and the stat it trains on a kill.
+// drops (item -> [min,max]), the stat it trains on a kill, and per-element
+// damage multipliers (< 1 = resist, > 1 = weak). Missing element = neutral 1.
 const MONSTERS = {
-  slime:   { name: 'Slime',         icon: '🟢', tier: 1, hp: 10,  atk: 2,  def: 0, xp: 6,   gold: 1, drops: { water_essence: [1, 2] }, trains: 'defence' },
-  rat:     { name: 'Giant Rat',     icon: '🐀', tier: 1, hp: 8,   atk: 3,  def: 0, xp: 5,   gold: 1, drops: { hide: [1, 1] },          trains: 'strength' },
-  bat:     { name: 'Cave Bat',      icon: '🦇', tier: 1, hp: 7,   atk: 4,  def: 0, xp: 6,   gold: 1, drops: { arcane_essence: [1, 1] },trains: 'intellect' },
-  wisp:    { name: 'Wisp',          icon: '✨', tier: 2, hp: 14,  atk: 5,  def: 0, xp: 12,  gold: 2, drops: { arcane_essence: [1, 2] },trains: 'intellect' },
-  goblin:  { name: 'Goblin',        icon: '👺', tier: 2, hp: 18,  atk: 6,  def: 2, xp: 14,  gold: 3, drops: { iron_scrap: [1, 2] },    trains: 'strength' },
-  wolf:    { name: 'Dire Wolf',     icon: '🐺', tier: 2, hp: 22,  atk: 7,  def: 1, xp: 16,  gold: 3, drops: { fang: [1, 2] },          trains: 'strength' },
-  turtle:  { name: 'War Turtle',    icon: '🐢', tier: 3, hp: 30,  atk: 5,  def: 6, xp: 22,  gold: 4, drops: { earth_essence: [1, 2] }, trains: 'defence' },
-  imp:     { name: 'Imp',           icon: '👹', tier: 3, hp: 24,  atk: 9,  def: 2, xp: 24,  gold: 5, drops: { fire_essence: [1, 3] },  trains: 'mana' },
-  wraith:  { name: 'Frost Wraith',  icon: '❄️', tier: 4, hp: 32,  atk: 11, def: 3, xp: 34,  gold: 7, drops: { ice_essence: [1, 3] },   trains: 'mana' },
-  golem:   { name: 'Stone Golem',   icon: '🗿', tier: 4, hp: 50,  atk: 8,  def: 8, xp: 38,  gold: 8, drops: { earth_essence: [2, 3], iron_scrap: [1, 2] }, trains: 'defence' },
-  fae:     { name: 'Fae Trickster', icon: '🧚', tier: 5, hp: 30,  atk: 13, def: 2, xp: 44,  gold: 9, drops: { arcane_essence: [2, 4] },trains: 'intellect' },
-  storm:   { name: 'Storm Sprite',  icon: '⚡', tier: 5, hp: 36,  atk: 14, def: 3, xp: 48,  gold: 10,drops: { lightning_essence: [2, 3] }, trains: 'mana' },
-  drake:   { name: 'Young Drake',   icon: '🐲', tier: 6, hp: 80,  atk: 16, def: 6, xp: 80,  gold: 16,drops: { drake_scale: [1, 2], fire_essence: [2, 4] }, trains: 'strength' },
-  lich:    { name: 'Bone Lich',     icon: '💀', tier: 7, hp: 100, atk: 20, def: 8, xp: 120, gold: 22,drops: { arcane_essence: [3, 5], lich_dust: [1, 1] }, trains: 'intellect' }
+  slime:   { name: 'Slime',         icon: '🟢', tier: 1, hp: 10,  atk: 2,  def: 0, xp: 6,   gold: 1, drops: { water_essence: [1, 2] }, trains: 'defence',  resist: { water: 0.5, fire: 1.3, lightning: 1.5 } },
+  rat:     { name: 'Giant Rat',     icon: '🐀', tier: 1, hp: 8,   atk: 3,  def: 0, xp: 5,   gold: 1, drops: { hide: [1, 1] },          trains: 'strength', resist: { fire: 1.3 } },
+  bat:     { name: 'Cave Bat',      icon: '🦇', tier: 1, hp: 7,   atk: 4,  def: 0, xp: 6,   gold: 1, drops: { arcane_essence: [1, 1] },trains: 'intellect',resist: { arcane: 0.7, physical: 0.85, lightning: 1.3 } },
+  wisp:    { name: 'Wisp',          icon: '✨', tier: 2, hp: 14,  atk: 5,  def: 0, xp: 12,  gold: 2, drops: { arcane_essence: [1, 2] },trains: 'intellect',resist: { arcane: 0.5, physical: 0.7, lightning: 1.4 } },
+  goblin:  { name: 'Goblin',        icon: '👺', tier: 2, hp: 18,  atk: 6,  def: 2, xp: 14,  gold: 3, drops: { iron_scrap: [1, 2] },    trains: 'strength', resist: { physical: 0.85, fire: 1.3 } },
+  wolf:    { name: 'Dire Wolf',     icon: '🐺', tier: 2, hp: 22,  atk: 7,  def: 1, xp: 16,  gold: 3, drops: { fang: [1, 2] },          trains: 'strength', resist: { ice: 0.7, fire: 1.3 } },
+  turtle:  { name: 'War Turtle',    icon: '🐢', tier: 3, hp: 30,  atk: 5,  def: 6, xp: 22,  gold: 4, drops: { earth_essence: [1, 2] }, trains: 'defence', resist: { earth: 0.4, physical: 0.7, lightning: 1.5 } },
+  imp:     { name: 'Imp',           icon: '👹', tier: 3, hp: 24,  atk: 9,  def: 2, xp: 24,  gold: 5, drops: { fire_essence: [1, 3] },  trains: 'mana',     resist: { fire: 0.4, water: 1.5, ice: 1.4 } },
+  wraith:  { name: 'Frost Wraith',  icon: '❄️', tier: 4, hp: 32,  atk: 11, def: 3, xp: 34,  gold: 7, drops: { ice_essence: [1, 3] },   trains: 'mana',     resist: { ice: 0.4, physical: 0.75, fire: 1.5 } },
+  golem:   { name: 'Stone Golem',   icon: '🗿', tier: 4, hp: 50,  atk: 8,  def: 8, xp: 38,  gold: 8, drops: { earth_essence: [2, 3], iron_scrap: [1, 2] }, trains: 'defence', resist: { earth: 0.4, physical: 0.6, water: 1.3, lightning: 1.3 } },
+  fae:     { name: 'Fae Trickster', icon: '🧚', tier: 5, hp: 30,  atk: 13, def: 2, xp: 44,  gold: 9, drops: { arcane_essence: [2, 4] },trains: 'intellect',resist: { arcane: 0.5, earth: 1.3, physical: 1.2 } },
+  storm:   { name: 'Storm Sprite',  icon: '⚡', tier: 5, hp: 36,  atk: 14, def: 3, xp: 48,  gold: 10,drops: { lightning_essence: [2, 3] }, trains: 'mana', resist: { lightning: 0.4, physical: 0.8, earth: 1.4 } },
+  drake:   { name: 'Young Drake',   icon: '🐲', tier: 6, hp: 80,  atk: 16, def: 6, xp: 80,  gold: 16,drops: { drake_scale: [1, 2], fire_essence: [2, 4] }, trains: 'strength', resist: { fire: 0.3, physical: 0.9, ice: 1.6, water: 1.3 } },
+  lich:    { name: 'Bone Lich',     icon: '💀', tier: 7, hp: 100, atk: 20, def: 8, xp: 120, gold: 22,drops: { arcane_essence: [3, 5], lich_dust: [1, 1] }, trains: 'intellect', resist: { arcane: 0.4, ice: 0.7, fire: 1.4, lightning: 1.3 } },
+  // Deep-phase bestiary
+  magma_wyrm:  { name: 'Magma Wyrm', icon: '🐍', tier: 8,  hp: 150, atk: 24, def: 10, xp: 180, gold: 32, drops: { fire_essence: [3, 5], drake_scale: [1, 2] }, trains: 'strength', resist: { fire: 0.2, physical: 0.75, ice: 1.7, water: 1.5 } },
+  storm_wyrm:  { name: 'Storm Wyrm', icon: '🐉', tier: 9,  hp: 200, atk: 28, def: 9,  xp: 240, gold: 44, drops: { lightning_essence: [3, 5], drake_scale: [1, 2] }, trains: 'mana',     resist: { lightning: 0.2, physical: 0.8, earth: 1.7 } },
+  wyrm_lord:   { name: 'Wyrm Lord',  icon: '🐲', tier: 10, hp: 320, atk: 34, def: 14, xp: 360, gold: 70, drops: { drake_scale: [2, 4], lich_dust: [1, 2], fire_essence: [3, 5] }, trains: 'strength', resist: { fire: 0.3, physical: 0.6, arcane: 0.7, ice: 1.5, water: 1.4 } }
 };
 
 // Hero level -> max monster tier unlocked.
-const TIER_UNLOCK = { 1: 1, 3: 2, 5: 3, 7: 4, 9: 5, 12: 6, 15: 7 };
+const TIER_UNLOCK = { 1: 1, 3: 2, 5: 3, 7: 4, 10: 5, 13: 6, 17: 7, 22: 8, 28: 9, 35: 10 };
 
 const RESOURCES = {
   fire_essence:      { name: 'Fire Essence',      icon: '🔥', element: 'fire',      desc: '+8% Fire infusion' },
@@ -154,10 +159,35 @@ function defaultState() {
     spellbook: {},   // { spellKey: true } — unlocked
     loadout: [],     // up to LOADOUT_SIZE spell keys
     monstersDefeated: {},
+    dungeonPhase: 1,  // persistent checkpoint — only advances on phase clear
     dungeonBest: 0,
     busy: false,
     inDungeon: false
   };
+}
+
+// Returns the dominant element of the current weapon — used as the damage
+// type of basic weapon attacks against monster resistances.
+function weaponElementOnAttack() {
+  if (!G.weapon || !G.weapon.elements) return 'physical';
+  let top = 'physical', topV = 0;
+  for (let i = 0; i < ELEMENTS.length; i++) {
+    const e = ELEMENTS[i];
+    const v = G.weapon.elements[e] || 0;
+    if (v > topV) { top = e; topV = v; }
+  }
+  return top;
+}
+function applyResistance(foe, element, dmg) {
+  if (!foe || !foe.resist || !element) return { dmg: dmg, mult: 1 };
+  const m = foe.resist[element];
+  if (!m || m === 1) return { dmg: dmg, mult: 1 };
+  return { dmg: Math.max(1, Math.round(dmg * m)), mult: m };
+}
+function resistLabel(mult) {
+  if (mult < 1) return ' <span class="crit" style="color:#8ed6ff">RESIST ×' + mult.toFixed(2) + '</span>';
+  if (mult > 1) return ' <span class="crit" style="color:#ff8080">WEAK ×' + mult.toFixed(2) + '</span>';
+  return '';
 }
 
 function statXpThreshold(level) {
@@ -241,6 +271,7 @@ function load() {
     if (!G.spellbook) G.spellbook = {};
     if (!Array.isArray(G.loadout)) G.loadout = [];
     G.loadout = G.loadout.filter(function (k) { return !!SPELLS[k]; }).slice(0, LOADOUT_SIZE);
+    if (typeof G.dungeonPhase !== 'number' || G.dungeonPhase < 1) G.dungeonPhase = 1;
     ensureSpellsForLevel();
     if (typeof G.hp !== 'number' || G.hp <= 0) G.hp = maxHp();
     if (typeof G.mana !== 'number' || G.mana < 0) G.mana = maxMana();
@@ -333,6 +364,7 @@ function chooseHero(key) {
   });
   G.monstersDefeated = {};
   G.dungeonBest = 0;
+  G.dungeonPhase = 1;
   save();
   render();
   toast(h.name + ' chosen — welcome.');
@@ -378,6 +410,13 @@ function render() {
   $('stat-defence').textContent = G.stats.defence;
   $('stat-mana').textContent = G.stats.mana;
   renderStatXpBars();
+
+  // Dungeon button label shows checkpoint phase.
+  const dunBtn = $('btn-dungeon');
+  if (dunBtn) {
+    const txt = dunBtn.querySelector('span:last-child');
+    if (txt) txt.textContent = 'Enter Dungeon · Phase ' + (G.dungeonPhase || 1);
+  }
 
   renderMonsters();
 }
@@ -527,6 +566,7 @@ function startCombat(monKey) {
   $('hunt-foe-sprite').className = 'sprite entering';
   setTimeout(function () { $('hunt-foe-sprite').className = 'sprite'; }, 460);
   $('hunt-foe-name').textContent = m.name;
+  $('hunt-foe-resist').innerHTML = formatResistance(m);
   $('hunt-log').innerHTML = '';
   $('hunt-flee').style.display = '';
   $('hunt-flee').disabled = false;
@@ -595,6 +635,24 @@ function spellGlyph(spell) {
   return spell.icon || ELEMENT_GLYPH[spell.element] || '✨';
 }
 
+// Render the resistance badge HTML for a foe (top 3 strongest deviations).
+function formatResistance(foe) {
+  if (!foe || !foe.resist) return '';
+  const items = [];
+  for (const e in foe.resist) {
+    const m = foe.resist[e];
+    if (m === 1) continue;
+    items.push({ e: e, m: m });
+  }
+  if (!items.length) return '';
+  items.sort(function (a, b) { return Math.abs(b.m - 1) - Math.abs(a.m - 1); });
+  return items.slice(0, 3).map(function (it) {
+    const g = ELEMENT_GLYPH[it.e] || it.e;
+    const cls = it.m < 1 ? 'r-resist' : 'r-weak';
+    return '<span class="' + cls + '">' + g + '×' + it.m.toFixed(1) + '</span>';
+  }).join(' ');
+}
+
 function scheduleCombatTick(delay) {
   if (combatTimer) clearTimeout(combatTimer);
   combatTimer = setTimeout(combatTick, delay);
@@ -626,13 +684,15 @@ function combatTick() {
 
   // 2. Weapon attack — melee animation.
   const p = playerAttack();
-  combatState.monHp -= p.dmg;
+  const wElem = weaponElementOnAttack();
+  const wRes = applyResistance(combatState.mon, wElem, p.dmg);
+  combatState.monHp -= wRes.dmg;
   _animSprite(youSprite, 'melee-right', 550);
   setTimeout(function () {
     _animSprite(foeSprite, 'hit', 400);
-    fxFloat(arena, 'foe', String(p.dmg) + (p.crit ? '!' : ''), p.crit ? 'crit' : '');
+    fxFloat(arena, 'foe', String(wRes.dmg) + (p.crit ? '!' : ''), p.crit ? 'crit' : '');
   }, 230);
-  cmbLog('<span class="you">You strike</span> for ' + p.dmg + (p.crit ? ' <span class="crit">CRIT!</span>' : ''));
+  cmbLog('<span class="you">You strike</span> for ' + wRes.dmg + ' ' + wElem + (p.crit ? ' <span class="crit">CRIT!</span>' : '') + resistLabel(wRes.mult));
   updateCombatBars();
   if (combatState.monHp <= 0) return setTimeout(function () { finishCombat(true); }, 500);
 
@@ -642,16 +702,17 @@ function combatTick() {
     const s = SPELLS[dmgKey];
     G.mana -= s.cost;
     const sd = spellDamage(s);
-    combatState.monHp -= sd.dmg;
+    const sRes = applyResistance(combatState.mon, s.element, sd.dmg);
+    combatState.monHp -= sRes.dmg;
     setTimeout(function () {
       _animSprite(youSprite, 'cast', 500);
       fxProjectile(arena, 'right', spellGlyph(s), EL_COLORS[s.element]);
     }, 560);
     setTimeout(function () {
       _animSprite(foeSprite, 'hit', 400);
-      fxFloat(arena, 'foe', String(sd.dmg) + (sd.crit ? '!' : ''), sd.crit ? 'crit' : '');
+      fxFloat(arena, 'foe', String(sRes.dmg) + (sd.crit ? '!' : ''), sd.crit ? 'crit' : '');
     }, 1000);
-    cmbLog('<span class="spell">You cast ' + s.icon + ' ' + s.name + '</span> — ' + sd.dmg + ' ' + s.element + (sd.bonus > 1.001 ? ' (×' + sd.bonus.toFixed(2) + ')' : '') + (sd.crit ? ' <span class="crit">CRIT!</span>' : ''));
+    cmbLog('<span class="spell">You cast ' + s.icon + ' ' + s.name + '</span> — ' + sRes.dmg + ' ' + s.element + (sd.bonus > 1.001 ? ' (×' + sd.bonus.toFixed(2) + ')' : '') + (sd.crit ? ' <span class="crit">CRIT!</span>' : '') + resistLabel(sRes.mult));
     setTimeout(updateCombatBars, 1050);
     if (combatState.monHp <= 0) return setTimeout(function () { finishCombat(true); }, 1200);
     setTimeout(huntFoeSwing, 1200);
@@ -923,8 +984,11 @@ function openDungeon() {
   }
   G.busy = true;
   G.inDungeon = true;
+  // Resume at the persistent checkpoint phase.
+  const startPhase = Math.max(1, G.dungeonPhase || 1);
   dungeonState = {
-    phase: 1,
+    phase: startPhase,
+    startPhase: startPhase,
     kills: 0,
     xpGained: 0,
     goldGained: 0,
@@ -943,40 +1007,84 @@ function openDungeon() {
   spawnDungeonFoe();
 }
 
-function dungeonPickFoe(phase) {
-  const tierMin = Math.min(7, Math.max(1, Math.ceil(phase / 2)));
-  const tierMax = Math.min(7, tierMin + 1);
+function dungeonPickFoe(phase, boss) {
+  // Tier scales with phase. Boss phases bias toward the top of the range.
+  const tierBase = Math.min(10, Math.max(1, Math.ceil(phase / 3)));
+  const tierMin = boss ? tierBase : tierBase;
+  const tierMax = boss ? Math.min(10, tierBase + 2) : Math.min(10, tierBase + 1);
   const pool = Object.entries(MONSTERS).filter(function (kv) {
     return kv[1].tier >= tierMin && kv[1].tier <= tierMax;
   });
   if (!pool.length) return ['slime', MONSTERS.slime];
+  if (boss) {
+    // Pick highest tier in the pool for boss flavour.
+    pool.sort(function (a, b) { return b[1].tier - a[1].tier; });
+    return pool[0];
+  }
   return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function isBossPhase(phase) {
+  return phase >= 5 && phase % 5 === 0;
 }
 
 function spawnDungeonFoe() {
   if (!dungeonState) return;
-  const picked = dungeonPickFoe(dungeonState.phase);
+  const phase = dungeonState.phase;
+  const boss = isBossPhase(phase);
+  const picked = dungeonPickFoe(phase, boss);
   const key = picked[0], base = picked[1];
-  const scale = 1 + (dungeonState.phase - 1) * 0.14;
+
+  // Steeper scaling: hp = base × (1 + (p-1)·0.20), atk × (1 + (p-1)·0.16).
+  let hpScale  = 1 + (phase - 1) * 0.20;
+  let atkScale = 1 + (phase - 1) * 0.16;
+  let xpScale  = 1 + (phase - 1) * 0.14;
+  let goldScale= 1 + (phase - 1) * 0.10;
+  let name = base.name;
+  let resist = Object.assign({}, base.resist || {});
+
+  if (boss) {
+    hpScale  *= 2.5;
+    atkScale *= 1.4;
+    xpScale  *= 3.0;
+    goldScale*= 2.5;
+    name = 'Elder ' + base.name;
+    // Sharpen its primary resistance and add a second one if missing.
+    let strongest = null, strongV = 1;
+    for (const e in resist) {
+      if (resist[e] < strongV) { strongV = resist[e]; strongest = e; }
+    }
+    if (strongest) resist[strongest] = Math.max(0.15, resist[strongest] - 0.15);
+    // Add physical resistance for bosses without one.
+    if (!resist.physical) resist.physical = 0.75;
+  }
+
   const foe = {
-    key: key, name: base.name, icon: base.icon,
-    hp: Math.round(base.hp * scale), max: Math.round(base.hp * scale),
-    atk: Math.round(base.atk * scale), def: base.def,
+    key: key, name: name, icon: base.icon,
+    hp: Math.round(base.hp * hpScale), max: Math.round(base.hp * hpScale),
+    atk: Math.round(base.atk * atkScale), def: base.def,
     tier: base.tier,
-    xp: Math.round(base.xp * scale), gold: Math.round(base.gold * scale),
-    drops: base.drops, trains: base.trains
+    xp: Math.round(base.xp * xpScale), gold: Math.round(base.gold * goldScale),
+    drops: base.drops, trains: base.trains,
+    resist: resist,
+    boss: boss
   };
   dungeonState.foe = foe;
-  $('dun-phase').textContent = 'Phase ' + dungeonState.phase;
+  $('dun-phase').textContent = (boss ? '⚔ BOSS · Phase ' : 'Phase ') + phase;
   const ico = $('dun-foe-sprite');
   ico.textContent = foe.icon;
   _animSprite(ico, 'entering', 460);
   $('dun-foe-name').textContent = foe.name;
+  $('dun-foe-resist').innerHTML = formatResistance(foe);
   refreshDungeonBars();
   $('dun-kills').textContent = dungeonState.kills;
   $('dun-gold').textContent = dungeonState.goldGained;
   $('dun-xp').textContent = dungeonState.xpGained;
-  dungeonLog('<span class="you">Phase ' + dungeonState.phase + '</span> — a ' + foe.name + ' blocks your path.');
+  if (boss) {
+    dungeonLog('<span class="crit">⚔ ELDER ' + base.name.toUpperCase() + '</span> — one kill ends the phase.');
+  } else {
+    dungeonLog('<span class="you">Phase ' + phase + '</span> — a ' + foe.name + ' blocks your path.');
+  }
   scheduleDungeonTick(620);
 }
 
@@ -1031,13 +1139,15 @@ function dungeonTick() {
 
   // 2. Weapon swing.
   const p = playerAttack();
-  foe.hp -= p.dmg;
+  const wElem = weaponElementOnAttack();
+  const wRes = applyResistance(foe, wElem, p.dmg);
+  foe.hp -= wRes.dmg;
   _animSprite(youSprite, 'melee-right', 550);
   setTimeout(function () {
     _animSprite(foeSprite, 'hit', 400);
-    fxFloat(arena, 'foe', String(p.dmg) + (p.crit ? '!' : ''), p.crit ? 'crit' : '');
+    fxFloat(arena, 'foe', String(wRes.dmg) + (p.crit ? '!' : ''), p.crit ? 'crit' : '');
   }, 230);
-  dungeonLog('<span class="you">You hit</span> ' + foe.name + ' for ' + p.dmg + (p.crit ? ' <span class="crit">CRIT!</span>' : ''));
+  dungeonLog('<span class="you">You hit</span> ' + foe.name + ' for ' + wRes.dmg + ' ' + wElem + (p.crit ? ' <span class="crit">CRIT!</span>' : '') + resistLabel(wRes.mult));
   refreshDungeonBars();
   if (foe.hp <= 0) return setTimeout(function () { dungeonFoeDown(foe); }, 480);
 
@@ -1047,16 +1157,17 @@ function dungeonTick() {
     const s = SPELLS[dmgKey];
     G.mana -= s.cost;
     const sd = spellDamage(s);
-    foe.hp -= sd.dmg;
+    const sRes = applyResistance(foe, s.element, sd.dmg);
+    foe.hp -= sRes.dmg;
     setTimeout(function () {
       _animSprite(youSprite, 'cast', 500);
       fxProjectile(arena, 'right', spellGlyph(s), EL_COLORS[s.element]);
     }, 560);
     setTimeout(function () {
       _animSprite(foeSprite, 'hit', 400);
-      fxFloat(arena, 'foe', String(sd.dmg) + (sd.crit ? '!' : ''), sd.crit ? 'crit' : '');
+      fxFloat(arena, 'foe', String(sRes.dmg) + (sd.crit ? '!' : ''), sd.crit ? 'crit' : '');
     }, 1000);
-    dungeonLog('<span class="spell">You cast ' + s.icon + ' ' + s.name + '</span> — ' + sd.dmg + ' ' + s.element + (sd.bonus > 1.001 ? ' (×' + sd.bonus.toFixed(2) + ')' : '') + (sd.crit ? ' <span class="crit">CRIT!</span>' : ''));
+    dungeonLog('<span class="spell">You cast ' + s.icon + ' ' + s.name + '</span> — ' + sRes.dmg + ' ' + s.element + (sd.bonus > 1.001 ? ' (×' + sd.bonus.toFixed(2) + ')' : '') + (sd.crit ? ' <span class="crit">CRIT!</span>' : '') + resistLabel(sRes.mult));
     setTimeout(refreshDungeonBars, 1050);
     if (foe.hp <= 0) return setTimeout(function () { dungeonFoeDown(foe); }, 1200);
     setTimeout(dungeonFoeSwing, 1200);
@@ -1102,11 +1213,21 @@ function dungeonFoeDown(foe) {
     const q = rng(lo, hi);
     if (q > 0) dungeonState.drops[k] = (dungeonState.drops[k] || 0) + q;
   }
-  if (dungeonState.kills % 3 === 0) {
-    dungeonState.phase += 1;
-    dungeonState.youHp = Math.min(maxHp(), dungeonState.youHp + Math.floor(maxHp() * 0.12));
+
+  // Phase clear: boss = 1 kill, normal = 3 kills.
+  const phaseClear = foe.boss ? true : (dungeonState.kills % 3 === 0);
+  if (phaseClear) {
+    const newPhase = dungeonState.phase + 1;
+    dungeonState.phase = newPhase;
+    // Persistent checkpoint — only ever moves forward.
+    if (newPhase > (G.dungeonPhase || 1)) G.dungeonPhase = newPhase;
+    if (newPhase > G.dungeonBest) G.dungeonBest = newPhase;
+    // Reset in-phase kill counter so the next phase needs its own 3 kills.
+    dungeonState.kills = 0;
+    dungeonState.youHp = Math.min(maxHp(), dungeonState.youHp + Math.floor(maxHp() * 0.15));
     G.mana = Math.min(maxMana(), G.mana + Math.floor(maxMana() * 0.30));
-    dungeonLog('<span class="you">You recover — Phase ' + dungeonState.phase + ' begins.</span>');
+    dungeonLog('<span class="you">Checkpoint! Phase ' + newPhase + ' begins.</span>');
+    save();
   }
   setTimeout(spawnDungeonFoe, 800);
 }
@@ -1146,8 +1267,10 @@ function showResults(survived, ds, newBest) {
   const list = $('result-list');
   list.innerHTML = '';
   const lines = [];
-  lines.push(['Phases survived', ds.phase + (survived ? '' : ' (died)')]);
-  lines.push(['Foes felled', ds.kills]);
+  lines.push(['Run started at', 'Phase ' + (ds.startPhase || 1)]);
+  lines.push(['Reached', 'Phase ' + ds.phase + (survived ? '' : ' (died)')]);
+  lines.push(['Checkpoint', 'Phase ' + (G.dungeonPhase || 1) + ' (next run starts here)']);
+  lines.push(['Foes felled', ds.kills + (ds.statXpGains ? '' : '')]);
   lines.push(['XP gained', '+' + ds.xpGained]);
   lines.push(['Gold gained', '+' + ds.goldGained + ' ⚜']);
   const sxpGains = Object.entries(ds.statXpGains)
@@ -1163,6 +1286,9 @@ function showResults(survived, ds, newBest) {
   });
   if (dropsTxt.length) lines.push(['Resources', dropsTxt.join(', ')]);
   if (newBest) lines.push(['New best phase', ds.phase]);
+  if (!survived) {
+    lines.push(['Tip', 'Power up your stats, forge, and loadout — then return.']);
+  }
   lines.forEach(function (pair) {
     const row = document.createElement('div');
     row.className = 'result-line';
