@@ -102,6 +102,38 @@ const RESOURCES = {
 };
 
 // ============================================================
+// Spells & loadout
+// ============================================================
+
+// kind: 'damage' | 'heal'
+// power: damage spells — base coefficient (×(8 + INT*2)); heal spells — fraction of maxHp restored
+const SPELLS = {
+  arcane_missile: { name: 'Arcane Missile', icon: '🌟', cost: 5,  kind: 'damage', element: 'arcane',    power: 1.0, desc: 'Cheap arcane strike.' },
+  fire_bolt:      { name: 'Fire Bolt',      icon: '🔥', cost: 7,  kind: 'damage', element: 'fire',      power: 1.3, desc: 'A scalding fireburst.' },
+  frost_bolt:     { name: 'Frost Bolt',     icon: '❄️', cost: 6,  kind: 'damage', element: 'ice',       power: 1.1, desc: 'Slow, cold, reliable.' },
+  stone_spike:    { name: 'Stone Spike',    icon: '🪨', cost: 8,  kind: 'damage', element: 'earth',     power: 1.4, desc: 'Crushing earth shard.' },
+  tidal_lance:    { name: 'Tidal Lance',    icon: '🌊', cost: 9,  kind: 'damage', element: 'water',     power: 1.5, desc: 'Sweeping wave of force.' },
+  thunder_clap:   { name: 'Thunder Clap',   icon: '⚡', cost: 12, kind: 'damage', element: 'lightning', power: 2.0, desc: 'Heavy lightning blast.' },
+  starfall:       { name: 'Starfall',       icon: '💫', cost: 18, kind: 'damage', element: 'arcane',    power: 3.0, desc: 'Devastating arcane finisher.' },
+  minor_heal:     { name: 'Minor Heal',     icon: '✨', cost: 6,  kind: 'heal',                       healPct: 0.25, desc: 'Restore 25% HP (auto <20%).' },
+  greater_heal:   { name: 'Greater Heal',   icon: '💖', cost: 14, kind: 'heal',                       healPct: 0.55, desc: 'Restore 55% HP (auto <20%).' },
+  divine_mend:    { name: 'Divine Mend',    icon: '🕊️', cost: 22, kind: 'heal',                       healPct: 0.95, desc: 'Full-body heal (auto <20%).' }
+};
+
+// Hero level → spells granted at that level (cumulative).
+const SPELL_UNLOCKS = {
+  1:  ['arcane_missile', 'minor_heal'],
+  2:  ['fire_bolt'],
+  3:  ['frost_bolt'],
+  4:  ['stone_spike'],
+  6:  ['tidal_lance', 'greater_heal'],
+  8:  ['thunder_clap'],
+  11: ['starfall'],
+  14: ['divine_mend']
+};
+const LOADOUT_SIZE = 4;
+
+// ============================================================
 // State
 // ============================================================
 
@@ -113,10 +145,13 @@ function defaultState() {
     level: 1,
     xp: 0,
     hp: BASE_HP,
+    mana: 25,
     gold: 0,
     stats: { strength: 0, intellect: 0, defence: 0, mana: 0 },
     resources: {},
     weapon: null,
+    spellbook: {},   // { spellKey: true } — unlocked
+    loadout: [],     // up to LOADOUT_SIZE spell keys
     monstersDefeated: {},
     dungeonBest: 0,
     busy: false,
@@ -131,6 +166,26 @@ function xpForLevel(lvl) {
 }
 function maxHp() {
   return BASE_HP + (G.level - 1) * 10 + G.stats.defence * 4;
+}
+function maxMana() {
+  return 20 + G.stats.mana * 5;
+}
+function manaRegenPerTurn() {
+  return 2 + Math.floor(G.stats.mana / 4);
+}
+function ensureSpellsForLevel() {
+  if (!G.spellbook) G.spellbook = {};
+  for (const lvl in SPELL_UNLOCKS) {
+    if (G.level >= +lvl) {
+      SPELL_UNLOCKS[lvl].forEach(function (s) { G.spellbook[s] = true; });
+    }
+  }
+}
+function isLoadoutFull() {
+  return (G.loadout || []).filter(function (k) { return !!k; }).length >= LOADOUT_SIZE;
+}
+function loadoutHas(key) {
+  return (G.loadout || []).indexOf(key) >= 0;
 }
 function unlockedTier() {
   let t = 1;
@@ -163,7 +218,13 @@ function load() {
     Object.assign(G, defaultState(), s);
     if (!G.stats) G.stats = { strength: 0, intellect: 0, defence: 0, mana: 0 };
     if (!G.resources) G.resources = {};
+    if (!G.spellbook) G.spellbook = {};
+    if (!Array.isArray(G.loadout)) G.loadout = [];
+    G.loadout = G.loadout.filter(function (k) { return !!SPELLS[k]; }).slice(0, LOADOUT_SIZE);
+    ensureSpellsForLevel();
     if (typeof G.hp !== 'number' || G.hp <= 0) G.hp = maxHp();
+    if (typeof G.mana !== 'number' || G.mana < 0) G.mana = maxMana();
+    if (G.mana > maxMana()) G.mana = maxMana();
     G.busy = false; G.inDungeon = false;
   } catch (e) {}
 }
@@ -241,7 +302,15 @@ function chooseHero(key) {
   G.stats = Object.assign({}, h.stats);
   G.weapon = JSON.parse(JSON.stringify(h.weapon));
   G.hp = maxHp();
+  G.mana = maxMana();
   G.resources = {};
+  G.spellbook = {};
+  G.loadout = [];
+  ensureSpellsForLevel();
+  // Auto-equip the starter spells so new heroes don't fight bare.
+  Object.keys(G.spellbook).forEach(function (k) {
+    if (G.loadout.length < LOADOUT_SIZE) G.loadout.push(k);
+  });
   G.monstersDefeated = {};
   G.dungeonBest = 0;
   save();
@@ -274,6 +343,13 @@ function render() {
   if (G.hp > maxHp()) G.hp = maxHp();
   $('hp-hp-fill').style.width = Math.max(0, (G.hp / maxHp()) * 100) + '%';
   $('hp-hp-val').textContent = G.hp + ' / ' + maxHp();
+
+  if (typeof G.mana !== 'number') G.mana = maxMana();
+  if (G.mana > maxMana()) G.mana = maxMana();
+  const mp = $('hp-mp-fill');
+  if (mp) mp.style.width = Math.max(0, (G.mana / maxMana()) * 100) + '%';
+  const mpVal = $('hp-mp-val');
+  if (mpVal) mpVal.textContent = G.mana + ' / ' + maxMana();
 
   $('gold-val').textContent = G.gold;
 
@@ -340,6 +416,37 @@ function playerAttack() {
   const dmg = Math.max(1, Math.round(raw * (0.85 + Math.random() * 0.3) * (crit ? 2 : 1)));
   return { dmg: dmg, crit: crit };
 }
+
+function spellDamage(spell) {
+  const raw = spell.power * (8 + G.stats.intellect * 2 + G.stats.mana * 0.5);
+  const crit = Math.random() < 0.10;
+  const dmg = Math.max(1, Math.round(raw * (0.9 + Math.random() * 0.25) * (crit ? 1.8 : 1)));
+  return { dmg: dmg, crit: crit };
+}
+
+// Pick best (highest power) affordable damage spell from loadout.
+function pickDamageSpell() {
+  let best = null, bestPower = -1;
+  (G.loadout || []).forEach(function (k) {
+    const s = SPELLS[k];
+    if (!s || s.kind !== 'damage') return;
+    if (G.mana < s.cost) return;
+    if (s.power > bestPower) { best = k; bestPower = s.power; }
+  });
+  return best;
+}
+
+// Pick strongest affordable heal from loadout.
+function pickHealSpell() {
+  let best = null, bestPct = -1;
+  (G.loadout || []).forEach(function (k) {
+    const s = SPELLS[k];
+    if (!s || s.kind !== 'heal') return;
+    if (G.mana < s.cost) return;
+    if (s.healPct > bestPct) { best = k; bestPct = s.healPct; }
+  });
+  return best;
+}
 function monsterAttack(m) {
   const raw = m.atk * (1 + (m.tier ? (m.tier - 1) : 0) * 0.05);
   const dmg = Math.max(1, Math.round(raw * (0.85 + Math.random() * 0.3) - G.stats.defence * 0.45));
@@ -354,6 +461,8 @@ function startCombat(monKey) {
   }
   const m = MONSTERS[monKey];
   const h = HEROES[G.hero];
+  // Rest before the fight: full mana, ready to cast.
+  G.mana = maxMana();
   combatState = {
     monKey: monKey, mon: m,
     monHp: m.hp, monMax: m.hp,
@@ -380,6 +489,10 @@ function updateCombatBars() {
   $('cmb-you-hp').textContent = combatState.youHp + ' / ' + maxHp();
   $('cmb-foe-fill').style.width = Math.max(0, (combatState.monHp / combatState.monMax) * 100) + '%';
   $('cmb-foe-hp').textContent = combatState.monHp + ' / ' + combatState.monMax;
+  const mpFill = $('cmb-you-mp-fill');
+  if (mpFill) mpFill.style.width = Math.max(0, (G.mana / maxMana()) * 100) + '%';
+  const mpTxt = $('cmb-you-mp');
+  if (mpTxt) mpTxt.textContent = 'MP ' + G.mana + ' / ' + maxMana();
 }
 
 function cmbLog(html) {
@@ -399,26 +512,65 @@ function combatTick() {
   if (!combatState) return;
   const m = combatState.mon;
 
+  // 1. Emergency heal at <20% HP.
+  const hpPct = combatState.youHp / maxHp();
+  if (hpPct < 0.20) {
+    const healKey = pickHealSpell();
+    if (healKey) {
+      const s = SPELLS[healKey];
+      G.mana -= s.cost;
+      const heal = Math.round(maxHp() * s.healPct);
+      combatState.youHp = Math.min(maxHp(), combatState.youHp + heal);
+      cmbLog('<span class="you">You cast ' + s.icon + ' ' + s.name + '</span> — restored ' + heal + ' HP');
+      updateCombatBars();
+      // Foe still gets to swing.
+      setTimeout(function () { foeSwing(); }, 380);
+      return;
+    }
+  }
+
+  // 2. Weapon attack.
   const p = playerAttack();
   combatState.monHp -= p.dmg;
   $('cmb-foe').classList.add('hit');
   setTimeout(function () { $('cmb-foe').classList.remove('hit'); }, 380);
   cmbLog('<span class="you">You strike</span> for ' + p.dmg + (p.crit ? ' <span class="crit">CRIT!</span>' : ''));
   updateCombatBars();
-
   if (combatState.monHp <= 0) return finishCombat(true);
 
-  setTimeout(function () {
-    if (!combatState) return;
-    const mh = monsterAttack(m);
-    combatState.youHp -= mh.dmg;
-    $('cmb-you').classList.add('hit');
-    setTimeout(function () { $('cmb-you').classList.remove('hit'); }, 380);
-    cmbLog('<span class="mon">' + m.name + ' hits</span> for ' + mh.dmg);
+  // 3. Damage spell — strongest affordable.
+  const dmgKey = pickDamageSpell();
+  if (dmgKey) {
+    const s = SPELLS[dmgKey];
+    G.mana -= s.cost;
+    const sd = spellDamage(s);
+    combatState.monHp -= sd.dmg;
+    cmbLog('<span class="you">You cast ' + s.icon + ' ' + s.name + '</span> — ' + sd.dmg + ' ' + s.element + ' dmg' + (sd.crit ? ' <span class="crit">CRIT!</span>' : ''));
+    $('cmb-foe').classList.add('hit');
+    setTimeout(function () { $('cmb-foe').classList.remove('hit'); }, 380);
     updateCombatBars();
-    if (combatState.youHp <= 0) return finishCombat(false);
-    scheduleCombatTick(620);
-  }, 420);
+    if (combatState.monHp <= 0) return finishCombat(true);
+  }
+
+  // 4. Foe swings.
+  setTimeout(foeSwing, 420);
+}
+
+function foeSwing() {
+  if (!combatState) return;
+  const m = combatState.mon;
+  const mh = monsterAttack(m);
+  combatState.youHp -= mh.dmg;
+  $('cmb-you').classList.add('hit');
+  setTimeout(function () { $('cmb-you').classList.remove('hit'); }, 380);
+  cmbLog('<span class="mon">' + m.name + ' hits</span> for ' + mh.dmg);
+
+  // End-of-round mana regen.
+  G.mana = Math.min(maxMana(), G.mana + manaRegenPerTurn());
+
+  updateCombatBars();
+  if (combatState.youHp <= 0) return finishCombat(false);
+  scheduleCombatTick(560);
 }
 
 function finishCombat(won) {
@@ -489,15 +641,22 @@ function bumpStat(stat) {
 
 function checkLevelUp() {
   let leveled = false;
+  const before = Object.assign({}, G.spellbook);
   while (G.xp >= xpForLevel(G.level)) {
     G.xp -= xpForLevel(G.level);
     G.level += 1;
     leveled = true;
     G.hp = maxHp();
+    G.mana = maxMana();
   }
   if (leveled) {
+    ensureSpellsForLevel();
     log('<span class="gold">Level up! You are now level ' + G.level + '.</span>', 'gold');
     toast('Level up! Lv ' + G.level);
+    const newSpells = Object.keys(G.spellbook).filter(function (k) { return !before[k]; });
+    newSpells.forEach(function (k) {
+      log('<span class="gold">New spell learned: ' + SPELLS[k].icon + ' ' + SPELLS[k].name + '</span>', 'gold');
+    });
   }
 }
 
@@ -708,6 +867,10 @@ function refreshDungeonBars() {
   $('dun-you-val').textContent = dungeonState.youHp + ' / ' + maxHp();
   $('dun-foe-fill').style.width = Math.max(0, (f.hp / f.max) * 100) + '%';
   $('dun-foe-val').textContent = f.hp + ' / ' + f.max;
+  const mpFill = $('dun-mp-fill');
+  if (mpFill) mpFill.style.width = Math.max(0, (G.mana / maxMana()) * 100) + '%';
+  const mpVal = $('dun-mp-val');
+  if (mpVal) mpVal.textContent = G.mana + ' / ' + maxMana();
 }
 
 function dungeonLog(html) {
@@ -728,41 +891,76 @@ function dungeonTick() {
   if (!dungeonState || dungeonState.fled) return;
   const foe = dungeonState.foe;
 
+  // 1. Emergency heal.
+  const hpPct = dungeonState.youHp / maxHp();
+  if (hpPct < 0.20) {
+    const healKey = pickHealSpell();
+    if (healKey) {
+      const s = SPELLS[healKey];
+      G.mana -= s.cost;
+      const heal = Math.round(maxHp() * s.healPct);
+      dungeonState.youHp = Math.min(maxHp(), dungeonState.youHp + heal);
+      dungeonLog('<span style="color:#aef0ae">You cast ' + s.icon + ' ' + s.name + '</span> — +' + heal + ' HP');
+      refreshDungeonBars();
+      setTimeout(dungeonFoeSwing, 360);
+      return;
+    }
+  }
+
+  // 2. Weapon swing.
   const p = playerAttack();
   foe.hp -= p.dmg;
   dungeonLog('<span style="color:var(--gold)">You hit</span> ' + foe.name + ' for ' + p.dmg + (p.crit ? ' <span style="color:#ffd966">CRIT!</span>' : ''));
   refreshDungeonBars();
+  if (foe.hp <= 0) return dungeonFoeDown(foe);
 
-  if (foe.hp <= 0) {
-    dungeonLog('<span style="color:var(--green)">' + foe.name + ' falls.</span>');
-    $('dun-mon-icon').classList.add('fade');
-    dungeonState.kills += 1;
-    dungeonState.xpGained += foe.xp;
-    dungeonState.goldGained += foe.gold;
-    dungeonState.statGains[foe.trains] += 1;
-    for (const k in foe.drops) {
-      const lo = foe.drops[k][0], hi = foe.drops[k][1];
-      const q = rng(lo, hi);
-      if (q > 0) dungeonState.drops[k] = (dungeonState.drops[k] || 0) + q;
-    }
-    if (dungeonState.kills % 3 === 0) {
-      dungeonState.phase += 1;
-      dungeonState.youHp = Math.min(maxHp(), dungeonState.youHp + Math.floor(maxHp() * 0.12));
-      dungeonLog('<span style="color:var(--gold)">You recover — Phase ' + dungeonState.phase + ' begins.</span>');
-    }
-    setTimeout(spawnDungeonFoe, 600);
-    return;
+  // 3. Damage spell.
+  const dmgKey = pickDamageSpell();
+  if (dmgKey) {
+    const s = SPELLS[dmgKey];
+    G.mana -= s.cost;
+    const sd = spellDamage(s);
+    foe.hp -= sd.dmg;
+    dungeonLog('<span style="color:#8ed6ff">You cast ' + s.icon + ' ' + s.name + '</span> — ' + sd.dmg + ' ' + s.element + (sd.crit ? ' <span style="color:#ffd966">CRIT!</span>' : ''));
+    refreshDungeonBars();
+    if (foe.hp <= 0) return dungeonFoeDown(foe);
   }
 
-  setTimeout(function () {
-    if (!dungeonState || dungeonState.fled) return;
-    const mh = monsterAttack(foe);
-    dungeonState.youHp -= mh.dmg;
-    dungeonLog('<span style="color:#f08080">' + foe.name + ' hits</span> you for ' + mh.dmg);
-    refreshDungeonBars();
-    if (dungeonState.youHp <= 0) return endDungeon(false);
-    scheduleDungeonTick(560);
-  }, 360);
+  // 4. Foe swing + regen.
+  setTimeout(dungeonFoeSwing, 360);
+}
+
+function dungeonFoeSwing() {
+  if (!dungeonState || dungeonState.fled) return;
+  const foe = dungeonState.foe;
+  const mh = monsterAttack(foe);
+  dungeonState.youHp -= mh.dmg;
+  dungeonLog('<span style="color:#f08080">' + foe.name + ' hits</span> you for ' + mh.dmg);
+  G.mana = Math.min(maxMana(), G.mana + manaRegenPerTurn());
+  refreshDungeonBars();
+  if (dungeonState.youHp <= 0) return endDungeon(false);
+  scheduleDungeonTick(520);
+}
+
+function dungeonFoeDown(foe) {
+  dungeonLog('<span style="color:var(--green)">' + foe.name + ' falls.</span>');
+  $('dun-mon-icon').classList.add('fade');
+  dungeonState.kills += 1;
+  dungeonState.xpGained += foe.xp;
+  dungeonState.goldGained += foe.gold;
+  dungeonState.statGains[foe.trains] += 1;
+  for (const k in foe.drops) {
+    const lo = foe.drops[k][0], hi = foe.drops[k][1];
+    const q = rng(lo, hi);
+    if (q > 0) dungeonState.drops[k] = (dungeonState.drops[k] || 0) + q;
+  }
+  if (dungeonState.kills % 3 === 0) {
+    dungeonState.phase += 1;
+    dungeonState.youHp = Math.min(maxHp(), dungeonState.youHp + Math.floor(maxHp() * 0.12));
+    G.mana = Math.min(maxMana(), G.mana + Math.floor(maxMana() * 0.30));
+    dungeonLog('<span style="color:var(--gold)">You recover — Phase ' + dungeonState.phase + ' begins.</span>');
+  }
+  setTimeout(spawnDungeonFoe, 600);
 }
 
 function fleeDungeon() {
@@ -823,13 +1021,138 @@ function showResults(survived, ds, newBest) {
 }
 
 // ============================================================
+// Spellbook screen
+// ============================================================
+
+function openSpellbook() {
+  if (G.busy) return;
+  show('screen-spellbook');
+  renderSpellbook();
+}
+
+function renderSpellbook() {
+  ensureSpellsForLevel();
+
+  $('sb-mp-fill').style.width = Math.max(0, (G.mana / maxMana()) * 100) + '%';
+  $('sb-mp-val').textContent = G.mana + ' / ' + maxMana();
+
+  // Loadout slots
+  const slots = $('sb-loadout');
+  slots.innerHTML = '';
+  for (let i = 0; i < LOADOUT_SIZE; i++) {
+    const key = G.loadout[i];
+    const slot = document.createElement('div');
+    if (key && SPELLS[key]) {
+      const s = SPELLS[key];
+      slot.className = 'sb-slot filled' + (s.kind === 'heal' ? ' heal' : '');
+      slot.innerHTML =
+        '<div class="ico">' + s.icon + '</div>' +
+        '<div class="nm">' + s.name + '</div>' +
+        '<div class="ct">' + s.cost + ' MP</div>';
+      (function (k) { slot.onclick = function () { unequipSpell(k); }; })(key);
+    } else {
+      slot.className = 'sb-slot empty';
+      slot.innerHTML = '<div class="ico">＋</div><div class="nm">empty</div>';
+    }
+    slots.appendChild(slot);
+  }
+
+  // Known + locked.
+  const known = $('sb-known');
+  const locked = $('sb-locked');
+  const lockedTitle = $('sb-locked-title');
+  known.innerHTML = '';
+  locked.innerHTML = '';
+
+  const sortedKeys = Object.keys(SPELLS);
+  const knownKeys = sortedKeys.filter(function (k) { return G.spellbook[k]; });
+  const lockedKeys = sortedKeys.filter(function (k) { return !G.spellbook[k]; });
+
+  if (knownKeys.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'grid-column:1/-1;text-align:center;color:var(--text3);font-style:italic;padding:14px;font-size:12px;';
+    empty.textContent = 'No spells yet — level up.';
+    known.appendChild(empty);
+  } else {
+    knownKeys.forEach(function (k) {
+      const s = SPELLS[k];
+      const equipped = loadoutHas(k);
+      const btn = document.createElement('button');
+      btn.className = 'spell-btn' + (s.kind === 'heal' ? ' heal' : '') + (equipped ? ' equipped' : '');
+      btn.innerHTML =
+        '<div class="si">' + s.icon + '</div>' +
+        '<div class="sd">' +
+          '<div class="sn">' + s.name + (equipped ? '  ✓' : '') + '</div>' +
+          '<div class="sm">' + s.cost + ' MP · ' + (s.kind === 'heal' ? '+' + Math.round(s.healPct * 100) + '% HP' : (s.element + ' dmg')) + '</div>' +
+          '<div class="se">' + s.desc + '</div>' +
+        '</div>';
+      btn.onclick = function () {
+        if (equipped) unequipSpell(k);
+        else equipSpell(k);
+      };
+      known.appendChild(btn);
+    });
+  }
+
+  // Locked previews — what unlocks next.
+  if (lockedKeys.length === 0) {
+    lockedTitle.style.display = 'none';
+  } else {
+    lockedTitle.style.display = '';
+    // For each locked spell, find its unlock level.
+    const lvlForSpell = {};
+    Object.keys(SPELL_UNLOCKS).forEach(function (lvl) {
+      SPELL_UNLOCKS[lvl].forEach(function (s) { if (lvlForSpell[s] === undefined) lvlForSpell[s] = +lvl; });
+    });
+    lockedKeys.forEach(function (k) {
+      const s = SPELLS[k];
+      const lvl = lvlForSpell[k] || '?';
+      const btn = document.createElement('button');
+      btn.className = 'spell-btn';
+      btn.disabled = true;
+      btn.innerHTML =
+        '<div class="si">🔒</div>' +
+        '<div class="sd">' +
+          '<div class="sn">' + s.name + '</div>' +
+          '<div class="sm">' + s.cost + ' MP</div>' +
+          '<div class="se">Unlocks at Lv ' + lvl + '</div>' +
+        '</div>';
+      locked.appendChild(btn);
+    });
+  }
+}
+
+function equipSpell(key) {
+  if (!G.spellbook[key]) return;
+  if (loadoutHas(key)) return;
+  if (G.loadout.length >= LOADOUT_SIZE) {
+    toast('Loadout full — remove one first.');
+    return;
+  }
+  G.loadout.push(key);
+  save();
+  renderSpellbook();
+  toast('Equipped ' + SPELLS[key].name);
+}
+
+function unequipSpell(key) {
+  const i = G.loadout.indexOf(key);
+  if (i < 0) return;
+  G.loadout.splice(i, 1);
+  save();
+  renderSpellbook();
+}
+
+// ============================================================
 // Wire-up
 // ============================================================
 
 function wire() {
   $('btn-forge').onclick = openForge;
+  $('btn-spellbook').onclick = openSpellbook;
   $('btn-dungeon').onclick = openDungeon;
   $('forge-back').onclick = function () { show('screen-hub'); render(); };
+  $('spellbook-back').onclick = function () { show('screen-hub'); render(); };
   $('cmb-flee').onclick = fleeCombat;
   $('cmb-close').onclick = closeCombat;
   $('dun-flee').onclick = fleeDungeon;

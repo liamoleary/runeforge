@@ -226,6 +226,7 @@ body {
 }
 .hp-bar .fill { height: 100%; border-radius: 3px; transition: width .3s; }
 .hp-bar.hp .fill { background: linear-gradient(90deg, #c02020, #f03030); }
+.hp-bar.mp .fill { background: linear-gradient(90deg, #2070dd, #4dc3ff); }
 .hp-bar.xp .fill { background: linear-gradient(90deg, var(--gold), #ff9900); }
 .hp-bar .val { font-size: 10px; color: var(--text); min-width: 44px; text-align: right; }
 
@@ -262,6 +263,7 @@ body {
 
 /* ===== Action row ===== */
 #action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#action-row .full { grid-column: 1 / -1; }
 .action-btn {
   background: linear-gradient(180deg, #2a1f0f, #1a1308);
   border: 1.5px solid var(--bdr2);
@@ -445,6 +447,106 @@ body {
 }
 #cmb-actions button:disabled { opacity: .35; cursor: not-allowed; }
 #cmb-actions button:active:not(:disabled) { transform: scale(.96); }
+
+/* ===== Spellbook screen ===== */
+#sb-mana-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(90deg, #0e1424, #0a0e1c);
+  border-bottom: 1px solid var(--bdr);
+}
+#sb-mana-bar .lbl {
+  font-family: 'Cinzel', serif; font-size: 12px;
+  color: #8ed6ff; letter-spacing: 1px;
+}
+#sb-mana-bar .track {
+  flex: 1; height: 10px; background: #050a14;
+  border: 1px solid var(--bdr); border-radius: 5px; overflow: hidden;
+}
+#sb-mana-bar .fill {
+  height: 100%; background: linear-gradient(90deg, #2070dd, #4dc3ff);
+  transition: width .3s;
+}
+#sb-mana-bar .val { font-size: 11px; color: #cfe9ff; font-family: 'Cinzel', serif; min-width: 64px; text-align: right; }
+.sb-section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 12px 12px 6px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.sb-section-title .hint { font-size: 9px; color: var(--text3); letter-spacing: .5px; text-transform: none; font-family: 'Crimson Text', serif; font-style: italic; }
+#sb-loadout {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 0 10px 6px;
+}
+.sb-slot {
+  background: var(--bg2);
+  border: 2px dashed var(--bdr);
+  border-radius: 8px;
+  padding: 6px 4px;
+  min-height: 68px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  text-align: center;
+}
+.sb-slot.filled { border-style: solid; border-color: var(--bdr2); background: #1c1710; }
+.sb-slot:active { transform: scale(.95); }
+.sb-slot .ico { font-size: 22px; line-height: 1; }
+.sb-slot .nm { font-size: 9px; font-family: 'Cinzel', serif; color: var(--gold); line-height: 1.1; }
+.sb-slot .ct { font-size: 9px; color: #8ed6ff; }
+.sb-slot.empty .ico { color: var(--text3); opacity: .5; }
+.sb-slot.empty .nm { color: var(--text3); }
+.sb-slot.heal.filled { border-color: #6fcc6f; box-shadow: inset 0 0 6px rgba(120, 220, 120, .15); }
+.sb-slot.heal .nm { color: #aef0ae; }
+
+#sb-known, #sb-locked {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 0 10px 10px;
+}
+.spell-btn {
+  background: var(--bg2);
+  border: 1.5px solid var(--bdr);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all .15s;
+}
+.spell-btn:active { transform: scale(.96); }
+.spell-btn:disabled { opacity: .45; cursor: not-allowed; }
+.spell-btn.equipped { border-color: var(--gold); background: #1f1808; }
+.spell-btn.heal { border-color: rgba(120, 220, 120, .35); }
+.spell-btn.heal.equipped { border-color: #6fcc6f; background: #0e1c0e; }
+.spell-btn .si {
+  font-size: 22px; width: 28px; text-align: center;
+}
+.spell-btn .sd { flex: 1; min-width: 0; }
+.spell-btn .sn {
+  font-family: 'Cinzel', serif; font-size: 11px;
+  color: var(--gold); line-height: 1.1;
+}
+.spell-btn.heal .sn { color: #aef0ae; }
+.spell-btn .sm { font-size: 10px; color: #8ed6ff; }
+.spell-btn .se {
+  font-size: 9px; color: var(--text2);
+  margin-top: 2px;
+  line-height: 1.2;
+}
+.spell-btn .lock-lvl {
+  font-size: 10px;
+  color: var(--text3);
+  font-family: 'Cinzel', serif;
+  letter-spacing: .5px;
+}
 
 /* ===== Forge screen ===== */
 #screen-forge .panel-body { padding: 14px 12px; }
@@ -757,6 +859,11 @@ body {
             <div class="track"><div class="fill" id="hp-hp-fill" style="width:100%"></div></div>
             <span class="val" id="hp-hp-val">50 / 50</span>
           </div>
+          <div class="hp-bar mp">
+            <span class="label">MP</span>
+            <div class="track"><div class="fill" id="hp-mp-fill" style="width:100%"></div></div>
+            <span class="val" id="hp-mp-val">25 / 25</span>
+          </div>
           <div class="hp-bar xp">
             <span class="label">XP</span>
             <div class="track"><div class="fill" id="hp-xp-fill" style="width:0%"></div></div>
@@ -791,7 +898,8 @@ body {
 
     <div id="action-row">
       <button class="action-btn" id="btn-forge"><span class="ab-icon">🔨</span><span>Forge</span></button>
-      <button class="action-btn dungeon" id="btn-dungeon"><span class="ab-icon">🏰</span><span>Dungeon</span></button>
+      <button class="action-btn" id="btn-spellbook"><span class="ab-icon">📖</span><span>Spells</span></button>
+      <button class="action-btn dungeon full" id="btn-dungeon"><span class="ab-icon">🏰</span><span>Enter Dungeon</span></button>
     </div>
 
     <div class="panel">
@@ -827,6 +935,33 @@ body {
     </div>
   </div>
 
+  <!-- ============== SPELLBOOK ============== -->
+  <div id="screen-spellbook" class="screen">
+    <div class="panel">
+      <div class="panel-hdr">
+        <span>Spellbook</span>
+        <button id="spellbook-back" style="background:var(--bg2);border:1px solid var(--bdr);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;padding:3px 10px;border-radius:4px;cursor:pointer;">← BACK</button>
+      </div>
+      <div id="sb-mana-bar">
+        <span class="lbl">MANA</span>
+        <div class="track"><div class="fill" id="sb-mp-fill" style="width:100%"></div></div>
+        <span class="val" id="sb-mp-val">25 / 25</span>
+      </div>
+      <div class="sb-section-title">
+        <span>Loadout — 4 slots</span>
+        <span class="hint">Tap to remove · heals auto-cast under 20% HP</span>
+      </div>
+      <div id="sb-loadout"></div>
+      <div class="sb-section-title">
+        <span>Known Spells</span>
+        <span class="hint">Tap to equip</span>
+      </div>
+      <div id="sb-known"></div>
+      <div class="sb-section-title" id="sb-locked-title" style="display:none;"><span>Locked</span></div>
+      <div id="sb-locked"></div>
+    </div>
+  </div>
+
   <!-- ============== DUNGEON ============== -->
   <div id="screen-dungeon" class="screen">
     <div id="dun-stage">
@@ -842,9 +977,14 @@ body {
       </div>
       <div id="dun-bars">
         <div class="dun-bar you">
-          <span class="label">You</span>
+          <span class="label">HP</span>
           <div class="track"><div class="fill" id="dun-you-fill" style="width:100%"></div></div>
           <span class="val" id="dun-you-val">50 / 50</span>
+        </div>
+        <div class="dun-bar mp" style="--accent:#4dc3ff;">
+          <span class="label">MP</span>
+          <div class="track"><div class="fill" id="dun-mp-fill" style="width:100%;background:linear-gradient(90deg,#2070dd,#4dc3ff);"></div></div>
+          <span class="val" id="dun-mp-val">25 / 25</span>
         </div>
         <div class="dun-bar foe">
           <span class="label">Foe</span>
@@ -877,6 +1017,8 @@ body {
         <div class="name" id="cmb-you-name">You</div>
         <div class="hp-row"><div class="hp-fill" id="cmb-you-fill" style="width:100%"></div></div>
         <div class="hp-text" id="cmb-you-hp">50 / 50</div>
+        <div class="hp-row" style="margin-top:3px;"><div class="hp-fill" id="cmb-you-mp-fill" style="width:100%;background:linear-gradient(90deg,#2070dd,#4dc3ff);"></div></div>
+        <div class="hp-text" id="cmb-you-mp" style="color:#8ed6ff;">MP 25 / 25</div>
       </div>
     </div>
     <div class="cmb-row" id="cmb-foe">
