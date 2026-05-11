@@ -1,6 +1,19 @@
 # RuneForge
 
-A browser-based idle/skilling RPG with a Cinzel-fonted dungeon flavour.
+A browser-based hero RPG. Pick a champion, hunt monsters, forge a weapon, dive a dungeon.
+
+## How it plays
+
+1. **Pick a hero** — Pebble (heavy hitter), Button (hybrid), or Luna (mage).
+2. **Hunt monsters** from the hub. Each kill gives XP, gold, an essence drop, and a stat bump tied to that monster (slimes train Defence, wolves train Strength, wisps train Intellect, imps train Mana, etc.). Tougher monster tiers unlock as you level up.
+3. **Forge your weapon.** You start with a single weapon. Infuse essences to shape it — pure-Fire wand if you only spend Fire essence, hybrid Fire/Water if you mix. The breakdown updates live and the weapon's name reflects its dominant element.
+4. **Dive the dungeon** when ready. Auto-battle through escalating phases until you fall, then return to the hub with everything you gathered.
+
+Stats:
+- **Strength** — physical weapon damage
+- **Intellect** — magical weapon damage
+- **Defence** — damage reduction & max HP
+- **Mana** — currently lifted by mage-type kills (room to grow into spells)
 
 ## Running locally
 

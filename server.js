@@ -16,18 +16,6 @@ db.exec(`
     CREATE TABLE IF NOT EXISTS saves (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, save_data TEXT NOT NULL, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id));
     `);
 
-// One-time save wipe for specific usernames, triggered on boot. Harmless if the
-// save no longer exists. Remove entries here once they have landed in production.
-const BOOT_RESET_USERS = ['batfighter5'];
-for (const uname of BOOT_RESET_USERS) {
-  try {
-    const u = db.prepare('SELECT id FROM users WHERE username = ?').get(uname.toLowerCase());
-    if (u) {
-      const r = db.prepare('DELETE FROM saves WHERE user_id = ?').run(u.id);
-      if (r.changes > 0) console.log(`[boot-reset] Wiped save for ${uname}`);
-    }
-  } catch (e) { console.error('[boot-reset] Failed for ' + uname + ':', e.message); }
-}
 app.use(express.json({ limit: '1mb' }));
 app.set('trust proxy', 1);
 app.use(session({ store: new SQLiteStore({ db: 'sessions.db', dir: dbDir }), secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'), resave: false, saveUninitialized: false, cookie: { secure: false, httpOnly: true, maxAge: 30*24*60*60*1000, sameSite: 'lax' }, proxy: true }));
@@ -60,11 +48,9 @@ app.get('/icon-192.png', (req, res) => { res.setHeader('Content-Type', 'image/sv
 app.get('/icon-512.png', (req, res) => { res.setHeader('Content-Type', 'image/svg+xml'); res.send(generateIconSVG(512)); });
 app.get('/', (req, res) => {
     let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-    const mobileCss = `<style>#hdr{display:flex;align-items:center;gap:8px;padding:6px 10px !important;flex-wrap:nowrap}#logo{display:none !important}#auth-ui{display:flex;align-items:center;gap:6px;flex-shrink:0}#auth-ui button{font-size:11px !important;padding:3px 8px !important}#hdr-right{margin-left:auto;flex-shrink:0}#tabs .tab-icon{display:none !important}#tabs{overflow-x:auto !important;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-wrap:nowrap !important}#tabs::-webkit-scrollbar{display:none}#tabs>div,#tabs>button{flex-shrink:0 !important;min-width:48px;font-size:11px !important;padding:5px 6px !important}@media(max-width:600px){body{font-size:13px}.panel{padding:8px !important;margin:4px !important}#skills-grid{gap:4px !important}#skills-grid>div{padding:6px !important;font-size:11px !important}.action-card{padding:8px !important;font-size:12px !important}#char,#inv,#shop{padding:8px !important}}</style>`;
-    const fixScript = `<script>(function(){if(typeof buildSkills==='function'){var _orig=buildSkills;buildSkills=function(){var g=document.getElementById('skills-grid');if(g)g.innerHTML='';return _orig.apply(this,arguments);};}})();<\/script>`;
-    const pwaHead = '<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#13100a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="/icon-192.png"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">';
-    html = html.replace('</head>', mobileCss + pwaHead + '</head>');
-    const scripts = fixScript + `<script src="/auth.js"><\/script><script src="/dungeon.js"><\/script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}<\/script>`;
+    const pwaHead = '<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#13100a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="/icon-192.png">';
+    html = html.replace('</head>', pwaHead + '</head>');
+    const scripts = `<script src="/dungeon.js"><\/script><script src="/auth.js"><\/script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}<\/script>`;
     html = html.replace('</body>', scripts + '</body>');
     res.type('html').send(html);
 });
