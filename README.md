@@ -157,15 +157,22 @@ logic, binary-searching a monster scalar until a middling (random-pick) build
 wins ~60%. `tools/apply-scalars.js` bakes the result into the monster table;
 monsters currently sit at roughly 1.4–1.6× their pre-boon hp and max hit.
 
-That gap is stark. A run that declines every boon wins **0–5%**; a run that
-takes them at random wins **~60%**. The choices, not the gear, are what carry
-a delve.
+That gap is stark. A run that declines every boon wins **0–10%**; a run that
+takes them at random wins **48–73%** depending on the dungeon. The choices, not
+the gear, are what carry a delve.
 
 There's no single right way to spend them. Deepening one line beats spreading
-in the Spire and loses to it in the Crypt, because a dungeon of frequent small
-hits rewards a second damage-reduction line more than a third tier of the
-first. That's the design working — the pool is what makes each dungeon a
-different puzzle.
+in some dungeons and loses to it in others — a dungeon of frequent small hits
+rewards a second damage-reduction line more than a third tier of the first,
+and which is true flips when the monster table moves. That's the design
+working: the pool is what makes each dungeon a different puzzle.
+
+**Don't over-tune this.** An 11% change to a dungeon's hp and max hit swings
+its win rate by roughly 25 points, and 60 trials only resolves to about ±6.
+Corrections smaller than ~10% are inside the noise, and the shipped 48–73%
+band is a deliberate stopping point rather than a target anyone hit exactly.
+The Abyss sits at the bottom of it, which is the right shape for a last
+dungeon.
 
 `tools/journey.js` plays a bot from level 1 to the last boss using the game's
 own combat and recipe functions, farming until each dungeon looks winnable. It
