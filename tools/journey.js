@@ -73,6 +73,8 @@ const { chromium } = require('playwright');
         }
       }
       for (const k in m.smelt) take(k, m.smelt[k]);
+      const rec = R.SMELT_RECIPES.filter(r => r.out === m.bar)[0];
+      seconds += R.craftMs(rec) / 1000;      // bench time, scaled by skill
       add(m.bar, 1);
       R.addXp('smithing', m.barXp);
       return true;
@@ -130,6 +132,8 @@ const { chromium } = require('playwright');
         const g = R.GEAR[key];
         if (!has(g.cost)) return;
         for (const c in g.cost) take(c, g.cost[c]);
+        const rec = R.MAKE_RECIPES.filter(r => r.out === key)[0];
+        seconds += R.craftMs(rec) / 1000;
         R.addXp('smithing', g.xp);
         G.equipped[g.slot] = key;
       });

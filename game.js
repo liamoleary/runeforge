@@ -149,22 +149,24 @@ const SLOT_NAMES = { weapon: 'Weapon', body: 'Body', shield: 'Shield', amulet: '
 
 // Bonuses are deliberately on the OSRS scale so the combat formulas below
 // behave the way a RuneScape player expects.
+// `craftMs` is the bench time for the piece at exactly its requirement level.
+// Heavier, more valuable pieces take noticeably longer to hammer out.
 const GEAR_KINDS = [
-  { key: 'sword',     name: 'Sword',     slot: 'weapon', icon: '🗡️', bars: 2, logs: 1,
+  { key: 'sword',     name: 'Sword',     slot: 'weapon', icon: '🗡️', bars: 2, logs: 1, craftMs: 3400,
     atk: function (t) { return 2 + t * 9; },  str: function (t) { return 2 + t * 8; },  def: function () { return 0; } },
-  { key: 'platebody', name: 'Platebody', slot: 'body',   icon: '🦺', bars: 5, logs: 0,
+  { key: 'platebody', name: 'Platebody', slot: 'body',   icon: '🦺', bars: 5, logs: 0, craftMs: 7000,
     atk: function () { return 0; },           str: function () { return 0; },           def: function (t) { return 4 + t * 11; } },
-  { key: 'shield',    name: 'Shield',    slot: 'shield', icon: '🛡️', bars: 3, logs: 1,
+  { key: 'shield',    name: 'Shield',    slot: 'shield', icon: '🛡️', bars: 3, logs: 1, craftMs: 4600,
     atk: function () { return 0; },           str: function () { return 0; },           def: function (t) { return 3 + t * 8; } }
 ];
 
 // Crafting: dungeon gems become amulets. Pure stat sticks, one per dungeon tier.
 const AMULETS = [
-  { key: 'sapphire_amulet',    name: 'Sapphire Amulet',    icon: '💎', gem: 'sapphire',    craft: 1,  xp: 260,   atk: 4,  str: 3,  def: 3 },
-  { key: 'emerald_amulet',     name: 'Emerald Amulet',     icon: '💚', gem: 'emerald',     craft: 12, xp: 700,   atk: 8,  str: 6,  def: 6 },
-  { key: 'ruby_amulet',        name: 'Ruby Amulet',        icon: '❤️', gem: 'ruby',        craft: 22, xp: 1700,  atk: 14, str: 11, def: 10 },
-  { key: 'diamond_amulet',     name: 'Diamond Amulet',     icon: '💠', gem: 'diamond',     craft: 32, xp: 3800,  atk: 21, str: 17, def: 15 },
-  { key: 'dragonstone_amulet', name: 'Dragonstone Amulet', icon: '🟣', gem: 'dragonstone', craft: 43, xp: 8200,  atk: 30, str: 25, def: 22 }
+  { key: 'sapphire_amulet',    name: 'Sapphire Amulet',    icon: '💎', gem: 'sapphire',    craft: 1,  xp: 260,   craftMs: 4000,  atk: 4,  str: 3,  def: 3 },
+  { key: 'emerald_amulet',     name: 'Emerald Amulet',     icon: '💚', gem: 'emerald',     craft: 12, xp: 700,   craftMs: 5000,  atk: 8,  str: 6,  def: 6 },
+  { key: 'ruby_amulet',        name: 'Ruby Amulet',        icon: '❤️', gem: 'ruby',        craft: 22, xp: 1700,  craftMs: 6200,  atk: 14, str: 11, def: 10 },
+  { key: 'diamond_amulet',     name: 'Diamond Amulet',     icon: '💠', gem: 'diamond',     craft: 32, xp: 3800,  craftMs: 7600,  atk: 21, str: 17, def: 15 },
+  { key: 'dragonstone_amulet', name: 'Dragonstone Amulet', icon: '🟣', gem: 'dragonstone', craft: 43, xp: 8200,  craftMs: 9200,  atk: 30, str: 25, def: 22 }
 ];
 
 // Cross metals with gear kinds to build the smithable catalogue, then fold in
@@ -188,6 +190,8 @@ METALS.forEach(function (m) {
       wearReq: k.slot === 'weapon' ? { attack: m.wield } : { defence: m.wield },
       cost: cost,
       xp: Math.round(m.barXp * k.bars * 1.8),
+      // Better metal is harder to work: the same piece takes longer each tier.
+      baseMs: Math.round(k.craftMs * (1 + m.tier * 0.22)),
       skill: 'smithing'
     };
   });
@@ -202,9 +206,65 @@ AMULETS.forEach(function (a) {
     wearReq: {},
     cost: cost,
     xp: a.xp,
+    baseMs: a.craftMs,
     skill: 'crafting'
   };
 });
+
+// ============================================================
+// Recipes — one shape for smelting, smithing and crafting
+// ============================================================
+
+// Every level above a recipe's requirement shaves time off, down to a floor.
+// Coming back to an old recipe at high level feels dramatically quicker.
+const CRAFT_SPEED_PER_LEVEL = 0.022;
+const CRAFT_SPEED_FLOOR = 0.35;
+
+function craftSpeedFactor(skill, req) {
+  const over = Math.max(0, lvl(skill) - req);
+  return Math.max(CRAFT_SPEED_FLOOR, 1 - over * CRAFT_SPEED_PER_LEVEL);
+}
+function craftMs(recipe) {
+  return Math.max(400, Math.round(recipe.baseMs * craftSpeedFactor(recipe.skill, recipe.req)));
+}
+
+// Smelting recipes, one per metal.
+const SMELT_RECIPES = METALS.map(function (m) {
+  return {
+    id: 'smelt_' + m.key,
+    kind: 'smelt',
+    name: m.name + ' Bar',
+    icon: ITEMS[m.bar].icon,
+    skill: 'smithing',
+    req: m.smith,
+    cost: m.smelt,
+    xp: m.barXp,
+    out: m.bar,
+    baseMs: Math.round(1200 * (1 + m.tier * 0.18))
+  };
+});
+
+// Smithing / crafting recipes, one per wearable.
+const MAKE_RECIPES = Object.keys(GEAR).map(function (key) {
+  const g = GEAR[key];
+  return {
+    id: 'make_' + key,
+    kind: 'make',
+    name: g.name,
+    icon: g.icon,
+    skill: g.skill,
+    req: g.makeReq[g.skill],
+    cost: g.cost,
+    xp: g.xp,
+    out: key,
+    baseMs: g.baseMs,
+    gear: g
+  };
+});
+const ALL_RECIPES = SMELT_RECIPES.concat(MAKE_RECIPES);
+function recipeById(id) {
+  return ALL_RECIPES.filter(function (r) { return r.id === id; })[0];
+}
 
 // ============================================================
 // Dungeons
@@ -564,10 +624,71 @@ function feed(html, cls) {
   while (f.children.length > 40) f.removeChild(f.lastChild);
 }
 
+// ---- Level-up fanfare ----
+
+const levelQueue = [];
+let levelFxBusy = false;
+
 function onLevelUp(key, level) {
   const s = SKILLS[key];
-  toast(s.icon + ' ' + s.name + ' level ' + level + '!');
   feed('<b>' + s.icon + ' ' + s.name + '</b> advanced to level <b>' + level + '</b>.', 'lvl');
+  levelQueue.push({ key: key, level: level });
+  drainLevelQueue();
+  pulseSkillTile(key);
+}
+
+function drainLevelQueue() {
+  if (levelFxBusy || !levelQueue.length) return;
+  const next = levelQueue.shift();
+  levelFxBusy = true;
+  playLevelFx(next.key, next.level, function () {
+    levelFxBusy = false;
+    drainLevelQueue();
+  });
+}
+
+function playLevelFx(key, level, done) {
+  const host = $('levelfx');
+  if (!host) { if (done) done(); return; }
+  const s = SKILLS[key];
+  host.innerHTML =
+    '<div class="lf-card">' +
+      '<div class="lf-rays"></div>' +
+      '<div class="lf-burst"></div>' +
+      '<div class="lf-ico">' + s.icon + '</div>' +
+      '<div class="lf-title">LEVEL UP</div>' +
+      '<div class="lf-skill">' + s.name + '</div>' +
+      '<div class="lf-lvl">' + level + '</div>' +
+    '</div>';
+  host.classList.add('show');
+
+  // A few sparks flung outward from the middle.
+  const card = host.querySelector('.lf-card');
+  for (let i = 0; i < 14; i++) {
+    const spark = el('div', 'lf-spark');
+    const angle = (Math.PI * 2 * i) / 14 + Math.random() * 0.4;
+    const dist = 70 + Math.random() * 70;
+    spark.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    spark.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    spark.style.animationDelay = (Math.random() * 0.12) + 's';
+    card.appendChild(spark);
+  }
+
+  setTimeout(function () {
+    host.classList.remove('show');
+    setTimeout(function () {
+      host.innerHTML = '';
+      if (done) done();
+    }, 320);
+  }, 1650);
+}
+
+function pulseSkillTile(key) {
+  const tile = document.querySelector('.skill-tile[data-skill="' + key + '"]');
+  if (!tile) return;
+  tile.classList.remove('levelled');
+  void tile.offsetWidth;
+  tile.classList.add('levelled');
 }
 
 // ============================================================
@@ -588,6 +709,7 @@ function showTab(key) {
   if (runState) { toast('Finish the dungeon first.'); return; }
   // Wandering off mid-action cancels it, so nothing ticks unseen.
   if (gatherState && key !== 'gather') stopGathering(true);
+  if (craftState && key !== 'forge') stopCrafting(true);
   resultsOpen = false;
   G.tab = key;
   render();
@@ -617,14 +739,67 @@ function render() {
   if (G.tab === 'gear')    renderGear();
 }
 
+// While you're working at something the bar slot belongs to that skill —
+// progress toward the next level, and how long the wait actually is.
+function activeJob() {
+  if (runState) return null;
+  if (gatherState) {
+    return { skill: gatherState.skill, xpPer: gatherState.node.xp, ms: gatherState.node.ms };
+  }
+  if (craftState) {
+    return { skill: craftState.recipe.skill, xpPer: craftState.recipe.xp, ms: craftState.ms };
+  }
+  return null;
+}
+
+function formatEta(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (s < 60) return s + 's';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + 'm ' + (s % 60) + 's';
+  return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+}
+
 function renderTopBar() {
   $('tl-val').textContent = totalLevel();
   $('cb-val').textContent = combatLevel();
+
+  const job = activeJob();
+  const bar = $('hp-bar');
+
+  if (job) {
+    const level = lvl(job.skill);
+    const xp = skillXp(job.skill);
+    const cur = xpAtLevel(level);
+    const next = level >= MAX_LEVEL ? cur : xpAtLevel(level + 1);
+    const span = Math.max(1, next - cur);
+    const into = Math.max(0, xp - cur);
+    const pct = level >= MAX_LEVEL ? 100 : Math.min(100, (into / span) * 100);
+    const remaining = Math.max(0, next - xp);
+    const actions = job.xpPer > 0 ? Math.ceil(remaining / job.xpPer) : 0;
+
+    bar.classList.add('xp-mode');
+    bar.classList.remove('low');
+    $('hp-label').textContent = SKILLS[job.skill].icon;
+    $('hp-fill').style.width = pct + '%';
+    $('hp-text').textContent = level >= MAX_LEVEL
+      ? 'MAX'
+      : Math.round(remaining).toLocaleString() + ' xp → ' + (level + 1);
+    $('hp-eta').textContent = level >= MAX_LEVEL
+      ? ''
+      : '~' + formatEta(actions * job.ms) + ' to level ' + (level + 1);
+    $('hp-eta').style.display = '';
+    return;
+  }
+
+  bar.classList.remove('xp-mode');
   const mh = maxHp();
   const pct = Math.max(0, Math.min(100, (G.hp / mh) * 100));
+  $('hp-label').textContent = 'HP';
   $('hp-fill').style.width = pct + '%';
   $('hp-text').textContent = Math.floor(G.hp) + ' / ' + mh;
-  $('hp-bar').classList.toggle('low', G.hp / mh < 0.35);
+  $('hp-eta').style.display = 'none';
+  bar.classList.toggle('low', G.hp / mh < 0.35);
 }
 
 function renderNav() {
@@ -657,6 +832,7 @@ function renderSkills() {
     const next = level >= MAX_LEVEL ? cur : xpAtLevel(level + 1);
     const pct = level >= MAX_LEVEL ? 100 : ((xp - cur) / (next - cur)) * 100;
     const tile = el('div', 'skill-tile ' + s.group);
+    tile.dataset.skill = k;
     tile.innerHTML =
       '<div class="st-top"><span class="st-ico">' + s.icon + '</span>' +
       '<span class="st-name">' + s.name + '</span>' +
@@ -716,55 +892,57 @@ function renderNodeList(wrap, nodes, skill) {
 // ---- Forge ----
 
 function renderForge() {
-  // Smelting
-  const smelt = $('smelt-list');
-  smelt.innerHTML = '';
-  METALS.forEach(function (m) {
-    const ok = lvl('smithing') >= m.smith;
-    const afford = canAfford(m.smelt);
-    const b = el('button', 'recipe' + (ok ? '' : ' locked'));
-    b.innerHTML =
-      '<span class="rc-ico">' + itemIcon(m.bar) + '</span>' +
-      '<span class="rc-body">' +
-        '<span class="rc-name">' + m.name + ' Bar</span>' +
-        '<span class="rc-cost">' + costText(m.smelt) + '</span>' +
-        '<span class="rc-meta">' + (ok ? m.barXp + ' Smithing xp' : 'Smithing ' + m.smith + ' required') + '</span>' +
-      '</span>' +
-      '<span class="rc-have">' + (have(m.bar) || '') + '</span>';
-    b.disabled = !ok || !afford;
-    if (ok && afford) b.onclick = function () { doSmelt(m); };
-    smelt.appendChild(b);
-  });
+  renderRecipeList($('smelt-list'), SMELT_RECIPES, false);
+  renderRecipeList($('make-list'), MAKE_RECIPES, true);
 
-  // Smithing + crafting
-  const make = $('make-list');
-  make.innerHTML = '';
-  const keys = Object.keys(GEAR);
+  const strip = $('craft-active');
+  if (craftState) {
+    strip.style.display = '';
+    $('ca-icon').textContent = craftState.recipe.icon;
+    $('ca-name').textContent = 'Forging ' + craftState.recipe.name;
+    $('ca-count').textContent = craftState.made + ' made · ' +
+      Math.round(craftState.xp).toLocaleString() + ' xp · ' +
+      (craftState.ms / 1000).toFixed(1) + 's each';
+  } else {
+    strip.style.display = 'none';
+  }
+}
+
+function renderRecipeList(wrap, recipes, hideFarOff) {
+  wrap.innerHTML = '';
   let shown = 0;
-  keys.forEach(function (key) {
-    const g = GEAR[key];
-    // Hide tiers far beyond reach so the list stays readable.
-    const skillLvl = lvl(g.skill);
-    const need = g.makeReq[g.skill];
-    if (need > skillLvl + 22) return;
+  recipes.forEach(function (r) {
+    const skillLvl = lvl(r.skill);
+    // Keep the gear list readable by hiding tiers far out of reach.
+    if (hideFarOff && r.req > skillLvl + 22) return;
     shown++;
-    const ok = meetsReq(g.makeReq);
-    const afford = canAfford(g.cost);
-    const b = el('button', 'recipe' + (ok ? '' : ' locked'));
+    const ok = skillLvl >= r.req;
+    const afford = canAfford(r.cost);
+    const active = craftState && craftState.recipe.id === r.id;
+    const speed = craftSpeedFactor(r.skill, r.req);
+    const b = el('button', 'recipe' + (ok ? '' : ' locked') + (active ? ' active' : ''));
     b.innerHTML =
-      '<span class="rc-ico">' + g.icon + '</span>' +
+      '<span class="rc-ico">' + r.icon + '</span>' +
       '<span class="rc-body">' +
-        '<span class="rc-name">' + g.name + statLine(g) + '</span>' +
-        '<span class="rc-cost">' + costText(g.cost) + '</span>' +
-        '<span class="rc-meta">' + (ok ? g.xp.toLocaleString() + ' ' + SKILLS[g.skill].name + ' xp'
-                                       : reqText(g.makeReq) + ' required') + '</span>' +
+        '<span class="rc-name">' + r.name + (r.gear ? statLine(r.gear) : '') + '</span>' +
+        '<span class="rc-cost">' + costText(r.cost) + '</span>' +
+        '<span class="rc-meta">' + (ok
+          ? r.xp.toLocaleString() + ' ' + SKILLS[r.skill].name + ' xp · ' +
+            (craftMs(r) / 1000).toFixed(1) + 's' +
+            (speed < 0.995 ? ' <span class="rc-fast">' + Math.round((1 - speed) * 100) + '% faster</span>' : '')
+          : SKILLS[r.skill].name + ' ' + r.req + ' required') + '</span>' +
       '</span>' +
-      '<span class="rc-have">' + (have(key) || '') + '</span>';
-    b.disabled = !ok || !afford;
-    if (ok && afford) b.onclick = function () { doMake(key); };
-    make.appendChild(b);
+      '<span class="rc-have">' + (have(r.out) || '') + '</span>';
+    b.disabled = !ok || (!afford && !active);
+    if (ok && (afford || active)) {
+      b.onclick = function () {
+        if (active) stopCrafting();
+        else startCrafting(r);
+      };
+    }
+    wrap.appendChild(b);
   });
-  if (!shown) make.appendChild(el('div', 'empty', 'Nothing you can forge yet.'));
+  if (!shown) wrap.appendChild(el('div', 'empty', 'Nothing you can forge yet.'));
 }
 
 function statLine(g) {
@@ -785,24 +963,82 @@ function costText(cost) {
   return parts.join(' ');
 }
 
-function doSmelt(m) {
-  if (lvl('smithing') < m.smith || !payCost(m.smelt)) return;
-  addItem(m.bar, 1);
-  addXp('smithing', m.barXp);
-  feed('Smelted a <b>' + m.name + ' Bar</b>. <span class="xp">+' + m.barXp + ' Smithing xp</span>', 'make');
-  save();
-  render();
+// ---- Crafting: takes real time, repeats while materials last ----
+
+let craftState = null;
+let craftTimer = null;
+
+function startCrafting(recipe) {
+  if (G.busy || runState) return;
+  stopGathering(true);
+  stopCrafting(true);
+  if (lvl(recipe.skill) < recipe.req) { toast(SKILLS[recipe.skill].name + ' ' + recipe.req + ' required'); return; }
+  if (!canAfford(recipe.cost)) { toast('Not enough materials.'); return; }
+  craftState = { recipe: recipe, made: 0, xp: 0, ms: craftMs(recipe) };
+  renderForge();
+  renderTopBar();
+  craftSwing();
 }
 
-function doMake(key) {
-  const g = GEAR[key];
-  if (!g || !meetsReq(g.makeReq) || !payCost(g.cost)) return;
-  addItem(key, 1);
-  addXp(g.skill, g.xp);
-  feed('Made a <b>' + g.name + '</b>. <span class="xp">+' + g.xp.toLocaleString() + ' ' + SKILLS[g.skill].name + ' xp</span>', 'make');
-  toast('Made ' + g.name);
+function craftSwing() {
+  if (!craftState) return;
+  const r = craftState.recipe;
+  // Materials are consumed up front so you can't queue what you can't pay for.
+  // They're held as `pending` until the piece finishes, and refunded if you
+  // stop partway — nobody should lose a rune bar to a mistimed tap.
+  if (!payCost(r.cost)) { stopCrafting(); toast('Out of materials.'); return; }
+  craftState.pending = r.cost;
+
+  craftState.ms = craftMs(r);
+  const bar = $('ca-fill');
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  void bar.offsetWidth;
+  bar.style.transition = 'width ' + craftState.ms + 'ms linear';
+  bar.style.width = '100%';
+  renderForge();
+
+  craftTimer = setTimeout(function () {
+    if (!craftState) return;
+    craftState.pending = null;      // paid for and delivered
+    addItem(r.out, 1);
+    addXp(r.skill, r.xp);
+    craftState.made += 1;
+    craftState.xp += r.xp;
+    flashCraftDone(r);
+    feed((r.kind === 'smelt' ? 'Smelted a ' : 'Forged a ') + '<b>' + r.name + '</b>. ' +
+      '<span class="xp">+' + r.xp.toLocaleString() + ' ' + SKILLS[r.skill].name + ' xp</span>', 'make');
+    save();
+    renderTopBar();
+    if (!canAfford(r.cost)) { stopCrafting(); return; }
+    craftSwing();
+  }, craftState.ms);
+}
+
+function stopCrafting(quiet) {
+  if (craftTimer) { clearTimeout(craftTimer); craftTimer = null; }
+  const had = craftState;
+  craftState = null;
+  if (!had) return;
+  // Hand back the materials for the piece that never got finished.
+  if (had.pending) {
+    for (const k in had.pending) addItem(k, had.pending[k]);
+    had.pending = null;
+  }
   save();
-  render();
+  if (!quiet) {
+    if (had.made > 0) toast('Made ' + had.made + ' × ' + had.recipe.name);
+    render();
+  }
+}
+
+// A quick pop on the finished item so completion registers.
+function flashCraftDone(recipe) {
+  const strip = $('craft-active');
+  if (!strip) return;
+  const pop = el('div', 'craft-pop', recipe.icon);
+  strip.appendChild(pop);
+  setTimeout(function () { try { strip.removeChild(pop); } catch (e) {} }, 850);
 }
 
 // ---- Gear ----
@@ -890,11 +1126,13 @@ let gatherTimer = null;
 function startGathering(node, skill) {
   if (G.busy) return;
   stopGathering(true);
+  stopCrafting(true);
   gatherState = {
     node: node, skill: skill, gained: 0, xp: 0,
     verb: skill === 'woodcutting' ? 'Chopping' : 'Mining'
   };
   renderGather();
+  renderTopBar();
   gatherSwing();
 }
 
@@ -946,6 +1184,7 @@ function enterDungeon(index) {
   const d = dungeonAt(index);
   if (!d || index > G.dungeonsCleared) return;
   stopGathering(true);
+  stopCrafting(true);
   regenTick();
   if (G.hp < maxHp() * 0.5) {
     toast('Too hurt — rest until you are at least half health.');
@@ -1178,11 +1417,13 @@ function wire() {
   if (cont) cont.onclick = function () { showTab('dungeon'); };
   const stop = $('ga-stop');
   if (stop) stop.onclick = function () { stopGathering(); };
+  const cstop = $('ca-stop');
+  if (cstop) cstop.onclick = function () { stopCrafting(); };
 }
 
 function startClocks() {
   setInterval(function () {
-    if (runState || gatherState || G.busy) return;
+    if (runState || gatherState || craftState || G.busy) return;
     if (regenTick()) renderTopBar();
   }, 3000);
 }
@@ -1211,6 +1452,8 @@ window.__rf = {
   SKILLS: SKILLS, SKILL_KEYS: SKILL_KEYS, ITEMS: ITEMS, GEAR: GEAR,
   METALS: METALS, DUNGEONS: DUNGEONS, TREES: TREES, ROCKS: ROCKS,
   AMULETS: AMULETS, GEAR_KINDS: GEAR_KINDS, SLOTS: SLOTS,
+  SMELT_RECIPES: SMELT_RECIPES, MAKE_RECIPES: MAKE_RECIPES, ALL_RECIPES: ALL_RECIPES,
+  craftMs: craftMs, craftSpeedFactor: craftSpeedFactor, recipeById: recipeById,
   xpAtLevel: xpAtLevel, levelFromXp: levelFromXp,
   lvl: lvl, totalLevel: totalLevel, combatLevel: combatLevel, maxHp: maxHp,
   playerMaxHit: playerMaxHit, playerAttackRoll: playerAttackRoll,

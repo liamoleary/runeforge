@@ -22,6 +22,34 @@ That's the ratchet: you can't smith the next tier until you've cleared the
 dungeon before it, and you can't clear the next dungeon in the gear you have.
 When a dungeon starts killing you, that's the game telling you to go grind.
 
+## Feedback while you work
+
+The bar under the header is contextual. Idle or in a dungeon it's your health;
+the moment you start chopping, mining or forging it becomes that skill's
+progress — xp remaining to the next level, and a live estimate of **how long
+that will actually take** at your current rate. It ticks down as you work.
+
+Levelling up gets a proper fanfare: a burst, rotating light shafts, sparks and
+the new level, over a dimmed screen, with the skill tile pulsing behind it.
+Multiple level-ups queue rather than stomping each other, and the whole thing
+respects `prefers-reduced-motion`.
+
+### Crafting takes time
+
+Smelting and smithing are timed jobs with a progress bar, not instant taps, and
+they repeat while materials last. Two things drive the duration:
+
+- **What you're making.** A platebody is slower than a sword, and each metal
+  tier is slower than the last. At Smithing 50 a rune platebody takes ~16s
+  against ~8s for a rune sword.
+- **How good you are.** Every level above a recipe's requirement shaves 2.2%
+  off, down to a floor of 35%. That same rune platebody drops to ~9s twenty
+  levels later and ~5.7s at 99 — old recipes get dramatically snappier as you
+  outgrow them.
+
+Materials are taken when a piece starts and refunded if you stop partway, so a
+mistimed tap never costs you a bar.
+
 ## Skills
 
 | | Skill | What it does |
@@ -74,7 +102,7 @@ monster stats given the player state that dungeon expects — picking defence fo
 a target hit chance, hp for a target fight length, then binary-searching
 attack and max hit until the run wins ~60% of the time. `tools/journey.js`
 then plays a bot from level 1 to the last boss using the game's own combat and
-recipe functions. A full clear currently runs about **95 minutes**, most of it
+recipe functions. A full clear currently runs about **105 minutes**, most of it
 gathering and smithing rather than combat farming.
 
 `tools/ui-test.js` drives the real UI through the whole loop. All three need a

@@ -68,6 +68,18 @@ body.in-run { overflow: hidden; }
 #hp-bar.low .fill { background: linear-gradient(90deg, #a01818, #f03030); }
 #hp-bar .val { font-size: 10px; font-family: 'Cinzel', serif; color: var(--text); min-width: 56px; text-align: right; }
 
+/* The same slot flips to skill progress while you're working at something. */
+#hp-bar.xp-mode .lbl { font-size: 13px; }
+#hp-bar.xp-mode .fill {
+  background: linear-gradient(90deg, #8a6a1e, var(--gold));
+  box-shadow: 0 0 8px rgba(240, 192, 64, .45);
+}
+#hp-bar.xp-mode .val { color: var(--gold2); min-width: 84px; }
+#hp-eta {
+  font-size: 10px; color: var(--text2); font-style: italic;
+  text-align: right; margin-top: 2px; letter-spacing: .3px;
+}
+
 /* ===== Layout ===== */
 #main { max-width: 520px; margin: 0 auto; padding: 10px 10px 20px; }
 .screen { display: none; flex-direction: column; gap: 10px; }
@@ -158,6 +170,42 @@ body.in-run { overflow: hidden; }
 }
 #ga-track { height: 6px; background: #0a0804; border-radius: 3px; overflow: hidden; margin-top: 8px; }
 #ga-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #2c9c2c, #7af07a); }
+
+/* Active forging strip — same shape as gathering, in forge colours */
+#craft-active {
+  position: relative; overflow: hidden;
+  background: linear-gradient(90deg, #241705, #150d04);
+  border: 1px solid var(--gold); border-radius: 10px; padding: 10px 12px;
+}
+#ca-row { display: flex; align-items: center; gap: 10px; }
+#ca-icon { font-size: 26px; animation: hammer 1.1s ease-in-out infinite; transform-origin: 70% 70%; }
+@keyframes hammer {
+  0%, 100% { transform: rotate(-12deg); }
+  45% { transform: rotate(16deg); }
+  60% { transform: rotate(4deg); }
+}
+#ca-info { flex: 1; min-width: 0; }
+#ca-name { font-family: 'Cinzel', serif; font-size: 13px; color: var(--gold2); }
+#ca-count { font-size: 11px; color: var(--text2); }
+#ca-stop {
+  background: var(--bg3); border: 1px solid var(--bdr2); color: var(--gold);
+  font-family: 'Cinzel', serif; font-size: 11px; padding: 6px 12px;
+  border-radius: 6px; cursor: pointer; letter-spacing: 1px;
+}
+#ca-track { height: 6px; background: #0a0804; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+#ca-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #b8801e, var(--gold2)); }
+.craft-pop {
+  position: absolute; right: 54px; top: 8px;
+  font-size: 24px; pointer-events: none;
+  animation: craftPop .85s ease forwards;
+}
+@keyframes craftPop {
+  0% { opacity: 0; transform: scale(.5) translateY(6px); }
+  25% { opacity: 1; transform: scale(1.25) translateY(-4px); }
+  100% { opacity: 0; transform: scale(1) translateY(-26px); }
+}
+.recipe.active { border-color: var(--gold); background: #221806; }
+.rc-fast { color: var(--green); font-weight: 600; }
 
 /* ===== Gear ===== */
 #equip-slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px; }
@@ -329,6 +377,115 @@ body.in-run #nav { display: none; }
 .nav-btn.active { color: var(--gold); border-top-color: var(--gold); background: rgba(240,192,64,.05); }
 .nav-btn.active .ni { filter: none; }
 
+/* ===== Level-up fanfare ===== */
+#levelfx {
+  position: fixed; inset: 0; z-index: 400;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; opacity: 0;
+  transition: opacity .3s ease;
+}
+#levelfx.show { opacity: 1; }
+/* Push the page back so the card is readable over any screen. */
+#levelfx.show::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at center, rgba(240,192,64,.18) 0%, transparent 62%),
+    rgba(4, 3, 1, .74);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.lf-card {
+  position: relative;
+  width: 214px; height: 214px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  animation: lfPop .55s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+/* Solid disc behind the text so rays never cut through the words. */
+.lf-card::before {
+  content: ''; position: absolute; inset: 16px;
+  background: radial-gradient(circle, rgba(20,14,5,.97) 46%, rgba(20,14,5,.78) 72%, transparent 84%);
+  border-radius: 50%;
+}
+.lf-card > * { position: relative; z-index: 1; }
+.lf-rays { z-index: 0 !important; }
+@keyframes lfPop {
+  0% { transform: scale(.3) rotate(-8deg); opacity: 0; }
+  60% { transform: scale(1.08) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+/* Rotating light shafts behind the card */
+.lf-rays {
+  position: absolute; inset: -40px;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(240,192,64,.24) 0deg 9deg,
+    transparent 9deg 26deg
+  );
+  border-radius: 50%;
+  animation: lfSpin 5s linear infinite;
+  mask-image: radial-gradient(circle, #000 24%, transparent 68%);
+  -webkit-mask-image: radial-gradient(circle, #000 24%, transparent 68%);
+}
+@keyframes lfSpin { to { transform: rotate(360deg); } }
+/* Expanding shockwave ring */
+.lf-burst {
+  position: absolute; left: 50%; top: 50%;
+  width: 60px; height: 60px; margin: -30px 0 0 -30px;
+  border: 3px solid var(--gold2); border-radius: 50%;
+  animation: lfBurst .95s ease-out forwards;
+}
+@keyframes lfBurst {
+  0% { transform: scale(.3); opacity: .95; }
+  100% { transform: scale(4.2); opacity: 0; }
+}
+.lf-ico {
+  font-size: 46px; line-height: 1;
+  filter: drop-shadow(0 0 16px rgba(255,217,102,.9));
+  animation: lfIco 1.6s ease-in-out;
+}
+@keyframes lfIco {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-7px) scale(1.14); }
+}
+.lf-title {
+  font-family: 'Cinzel', serif; font-size: 13px; font-weight: 900;
+  letter-spacing: 5px; color: var(--gold2);
+  margin-top: 8px; text-shadow: 0 0 12px rgba(255,217,102,.8);
+}
+.lf-skill {
+  font-family: 'Cinzel', serif; font-size: 14px;
+  color: var(--text); letter-spacing: 1px; margin-top: 3px;
+}
+.lf-lvl {
+  font-family: 'Cinzel', serif; font-size: 52px; font-weight: 900;
+  color: var(--gold); line-height: 1.05;
+  text-shadow: 0 0 22px rgba(240,192,64,.75), 0 3px 0 #5a3f10;
+}
+.lf-spark {
+  position: absolute; left: 50%; top: 50%;
+  width: 6px; height: 6px; margin: -3px 0 0 -3px;
+  background: var(--gold2); border-radius: 50%;
+  box-shadow: 0 0 8px rgba(255,217,102,.9);
+  animation: lfSpark 1s ease-out forwards;
+}
+@keyframes lfSpark {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; }
+}
+/* The skill tile itself reacts too */
+.skill-tile.levelled { animation: tileLevel 1.1s ease; }
+@keyframes tileLevel {
+  0% { transform: scale(1); }
+  22% { transform: scale(1.07); box-shadow: 0 0 20px rgba(240,192,64,.65); border-color: var(--gold); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lf-rays, .lf-burst, .lf-spark, #ca-icon { animation: none; }
+  .lf-card { animation-duration: .01s; }
+}
+
 /* ===== Toast ===== */
 #toast {
   position: fixed; top: 62px; left: 50%; transform: translateX(-50%);
@@ -359,10 +516,11 @@ body.in-run #nav { display: none; }
     <span class="pill">Combat <b id="cb-val">3</b></span>
   </div>
   <div id="hp-bar">
-    <span class="lbl">HP</span>
+    <span class="lbl" id="hp-label">HP</span>
     <div class="track"><div class="fill" id="hp-fill" style="width:100%"></div></div>
-    <span class="val" id="hp-text">10 / 10</span>
+    <span class="val" id="hp-text">30 / 30</span>
   </div>
+  <div id="hp-eta" style="display:none;"></div>
 </div>
 
 <div id="main">
@@ -404,6 +562,17 @@ body.in-run #nav { display: none; }
 
   <!-- ================= FORGE ================= -->
   <div id="screen-forge" class="screen">
+    <div id="craft-active" style="display:none;">
+      <div id="ca-row">
+        <div id="ca-icon">🔨</div>
+        <div id="ca-info">
+          <div id="ca-name">Forging</div>
+          <div id="ca-count">0 made</div>
+        </div>
+        <button id="ca-stop">STOP</button>
+      </div>
+      <div id="ca-track"><div id="ca-fill"></div></div>
+    </div>
     <div class="panel">
       <div class="panel-hdr"><span>🔥 Smelting</span><span class="hint">ore → bars</span></div>
       <div class="list" id="smelt-list"></div>
@@ -471,6 +640,7 @@ body.in-run #nav { display: none; }
   <div id="run-actions"><button id="run-flee">RETREAT</button></div>
 </div>
 
+<div id="levelfx"></div>
 <div id="nav"></div>
 <div id="toast"></div>
 
