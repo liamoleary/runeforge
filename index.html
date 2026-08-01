@@ -290,6 +290,45 @@ body {
   box-shadow: 0 0 12px rgba(240, 192, 64, .25), inset 0 0 8px rgba(240, 192, 64, .08);
   animation: dungeonGlow 2.4s ease-in-out infinite;
 }
+.action-btn.camp { font-size: 12px; padding: 9px; }
+.action-btn.camp.afford { border-color: #6fcc6f; color: #aef0ae; }
+.action-btn.camp.rested {
+  opacity: .5;
+  border-color: var(--bdr);
+  color: var(--text2);
+}
+
+/* Dungeon phase stepper */
+#dun-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg2);
+  border: 1px solid var(--bdr);
+  border-radius: 8px;
+  padding: 5px 8px;
+}
+#dun-select button {
+  background: var(--bg3);
+  border: 1px solid var(--bdr2);
+  color: var(--gold);
+  font-size: 12px;
+  width: 34px;
+  padding: 5px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+#dun-select button:disabled { opacity: .25; cursor: not-allowed; }
+#dun-select button:active:not(:disabled) { transform: scale(.94); }
+#dun-select .phase-label {
+  flex: 1;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: .5px;
+}
 @keyframes dungeonGlow {
   0%, 100% { box-shadow: 0 0 12px rgba(240, 192, 64, .25), inset 0 0 8px rgba(240, 192, 64, .08); }
   50% { box-shadow: 0 0 20px rgba(240, 192, 64, .45), inset 0 0 14px rgba(240, 192, 64, .14); }
@@ -567,104 +606,6 @@ body {
   letter-spacing: .3px;
 }
 
-/* ===== Combat overlay (legacy modal — kept hidden) ===== */
-#combat-stage {
-  position: fixed; inset: 0;
-  background: radial-gradient(ellipse at center, #1a0e04 0%, rgba(0, 0, 0, .92) 75%);
-  z-index: 200;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-#combat-stage.active { display: flex; }
-#combat-stage .arena {
-  width: 100%; max-width: 460px;
-  background: linear-gradient(180deg, #1a1308, #0a0703);
-  border: 2px solid var(--gold);
-  border-radius: 14px;
-  padding: 18px;
-  box-shadow: 0 0 36px rgba(240, 192, 64, .25);
-}
-.cmb-row {
-  display: flex; align-items: center; gap: 12px;
-  margin-bottom: 14px;
-}
-.cmb-row .portrait {
-  width: 68px; height: 68px;
-  font-size: 44px;
-  display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle, #2a1f10, #110a04);
-  border: 2px solid var(--bdr2);
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-.cmb-row .info { flex: 1; min-width: 0; }
-.cmb-row .name {
-  font-family: 'Cinzel', serif;
-  font-size: 14px;
-  color: var(--gold);
-  margin-bottom: 4px;
-}
-.cmb-row .hp-row {
-  height: 11px;
-  background: #0a0804;
-  border: 1px solid var(--bdr);
-  border-radius: 6px;
-  overflow: hidden;
-}
-.cmb-row .hp-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #c02020, #f03030);
-  transition: width .35s;
-}
-.cmb-row .hp-text {
-  font-size: 10px;
-  color: var(--text2);
-  margin-top: 2px;
-}
-.cmb-row.hit { animation: cmbHit .4s ease; }
-@keyframes cmbHit {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-6px); }
-  50% { transform: translateX(5px); }
-  75% { transform: translateX(-3px); }
-  100% { transform: translateX(0); }
-}
-#cmb-log {
-  background: rgba(0, 0, 0, .35);
-  border: 1px solid var(--bdr);
-  border-radius: 6px;
-  padding: 8px;
-  font-size: 12px;
-  color: var(--text2);
-  max-height: 140px;
-  overflow-y: auto;
-  font-family: 'Crimson Text', serif;
-}
-#cmb-log p { margin-bottom: 2px; line-height: 1.4; }
-#cmb-log .you { color: var(--gold); }
-#cmb-log .mon { color: #f08080; }
-#cmb-log .crit { color: var(--gold2); font-weight: bold; }
-#cmb-log .win { color: var(--green); font-weight: bold; }
-#cmb-log .lose { color: var(--red); font-weight: bold; }
-#cmb-actions { display: flex; gap: 8px; margin-top: 12px; }
-#cmb-actions button {
-  flex: 1;
-  background: var(--bg2);
-  border: 1px solid var(--bdr2);
-  color: var(--gold);
-  font-family: 'Cinzel', serif;
-  font-size: 12px;
-  padding: 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  letter-spacing: 1px;
-}
-#cmb-actions button:disabled { opacity: .35; cursor: not-allowed; }
-#cmb-actions button:active:not(:disabled) { transform: scale(.96); }
-
 /* ===== Spellbook screen ===== */
 #sb-mana-bar {
   display: flex; align-items: center; gap: 8px;
@@ -866,16 +807,6 @@ body {
 }
 
 /* ===== Dungeon screen ===== */
-#dun-stage {
-  background: linear-gradient(180deg, #1a0e04, #060300);
-  border: 1.5px solid var(--bdr2);
-  border-radius: 10px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
 #dun-phase {
   font-family: 'Cinzel', serif;
   font-size: 15px;
@@ -889,32 +820,6 @@ body {
   color: var(--text2);
 }
 #dun-stats b { color: var(--gold); }
-#dun-monster {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 6px;
-  margin: 6px 0;
-}
-#dun-mon-icon {
-  font-size: 56px;
-  filter: drop-shadow(0 0 14px rgba(240, 80, 80, .35));
-}
-#dun-mon-icon.fade { animation: dunFade .45s ease forwards; }
-@keyframes dunFade { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.5); } }
-#dun-mon-name {
-  font-family: 'Cinzel', serif;
-  font-size: 13px;
-  color: var(--text);
-}
-#dun-bars { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 6px; }
-.dun-bar { display: flex; align-items: center; gap: 6px; }
-.dun-bar .label { font-size: 10px; font-family: 'Cinzel', serif; color: var(--text2); width: 42px; }
-.dun-bar .track {
-  flex: 1; height: 9px; background: #0a0804; border: 1px solid var(--bdr); border-radius: 5px; overflow: hidden;
-}
-.dun-bar .fill { height: 100%; transition: width .25s; }
-.dun-bar.you .fill { background: linear-gradient(90deg, #2cb52c, #5af05a); }
-.dun-bar.foe .fill { background: linear-gradient(90deg, #c02020, #f03030); }
-.dun-bar .val { font-size: 10px; color: var(--text); width: 50px; text-align: right; }
 #dun-log {
   width: 100%;
   background: rgba(0, 0, 0, .35);
@@ -928,19 +833,6 @@ body {
   color: var(--text2);
 }
 #dun-log p { margin-bottom: 2px; line-height: 1.35; }
-#dun-actions { display: flex; gap: 8px; width: 100%; margin-top: 6px; }
-#dun-actions button {
-  flex: 1;
-  background: var(--bg2);
-  border: 1px solid var(--bdr2);
-  color: var(--gold);
-  font-family: 'Cinzel', serif;
-  font-size: 12px;
-  padding: 9px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-#dun-actions button:active { transform: scale(.96); }
 
 /* ===== Result screen ===== */
 #screen-results { align-items: stretch; }
@@ -1114,9 +1006,15 @@ body {
     </div>
 
     <div id="action-row">
-      <button class="action-btn" id="btn-forge"><span class="ab-icon">🔨</span><span>Forge</span></button>
-      <button class="action-btn" id="btn-spellbook"><span class="ab-icon">📖</span><span>Spells</span></button>
-      <button class="action-btn dungeon full" id="btn-dungeon"><span class="ab-icon">🏰</span><span>Enter Dungeon</span></button>
+      <button class="action-btn" id="btn-forge"><span class="ab-icon">🔨</span><span class="ab-label">Forge</span></button>
+      <button class="action-btn" id="btn-spellbook"><span class="ab-icon">📖</span><span class="ab-label">Spells</span></button>
+      <button class="action-btn camp full" id="btn-camp"><span class="ab-icon">🔥</span><span class="ab-label">Camp</span></button>
+      <div id="dun-select" class="full" style="display:none;">
+        <button id="dun-phase-down" aria-label="Start an earlier phase">◀</button>
+        <span class="phase-label" id="dun-phase-label">Start at Phase 1 / 1</span>
+        <button id="dun-phase-up" aria-label="Start a later phase">▶</button>
+      </div>
+      <button class="action-btn dungeon full" id="btn-dungeon"><span class="ab-icon">🏰</span><span class="ab-label">Enter Dungeon</span></button>
     </div>
 
     <div class="panel" id="hunt-panel">

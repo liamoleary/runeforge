@@ -144,6 +144,12 @@ const LOADOUT_SIZE = 4;
 
 const BASE_HP = 40;
 
+// Out-of-combat recovery. Percentages of the current maximum, per minute of
+// real time — accrues while the tab is closed too, since it is derived from
+// timestamps rather than ticks.
+const REGEN_HP_PCT_PER_MIN = 12;
+const REGEN_MP_PCT_PER_MIN = 20;
+
 function defaultState() {
   return {
     hero: null,
@@ -160,7 +166,10 @@ function defaultState() {
     loadout: [],     // up to LOADOUT_SIZE spell keys
     monstersDefeated: {},
     dungeonPhase: 1,  // persistent checkpoint — only advances on phase clear
+    dungeonStart: 1,  // phase the next run begins at (player-chosen, ≤ checkpoint)
     dungeonBest: 0,
+    hpRegenAt: 0,     // ms timestamp the HP regen clock last paid out
+    mpRegenAt: 0,
     busy: false,
     inDungeon: false
   };
@@ -177,6 +186,13 @@ function weaponElementOnAttack() {
     if (v > topV) { top = e; topV = v; }
   }
   return top;
+}
+// Flat mitigation from the foe's armour. Applied to weapon swings only —
+// spells bypass armour, which is what makes them worth casting at turtles,
+// golems and other high-def foes.
+function applyArmor(foe, dmg) {
+  if (!foe || !foe.def) return dmg;
+  return Math.max(1, Math.round(dmg - foe.def * 0.5));
 }
 function applyResistance(foe, element, dmg) {
   if (!foe || !foe.resist || !element) return { dmg: dmg, mult: 1 };
@@ -252,6 +268,84 @@ function tierUnlockLevel(tier) {
 }
 
 // ============================================================
+// Rest & recovery
+// ============================================================
+
+// Stop the regen clocks from paying out for time spent mid-fight (during
+// combat the arena owns your HP, not G.hp).
+function touchRegen() {
+  const now = Date.now();
+  G.hpRegenAt = now;
+  G.mpRegenAt = now;
+}
+
+// Advance HP/MP by however much real time has passed. Returns true if
+// anything actually changed, so callers can skip a redraw.
+function regenTick() {
+  if (!G.hero) return false;
+  const now = Date.now();
+  if (!G.hpRegenAt || G.hpRegenAt > now) G.hpRegenAt = now;
+  if (!G.mpRegenAt || G.mpRegenAt > now) G.mpRegenAt = now;
+  if (G.busy) { touchRegen(); return false; }
+
+  let changed = false;
+  const mh = maxHp();
+  if (G.hp < mh) {
+    const perMs = mh * (REGEN_HP_PCT_PER_MIN / 100) / 60000;
+    const gain = Math.floor((now - G.hpRegenAt) * perMs);
+    if (gain > 0) {
+      G.hp = Math.min(mh, G.hp + gain);
+      G.hpRegenAt += Math.ceil(gain / perMs);
+      changed = true;
+    }
+  } else {
+    G.hp = mh;
+    G.hpRegenAt = now;
+  }
+
+  const mm = maxMana();
+  if (G.mana < mm) {
+    const perMs = mm * (REGEN_MP_PCT_PER_MIN / 100) / 60000;
+    const gain = Math.floor((now - G.mpRegenAt) * perMs);
+    if (gain > 0) {
+      G.mana = Math.min(mm, G.mana + gain);
+      G.mpRegenAt += Math.ceil(gain / perMs);
+      changed = true;
+    }
+  } else {
+    G.mana = mm;
+    G.mpRegenAt = now;
+  }
+  return changed;
+}
+
+// Gold price to skip the wait and top everything up right now.
+function campCost() {
+  const missHp = Math.max(0, maxHp() - G.hp);
+  const missMp = Math.max(0, maxMana() - G.mana);
+  if (missHp <= 0 && missMp <= 0) return 0;
+  return Math.max(1, Math.ceil(missHp / 6) + Math.ceil(missMp / 8));
+}
+
+function makeCamp() {
+  if (G.busy) return;
+  const cost = campCost();
+  if (cost <= 0) { toast('Already at full strength.'); return; }
+  if (G.gold < cost) {
+    toast('Need ' + cost + ' ⚜ — or just wait it out.');
+    return;
+  }
+  G.gold -= cost;
+  G.hp = maxHp();
+  G.mana = maxMana();
+  touchRegen();
+  save();
+  render();
+  toast('Rested — full HP and mana.');
+  log('Made camp for <b>' + cost + ' ⚜</b> — fully restored.', 'gold');
+}
+
+// ============================================================
 // Save / load (called from auth.js cloud sync and from triggers)
 // ============================================================
 
@@ -272,11 +366,18 @@ function load() {
     if (!Array.isArray(G.loadout)) G.loadout = [];
     G.loadout = G.loadout.filter(function (k) { return !!SPELLS[k]; }).slice(0, LOADOUT_SIZE);
     if (typeof G.dungeonPhase !== 'number' || G.dungeonPhase < 1) G.dungeonPhase = 1;
+    if (typeof G.dungeonStart !== 'number' || G.dungeonStart < 1) G.dungeonStart = G.dungeonPhase;
+    if (G.dungeonStart > G.dungeonPhase) G.dungeonStart = G.dungeonPhase;
     ensureSpellsForLevel();
     if (typeof G.hp !== 'number' || G.hp <= 0) G.hp = maxHp();
     if (typeof G.mana !== 'number' || G.mana < 0) G.mana = maxMana();
     if (G.mana > maxMana()) G.mana = maxMana();
     G.busy = false; G.inDungeon = false;
+    // Saves from before timed recovery carry no clocks — start them now so
+    // an old save doesn't instantly regen from the epoch.
+    if (typeof G.hpRegenAt !== 'number' || !G.hpRegenAt) G.hpRegenAt = Date.now();
+    if (typeof G.mpRegenAt !== 'number' || !G.mpRegenAt) G.mpRegenAt = Date.now();
+    regenTick();
   } catch (e) {}
 }
 window.load = load;
@@ -363,8 +464,11 @@ function chooseHero(key) {
     if (G.loadout.length < LOADOUT_SIZE) G.loadout.push(k);
   });
   G.monstersDefeated = {};
+  G.statXp = { strength: 0, intellect: 0, defence: 0, mana: 0 };
   G.dungeonBest = 0;
   G.dungeonPhase = 1;
+  G.dungeonStart = 1;
+  touchRegen();
   save();
   render();
   toast(h.name + ' chosen — welcome.');
@@ -382,11 +486,28 @@ function render() {
     return;
   }
   show('screen-hub');
+  // Settle any recovery owed since the last look before drawing the bars —
+  // otherwise the hub shows stale HP until the regen timer next fires.
+  regenTick();
   const h = HEROES[G.hero];
 
   $('hp-portrait').textContent = h.portrait;
   $('hp-name-txt').textContent = h.name;
   $('hp-lvl').textContent = 'Lv ' + G.level;
+
+  $('stat-strength').textContent = G.stats.strength;
+  $('stat-intellect').textContent = G.stats.intellect;
+  $('stat-defence').textContent = G.stats.defence;
+  $('stat-mana').textContent = G.stats.mana;
+  renderStatXpBars();
+  renderVitals();
+  renderMonsters();
+}
+
+// The parts of the hub that drift on their own (HP/MP regen, gold, camp
+// price). Cheap enough to run on a timer without rebuilding the monster grid.
+function renderVitals() {
+  if (!G.hero) return;
 
   const need = xpForLevel(G.level);
   $('hp-xp-fill').style.width = Math.min(100, (G.xp / need) * 100) + '%';
@@ -405,20 +526,57 @@ function render() {
 
   $('gold-val').textContent = G.gold;
 
-  $('stat-strength').textContent = G.stats.strength;
-  $('stat-intellect').textContent = G.stats.intellect;
-  $('stat-defence').textContent = G.stats.defence;
-  $('stat-mana').textContent = G.stats.mana;
-  renderStatXpBars();
-
-  // Dungeon button label shows checkpoint phase.
-  const dunBtn = $('btn-dungeon');
-  if (dunBtn) {
-    const txt = dunBtn.querySelector('span:last-child');
-    if (txt) txt.textContent = 'Enter Dungeon · Phase ' + (G.dungeonPhase || 1);
+  // Camp button — price tracks how hurt you are.
+  const campBtn = $('btn-camp');
+  if (campBtn) {
+    const cost = campCost();
+    const label = campBtn.querySelector('.ab-label');
+    if (cost <= 0) {
+      campBtn.classList.add('rested');
+      if (label) label.textContent = 'Rested';
+    } else {
+      campBtn.classList.remove('rested');
+      campBtn.classList.toggle('afford', G.gold >= cost);
+      if (label) label.textContent = 'Camp · ' + cost + ' ⚜';
+    }
   }
 
-  renderMonsters();
+  renderDungeonPicker();
+}
+
+// Phase stepper — lets you re-run any phase you've already reached instead of
+// being locked to the furthest checkpoint.
+function renderDungeonPicker() {
+  const wrap = $('dun-select');
+  const max = Math.max(1, G.dungeonPhase || 1);
+  if (typeof G.dungeonStart !== 'number' || G.dungeonStart < 1) G.dungeonStart = max;
+  if (G.dungeonStart > max) G.dungeonStart = max;
+
+  if (wrap) {
+    // Nothing to pick from until you've cleared at least one phase.
+    wrap.style.display = max > 1 ? '' : 'none';
+    const lbl = $('dun-phase-label');
+    if (lbl) lbl.textContent = 'Start at Phase ' + G.dungeonStart + ' / ' + max;
+    const down = $('dun-phase-down');
+    const up = $('dun-phase-up');
+    if (down) down.disabled = G.dungeonStart <= 1;
+    if (up) up.disabled = G.dungeonStart >= max;
+  }
+
+  const dunBtn = $('btn-dungeon');
+  if (dunBtn) {
+    const txt = dunBtn.querySelector('.ab-label');
+    if (txt) txt.textContent = 'Enter Dungeon · Phase ' + G.dungeonStart;
+  }
+}
+
+function stepDungeonPhase(delta) {
+  const max = Math.max(1, G.dungeonPhase || 1);
+  const next = Math.min(max, Math.max(1, (G.dungeonStart || 1) + delta));
+  if (next === G.dungeonStart) return;
+  G.dungeonStart = next;
+  save();
+  renderDungeonPicker();
 }
 
 function renderStatXpBars() {
@@ -547,14 +705,13 @@ function monsterAttack(m) {
 
 function startCombat(monKey) {
   if (G.busy) return;
+  regenTick();
   if (G.hp <= 5) {
     toast('You are too weak — rest a moment.');
     return;
   }
   const m = MONSTERS[monKey];
   const h = HEROES[G.hero];
-  // Rest before the fight: full mana.
-  G.mana = maxMana();
   combatState = {
     monKey: monKey, mon: m,
     monHp: m.hp, monMax: m.hp,
@@ -685,7 +842,7 @@ function combatTick() {
   // 2. Weapon attack — melee animation.
   const p = playerAttack();
   const wElem = weaponElementOnAttack();
-  const wRes = applyResistance(combatState.mon, wElem, p.dmg);
+  const wRes = applyResistance(combatState.mon, wElem, applyArmor(combatState.mon, p.dmg));
   combatState.monHp -= wRes.dmg;
   _animSprite(youSprite, 'melee-right', 550);
   setTimeout(function () {
@@ -784,6 +941,7 @@ function finishCombat(won) {
 
   $('hunt-flee').style.display = 'none';
   $('hunt-continue').style.display = '';
+  touchRegen();
   save();
 }
 
@@ -801,6 +959,7 @@ function fleeCombat() {
   if (combatTimer) { clearTimeout(combatTimer); combatTimer = null; }
   G.hp = Math.max(1, combatState.youHp - 3);
   cmbLog('<span class="lose">You fled.</span>');
+  touchRegen();
   combatState = null;
   $('hunt-flee').style.display = 'none';
   $('hunt-continue').style.display = '';
@@ -978,18 +1137,20 @@ let dungeonTimer = null;
 
 function openDungeon() {
   if (G.busy) return;
+  regenTick();
   if (G.hp < Math.floor(maxHp() * 0.4)) {
     toast('Rest first — HP too low.');
     return;
   }
   G.busy = true;
   G.inDungeon = true;
-  // Resume at the persistent checkpoint phase.
-  const startPhase = Math.max(1, G.dungeonPhase || 1);
+  // Start where the player asked, capped at the furthest checkpoint reached.
+  const startPhase = Math.min(Math.max(1, G.dungeonPhase || 1), Math.max(1, G.dungeonStart || 1));
   dungeonState = {
     phase: startPhase,
     startPhase: startPhase,
     kills: 0,
+    totalKills: 0,
     xpGained: 0,
     goldGained: 0,
     drops: {},
@@ -1077,7 +1238,7 @@ function spawnDungeonFoe() {
   $('dun-foe-name').textContent = foe.name;
   $('dun-foe-resist').innerHTML = formatResistance(foe);
   refreshDungeonBars();
-  $('dun-kills').textContent = dungeonState.kills;
+  $('dun-kills').textContent = dungeonState.totalKills;
   $('dun-gold').textContent = dungeonState.goldGained;
   $('dun-xp').textContent = dungeonState.xpGained;
   if (boss) {
@@ -1140,7 +1301,7 @@ function dungeonTick() {
   // 2. Weapon swing.
   const p = playerAttack();
   const wElem = weaponElementOnAttack();
-  const wRes = applyResistance(foe, wElem, p.dmg);
+  const wRes = applyResistance(foe, wElem, applyArmor(foe, p.dmg));
   foe.hp -= wRes.dmg;
   _animSprite(youSprite, 'melee-right', 550);
   setTimeout(function () {
@@ -1201,7 +1362,8 @@ function dungeonFoeSwing() {
 function dungeonFoeDown(foe) {
   dungeonLog('<span class="win">' + foe.name + ' falls.</span>');
   _animSprite($('dun-foe-sprite'), 'dying', 900);
-  dungeonState.kills += 1;
+  dungeonState.kills += 1;         // kills within the current phase
+  dungeonState.totalKills += 1;    // kills across the whole run
   dungeonState.xpGained += foe.xp;
   dungeonState.goldGained += foe.gold;
   const sxp = statXpPerKill(foe);
@@ -1219,8 +1381,13 @@ function dungeonFoeDown(foe) {
   if (phaseClear) {
     const newPhase = dungeonState.phase + 1;
     dungeonState.phase = newPhase;
-    // Persistent checkpoint — only ever moves forward.
-    if (newPhase > (G.dungeonPhase || 1)) G.dungeonPhase = newPhase;
+    // Persistent checkpoint — only ever moves forward. If the player was
+    // already starting from the checkpoint, carry their choice along with it.
+    const atCheckpoint = (G.dungeonStart || 1) >= (G.dungeonPhase || 1);
+    if (newPhase > (G.dungeonPhase || 1)) {
+      G.dungeonPhase = newPhase;
+      if (atCheckpoint) G.dungeonStart = newPhase;
+    }
     if (newPhase > G.dungeonBest) G.dungeonBest = newPhase;
     // Reset in-phase kill counter so the next phase needs its own 3 kills.
     dungeonState.kills = 0;
@@ -1252,6 +1419,7 @@ function endDungeon(survived) {
   if (newBest) G.dungeonBest = ds.phase;
   G.busy = false;
   G.inDungeon = false;
+  touchRegen();
 
   showResults(survived, ds, newBest);
   checkLevelUp();
@@ -1269,8 +1437,8 @@ function showResults(survived, ds, newBest) {
   const lines = [];
   lines.push(['Run started at', 'Phase ' + (ds.startPhase || 1)]);
   lines.push(['Reached', 'Phase ' + ds.phase + (survived ? '' : ' (died)')]);
-  lines.push(['Checkpoint', 'Phase ' + (G.dungeonPhase || 1) + ' (next run starts here)']);
-  lines.push(['Foes felled', ds.kills + (ds.statXpGains ? '' : '')]);
+  lines.push(['Checkpoint', 'Phase ' + (G.dungeonPhase || 1) + ' (furthest reached)']);
+  lines.push(['Foes felled', ds.totalKills || 0]);
   lines.push(['XP gained', '+' + ds.xpGained]);
   lines.push(['Gold gained', '+' + ds.goldGained + ' ⚜']);
   const sxpGains = Object.entries(ds.statXpGains)
@@ -1295,7 +1463,7 @@ function showResults(survived, ds, newBest) {
     row.innerHTML = '<span class="lbl">' + pair[0] + '</span><span class="val">' + pair[1] + '</span>';
     list.appendChild(row);
   });
-  log('Dungeon run — phase ' + ds.phase + ', ' + ds.kills + ' kills, +' + ds.xpGained + ' XP, +' + ds.goldGained + ' ⚜.', survived ? 'gold' : 'red');
+  log('Dungeon run — phase ' + ds.phase + ', ' + (ds.totalKills || 0) + ' kills, +' + ds.xpGained + ' XP, +' + ds.goldGained + ' ⚜.', survived ? 'gold' : 'red');
 }
 
 // ============================================================
@@ -1410,7 +1578,7 @@ function renderSpellbook() {
 function equipSpell(key) {
   if (!G.spellbook[key]) return;
   if (loadoutHas(key)) return;
-  if (G.loadout.length >= LOADOUT_SIZE) {
+  if (isLoadoutFull()) {
     toast('Loadout full — remove one first.');
     return;
   }
@@ -1432,22 +1600,46 @@ function unequipSpell(key) {
 // Wire-up
 // ============================================================
 
+// Bind by id, tolerating a missing element — the service worker can serve a
+// cached index.html that predates a control added here.
+function on(id, fn) {
+  const el = $(id);
+  if (el) el.onclick = fn;
+}
+
 function wire() {
-  $('btn-forge').onclick = openForge;
-  $('btn-spellbook').onclick = openSpellbook;
-  $('btn-dungeon').onclick = openDungeon;
-  $('forge-back').onclick = function () { show('screen-hub'); render(); };
-  $('spellbook-back').onclick = function () { show('screen-hub'); render(); };
-  $('hunt-flee').onclick = fleeCombat;
-  $('hunt-continue').onclick = closeCombat;
-  $('dun-flee').onclick = fleeDungeon;
-  $('result-continue').onclick = function () { show('screen-hub'); render(); };
+  on('btn-forge', openForge);
+  on('btn-spellbook', openSpellbook);
+  on('btn-dungeon', openDungeon);
+  on('btn-camp', makeCamp);
+  on('dun-phase-down', function () { stepDungeonPhase(-1); });
+  on('dun-phase-up', function () { stepDungeonPhase(1); });
+  on('forge-back', function () { show('screen-hub'); render(); });
+  on('spellbook-back', function () { show('screen-hub'); render(); });
+  on('hunt-flee', fleeCombat);
+  on('hunt-continue', closeCombat);
+  on('dun-flee', fleeDungeon);
+  on('result-continue', function () { show('screen-hub'); render(); });
+}
+
+// Recovery ticks on a timer while you're idle in the hub. Nothing is written
+// to storage here — the regen clocks are timestamps, so the next real save
+// (or reload) reconstructs exactly the same result.
+const REGEN_TICK_MS = 4000;
+function startRegenLoop() {
+  setInterval(function () {
+    if (!G.hero || G.busy) return;
+    const hub = $('screen-hub');
+    if (!hub || !hub.classList.contains('active')) return;
+    if (regenTick()) renderVitals();
+  }, REGEN_TICK_MS);
 }
 
 function init() {
   wire();
   load();
   render();
+  startRegenLoop();
 }
 
 if (document.readyState === 'loading') {
