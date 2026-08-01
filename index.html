@@ -11,1136 +11,467 @@
   --bdr: #3a2c18; --bdr2: #6b4f22;
   --gold: #f0c040; --gold2: #ffd966;
   --text: #e8d898; --text2: #9a7e50; --text3: #5a4830;
-  --green: #5ac85a; --red: #e03030; --blue: #4488dd; --purple: #a388e8;
-  --el-physical: #d4d4d4;
-  --el-fire: #ff6a3d;
-  --el-water: #4dc3ff;
-  --el-earth: #b07a3a;
-  --el-ice: #8ed6ff;
-  --el-lightning: #ffe14d;
-  --el-arcane: #c688ff;
+  --green: #5ac85a; --red: #e03030; --blue: #4488dd;
+  --combat: #d4643c; --gather: #5ca85c; --craft: #c8a03c;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-button, a, [onclick] { touch-action: manipulation; }
+button { font: inherit; color: inherit; touch-action: manipulation; }
 html, body { height: 100%; overflow-x: hidden; }
 body {
   background: radial-gradient(ellipse at top, #1a1308 0%, var(--bg) 60%);
   color: var(--text);
   font-family: 'Crimson Text', Georgia, serif;
   font-size: 15px;
-  min-height: 100vh;
+  padding-bottom: 66px;
 }
+body.in-run { overflow: hidden; }
 
-/* ===== Header ===== */
-#hdr {
+/* ===== Top bar ===== */
+#top {
+  position: sticky; top: 0; z-index: 40;
   background: linear-gradient(180deg, #140e04, #0e0a03);
   border-bottom: 1px solid var(--bdr);
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
   box-shadow: 0 2px 12px rgba(180, 120, 0, .25);
-  position: sticky; top: 0; z-index: 50;
+  padding: 7px 12px 8px;
 }
+#top-row { display: flex; align-items: center; gap: 10px; }
 #logo {
-  font-family: 'Cinzel', serif;
-  font-size: 18px;
-  font-weight: 900;
-  color: var(--gold);
-  letter-spacing: 2px;
+  font-family: 'Cinzel', serif; font-size: 16px; font-weight: 900;
+  color: var(--gold); letter-spacing: 2px;
   text-shadow: 0 0 14px rgba(240, 192, 64, .5);
+  flex: 1; min-width: 0;
 }
-#hdr-right { display: flex; align-items: center; gap: 10px; }
-#gold-hdr {
-  font-family: 'Cinzel', serif;
-  font-size: 13px;
-  color: var(--gold);
-  background: var(--bg2);
-  border: 1px solid var(--bdr);
-  border-radius: 16px;
-  padding: 3px 10px;
+.pill {
+  font-family: 'Cinzel', serif; font-size: 11px;
+  background: var(--bg2); border: 1px solid var(--bdr);
+  border-radius: 14px; padding: 3px 9px; white-space: nowrap;
 }
+.pill b { color: var(--gold); }
+#auth-ui { display: flex; align-items: center; gap: 6px; }
+#auth-ui button {
+  background: var(--bg3); border: 1px solid var(--bdr); color: var(--gold);
+  padding: 3px 10px; border-radius: 4px; cursor: pointer;
+  font-family: 'Cinzel', serif; font-size: 10px;
+}
+#auth-ui #auth-status { color: var(--gold); font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; }
 
-/* ===== Main layout ===== */
-#main {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 10px 10px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+#hp-bar { display: flex; align-items: center; gap: 7px; margin-top: 6px; }
+#hp-bar .lbl { font-family: 'Cinzel', serif; font-size: 10px; color: var(--text2); }
+#hp-bar .track {
+  flex: 1; height: 9px; background: #0a0804;
+  border: 1px solid var(--bdr); border-radius: 5px; overflow: hidden;
 }
+#hp-bar .fill {
+  height: 100%; background: linear-gradient(90deg, #2c9c2c, #5af05a);
+  transition: width .3s;
+}
+#hp-bar.low .fill { background: linear-gradient(90deg, #a01818, #f03030); }
+#hp-bar .val { font-size: 10px; font-family: 'Cinzel', serif; color: var(--text); min-width: 56px; text-align: right; }
 
+/* ===== Layout ===== */
+#main { max-width: 520px; margin: 0 auto; padding: 10px 10px 20px; }
 .screen { display: none; flex-direction: column; gap: 10px; }
 .screen.active { display: flex; }
 
-.panel {
-  background: var(--bg1);
-  border: 1px solid var(--bdr);
-  border-radius: 10px;
-  overflow: hidden;
-}
+.panel { background: var(--bg1); border: 1px solid var(--bdr); border-radius: 10px; overflow: hidden; }
 .panel-hdr {
   background: linear-gradient(90deg, #1a1208, #231a0c);
   border-bottom: 1px solid var(--bdr);
   padding: 8px 12px;
-  font-family: 'Cinzel', serif;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text2);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700;
+  color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
-.panel-body { padding: 10px 12px; }
+.panel-hdr .hint { font-size: 9px; color: var(--text3); letter-spacing: .4px; text-transform: none; font-style: italic; font-family: 'Crimson Text', serif; }
+.panel-body { padding: 10px; }
+.empty { color: var(--text3); font-style: italic; text-align: center; padding: 16px 10px; font-size: 12px; }
 
-/* ===== Hero select ===== */
-#screen-hero-select { padding-top: 8px; }
-#hero-intro {
-  text-align: center;
-  padding: 14px 10px;
-}
-#hero-intro h1 {
-  font-family: 'Cinzel', serif;
-  font-size: 22px;
-  font-weight: 900;
-  color: var(--gold);
-  letter-spacing: 4px;
-  text-shadow: 0 0 16px rgba(240, 192, 64, .55);
-  margin-bottom: 6px;
-}
-#hero-intro p {
-  color: var(--text2);
-  font-style: italic;
-  font-size: 13px;
-  max-width: 360px;
-  margin: 0 auto;
-  line-height: 1.5;
-}
-.hero-cards { display: flex; flex-direction: column; gap: 12px; }
-.hero-card {
-  background: linear-gradient(180deg, #1c1410, #110c07);
-  border: 2px solid var(--bdr);
-  border-radius: 12px;
-  padding: 14px;
-  cursor: pointer;
-  transition: all .25s ease;
-  display: flex;
-  gap: 14px;
-  align-items: center;
-}
-.hero-card:active { transform: scale(.98); }
-.hero-card:hover { border-color: var(--bdr2); box-shadow: 0 0 16px rgba(240, 192, 64, .15); }
-.hero-card .hc-portrait {
-  font-size: 52px;
-  width: 76px; height: 76px;
-  background: radial-gradient(circle, #2a1f10, #110a04);
-  border: 2px solid var(--bdr2);
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  box-shadow: inset 0 0 14px rgba(0, 0, 0, .6);
-}
-.hero-card .hc-info { flex: 1; min-width: 0; }
-.hero-card .hc-name {
-  font-family: 'Cinzel', serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--gold);
-  margin-bottom: 4px;
-}
-.hero-card .hc-desc {
-  font-size: 12px;
-  color: var(--text2);
-  font-style: italic;
-  margin-bottom: 8px;
-  line-height: 1.35;
-}
-.hero-card .hc-stats { display: flex; gap: 10px; flex-wrap: wrap; }
-.hc-stat {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-family: 'Cinzel', serif;
-  letter-spacing: .5px;
-}
-.hc-stat .star { color: var(--gold); }
-.hc-stat .label { color: var(--text2); text-transform: uppercase; }
-
-/* ===== Hub: hero plate ===== */
-#hero-plate {
-  display: flex;
-  gap: 12px;
-  background: linear-gradient(90deg, #1a1308, #110b05);
-  border: 1px solid var(--bdr);
-  border-radius: 10px;
-  padding: 10px;
-  align-items: center;
-}
-#hp-portrait {
-  font-size: 38px;
-  width: 60px; height: 60px;
-  background: radial-gradient(circle, #2a1f10, #110a04);
-  border: 2px solid var(--gold);
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 0 12px rgba(240, 192, 64, .25), inset 0 0 10px rgba(0, 0, 0, .5);
-}
-#hp-meta { flex: 1; min-width: 0; }
-#hp-name {
-  font-family: 'Cinzel', serif;
-  font-size: 15px;
-  color: var(--gold);
-  font-weight: 700;
-  margin-bottom: 2px;
-  display: flex; align-items: center; gap: 8px;
-}
-#hp-lvl {
-  background: var(--bg2);
-  border: 1px solid var(--bdr2);
-  color: var(--text);
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 8px;
-}
-.hp-bars { display: flex; flex-direction: column; gap: 3px; }
-.hp-bar {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 10px;
-  font-family: 'Cinzel', serif;
-  color: var(--text2);
-}
-.hp-bar .label { width: 36px; }
-.hp-bar .track {
-  flex: 1;
-  height: 7px;
-  background: #0a0804;
-  border: 1px solid var(--bdr);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.hp-bar .fill { height: 100%; border-radius: 3px; transition: width .3s; }
-.hp-bar.hp .fill { background: linear-gradient(90deg, #c02020, #f03030); }
-.hp-bar.mp .fill { background: linear-gradient(90deg, #2070dd, #4dc3ff); }
-.hp-bar.xp .fill { background: linear-gradient(90deg, var(--gold), #ff9900); }
-.hp-bar .val { font-size: 10px; color: var(--text); min-width: 44px; text-align: right; }
-
-/* ===== Stat strip ===== */
-#stat-strip {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-.stat-tile {
-  background: var(--bg2);
-  border: 1px solid var(--bdr);
-  border-radius: 8px;
-  padding: 8px 4px;
-  text-align: center;
-  position: relative;
-}
-.stat-tile .icon { font-size: 18px; line-height: 1; margin-bottom: 2px; }
-.stat-tile .lbl {
-  font-family: 'Cinzel', serif;
-  font-size: 8px;
-  color: var(--text3);
-  letter-spacing: .5px;
-  text-transform: uppercase;
-}
-.stat-tile .val {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--gold);
-  line-height: 1.1;
-}
-.stat-tile.bumped { animation: statBump .55s ease; }
-@keyframes statBump { 0% { transform: scale(1); } 30% { transform: scale(1.15); box-shadow: 0 0 16px rgba(240, 192, 64, .6); } 100% { transform: scale(1); } }
-
-/* ===== Action row ===== */
-#action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-#action-row .full { grid-column: 1 / -1; }
-.action-btn {
-  background: linear-gradient(180deg, #2a1f0f, #1a1308);
-  border: 1.5px solid var(--bdr2);
-  color: var(--gold);
-  font-family: 'Cinzel', serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  padding: 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  text-transform: uppercase;
-  transition: transform .15s, box-shadow .15s;
-}
-.action-btn:active { transform: scale(.96); }
-.action-btn .ab-icon { font-size: 18px; }
-.action-btn.dungeon {
-  border-color: var(--gold);
-  background: linear-gradient(180deg, #2a1c08, #1a1206);
-  box-shadow: 0 0 12px rgba(240, 192, 64, .25), inset 0 0 8px rgba(240, 192, 64, .08);
-  animation: dungeonGlow 2.4s ease-in-out infinite;
-}
-.action-btn.camp { font-size: 12px; padding: 9px; }
-.action-btn.camp.afford { border-color: #6fcc6f; color: #aef0ae; }
-.action-btn.camp.rested {
-  opacity: .5;
-  border-color: var(--bdr);
-  color: var(--text2);
-}
-
-/* Dungeon phase stepper */
-#dun-select {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg2);
-  border: 1px solid var(--bdr);
-  border-radius: 8px;
-  padding: 5px 8px;
-}
-#dun-select button {
-  background: var(--bg3);
-  border: 1px solid var(--bdr2);
-  color: var(--gold);
-  font-size: 12px;
-  width: 34px;
-  padding: 5px 0;
-  border-radius: 6px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-#dun-select button:disabled { opacity: .25; cursor: not-allowed; }
-#dun-select button:active:not(:disabled) { transform: scale(.94); }
-#dun-select .phase-label {
-  flex: 1;
-  text-align: center;
-  font-family: 'Cinzel', serif;
-  font-size: 11px;
-  color: var(--text2);
-  letter-spacing: .5px;
-}
-@keyframes dungeonGlow {
-  0%, 100% { box-shadow: 0 0 12px rgba(240, 192, 64, .25), inset 0 0 8px rgba(240, 192, 64, .08); }
-  50% { box-shadow: 0 0 20px rgba(240, 192, 64, .45), inset 0 0 14px rgba(240, 192, 64, .14); }
-}
-
-/* ===== Monster grid ===== */
-#monster-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  padding: 10px;
-}
-.mon-card {
-  background: var(--bg2);
-  border: 1.5px solid var(--bdr);
-  border-radius: 8px;
-  padding: 10px 8px;
-  cursor: pointer;
-  transition: all .15s;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  text-align: center;
-}
-.mon-card:active { transform: scale(.96); }
-.mon-card:hover { border-color: var(--bdr2); }
-.mon-card.locked { opacity: .35; cursor: not-allowed; filter: grayscale(.8); }
-.mon-card .mc-icon { font-size: 30px; line-height: 1; }
-.mon-card .mc-name {
-  font-family: 'Cinzel', serif;
-  font-size: 11px;
-  color: var(--gold);
-  font-weight: 700;
-}
-.mon-card .mc-tier {
-  font-size: 9px;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: .5px;
-}
-.mon-card .mc-meta {
-  font-size: 9px;
-  color: var(--text2);
-  display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
-}
-.mon-card .mc-meta .mm-stat { color: var(--green); }
-.mon-card .mc-lock {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(0, 0, 0, .55);
-  border-radius: 8px;
-  color: var(--text3);
-  font-family: 'Cinzel', serif;
-  font-size: 10px;
-  letter-spacing: .8px;
-  text-transform: uppercase;
-}
-
-/* ===== Inline Arena (used by hunt + dungeon) ===== */
-.arena {
-  position: relative;
-  height: 150px;
-  background:
-    linear-gradient(180deg, rgba(0,0,0,.0) 0%, rgba(0,0,0,.45) 100%),
-    radial-gradient(ellipse at center, #2a1d08 0%, #0a0703 75%);
-  border-bottom: 1px solid var(--bdr);
-  overflow: hidden;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 12px 18px 14px;
-}
-.arena::after {
-  content: '';
-  position: absolute; left: 0; right: 0; bottom: 0; height: 14px;
-  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .6));
-  pointer-events: none;
-}
-.fighter {
-  width: 90px;
-  text-align: center;
-  position: relative;
-  z-index: 2;
-}
-.fighter .sprite {
-  font-size: 48px;
-  display: inline-block;
-  line-height: 1;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .55));
-  transition: transform .15s ease;
-}
-.fighter .nm {
-  font-size: 10px;
-  font-family: 'Cinzel', serif;
-  color: var(--text2);
-  letter-spacing: .5px;
-  margin-top: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.fighter .bar {
-  width: 84px;
-  height: 6px;
-  background: #0a0804;
-  border: 1px solid var(--bdr);
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 2px auto;
-}
-.fighter .bar .fill { height: 100%; transition: width .3s; }
-.fighter .bar.hp .fill { background: linear-gradient(90deg, #c02020, #f03030); }
-.fighter .bar.mp .fill { background: linear-gradient(90deg, #2070dd, #4dc3ff); }
-.fighter .bar-val { font-size: 8px; color: var(--text3); }
-.foe-resist {
-  font-size: 9px;
-  font-family: 'Cinzel', serif;
-  letter-spacing: .3px;
-  margin-top: 2px;
-  min-height: 12px;
-  line-height: 1.1;
-}
-.foe-resist .r-resist { color: #8ed6ff; }
-.foe-resist .r-weak   { color: #ff8080; }
-
-/* Sprite animations */
-.sprite.melee-right { animation: meleeRight .55s ease; }
-.sprite.melee-left  { animation: meleeLeft  .55s ease; }
-@keyframes meleeRight {
-  0%   { transform: translateX(0) scale(1); }
-  35%  { transform: translateX(180px) scale(1.1); }
-  55%  { transform: translateX(160px) scale(.95); }
-  100% { transform: translateX(0) scale(1); }
-}
-@keyframes meleeLeft {
-  0%   { transform: translateX(0) scale(1); }
-  35%  { transform: translateX(-180px) scale(1.1); }
-  55%  { transform: translateX(-160px) scale(.95); }
-  100% { transform: translateX(0) scale(1); }
-}
-.sprite.cast { animation: cast .5s ease; }
-@keyframes cast {
-  0%   { transform: scale(1); filter: drop-shadow(0 4px 6px rgba(0,0,0,.55)); }
-  40%  { transform: scale(1.16); filter: drop-shadow(0 0 14px rgba(190, 200, 255, .8)); }
-  100% { transform: scale(1); }
-}
-.sprite.hit { animation: hitShake .42s ease; }
-@keyframes hitShake {
-  0%, 100% { transform: translateX(0); filter: brightness(1); }
-  20% { transform: translateX(-5px); filter: brightness(1.8); }
-  40% { transform: translateX(4px); filter: brightness(.7); }
-  60% { transform: translateX(-3px); filter: brightness(1.4); }
-  80% { transform: translateX(2px); }
-}
-.sprite.dying { animation: dying .9s ease forwards; }
-@keyframes dying {
-  0%   { opacity: 1; transform: scale(1); }
-  60%  { opacity: .6; transform: scale(.8) translateY(8px); }
-  100% { opacity: 0; transform: scale(.4) translateY(20px); }
-}
-.sprite.entering { animation: entering .45s ease; }
-@keyframes entering {
-  0%   { opacity: 0; transform: scale(.5); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
-/* Projectile/aura effects */
-.fx-proj {
-  position: absolute;
-  top: 32%;
-  font-size: 32px;
-  pointer-events: none;
-  z-index: 3;
-  filter: drop-shadow(0 0 10px currentColor);
-}
-.fx-proj.toFoe { animation: projRight .5s ease forwards; }
-.fx-proj.toYou { animation: projLeft  .5s ease forwards; }
-@keyframes projRight {
-  0%   { left: 18%;  opacity: 0; transform: scale(.4) rotate(0deg); }
-  20%  { opacity: 1; transform: scale(1) rotate(40deg); }
-  85%  { left: 70%;  opacity: 1; transform: scale(1.1) rotate(180deg); }
-  100% { left: 75%;  opacity: 0; transform: scale(1.4) rotate(220deg); }
-}
-@keyframes projLeft {
-  0%   { right: 18%; opacity: 0; transform: scale(.4) rotate(0deg); }
-  20%  { opacity: 1; transform: scale(1) rotate(-40deg); }
-  85%  { right: 70%; opacity: 1; transform: scale(1.1) rotate(-180deg); }
-  100% { right: 75%; opacity: 0; transform: scale(1.4) rotate(-220deg); }
-}
-
-/* Floating damage / heal numbers */
-.fx-dmg {
-  position: absolute;
-  font-family: 'Cinzel', serif;
-  font-weight: 700;
-  font-size: 17px;
-  pointer-events: none;
-  z-index: 4;
-  color: #ff8080;
-  text-shadow: 0 0 6px rgba(0, 0, 0, .9);
-  animation: dmgFloat .9s ease forwards;
-}
-.fx-dmg.crit { color: #ffd966; font-size: 22px; text-shadow: 0 0 10px rgba(255, 217, 102, .8); }
-.fx-dmg.heal { color: #6fdc6f; }
-.fx-dmg.you  { left: 18%; }
-.fx-dmg.foe  { right: 18%; }
-@keyframes dmgFloat {
-  0%   { opacity: 0; transform: translateY(0); }
-  15%  { opacity: 1; transform: translateY(-12px); }
-  100% { opacity: 0; transform: translateY(-50px); }
-}
-
-/* Arena log + actions */
-.arena-log {
-  background: rgba(0, 0, 0, .35);
-  border-top: 1px solid var(--bdr);
-  padding: 6px 12px;
-  font-size: 11px;
-  color: var(--text2);
-  max-height: 92px;
-  overflow-y: auto;
-  font-family: 'Crimson Text', serif;
-}
-.arena-log p { margin-bottom: 2px; line-height: 1.4; }
-.arena-log .you { color: var(--gold); }
-.arena-log .mon { color: #f08080; }
-.arena-log .crit { color: #ffd966; font-weight: bold; }
-.arena-log .heal { color: #aef0ae; }
-.arena-log .spell { color: #8ed6ff; }
-.arena-log .win { color: var(--green); font-weight: bold; }
-.arena-log .lose { color: var(--red); font-weight: bold; }
-.arena-actions {
-  display: flex; gap: 8px;
-  padding: 8px 10px 10px;
-}
-.arena-actions button {
-  flex: 1;
-  background: var(--bg2);
-  border: 1px solid var(--bdr2);
-  color: var(--gold);
-  font-family: 'Cinzel', serif;
-  font-size: 11px;
-  padding: 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  letter-spacing: 1px;
-}
-.arena-actions button:active { transform: scale(.96); }
-
-/* Hunt panel mode toggle */
-#hunt-combat { display: none; }
-#hunt-panel.combat-mode #monster-grid { display: none; }
-#hunt-panel.combat-mode #hunt-combat { display: block; }
-
-/* Stat XP bar (under each stat tile) */
-.stat-tile .xp-mini {
-  height: 3px;
-  background: #0a0804;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-top: 4px;
-}
-.stat-tile .xp-mini .xp-mini-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #6b4f22, var(--gold));
-  transition: width .35s;
-  width: 0%;
-}
-.stat-tile .xp-mini-val {
-  font-size: 7px;
-  color: var(--text3);
-  margin-top: 1px;
-  letter-spacing: .3px;
-}
-
-/* ===== Spellbook screen ===== */
-#sb-mana-bar {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 12px;
-  background: linear-gradient(90deg, #0e1424, #0a0e1c);
-  border-bottom: 1px solid var(--bdr);
-}
-#sb-mana-bar .lbl {
-  font-family: 'Cinzel', serif; font-size: 12px;
-  color: #8ed6ff; letter-spacing: 1px;
-}
-#sb-mana-bar .track {
-  flex: 1; height: 10px; background: #050a14;
-  border: 1px solid var(--bdr); border-radius: 5px; overflow: hidden;
-}
-#sb-mana-bar .fill {
-  height: 100%; background: linear-gradient(90deg, #2070dd, #4dc3ff);
-  transition: width .3s;
-}
-#sb-mana-bar .val { font-size: 11px; color: #cfe9ff; font-family: 'Cinzel', serif; min-width: 64px; text-align: right; }
-.sb-section-title {
-  font-family: 'Cinzel', serif;
-  font-size: 11px;
-  color: var(--text2);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  padding: 12px 12px 6px;
-  display: flex; justify-content: space-between; align-items: center;
-}
-.sb-section-title .hint { font-size: 9px; color: var(--text3); letter-spacing: .5px; text-transform: none; font-family: 'Crimson Text', serif; font-style: italic; }
-#sb-loadout {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-  padding: 0 10px 6px;
-}
-.sb-slot {
-  background: var(--bg2);
-  border: 2px dashed var(--bdr);
-  border-radius: 8px;
-  padding: 6px 4px;
-  min-height: 68px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px;
-  cursor: pointer;
-  text-align: center;
-}
-.sb-slot.filled { border-style: solid; border-color: var(--bdr2); background: #1c1710; }
-.sb-slot:active { transform: scale(.95); }
-.sb-slot .ico { font-size: 22px; line-height: 1; }
-.sb-slot .nm { font-size: 9px; font-family: 'Cinzel', serif; color: var(--gold); line-height: 1.1; }
-.sb-slot .ct { font-size: 9px; color: #8ed6ff; }
-.sb-slot.empty .ico { color: var(--text3); opacity: .5; }
-.sb-slot.empty .nm { color: var(--text3); }
-.sb-slot.heal.filled { border-color: #6fcc6f; box-shadow: inset 0 0 6px rgba(120, 220, 120, .15); }
-.sb-slot.heal .nm { color: #aef0ae; }
-
-#sb-known, #sb-locked {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  padding: 0 10px 10px;
-}
-.spell-btn {
-  background: var(--bg2);
-  border: 1.5px solid var(--bdr);
-  border-radius: 8px;
-  padding: 8px;
-  display: flex; align-items: center; gap: 8px;
-  cursor: pointer;
-  text-align: left;
-  transition: all .15s;
-}
-.spell-btn:active { transform: scale(.96); }
-.spell-btn:disabled { opacity: .45; cursor: not-allowed; }
-.spell-btn.equipped { border-color: var(--gold); background: #1f1808; }
-.spell-btn.heal { border-color: rgba(120, 220, 120, .35); }
-.spell-btn.heal.equipped { border-color: #6fcc6f; background: #0e1c0e; }
-.spell-btn .si {
-  font-size: 22px; width: 28px; text-align: center;
-}
-.spell-btn .sd { flex: 1; min-width: 0; }
-.spell-btn .sn {
-  font-family: 'Cinzel', serif; font-size: 11px;
+/* ===== Skills ===== */
+#total-banner {
+  text-align: center; padding: 12px 10px 14px;
+  background: radial-gradient(ellipse at center, #1f1608 0%, transparent 72%);
+}
+#total-banner .cap {
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 2.5px;
+  color: var(--text2); text-transform: uppercase;
+}
+#total-level-big {
+  font-family: 'Cinzel', serif; font-size: 40px; font-weight: 900;
   color: var(--gold); line-height: 1.1;
+  text-shadow: 0 0 18px rgba(240, 192, 64, .45);
 }
-.spell-btn.heal .sn { color: #aef0ae; }
-.spell-btn .sm { font-size: 10px; color: #8ed6ff; }
-.spell-btn .se {
-  font-size: 9px; color: var(--text2);
-  margin-top: 2px;
-  line-height: 1.2;
+#skill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; padding: 10px; }
+.skill-tile {
+  background: var(--bg2); border: 1px solid var(--bdr);
+  border-left-width: 3px; border-radius: 8px; padding: 8px 9px;
 }
-.spell-btn .lock-lvl {
-  font-size: 10px;
-  color: var(--text3);
-  font-family: 'Cinzel', serif;
-  letter-spacing: .5px;
-}
+.skill-tile.combat { border-left-color: var(--combat); }
+.skill-tile.gather { border-left-color: var(--gather); }
+.skill-tile.craft  { border-left-color: var(--craft); }
+.st-top { display: flex; align-items: center; gap: 6px; }
+.st-ico { font-size: 15px; }
+.st-name { font-family: 'Cinzel', serif; font-size: 10px; color: var(--text2); flex: 1; letter-spacing: .5px; }
+.st-lvl { font-family: 'Cinzel', serif; font-size: 17px; font-weight: 700; color: var(--gold); line-height: 1; }
+.st-track { height: 4px; background: #0a0804; border-radius: 2px; overflow: hidden; margin: 6px 0 3px; }
+.st-fill { height: 100%; background: linear-gradient(90deg, #6b4f22, var(--gold)); transition: width .35s; }
+.st-xp { font-size: 9px; color: var(--text3); }
 
-/* ===== Forge screen ===== */
-#screen-forge .panel-body { padding: 14px 12px; }
-#forge-weapon {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 6px;
-  padding: 14px 10px;
-  background: radial-gradient(ellipse at center, #1f1608 0%, transparent 70%);
+/* ===== Node lists (gather) & recipes (forge) ===== */
+.list { display: flex; flex-direction: column; gap: 6px; padding: 8px; }
+.node-btn, .recipe, .inv-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: var(--bg2); border: 1px solid var(--bdr); border-radius: 8px;
+  padding: 8px 10px; cursor: pointer; text-align: left;
+  transition: border-color .15s, transform .1s;
 }
-#fw-icon {
-  font-size: 60px;
-  filter: drop-shadow(0 0 14px rgba(240, 192, 64, .45));
-  margin-bottom: 4px;
+.node-btn:active:not(:disabled), .recipe:active:not(:disabled), .inv-item:active { transform: scale(.985); }
+.node-btn:disabled, .recipe:disabled { cursor: not-allowed; opacity: .45; }
+.node-btn.locked, .recipe.locked { opacity: .38; }
+.node-btn.active { border-color: var(--green); background: #14200f; }
+.nd-ico, .rc-ico, .iv-ico { font-size: 22px; width: 26px; text-align: center; flex-shrink: 0; }
+.nd-body, .rc-body, .iv-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.nd-name, .rc-name, .iv-name { font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold); }
+.nd-meta, .rc-meta, .iv-meta { font-size: 10px; color: var(--text2); }
+.nd-have, .rc-have, .iv-qty {
+  font-family: 'Cinzel', serif; font-size: 12px; color: var(--text2);
+  min-width: 26px; text-align: right; flex-shrink: 0;
 }
-#fw-name {
-  font-family: 'Cinzel', serif;
-  font-size: 18px;
-  color: var(--gold);
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-#fw-power {
-  font-size: 12px;
-  color: var(--text2);
-}
-#fw-power b { color: var(--gold); }
-#fw-elements {
-  display: flex; flex-wrap: wrap; gap: 4px;
-  justify-content: center;
-  margin-top: 4px;
-  max-width: 340px;
-}
-.el-chip {
-  background: var(--bg2);
-  border: 1px solid var(--bdr);
-  border-radius: 12px;
-  padding: 2px 8px;
-  font-size: 10px;
-  font-family: 'Cinzel', serif;
-  display: flex; align-items: center; gap: 4px;
-}
-.el-chip .el-dot { width: 8px; height: 8px; border-radius: 50%; }
-#fw-bar {
-  width: 100%;
-  max-width: 320px;
-  height: 14px;
-  border-radius: 7px;
-  overflow: hidden;
-  display: flex;
-  margin-top: 6px;
-  border: 1px solid var(--bdr);
-}
-#fw-bar .seg { height: 100%; transition: width .35s; }
-#fw-tip {
-  font-size: 11px;
-  color: var(--text3);
-  font-style: italic;
-  text-align: center;
-  margin-top: 4px;
-  padding: 0 14px;
-  line-height: 1.4;
-}
-#forge-resources {
-  padding: 10px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-}
-.res-btn {
-  background: var(--bg2);
-  border: 1.5px solid var(--bdr);
-  border-radius: 8px;
-  padding: 8px;
-  display: flex; align-items: center; gap: 8px;
-  cursor: pointer;
-  transition: all .15s;
-  text-align: left;
-}
-.res-btn:active:not(:disabled) { transform: scale(.96); }
-.res-btn:disabled { opacity: .3; cursor: not-allowed; }
-.res-btn .ri {
-  font-size: 22px; width: 32px; text-align: center;
-}
-.res-btn .rd { flex: 1; min-width: 0; }
-.res-btn .rn {
-  font-family: 'Cinzel', serif;
-  font-size: 11px;
-  color: var(--gold);
-}
-.res-btn .rq {
-  font-size: 10px;
-  color: var(--text2);
-}
-.res-btn .re {
-  font-size: 9px;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  margin-top: 1px;
-}
+.rc-cost { font-size: 10px; }
+.rc-cost .ok { color: var(--text2); }
+.rc-cost .short { color: #e07070; }
+.rc-stats { font-family: 'Crimson Text', serif; font-size: 10px; color: var(--green); font-weight: 600; }
 
-/* ===== Dungeon screen ===== */
-#dun-phase {
-  font-family: 'Cinzel', serif;
-  font-size: 15px;
-  color: var(--gold);
-  letter-spacing: 2px;
-  text-transform: uppercase;
+/* Active gathering strip */
+#gather-active {
+  background: linear-gradient(90deg, #14200f, #0d1509);
+  border: 1px solid var(--green); border-radius: 10px; padding: 10px 12px;
 }
-#dun-stats {
-  display: flex; gap: 12px;
-  font-size: 11px;
-  color: var(--text2);
+#ga-row { display: flex; align-items: center; gap: 10px; }
+#ga-icon { font-size: 26px; }
+#ga-info { flex: 1; min-width: 0; }
+#ga-name { font-family: 'Cinzel', serif; font-size: 13px; color: #aef0ae; }
+#ga-count { font-size: 11px; color: var(--text2); }
+#ga-stop {
+  background: var(--bg3); border: 1px solid var(--bdr2); color: var(--gold);
+  font-family: 'Cinzel', serif; font-size: 11px; padding: 6px 12px;
+  border-radius: 6px; cursor: pointer; letter-spacing: 1px;
 }
-#dun-stats b { color: var(--gold); }
-#dun-log {
-  width: 100%;
-  background: rgba(0, 0, 0, .35);
-  border: 1px solid var(--bdr);
-  border-radius: 6px;
-  padding: 6px 8px;
-  font-size: 11px;
-  max-height: 110px;
-  overflow-y: auto;
-  font-family: 'Crimson Text', serif;
-  color: var(--text2);
-}
-#dun-log p { margin-bottom: 2px; line-height: 1.35; }
+#ga-track { height: 6px; background: #0a0804; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+#ga-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #2c9c2c, #7af07a); }
 
-/* ===== Result screen ===== */
-#screen-results { align-items: stretch; }
-#result-title {
-  font-family: 'Cinzel', serif;
-  font-size: 20px;
-  text-align: center;
-  letter-spacing: 2px;
-  margin: 8px 0;
+/* ===== Gear ===== */
+#equip-slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px; }
+.eq-slot {
+  background: var(--bg2); border: 2px dashed var(--bdr); border-radius: 8px;
+  padding: 7px 4px; text-align: center; min-height: 78px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
 }
-#result-title.win { color: var(--green); text-shadow: 0 0 14px rgba(90, 200, 90, .45); }
-#result-title.lose { color: var(--red); text-shadow: 0 0 14px rgba(224, 48, 48, .45); }
-#result-list { padding: 12px; display: flex; flex-direction: column; gap: 6px; }
-.result-line {
-  display: flex; justify-content: space-between; gap: 10px;
-  background: var(--bg2);
-  border: 1px solid var(--bdr);
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 13px;
+.eq-slot.filled { border-style: solid; border-color: var(--bdr2); cursor: pointer; }
+.eq-slot.filled:active { transform: scale(.96); }
+.eq-label { font-family: 'Cinzel', serif; font-size: 8px; color: var(--text3); letter-spacing: .6px; text-transform: uppercase; }
+.eq-ico { font-size: 22px; line-height: 1.1; }
+.eq-name { font-size: 9px; color: var(--text2); line-height: 1.15; }
+.eq-slot.filled .eq-name { color: var(--gold); }
+#bonus-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 0 10px 10px; }
+.bonus {
+  background: var(--bg2); border: 1px solid var(--bdr); border-radius: 8px;
+  padding: 6px 4px; text-align: center;
 }
-.result-line .lbl { color: var(--text2); }
-.result-line .val { color: var(--gold); font-family: 'Cinzel', serif; }
-#result-continue {
+.bonus .bl { font-family: 'Cinzel', serif; font-size: 8px; color: var(--text3); letter-spacing: .5px; text-transform: uppercase; }
+.bonus .bv { font-family: 'Cinzel', serif; font-size: 15px; color: var(--gold); font-weight: 700; }
+.inv-item.wearable { border-color: var(--bdr2); }
+
+/* ===== Dungeon list ===== */
+#dungeon-list { display: flex; flex-direction: column; gap: 9px; }
+.dun-card {
+  background: linear-gradient(180deg, #1a1308, #100b05);
+  border: 1.5px solid var(--bdr); border-radius: 10px; padding: 11px 12px;
+}
+.dun-card.locked { opacity: .5; }
+.dun-card.cleared { border-color: #3c6b3c; }
+.dc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.dc-ico { font-size: 22px; }
+.dc-name { font-family: 'Cinzel', serif; font-size: 14px; color: var(--gold); flex: 1; }
+.dc-tag {
+  font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 1px;
+  border: 1px solid var(--bdr2); border-radius: 8px; padding: 2px 7px; color: var(--text2);
+}
+.dun-card.cleared .dc-tag { color: var(--green); border-color: #3c6b3c; }
+.dc-blurb { font-size: 12px; color: var(--text2); font-style: italic; line-height: 1.4; margin-bottom: 6px; }
+.dc-meta, .dc-drops { font-size: 10px; color: var(--text3); margin-bottom: 3px; }
+.dc-drops { color: var(--text2); }
+.dc-go {
+  width: 100%; margin-top: 8px;
   background: linear-gradient(180deg, #2a1f0f, #1a1308);
-  border: 2px solid var(--gold);
-  color: var(--gold);
-  font-family: 'Cinzel', serif;
-  font-size: 14px;
-  padding: 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  letter-spacing: 2px;
-  width: 100%;
-  margin-top: 8px;
+  border: 1.5px solid var(--gold); color: var(--gold);
+  font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; padding: 9px; border-radius: 7px; cursor: pointer;
 }
-#result-continue:active { transform: scale(.97); }
+.dc-go:active { transform: scale(.97); }
+.dc-need { margin-top: 8px; font-size: 10px; color: var(--text3); text-align: center; font-style: italic; }
 
-/* ===== Log feed ===== */
-#log {
-  background: var(--bg1);
-  border: 1px solid var(--bdr);
-  border-radius: 10px;
-  padding: 8px 12px;
-  max-height: 160px;
-  overflow-y: auto;
-  font-size: 12px;
-  color: var(--text2);
+/* ===== Dungeon run overlay ===== */
+#run-overlay {
+  position: fixed; inset: 0; z-index: 120; display: none;
+  background: radial-gradient(ellipse at center, #1a0e04 0%, #060300 78%);
+  flex-direction: column;
 }
-#log p { margin-bottom: 3px; line-height: 1.4; }
-#log .gold { color: var(--gold); }
-#log .stat { color: var(--green); }
-#log .red { color: #f08080; }
+body.in-run #run-overlay { display: flex; }
+#run-top {
+  padding: 10px 14px; border-bottom: 1px solid var(--bdr);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: linear-gradient(180deg, #140e04, #0e0a03);
+}
+#run-name { font-family: 'Cinzel', serif; font-size: 14px; color: var(--gold); letter-spacing: 1px; }
+#run-wave { font-family: 'Cinzel', serif; font-size: 11px; color: var(--text2); letter-spacing: 1px; }
+#run-stage {
+  position: relative; flex-shrink: 0;
+  height: 190px; display: flex; align-items: center; justify-content: space-around;
+  padding: 0 16px;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,.45));
+}
+.combatant { text-align: center; width: 120px; position: relative; z-index: 2; }
+.combatant .ico { font-size: 46px; line-height: 1; display: inline-block; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)); }
+.combatant .ico.hit { animation: shake .35s ease; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); filter: brightness(1); }
+  25% { transform: translateX(-6px); filter: brightness(1.9); }
+  60% { transform: translateX(5px); filter: brightness(.6); }
+}
+.combatant .nm { font-family: 'Cinzel', serif; font-size: 10px; color: var(--text2); margin-top: 5px; line-height: 1.2; }
+.combatant .track { height: 7px; background: #0a0804; border: 1px solid var(--bdr); border-radius: 4px; overflow: hidden; margin: 5px auto 2px; }
+.combatant .fill { height: 100%; transition: width .25s; }
+.combatant.you .fill { background: linear-gradient(90deg, #2c9c2c, #5af05a); }
+.combatant.foe .fill { background: linear-gradient(90deg, #a01818, #f03030); }
+.combatant .hpv { font-size: 9px; color: var(--text3); }
+.float {
+  position: absolute; top: 34%;
+  font-family: 'Cinzel', serif; font-weight: 700; font-size: 20px;
+  color: #ff8b7a; text-shadow: 0 0 7px rgba(0,0,0,.95);
+  pointer-events: none; z-index: 4; animation: floatUp .9s ease forwards;
+}
+.float.you { left: 20%; }
+.float.foe { right: 20%; }
+.float.zero { color: var(--text3); font-size: 15px; }
+@keyframes floatUp {
+  0% { opacity: 0; transform: translateY(0); }
+  18% { opacity: 1; transform: translateY(-12px); }
+  100% { opacity: 0; transform: translateY(-52px); }
+}
+#run-log {
+  flex: 1; overflow-y: auto; padding: 10px 14px;
+  font-size: 12px; color: var(--text2); line-height: 1.5;
+  border-top: 1px solid var(--bdr);
+}
+#run-log p { margin-bottom: 2px; }
+#run-log b { color: var(--gold2); }
+#run-log .miss { color: var(--text3); font-style: italic; }
+#run-log .hurt { color: #f08080; }
+#run-log .win { color: var(--green); font-weight: 600; }
+#run-log .lose { color: var(--red); font-weight: 600; }
+#run-log .boss { color: var(--gold); font-weight: 700; letter-spacing: .5px; }
+#run-actions { padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--bdr); }
+#run-flee {
+  width: 100%; background: var(--bg2); border: 1px solid var(--bdr2); color: var(--gold);
+  font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 2px;
+  padding: 11px; border-radius: 7px; cursor: pointer;
+}
 
-/* ===== Auth bits ===== */
-#auth-ui { display: flex; align-items: center; gap: 6px; }
-#auth-ui button {
-  background: var(--bg3);
-  border: 1px solid var(--bdr);
-  color: var(--gold);
-  padding: 4px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: 'Cinzel', serif;
-  font-size: 11px;
+/* ===== Results ===== */
+#result-title { font-family: 'Cinzel', serif; font-size: 21px; text-align: center; letter-spacing: 2px; margin: 6px 0 2px; }
+#result-title.win { color: var(--green); text-shadow: 0 0 14px rgba(90,200,90,.4); }
+#result-title.lose { color: var(--red); text-shadow: 0 0 14px rgba(224,48,48,.4); }
+#result-sub { text-align: center; font-size: 12px; color: var(--text2); font-style: italic; margin-bottom: 6px; }
+#result-list { display: flex; flex-direction: column; gap: 5px; padding: 10px; }
+.res-row {
+  display: flex; justify-content: space-between; gap: 12px;
+  background: var(--bg2); border: 1px solid var(--bdr); border-radius: 6px;
+  padding: 7px 10px; font-size: 12px;
 }
-#auth-ui #auth-status { color: var(--gold); font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; }
+.rr-l { color: var(--text2); flex-shrink: 0; }
+.rr-v { color: var(--gold); font-family: 'Cinzel', serif; text-align: right; }
+#result-continue {
+  width: 100%; background: linear-gradient(180deg, #2a1f0f, #1a1308);
+  border: 2px solid var(--gold); color: var(--gold);
+  font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 2px;
+  padding: 12px; border-radius: 8px; cursor: pointer;
+}
+
+/* ===== Activity feed ===== */
+#feed {
+  background: var(--bg1); border: 1px solid var(--bdr); border-radius: 10px;
+  padding: 8px 12px; max-height: 150px; overflow-y: auto;
+  font-size: 12px; color: var(--text2); line-height: 1.5;
+}
+#feed p { margin-bottom: 3px; }
+#feed b { color: var(--gold); }
+#feed .xp { color: var(--green); }
+#feed .lvl { color: var(--gold2); }
+#feed .win { color: var(--green); }
+#feed .lose { color: #f08080; }
+
+/* ===== Bottom nav ===== */
+#nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
+  display: flex;
+  background: linear-gradient(180deg, #14100a, #0a0704);
+  border-top: 1px solid var(--bdr);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+body.in-run #nav { display: none; }
+.nav-btn {
+  flex: 1; background: none; border: none; cursor: pointer;
+  padding: 8px 2px 9px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  color: var(--text3); border-top: 2px solid transparent;
+}
+.nav-btn .ni { font-size: 19px; line-height: 1; filter: grayscale(.6) opacity(.65); }
+.nav-btn .nl { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: .6px; }
+.nav-btn.active { color: var(--gold); border-top-color: var(--gold); background: rgba(240,192,64,.05); }
+.nav-btn.active .ni { filter: none; }
 
 /* ===== Toast ===== */
 #toast {
-  position: fixed;
-  top: 60px; left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg2);
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-family: 'Cinzel', serif;
-  font-size: 13px;
-  z-index: 300;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, .6), 0 0 14px rgba(240, 192, 64, .25);
-  opacity: 0;
-  transition: opacity .25s, transform .25s;
-  pointer-events: none;
+  position: fixed; top: 62px; left: 50%; transform: translateX(-50%);
+  background: var(--bg2); border: 1px solid var(--gold); color: var(--gold);
+  padding: 8px 15px; border-radius: 8px;
+  font-family: 'Cinzel', serif; font-size: 13px; z-index: 300;
+  box-shadow: 0 4px 20px rgba(0,0,0,.6), 0 0 14px rgba(240,192,64,.25);
+  opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none;
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(4px); }
 
-/* ===== Scrollbar ===== */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-thumb { background: var(--bdr2); border-radius: 2px; }
 ::-webkit-scrollbar-track { background: transparent; }
 
-@media (max-width: 380px) {
-  #logo { font-size: 16px; letter-spacing: 1.5px; }
-  .stat-tile .val { font-size: 16px; }
-  .mon-card .mc-icon { font-size: 26px; }
+@media (max-width: 360px) {
+  #logo { font-size: 14px; letter-spacing: 1px; }
+  .pill { font-size: 10px; padding: 2px 7px; }
 }
 </style>
 </head>
 <body>
 
-<div id="hdr">
-  <div id="logo">RUNEFORGE</div>
-  <div id="hdr-right">
-    <span id="gold-hdr">⚜ <span id="gold-val">0</span></span>
+<div id="top">
+  <div id="top-row">
+    <div id="logo">RUNEFORGE</div>
+    <span class="pill">Total <b id="tl-val">17</b></span>
+    <span class="pill">Combat <b id="cb-val">3</b></span>
+  </div>
+  <div id="hp-bar">
+    <span class="lbl">HP</span>
+    <div class="track"><div class="fill" id="hp-fill" style="width:100%"></div></div>
+    <span class="val" id="hp-text">10 / 10</span>
   </div>
 </div>
 
 <div id="main">
 
-  <!-- ============== HERO SELECT ============== -->
-  <div id="screen-hero-select" class="screen">
-    <div id="hero-intro">
-      <h1>CHOOSE YOUR CHAMPION</h1>
-      <p>Three souls answer the call of the forge. Each carries a different fate, and a different blade.</p>
+  <!-- ================= SKILLS ================= -->
+  <div id="screen-skills" class="screen">
+    <div class="panel">
+      <div id="total-banner">
+        <div class="cap">Total Level</div>
+        <div id="total-level-big">17</div>
+      </div>
+      <div id="skill-grid"></div>
     </div>
-    <div class="hero-cards" id="hero-cards-list"></div>
+    <div id="feed"></div>
   </div>
 
-  <!-- ============== HUB ============== -->
-  <div id="screen-hub" class="screen">
-    <div id="hero-plate">
-      <div id="hp-portrait">🗿</div>
-      <div id="hp-meta">
-        <div id="hp-name">
-          <span id="hp-name-txt">Hero</span>
-          <span id="hp-lvl">Lv 1</span>
+  <!-- ================= GATHER ================= -->
+  <div id="screen-gather" class="screen">
+    <div id="gather-active" style="display:none;">
+      <div id="ga-row">
+        <div id="ga-icon">🌳</div>
+        <div id="ga-info">
+          <div id="ga-name">Chopping Tree</div>
+          <div id="ga-count">0 × Logs</div>
         </div>
-        <div class="hp-bars">
-          <div class="hp-bar hp">
-            <span class="label">HP</span>
-            <div class="track"><div class="fill" id="hp-hp-fill" style="width:100%"></div></div>
-            <span class="val" id="hp-hp-val">50 / 50</span>
-          </div>
-          <div class="hp-bar mp">
-            <span class="label">MP</span>
-            <div class="track"><div class="fill" id="hp-mp-fill" style="width:100%"></div></div>
-            <span class="val" id="hp-mp-val">25 / 25</span>
-          </div>
-          <div class="hp-bar xp">
-            <span class="label">XP</span>
-            <div class="track"><div class="fill" id="hp-xp-fill" style="width:0%"></div></div>
-            <span class="val" id="hp-xp-val">0 / 100</span>
-          </div>
-        </div>
+        <button id="ga-stop">STOP</button>
       </div>
+      <div id="ga-track"><div id="ga-fill"></div></div>
     </div>
-
-    <div id="stat-strip">
-      <div class="stat-tile" data-stat="strength">
-        <div class="icon">⚔️</div>
-        <div class="val" id="stat-strength">3</div>
-        <div class="lbl">Strength</div>
-      </div>
-      <div class="stat-tile" data-stat="intellect">
-        <div class="icon">📖</div>
-        <div class="val" id="stat-intellect">1</div>
-        <div class="lbl">Intellect</div>
-      </div>
-      <div class="stat-tile" data-stat="defence">
-        <div class="icon">🛡️</div>
-        <div class="val" id="stat-defence">1</div>
-        <div class="lbl">Defence</div>
-      </div>
-      <div class="stat-tile" data-stat="mana">
-        <div class="icon">💧</div>
-        <div class="val" id="stat-mana">1</div>
-        <div class="lbl">Mana</div>
-      </div>
+    <div class="panel">
+      <div class="panel-hdr"><span>🪓 Woodcutting</span><span class="hint">tap to start · tap again to stop</span></div>
+      <div class="list" id="tree-list"></div>
     </div>
-
-    <div id="action-row">
-      <button class="action-btn" id="btn-forge"><span class="ab-icon">🔨</span><span class="ab-label">Forge</span></button>
-      <button class="action-btn" id="btn-spellbook"><span class="ab-icon">📖</span><span class="ab-label">Spells</span></button>
-      <button class="action-btn camp full" id="btn-camp"><span class="ab-icon">🔥</span><span class="ab-label">Camp</span></button>
-      <div id="dun-select" class="full" style="display:none;">
-        <button id="dun-phase-down" aria-label="Start an earlier phase">◀</button>
-        <span class="phase-label" id="dun-phase-label">Start at Phase 1 / 1</span>
-        <button id="dun-phase-up" aria-label="Start a later phase">▶</button>
-      </div>
-      <button class="action-btn dungeon full" id="btn-dungeon"><span class="ab-icon">🏰</span><span class="ab-label">Enter Dungeon</span></button>
+    <div class="panel">
+      <div class="panel-hdr"><span>⛏️ Mining</span><span class="hint">logs &amp; ore feed the forge</span></div>
+      <div class="list" id="rock-list"></div>
     </div>
-
-    <div class="panel" id="hunt-panel">
-      <div class="panel-hdr">
-        <span id="hunt-title">Hunting Grounds</span>
-        <span style="font-size:10px;color:var(--text3);" id="hunt-hint">Tap to engage</span>
-      </div>
-      <div id="monster-grid"></div>
-      <div id="hunt-combat">
-        <div class="arena" id="hunt-arena">
-          <div class="fighter you">
-            <div class="sprite" id="hunt-you-sprite">🗿</div>
-            <div class="nm" id="hunt-you-name">You</div>
-            <div class="bar hp"><div class="fill" id="hunt-you-hp-fill" style="width:100%"></div></div>
-            <div class="bar mp"><div class="fill" id="hunt-you-mp-fill" style="width:100%"></div></div>
-          </div>
-          <div class="fighter foe">
-            <div class="sprite" id="hunt-foe-sprite">👺</div>
-            <div class="nm" id="hunt-foe-name">Foe</div>
-            <div class="foe-resist" id="hunt-foe-resist"></div>
-            <div class="bar hp"><div class="fill" id="hunt-foe-hp-fill" style="width:100%"></div></div>
-            <div class="bar-val" id="hunt-foe-hpval">0 / 0</div>
-          </div>
-        </div>
-        <div class="arena-log" id="hunt-log"></div>
-        <div class="arena-actions">
-          <button id="hunt-flee">FLEE</button>
-          <button id="hunt-continue" style="display:none;">CONTINUE</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="log"></div>
   </div>
 
-  <!-- ============== FORGE ============== -->
+  <!-- ================= FORGE ================= -->
   <div id="screen-forge" class="screen">
     <div class="panel">
-      <div class="panel-hdr">
-        <span>The Forge</span>
-        <button id="forge-back" style="background:var(--bg2);border:1px solid var(--bdr);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;padding:3px 10px;border-radius:4px;cursor:pointer;">← BACK</button>
-      </div>
-      <div id="forge-weapon">
-        <div id="fw-icon">⚔️</div>
-        <div id="fw-name">Iron Sword</div>
-        <div id="fw-power">Power <b id="fw-power-val">5</b> · Tier <b id="fw-tier">0</b></div>
-        <div id="fw-bar"></div>
-        <div id="fw-elements"></div>
-        <div id="fw-tip">Infuse essences from defeated monsters to bend this weapon to your will. Mixing elements creates hybrid weapons; staying pure makes them specialised.</div>
-      </div>
+      <div class="panel-hdr"><span>🔥 Smelting</span><span class="hint">ore → bars</span></div>
+      <div class="list" id="smelt-list"></div>
     </div>
     <div class="panel">
-      <div class="panel-hdr"><span>Resources</span><span style="font-size:10px;color:var(--text3);" id="forge-res-hint">Tap to infuse one</span></div>
-      <div id="forge-resources"></div>
+      <div class="panel-hdr"><span>🔨 Smithing &amp; Crafting</span><span class="hint">bars, logs &amp; dungeon spoils → gear</span></div>
+      <div class="list" id="make-list"></div>
     </div>
   </div>
 
-  <!-- ============== SPELLBOOK ============== -->
-  <div id="screen-spellbook" class="screen">
-    <div class="panel">
-      <div class="panel-hdr">
-        <span>Spellbook</span>
-        <button id="spellbook-back" style="background:var(--bg2);border:1px solid var(--bdr);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;padding:3px 10px;border-radius:4px;cursor:pointer;">← BACK</button>
-      </div>
-      <div id="sb-mana-bar">
-        <span class="lbl">MANA</span>
-        <div class="track"><div class="fill" id="sb-mp-fill" style="width:100%"></div></div>
-        <span class="val" id="sb-mp-val">25 / 25</span>
-      </div>
-      <div class="sb-section-title">
-        <span>Loadout — 4 slots</span>
-        <span class="hint">Tap to remove · heals auto-cast under 20% HP</span>
-      </div>
-      <div id="sb-loadout"></div>
-      <div class="sb-section-title">
-        <span>Known Spells</span>
-        <span class="hint">Tap to equip</span>
-      </div>
-      <div id="sb-known"></div>
-      <div class="sb-section-title" id="sb-locked-title" style="display:none;"><span>Locked</span></div>
-      <div id="sb-locked"></div>
-    </div>
-  </div>
-
-  <!-- ============== DUNGEON ============== -->
+  <!-- ================= DUNGEON ================= -->
   <div id="screen-dungeon" class="screen">
+    <div id="dungeon-list"></div>
+  </div>
+
+  <!-- ================= GEAR ================= -->
+  <div id="screen-gear" class="screen">
     <div class="panel">
-      <div class="panel-hdr">
-        <span id="dun-phase">Phase 1</span>
-        <span id="dun-stats" style="font-size:10px;color:var(--text3);">
-          Kills <b id="dun-kills" style="color:var(--gold);">0</b>
-          · Gold <b id="dun-gold" style="color:var(--gold);">0</b>
-          · XP <b id="dun-xp" style="color:var(--gold);">0</b>
-        </span>
+      <div class="panel-hdr"><span>Equipment</span><span class="hint">tap a slot to remove</span></div>
+      <div id="equip-slots"></div>
+      <div id="bonus-row">
+        <div class="bonus"><div class="bl">Attack</div><div class="bv" id="bonus-atk">+0</div></div>
+        <div class="bonus"><div class="bl">Strength</div><div class="bv" id="bonus-str">+0</div></div>
+        <div class="bonus"><div class="bl">Defence</div><div class="bv" id="bonus-def">+0</div></div>
+        <div class="bonus"><div class="bl">Max Hit</div><div class="bv" id="bonus-hit">1</div></div>
       </div>
-      <div class="arena" id="dun-arena">
-        <div class="fighter you">
-          <div class="sprite" id="dun-you-sprite">🗿</div>
-          <div class="nm" id="dun-you-name">You</div>
-          <div class="bar hp"><div class="fill" id="dun-you-hp-fill" style="width:100%"></div></div>
-          <div class="bar mp"><div class="fill" id="dun-you-mp-fill" style="width:100%"></div></div>
-        </div>
-        <div class="fighter foe">
-          <div class="sprite" id="dun-foe-sprite">👹</div>
-          <div class="nm" id="dun-foe-name">Foe</div>
-          <div class="foe-resist" id="dun-foe-resist"></div>
-          <div class="bar hp"><div class="fill" id="dun-foe-hp-fill" style="width:100%"></div></div>
-          <div class="bar-val" id="dun-foe-hpval">0 / 0</div>
-        </div>
-      </div>
-      <div class="arena-log" id="dun-log"></div>
-      <div class="arena-actions">
-        <button id="dun-flee">FLEE</button>
-      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-hdr"><span>Pack</span><span class="hint">tap gear to equip</span></div>
+      <div class="list" id="inv-list"></div>
     </div>
   </div>
 
-  <!-- ============== RESULTS ============== -->
+  <!-- ================= RESULTS ================= -->
   <div id="screen-results" class="screen">
-    <div id="result-title" class="win">VICTORY</div>
+    <div id="result-title" class="win">DUNGEON CLEARED</div>
+    <div id="result-sub"></div>
     <div class="panel"><div id="result-list"></div></div>
-    <button id="result-continue">RETURN TO HUB</button>
+    <button id="result-continue">CONTINUE</button>
   </div>
 
 </div>
 
+<!-- ================= RUN OVERLAY ================= -->
+<div id="run-overlay">
+  <div id="run-top">
+    <span id="run-name">Dungeon</span>
+    <span id="run-wave">Wave 1 / 5</span>
+  </div>
+  <div id="run-stage">
+    <div class="combatant you">
+      <div class="ico" id="you-ico">🧍</div>
+      <div class="nm">You</div>
+      <div class="track"><div class="fill" id="you-fill" style="width:100%"></div></div>
+      <div class="hpv" id="you-hp">10 / 10</div>
+    </div>
+    <div class="combatant foe">
+      <div class="ico" id="foe-ico">🐀</div>
+      <div class="nm" id="foe-name">Giant Rat</div>
+      <div class="track"><div class="fill" id="foe-fill" style="width:100%"></div></div>
+      <div class="hpv" id="foe-hp">12 / 12</div>
+    </div>
+  </div>
+  <div id="run-log"></div>
+  <div id="run-actions"><button id="run-flee">RETREAT</button></div>
+</div>
+
+<div id="nav"></div>
 <div id="toast"></div>
 
 </body>
