@@ -50,6 +50,31 @@ they repeat while materials last. Two things drive the duration:
 Materials are taken when a piece starts and refunded if you stop partway, so a
 mistimed tap never costs you a bar.
 
+The active job is visible wherever you are: the strip sticks below the header
+while you scroll, *and* the row you tapped grows its own progress bar with a
+FORGING / CHOPPING badge. Tapping a row that's already working says so rather
+than silently cancelling it — stopping is always the explicit STOP button.
+
+### Knowing what to wear
+
+The pack sorts upgrades to the top and labels them. Each wearable shows its
+stats, a **▲ UPGRADE +n** badge when it beats what's in that slot, **★ BEST**
+when it's the best you own for the slot, or the requirement you're missing if
+you can't wear it yet. Equipment slots with something better waiting in the
+pack are outlined in green.
+
+### Disenchanting
+
+Any piece in your pack can be broken down with the ♻ button. Each unit of its
+original recipe rolls independently at a **40%** chance to come back, so
+salvage is always lossy — it's a way to recover from a misbuild or reclaim
+outgrown gear, never a cheaper source of materials than mining. It asks for
+confirmation first, and equipped items can't be salvaged without unequipping.
+
+Note that crafting an item and breaking it down is a slightly more
+xp-efficient use of bars than smelting alone — that's an intentional trade
+against the bench time it costs.
+
 ## Skills
 
 | | Skill | What it does |

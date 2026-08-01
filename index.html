@@ -207,6 +207,32 @@ body.in-run { overflow: hidden; }
 .recipe.active { border-color: var(--gold); background: #221806; }
 .rc-fast { color: var(--green); font-weight: 600; }
 
+/* Keep the active job pinned under the header, so tapping a recipe far down
+   the list still shows you that it started. */
+#craft-active, #gather-active {
+  position: sticky;
+  top: calc(var(--topbar-h, 66px) - 1px);
+  z-index: 30;
+}
+
+/* Progress + status shown on the row you actually tapped */
+.node-btn, .recipe { position: relative; overflow: hidden; }
+.rc-badge {
+  position: absolute; top: 6px; right: 8px;
+  font-family: 'Cinzel', serif; font-size: 7.5px; letter-spacing: 1.2px;
+  color: #0f0b03; background: var(--gold); border-radius: 6px;
+  padding: 2px 6px; font-weight: 700;
+  animation: badgePulse 1.2s ease-in-out infinite;
+}
+@keyframes badgePulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.node-btn.active .rc-badge { color: #06140a; background: #6df06d; }
+.rc-prog {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: rgba(0, 0, 0, .5);
+}
+.rc-prog-fill { display: block; height: 100%; width: 0%; background: var(--gold2); }
+.node-btn.active .rc-prog-fill { background: #7af07a; }
+
 /* ===== Gear ===== */
 #equip-slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px; }
 .eq-slot {
@@ -227,7 +253,65 @@ body.in-run { overflow: hidden; }
 }
 .bonus .bl { font-family: 'Cinzel', serif; font-size: 8px; color: var(--text3); letter-spacing: .5px; text-transform: uppercase; }
 .bonus .bv { font-family: 'Cinzel', serif; font-size: 15px; color: var(--gold); font-weight: 700; }
-.inv-item.wearable { border-color: var(--bdr2); }
+.eq-slot.has-upgrade { border-color: var(--green); box-shadow: 0 0 10px rgba(90, 200, 90, .25); }
+.eq-up { font-size: 8px; color: var(--green); font-weight: 700; letter-spacing: .3px; }
+
+/* ===== Pack: upgrades, best-in-slot, salvage ===== */
+.inv-item { position: relative; padding-right: 44px; }
+.inv-item.wearable { border-color: var(--bdr2); cursor: pointer; }
+.inv-item.is-upgrade {
+  border-color: var(--green);
+  background: linear-gradient(90deg, #14210f, var(--bg2));
+}
+.inv-item.unwearable { opacity: .62; cursor: default; }
+.iv-stats { font-size: 10px; color: var(--green); font-weight: 600; }
+.iv-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.iv-tag {
+  font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: .6px;
+  border-radius: 6px; padding: 2px 6px; white-space: nowrap;
+}
+.iv-tag.up   { background: #1f5a1f; color: #b6f5b6; font-weight: 700; }
+.iv-tag.best { background: var(--gold); color: #14100a; font-weight: 700; }
+.iv-tag.same { background: var(--bg3); color: var(--text3); }
+.iv-tag.down { background: #3a1414; color: #e09b9b; }
+.iv-tag.locked { background: #2a1f0c; color: var(--text3); }
+.iv-salvage {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 30px; height: 30px; border-radius: 7px;
+  background: var(--bg3); border: 1px solid var(--bdr2);
+  color: #9ad39a; font-size: 16px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Segoe UI Symbol', system-ui, sans-serif;
+}
+.iv-salvage:active { transform: translateY(-50%) scale(.9); }
+.inv-item .iv-qty { margin-right: 4px; }
+
+/* ===== Confirm dialog ===== */
+#confirm {
+  position: fixed; inset: 0; z-index: 350;
+  background: rgba(4, 3, 1, .78);
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+#confirm.show { display: flex; }
+.cf-card {
+  background: var(--bg1); border: 1.5px solid var(--bdr2);
+  border-radius: 12px; padding: 18px; width: 100%; max-width: 330px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .7);
+}
+#cf-title {
+  font-family: 'Cinzel', serif; font-size: 15px; color: var(--gold);
+  margin-bottom: 8px; letter-spacing: .5px;
+}
+#cf-body { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.cf-mats { color: var(--text); display: inline-block; margin-top: 6px; }
+.cf-actions { display: flex; gap: 8px; margin-top: 16px; }
+.cf-actions button {
+  flex: 1; padding: 10px; border-radius: 7px; cursor: pointer;
+  font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 1px;
+}
+#cf-cancel { background: var(--bg3); border: 1px solid var(--bdr); color: var(--text2); }
+#cf-ok { background: linear-gradient(180deg, #6a2020, #431212); border: 1.5px solid #a33; color: #ffd9d9; }
+#cf-ok:active, #cf-cancel:active { transform: scale(.97); }
 
 /* ===== Dungeon list ===== */
 #dungeon-list { display: flex; flex-direction: column; gap: 9px; }
@@ -638,6 +722,17 @@ body.in-run #nav { display: none; }
   </div>
   <div id="run-log"></div>
   <div id="run-actions"><button id="run-flee">RETREAT</button></div>
+</div>
+
+<div id="confirm">
+  <div class="cf-card">
+    <div id="cf-title">Are you sure?</div>
+    <div id="cf-body"></div>
+    <div class="cf-actions">
+      <button id="cf-cancel">CANCEL</button>
+      <button id="cf-ok">CONFIRM</button>
+    </div>
+  </div>
 </div>
 
 <div id="levelfx"></div>

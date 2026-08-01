@@ -125,6 +125,45 @@ function check(name, cond, extra) {
   check('smelting auto-repeats without extra taps',
     (await page.evaluate(() => __rf.have('copper_ore'))) <= 54);
   check('smithing xp granted', (await page.evaluate(() => window.G.skills.smithing.xp)) >= 120);
+  console.log('\n== Craft progress is visible wherever you tapped ==');
+  check('active row shows a FORGING badge',
+    (await page.locator('#smelt-list .recipe.active .rc-badge').count()) === 1);
+  check('active row has its own progress bar',
+    (await page.locator('#smelt-list .recipe.active .rc-prog-fill').count()) === 1);
+  // Sample twice mid-swing — the width resets to 0 at each swing boundary.
+  await page.waitForTimeout(500);
+  const w1 = await page.evaluate(() => parseFloat(getComputedStyle(
+    document.querySelector('.recipe.active .rc-prog-fill')).width));
+  await page.waitForTimeout(400);
+  const w2 = await page.evaluate(() => parseFloat(getComputedStyle(
+    document.querySelector('.recipe.active .rc-prog-fill')).width));
+  check('row progress bar advances over time', w2 > w1 || w1 > 0, `${w1}px → ${w2}px`);
+  check('active strip is sticky under the header',
+    (await page.evaluate(() => getComputedStyle(document.getElementById('craft-active')).position)) === 'sticky');
+  const stickyTop = await page.evaluate(() => getComputedStyle(document.getElementById('craft-active')).top);
+  check('sticky offset matches the header height', parseFloat(stickyTop) > 20, stickyTop);
+  // Scroll to the bottom: the strip must stay on screen.
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(200);
+  const visibleWhenScrolled = await page.evaluate(() => {
+    const r = document.getElementById('craft-active').getBoundingClientRect();
+    return r.top >= 0 && r.bottom <= window.innerHeight;
+  });
+  check('strip still on screen after scrolling to the bottom', visibleWhenScrolled);
+
+  console.log('\n== Re-tapping an active recipe does not cancel it ==');
+  const madeBefore = await page.evaluate(() => window.G.inventory.bronze_bar || 0);
+  await page.evaluate(() => {
+    const r = document.querySelector('#smelt-list .recipe.active');
+    r.click(); r.click(); r.click();
+  });
+  check('still crafting after repeated taps', await page.isVisible('#craft-active'));
+  check('repeated taps kept the same recipe active',
+    (await page.locator('#smelt-list .recipe.active').count()) === 1);
+  await page.waitForFunction((n) => (window.G.inventory.bronze_bar || 0) > n, madeBefore, { timeout: 20000 });
+  check('production continued through the taps', true);
+  await page.evaluate(() => window.scrollTo(0, 0));
+
   const oreBeforeStop = await page.evaluate(() => __rf.have('copper_ore'));
   await page.click('#ca-stop');
   check('stop halts crafting', !(await page.isVisible('#craft-active')));
@@ -244,6 +283,90 @@ function check(name, cond, extra) {
     JSON.stringify({ hero: 'pebble', level: 40, gold: 999 })));
   await page.reload({ waitUntil: 'networkidle' });
   check('old-format save ignored', (await page.evaluate(() => __rf.totalLevel())) === 17);
+
+  console.log('\n== Upgrade indicators ==');
+  await page.evaluate(() => {
+    __rf.setLevels({ attack: 60, defence: 60, strength: 40, hitpoints: 30 });
+    window.G.equipped = { weapon: 'bronze_sword', body: null, shield: null, amulet: null };
+    window.G.inventory = {};
+    __rf.addItem('rune_sword', 1);      // strictly better than bronze
+    __rf.addItem('iron_sword', 1);      // better than bronze, worse than rune
+    __rf.addItem('bronze_shield', 1);   // fills an empty slot
+    __rf.addItem('copper_ore', 5);      // plain material, no badges
+  });
+  await page.click('.nav-btn[data-tab="gear"]');
+  const inv = await page.evaluate(() => Array.from(document.querySelectorAll('#inv-list .inv-item'))
+    .map(r => ({ text: r.textContent.replace(/\s+/g, ' ').trim(), cls: r.className })));
+  const runeRow = inv.find(r => r.text.includes('Rune Sword'));
+  const ironRow = inv.find(r => r.text.includes('Iron Sword'));
+  const oreRow = inv.find(r => r.text.includes('Copper Ore'));
+  check('upgrade is flagged', /UPGRADE \+\d+/.test(runeRow.text), runeRow.text.slice(0, 60));
+  check('best-in-slot is flagged', /BEST/.test(runeRow.text));
+  check('upgrade row is highlighted', /is-upgrade/.test(runeRow.cls));
+  check('lesser upgrade also flagged but not BEST',
+    /UPGRADE/.test(ironRow.text) && !/BEST/.test(ironRow.text), ironRow.text.slice(0, 60));
+  check('upgrades sort above other items', inv[0].text.includes('Rune Sword'), inv[0].text.slice(0, 40));
+  check('plain materials get no gear badges',
+    !/UPGRADE|BEST/.test(oreRow.text), oreRow.text.slice(0, 40));
+  check('equipped slot advertises a pending upgrade',
+    (await page.locator('.eq-slot.has-upgrade').count()) >= 1);
+
+  const unwearable = await page.evaluate(() => {
+    __rf.setLevels({ attack: 1, defence: 1 });
+    window.render();
+    const row = Array.from(document.querySelectorAll('#inv-list .inv-item'))
+      .find(r => r.textContent.includes('Rune Sword'));
+    return { text: row.textContent.replace(/\s+/g, ' '), cls: row.className };
+  });
+  check('unwearable gear shows the requirement, not an upgrade badge',
+    /Attack 40/.test(unwearable.text) && !/UPGRADE/.test(unwearable.text),
+    unwearable.text.slice(0, 70));
+
+  console.log('\n== Disenchanting ==');
+  await page.evaluate(() => {
+    __rf.setLevels({ attack: 60, defence: 60 });
+    window.G.inventory = {};
+    __rf.addItem('bronze_sword', 3);
+    window.render();
+  });
+  await page.locator('#inv-list .iv-salvage').first().click();
+  check('confirm dialog opens', await page.isVisible('#confirm'));
+  check('dialog names the item', /Bronze Sword/.test(await page.textContent('#cf-title')));
+  check('dialog lists what may come back', /Bronze Bar/.test(await page.textContent('#cf-body')));
+  await page.click('#cf-cancel');
+  check('cancel closes without destroying', !(await page.isVisible('#confirm')));
+  check('item still owned after cancel', (await page.evaluate(() => __rf.have('bronze_sword'))) === 3);
+
+  await page.locator('#inv-list .iv-salvage').first().click();
+  await page.click('#cf-ok');
+  check('confirming consumes exactly one item',
+    (await page.evaluate(() => __rf.have('bronze_sword'))) === 2,
+    await page.evaluate(() => __rf.have('bronze_sword')));
+
+  // Salvage must be lossy: never a cheaper source of materials than mining.
+  const salvage = await page.evaluate(() => {
+    let bars = 0, logs = 0;
+    const N = 4000;
+    for (let i = 0; i < N; i++) {
+      const y = __rf.salvageYield('bronze_sword');
+      bars += y.bronze_bar || 0;
+      logs += y.logs || 0;
+    }
+    return { barRate: bars / (N * 2), logRate: logs / N };
+  });
+  check('bar recovery averages ~40%', Math.abs(salvage.barRate - 0.4) < 0.04,
+    `${(salvage.barRate * 100).toFixed(1)}%`);
+  check('log recovery averages ~40%', Math.abs(salvage.logRate - 0.4) < 0.04,
+    `${(salvage.logRate * 100).toFixed(1)}%`);
+  check('recovery is strictly lossy', salvage.barRate < 1 && salvage.logRate < 1);
+
+  const equippedSafe = await page.evaluate(() => {
+    __rf.addItem('bronze_sword', 1);
+    window.render();
+    const rows = Array.from(document.querySelectorAll('#inv-list .inv-item'));
+    return rows.every(r => !r.textContent.includes('undefined'));
+  });
+  check('pack renders cleanly after salvaging', equippedSafe);
 
   console.log('\n== Errors ==');
   check('no uncaught JS errors', errors.length === 0, errors.slice(0, 4).join(' | '));

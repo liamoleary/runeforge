@@ -446,6 +446,47 @@ function gearBonus(stat) {
   }, 0);
 }
 
+// A single number for "how good is this piece". Within a slot every stat
+// pulls in the same direction, so a plain sum ranks them sensibly.
+function gearScore(g) {
+  if (!g) return 0;
+  return (g.atk || 0) + (g.str || 0) + (g.def || 0);
+}
+
+// How this piece compares with whatever occupies its slot right now.
+function upgradeDelta(key) {
+  const g = GEAR[key];
+  if (!g) return null;
+  const worn = G.equipped[g.slot];
+  return gearScore(g) - gearScore(worn ? GEAR[worn] : null);
+}
+
+// The best piece you own for each slot, counting what's already worn.
+// Only pieces you actually meet the requirements for can be "best".
+function bestOwnedPerSlot() {
+  const best = {};
+  SLOTS.forEach(function (s) { best[s] = null; });
+  function consider(key) {
+    const g = GEAR[key];
+    if (!g || !meetsReq(g.wearReq)) return;
+    const cur = best[g.slot];
+    if (!cur || gearScore(g) > gearScore(GEAR[cur])) best[g.slot] = key;
+  }
+  Object.keys(G.inventory).forEach(function (k) { if (have(k) > 0) consider(k); });
+  SLOTS.forEach(function (s) { if (G.equipped[s]) consider(G.equipped[s]); });
+  return best;
+}
+
+// True if something strictly better than the worn piece is sitting in the pack.
+function hasUpgradeInPack(slot) {
+  const worn = G.equipped[slot];
+  const wornScore = gearScore(worn ? GEAR[worn] : null);
+  return Object.keys(G.inventory).some(function (k) {
+    const g = GEAR[k];
+    return g && have(k) > 0 && g.slot === slot && meetsReq(g.wearReq) && gearScore(g) > wornScore;
+  });
+}
+
 function equip(key) {
   const g = GEAR[key];
   if (!g || have(key) <= 0) return;
@@ -470,6 +511,81 @@ function unequip(slot) {
   addItem(key, 1);
   save();
   render();
+}
+
+// ---- Disenchanting ----
+
+// Each unit of the original recipe gets an independent roll to come back.
+// Deliberately below half, so breaking gear down is a way to recover from a
+// mistake, never a cheaper route to materials than mining them.
+const SALVAGE_CHANCE = 0.4;
+
+function salvageYield(key) {
+  const g = GEAR[key];
+  const out = {};
+  if (!g || !g.cost) return out;
+  for (const mat in g.cost) {
+    let got = 0;
+    for (let i = 0; i < g.cost[mat]; i++) if (Math.random() < SALVAGE_CHANCE) got++;
+    if (got > 0) out[mat] = got;
+  }
+  return out;
+}
+
+function disenchant(key) {
+  const g = GEAR[key];
+  if (!g || have(key) <= 0) return;
+  takeItem(key, 1);
+  const got = salvageYield(key);
+  const parts = [];
+  for (const mat in got) {
+    addItem(mat, got[mat]);
+    parts.push(got[mat] + '× ' + itemName(mat));
+  }
+  if (parts.length) {
+    feed('Disenchanted <b>' + g.name + '</b> — recovered ' + parts.join(', ') + '.', 'make');
+    toast('Recovered ' + parts.join(', '));
+  } else {
+    feed('Disenchanted <b>' + g.name + '</b> — nothing salvageable.', 'lose');
+    toast('Nothing recovered.');
+  }
+  save();
+  render();
+}
+
+// Breaking gear is destructive and irreversible, so it always asks first.
+function confirmDisenchant(key) {
+  const g = GEAR[key];
+  if (!g) return;
+  const expected = [];
+  for (const mat in g.cost) {
+    expected.push(itemIcon(mat) + ' up to ' + g.cost[mat] + '× ' + itemName(mat));
+  }
+  askConfirm(
+    'Disenchant ' + g.name + '?',
+    'This destroys the item. Each material has a ' + Math.round(SALVAGE_CHANCE * 100) +
+      '% chance to come back:<br><span class="cf-mats">' + expected.join('<br>') + '</span>',
+    'DISENCHANT',
+    function () { disenchant(key); }
+  );
+}
+
+let confirmAction = null;
+function askConfirm(title, body, okLabel, onOk) {
+  const m = $('confirm');
+  if (!m) { if (onOk) onOk(); return; }
+  $('cf-title').textContent = title;
+  $('cf-body').innerHTML = body;
+  $('cf-ok').textContent = okLabel || 'CONFIRM';
+  confirmAction = onOk;
+  m.classList.add('show');
+}
+function closeConfirm(run) {
+  const m = $('confirm');
+  if (m) m.classList.remove('show');
+  const fn = confirmAction;
+  confirmAction = null;
+  if (run && fn) fn();
 }
 
 // ============================================================
@@ -605,6 +721,24 @@ function esc(s) {
   });
 }
 function rng(lo, hi) { return Math.floor(Math.random() * (hi - lo + 1)) + lo; }
+
+// Drive a bar from 0 to 100% over `ms`, restarting the transition cleanly.
+function runProgressBar(fill, ms) {
+  if (!fill) return;
+  fill.style.transition = 'none';
+  fill.style.width = '0%';
+  void fill.offsetWidth;
+  fill.style.transition = 'width ' + ms + 'ms linear';
+  fill.style.width = '100%';
+}
+
+// The active-job strips stick below the header; the header's height varies
+// with the viewport, so publish it as a custom property.
+function syncHeaderHeight() {
+  const top = $('top');
+  if (!top) return;
+  document.documentElement.style.setProperty('--topbar-h', top.offsetHeight + 'px');
+}
 
 let toastTimer = null;
 function toast(msg) {
@@ -878,11 +1012,17 @@ function renderNodeList(wrap, nodes, skill) {
                                            : n.xp + ' xp · ' + (n.ms / 1000).toFixed(1) + 's') + '</span>' +
       '</span>' +
       '<span class="nd-have">' + (have(n.drop) || '') + '</span>';
+    if (active) {
+      b.appendChild(el('span', 'rc-badge', skill === 'woodcutting' ? 'CHOPPING' : 'MINING'));
+      const prog = el('span', 'rc-prog');
+      prog.appendChild(el('span', 'rc-prog-fill'));
+      b.appendChild(prog);
+    }
     b.disabled = locked;
     if (!locked) {
       b.onclick = function () {
-        if (active) stopGathering();
-        else startGathering(n, skill);
+        if (active) { toast('Already working — tap STOP to cancel.'); return; }
+        startGathering(n, skill);
       };
     }
     wrap.appendChild(b);
@@ -933,11 +1073,21 @@ function renderRecipeList(wrap, recipes, hideFarOff) {
           : SKILLS[r.skill].name + ' ' + r.req + ' required') + '</span>' +
       '</span>' +
       '<span class="rc-have">' + (have(r.out) || '') + '</span>';
+    if (active) {
+      // Progress runs along the row you actually tapped, so it's obvious the
+      // job started even when the strip at the top is scrolled out of view.
+      b.appendChild(el('span', 'rc-badge', 'FORGING'));
+      const prog = el('span', 'rc-prog');
+      prog.appendChild(el('span', 'rc-prog-fill'));
+      b.appendChild(prog);
+    }
     b.disabled = !ok || (!afford && !active);
     if (ok && (afford || active)) {
       b.onclick = function () {
-        if (active) stopCrafting();
-        else startCrafting(r);
+        // Tapping the row that's already working must not silently cancel it —
+        // that was the trap when the strip was off-screen. Stop is explicit.
+        if (active) { toast('Already forging — tap STOP to cancel.'); return; }
+        startCrafting(r);
       };
     }
     wrap.appendChild(b);
@@ -990,13 +1140,10 @@ function craftSwing() {
   craftState.pending = r.cost;
 
   craftState.ms = craftMs(r);
-  const bar = $('ca-fill');
-  bar.style.transition = 'none';
-  bar.style.width = '0%';
-  void bar.offsetWidth;
-  bar.style.transition = 'width ' + craftState.ms + 'ms linear';
-  bar.style.width = '100%';
   renderForge();
+  // renderForge rebuilds the rows, so the bars have to be driven afterwards.
+  runProgressBar($('ca-fill'), craftState.ms);
+  runProgressBar(document.querySelector('.recipe.active .rc-prog-fill'), craftState.ms);
 
   craftTimer = setTimeout(function () {
     if (!craftState) return;
@@ -1049,11 +1196,13 @@ function renderGear() {
   SLOTS.forEach(function (s) {
     const key = G.equipped[s];
     const g = key ? GEAR[key] : null;
-    const d = el('div', 'eq-slot' + (g ? ' filled' : ''));
+    const upgrade = hasUpgradeInPack(s);
+    const d = el('div', 'eq-slot' + (g ? ' filled' : '') + (upgrade ? ' has-upgrade' : ''));
     d.innerHTML =
       '<div class="eq-label">' + SLOT_NAMES[s] + '</div>' +
       '<div class="eq-ico">' + (g ? g.icon : '＋') + '</div>' +
-      '<div class="eq-name">' + (g ? g.name : 'empty') + '</div>';
+      '<div class="eq-name">' + (g ? g.name : 'empty') + '</div>' +
+      (upgrade ? '<div class="eq-up">▲ upgrade</div>' : '');
     if (g) d.onclick = function () { unequip(s); };
     slots.appendChild(d);
   });
@@ -1070,23 +1219,71 @@ function renderGear() {
     inv.appendChild(el('div', 'empty', 'Your pack is empty. Go chop or mine something.'));
     return;
   }
-  // Wearables first, then raw materials.
+
+  const best = bestOwnedPerSlot();
+  // Upgrades float to the top, then other wearables, then raw materials.
+  function rank(k) {
+    const g = GEAR[k];
+    if (!g) return 3;
+    if (!meetsReq(g.wearReq)) return 2;
+    return upgradeDelta(k) > 0 ? 0 : 1;
+  }
   keys.sort(function (a, b) {
-    const ga = !!GEAR[a], gb = !!GEAR[b];
-    if (ga !== gb) return ga ? -1 : 1;
+    const ra = rank(a), rb = rank(b);
+    if (ra !== rb) return ra - rb;
+    if (ra === 0) return upgradeDelta(b) - upgradeDelta(a);
+    if (GEAR[a] && GEAR[b]) return gearScore(GEAR[b]) - gearScore(GEAR[a]);
     return itemName(a).localeCompare(itemName(b));
   });
+
   keys.forEach(function (k) {
     const g = GEAR[k];
-    const b = el('button', 'inv-item' + (g ? ' wearable' : ''));
-    b.innerHTML =
-      '<span class="iv-ico">' + itemIcon(k) + '</span>' +
-      '<span class="iv-body"><span class="iv-name">' + itemName(k) + '</span>' +
-      (g ? '<span class="iv-meta">' + (meetsReq(g.wearReq) ? 'Tap to equip' : reqText(g.wearReq) + ' required') + '</span>' : '') +
+    if (!g) {
+      const row = el('div', 'inv-item');
+      row.innerHTML =
+        '<span class="iv-ico">' + itemIcon(k) + '</span>' +
+        '<span class="iv-body"><span class="iv-name">' + itemName(k) + '</span></span>' +
+        '<span class="iv-qty">×' + have(k) + '</span>';
+      inv.appendChild(row);
+      return;
+    }
+
+    const wearable = meetsReq(g.wearReq);
+    const delta = upgradeDelta(k);
+    const isBest = best[g.slot] === k;
+
+    let tag = '';
+    if (!wearable) {
+      tag = '<span class="iv-tag locked">🔒 ' + reqText(g.wearReq) + '</span>';
+    } else if (delta > 0) {
+      tag = '<span class="iv-tag up">▲ UPGRADE +' + delta + '</span>';
+    } else if (delta === 0) {
+      tag = '<span class="iv-tag same">same as worn</span>';
+    } else {
+      tag = '<span class="iv-tag down">▼ ' + delta + '</span>';
+    }
+    if (isBest) tag = '<span class="iv-tag best">★ BEST</span>' + tag;
+
+    const row = el('div', 'inv-item wearable' +
+      (delta > 0 && wearable ? ' is-upgrade' : '') + (wearable ? '' : ' unwearable'));
+    row.innerHTML =
+      '<span class="iv-ico">' + g.icon + '</span>' +
+      '<span class="iv-body">' +
+        '<span class="iv-name">' + g.name + '</span>' +
+        '<span class="iv-stats">' + statLine(g).replace(/<\/?span[^>]*>/g, '') + '</span>' +
+        '<span class="iv-tags">' + tag + '</span>' +
       '</span>' +
       '<span class="iv-qty">×' + have(k) + '</span>';
-    if (g) b.onclick = function () { equip(k); };
-    inv.appendChild(b);
+
+    // Tapping the row equips; the salvage button is its own target.
+    if (wearable) row.onclick = function () { equip(k); };
+    const salv = el('button', 'iv-salvage', '♻');
+    salv.title = 'Disenchant for materials';
+    salv.setAttribute('aria-label', 'Disenchant ' + g.name);
+    salv.onclick = function (e) { e.stopPropagation(); confirmDisenchant(k); };
+    row.appendChild(salv);
+
+    inv.appendChild(row);
   });
 }
 
@@ -1136,16 +1333,16 @@ function startGathering(node, skill) {
   gatherSwing();
 }
 
+// Same treatment as the forge: show progress on the node you tapped.
+function renderNodeProgress(ms) {
+  runProgressBar($('ga-fill'), ms);
+  runProgressBar(document.querySelector('.node-btn.active .rc-prog-fill'), ms);
+}
+
 function gatherSwing() {
   if (!gatherState) return;
-  const bar = $('ga-fill');
   const node = gatherState.node;
-  // Restart the CSS transition from zero each swing.
-  bar.style.transition = 'none';
-  bar.style.width = '0%';
-  void bar.offsetWidth;
-  bar.style.transition = 'width ' + node.ms + 'ms linear';
-  bar.style.width = '100%';
+  renderNodeProgress(node.ms);
 
   gatherTimer = setTimeout(function () {
     if (!gatherState) return;
@@ -1156,7 +1353,7 @@ function gatherSwing() {
     renderGather();   // refreshes both node lists, so unlocks appear as they happen
     renderTopBar();
     save();
-    gatherSwing();
+    gatherSwing();     // re-arms the bars via renderNodeProgress
   }, node.ms);
 }
 
@@ -1419,6 +1616,14 @@ function wire() {
   if (stop) stop.onclick = function () { stopGathering(); };
   const cstop = $('ca-stop');
   if (cstop) cstop.onclick = function () { stopCrafting(); };
+  const cfOk = $('cf-ok');
+  if (cfOk) cfOk.onclick = function () { closeConfirm(true); };
+  const cfCancel = $('cf-cancel');
+  if (cfCancel) cfCancel.onclick = function () { closeConfirm(false); };
+  const cf = $('confirm');
+  if (cf) cf.onclick = function (e) { if (e.target === cf) closeConfirm(false); };
+  syncHeaderHeight();
+  window.addEventListener('resize', syncHeaderHeight);
 }
 
 function startClocks() {
@@ -1461,6 +1666,8 @@ window.__rf = {
   monsterAttackRoll: monsterAttackRoll, monsterDefenceRoll: monsterDefenceRoll,
   rollDamage: rollDamage, awardCombatXp: awardCombatXp,
   addXp: addXp, addItem: addItem, have: have, gearBonus: gearBonus,
+  gearScore: gearScore, upgradeDelta: upgradeDelta, bestOwnedPerSlot: bestOwnedPerSlot,
+  salvageYield: salvageYield, SALVAGE_CHANCE: SALVAGE_CHANCE,
   defaultState: defaultState,
   setLevels: function (levels) {
     for (const k in levels) if (G.skills[k]) G.skills[k] = { xp: xpAtLevel(levels[k]) };
