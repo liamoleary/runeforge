@@ -247,23 +247,103 @@ function check(name, cond, extra) {
   check('only the first is open', (await page.locator('.dun-card .dc-go').count()) === 1);
   await page.evaluate(() => {
     __rf.setLevels({ attack: 12, strength: 12, defence: 12, hitpoints: 14 });
+    __rf.setPace(0.15);           // keep the suite quick
     window.render();
   });
   await page.locator('.dun-card .dc-go').first().click();
   check('run overlay opens', await page.isVisible('#run-overlay'));
   check('HP bar shown during a run, not xp',
     !(await page.evaluate(() => document.getElementById('hp-bar').classList.contains('xp-mode'))));
-  await page.waitForSelector('#screen-results.active', { timeout: 90000 });
+
+  console.log('\n== Boons: the in-run build ==');
+  // Clearing wave 1 must offer a delve level.
+  await page.waitForSelector('body.picking-boon', { timeout: 60000 });
+  check('clearing a wave offers a delve level', true);
+  check('exactly three boons offered', (await page.locator('.boon-card').count()) === 3);
+  const firstOffer = await page.evaluate(() => __rf.runInfo());
+  check('run level starts at 1', firstOffer.runLevel === 1, firstOffer.runLevel);
+  check('all three offers are first-tier',
+    firstOffer.pending.every(p => p.endsWith(':1')), firstOffer.pending.join(', '));
+  check('offers come from this dungeon\'s pool', await page.evaluate(() => {
+    const pool = __rf.DUNGEON_BOONS.warren;
+    return __rf.runInfo().pending.every(p => pool.indexOf(p.split(':')[0]) >= 0);
+  }), firstOffer.pending.join(', '));
+  check('combat is halted while choosing',
+    (await page.evaluate(() => __rf.runInfo().wave)) === 2);
+
+  // Taking one grants it and resumes the fight.
+  const takenKey = firstOffer.pending[0].split(':')[0];
+  await page.locator('.boon-card').first().click();
+  const afterPick = await page.evaluate(() => __rf.runInfo());
+  check('the chosen boon is granted', afterPick.boons[takenKey] === 1,
+    JSON.stringify(afterPick.boons));
+  check('choosing dismisses the panel', !(await page.isVisible('body.picking-boon')));
+  check('the build shows in the run HUD',
+    (await page.locator('#run-boons .boon-chip').count()) === 1);
+
+  // Second level up should offer that line's tier II somewhere.
+  await page.waitForSelector('body.picking-boon', { timeout: 60000 });
+  const second = await page.evaluate(() => __rf.runInfo());
+  check('run level advances', second.runLevel === 2, second.runLevel);
+  check('a taken line is offered at tier II',
+    second.pending.some(p => p === takenKey + ':2'), second.pending.join(', '));
+
+  // Drive the rest of the run automatically.
+  await page.evaluate(() => __rf.setAutoBoon(() => 0));
+  await page.locator('.boon-card').first().click();
+  await page.waitForSelector('#screen-results.active', { timeout: 120000 });
+
   const res = await page.evaluate(() => ({
     title: document.getElementById('result-title').textContent,
     rows: Array.from(document.querySelectorAll('.res-row')).map(r => r.textContent),
-    busy: window.G.busy
+    busy: window.G.busy,
+    inRun: __rf.isInRun()
   }));
   check('results screen shown', res.rows.length > 0, res.title);
   check('busy flag cleared', res.busy === false);
+  check('results record the delve build', res.rows.some(r => /Delve build/.test(r)),
+    (res.rows.find(r => /Delve build/.test(r)) || '').slice(0, 60));
   check('no NaN/undefined in results', !res.rows.some(r => /NaN|undefined/.test(r)), res.rows.join(' | '));
+
+  console.log('\n== Boons do not leak out of the run ==');
+  check('run state is gone', res.inRun === false);
+  check('no boon data on the save',
+    await page.evaluate(() => !('boons' in window.G) && !JSON.stringify(window.G).includes('emberbrand')));
+  const maxHitAfter = await page.evaluate(() => __rf.playerMaxHit());
+  const maxHitClean = await page.evaluate(() => {
+    // Same levels and gear, measured outside any run.
+    return __rf.playerMaxHit();
+  });
+  check('max hit carries no run bonuses', maxHitAfter === maxHitClean,
+    `${maxHitAfter} vs ${maxHitClean}`);
   await page.click('#result-continue');
   check('run overlay closed', !(await page.isVisible('#run-overlay')));
+
+  // A second run must start from a blank build.
+  await page.evaluate(() => { __rf.setAutoBoon(null); window.G.hp = __rf.maxHp(); });
+  await page.locator('.dun-card .dc-go').first().click();
+  await page.waitForSelector('body.picking-boon', { timeout: 60000 });
+  const fresh = await page.evaluate(() => __rf.runInfo());
+  check('a new run starts with no boons', Object.keys(fresh.boons).length === 0,
+    JSON.stringify(fresh.boons));
+  check('and back at delve level 1', fresh.runLevel === 1, fresh.runLevel);
+  await page.evaluate(() => { __rf.setAutoBoon(() => 0); });
+  await page.locator('.boon-card').first().click();
+  await page.waitForSelector('#screen-results.active', { timeout: 120000 });
+  await page.click('#result-continue');
+  await page.evaluate(() => { __rf.setAutoBoon(null); __rf.setPace(1); });
+
+  console.log('\n== Each dungeon has its own character ==');
+  const pools = await page.evaluate(() => ({
+    crypt: __rf.DUNGEON_BOONS.crypt,
+    spire: __rf.DUNGEON_BOONS.spire,
+    lines: Object.keys(__rf.BOON_LINES).length
+  }));
+  check('eight boon lines exist', pools.lines === 8, pools.lines);
+  check('the Crypt offers necromancy', pools.crypt.indexOf('necromancy') >= 0, pools.crypt.join(','));
+  check('the Spire offers stormcaller', pools.spire.indexOf('stormcaller') >= 0, pools.spire.join(','));
+  check('pools differ between dungeons',
+    pools.crypt.join(',') !== pools.spire.join(','));
 
   console.log('\n== Persistence ==');
   await page.evaluate(() => window.save());

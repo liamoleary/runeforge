@@ -75,6 +75,29 @@ Note that crafting an item and breaking it down is a slightly more
 xp-efficient use of bars than smelting alone — that's an intentional trade
 against the bench time it costs.
 
+## Delving: the in-run build
+
+Skilling is the idle half of the game. Dungeons are the part you play.
+
+Clear a wave and you gain a **delve level** — pick one of three **boons**. Boons
+come in lines that escalate, so taking one opens its next tier as a future
+offer, and a run grows into an identity:
+
+> 🔥 Kindling *(30% chance of bonus fire damage)* → 🔥 Wildfire *(fire also
+> burns)* → 🔥 Immolation *(a burning corpse detonates onto the next foe)*
+
+**Every dungeon draws from its own pool**, so each one makes a different kind of
+character. The Frozen Crypt offers Necromancy and Frostbite; the Storm Spire
+offers Stormcaller and Voidtouched. The eight lines are Emberbrand, Frostbite,
+Stormcaller, Necromancy, Stoneblood, Bloodlust, Voidtouched and Scavenger.
+
+**None of it persists.** Boons live and die with the run — walk out and they're
+gone. Your eight skills stay purely about gear, so the two halves of the game
+never entangle.
+
+The tension is depth versus breadth: three first tiers is a weak spread, while
+committing to one line gets you a capstone that changes how fights resolve.
+
 ## Skills
 
 | | Skill | What it does |
@@ -125,19 +148,34 @@ costs you the run rather than your evening.
 The numbers aren't guesswork. `tools/tune.js` solves for each dungeon's
 monster stats given the player state that dungeon expects — picking defence for
 a target hit chance, hp for a target fight length, then binary-searching
-attack and max hit until the run wins ~60% of the time. `tools/journey.js`
-then plays a bot from level 1 to the last boss using the game's own combat and
-recipe functions. A full clear currently runs about **105 minutes**, most of it
-gathering and smithing rather than combat farming.
+attack and max hit until the run wins ~60% of the time.
 
-`tools/ui-test.js` drives the real UI through the whole loop. All three need a
-local server and Playwright:
+Boons changed that picture — a roguelite's content has to assume you build, so
+`tools/boon-calibrate.js` re-tunes difficulty around them. It drives the **real
+`combatRound()`** with pacing scaled to zero rather than re-implementing the
+logic, binary-searching a monster scalar until a middling (random-pick) build
+wins ~60%. It then reports what a no-build and a good-build run do at that same
+difficulty — the gap between those two is the reward for playing well.
+`tools/apply-scalars.js` bakes the result into the monster table. Monsters
+currently sit at roughly 1.4–1.6× their pre-boon hp and max hit.
+
+`tools/journey.js` plays a bot from level 1 to the last boss using the game's
+own combat and recipe functions, farming until each dungeon looks winnable. It
+takes **no boons at all**, so its **132 minutes** is the pessimistic floor — the
+time it takes if you throw every delve level away. A player who actually builds
+spends less of that on combat farming.
+
+`tools/ui-test.js` drives the real UI through the whole loop. All of these need
+a local server and Playwright:
 
 ```bash
 npm start &
-node tools/tune.js       # re-solve monster stats
-node tools/journey.js    # measure end-to-end playtime
-node tools/ui-test.js    # end-to-end UI checks
+node tools/tune.js            # solve monster stats for a target hit chance
+node tools/boon-calibrate.js  # re-tune difficulty around the boon system
+node tools/apply-scalars.js warren=1.4 crypt=1.9 …   # bake the result in
+node tools/boon-balance.js    # measure what boons are worth
+node tools/journey.js         # measure end-to-end playtime
+node tools/ui-test.js         # end-to-end UI checks
 ```
 
 They point at `localhost:3111` by default — edit the URL at the top if you run

@@ -278,10 +278,10 @@ const DUNGEONS = [
     blurb: 'Damp tunnels under the village. Something has been breeding down here.',
     waves: 5,
     monsters: [
-      { name: 'Giant Rat',   icon: '🐀', hp: 7,  atk: 6,  def: 1, maxHit: 3 },
-      { name: 'Cave Slime',  icon: '🟢', hp: 9,  atk: 7,  def: 1, maxHit: 4 }
+      { name: 'Giant Rat',   icon: '🐀', hp: 11,  atk: 6,  def: 1, maxHit: 5 },
+      { name: 'Cave Slime',  icon: '🟢', hp: 15,  atk: 7,  def: 1, maxHit: 6 }
     ],
-    boss: { name: 'Warren Brood-Mother', icon: '🕷️', hp: 16, atk: 10, def: 2, maxHit: 6 },
+    boss: { name: 'Warren Brood-Mother', icon: '🕷️', hp: 26, atk: 10, def: 2, maxHit: 10 },
     drops: { ember_core: [1, 2], sapphire: [0, 1] },
     clearDrops: { ember_core: 3, sapphire: 2 }
   },
@@ -290,10 +290,10 @@ const DUNGEONS = [
     blurb: 'A barrow sealed in black ice. The cold bites through bronze.',
     waves: 6,
     monsters: [
-      { name: 'Frost Ghoul',  icon: '🧟', hp: 15, atk: 22, def: 6, maxHit: 3 },
-      { name: 'Ice Wraith',   icon: '👻', hp: 20, atk: 24, def: 7, maxHit: 4 }
+      { name: 'Frost Ghoul',  icon: '🧟', hp: 24, atk: 22, def: 6, maxHit: 5 },
+      { name: 'Ice Wraith',   icon: '👻', hp: 33, atk: 24, def: 7, maxHit: 7 }
     ],
-    boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 37, atk: 30, def: 12, maxHit: 5 },
+    boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 60, atk: 30, def: 12, maxHit: 8 },
     drops: { frost_shard: [1, 2], emerald: [0, 1] },
     clearDrops: { frost_shard: 3, emerald: 2 }
   },
@@ -302,10 +302,10 @@ const DUNGEONS = [
     blurb: 'A tower struck by lightning so often the stone has turned to glass.',
     waves: 7,
     monsters: [
-      { name: 'Storm Sprite',  icon: '⚡', hp: 27,  atk: 39, def: 14, maxHit: 4 },
-      { name: 'Thunder Golem', icon: '🗿', hp: 36,  atk: 43, def: 16, maxHit: 5 }
+      { name: 'Storm Sprite',  icon: '⚡', hp: 37,  atk: 39, def: 14, maxHit: 5 },
+      { name: 'Thunder Golem', icon: '🗿', hp: 49,  atk: 43, def: 16, maxHit: 7 }
     ],
-    boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 71, atk: 52, def: 25, maxHit: 7 },
+    boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 97, atk: 52, def: 25, maxHit: 10 },
     drops: { storm_crystal: [1, 2], ruby: [0, 1] },
     clearDrops: { storm_crystal: 3, ruby: 2 }
   },
@@ -314,10 +314,10 @@ const DUNGEONS = [
     blurb: 'The heat alone kills the unprepared. Bring the best steel you have.',
     waves: 8,
     monsters: [
-      { name: 'Whelp',        icon: '🦎', hp: 40,  atk: 57, def: 24, maxHit: 5 },
-      { name: 'Ember Drake',  icon: '🐉', hp: 54,  atk: 63, def: 27, maxHit: 6 }
+      { name: 'Whelp',        icon: '🦎', hp: 60,  atk: 57, def: 24, maxHit: 7 },
+      { name: 'Ember Drake',  icon: '🐉', hp: 81,  atk: 63, def: 27, maxHit: 9 }
     ],
-    boss: { name: 'Ashmaw the Elder', icon: '🐲', hp: 112, atk: 75, def: 39, maxHit: 9 },
+    boss: { name: 'Ashmaw the Elder', icon: '🐲', hp: 167, atk: 75, def: 39, maxHit: 13 },
     drops: { dragon_ash: [1, 2], diamond: [0, 1] },
     clearDrops: { dragon_ash: 3, diamond: 2 }
   },
@@ -326,15 +326,154 @@ const DUNGEONS = [
     blurb: 'Nothing comes back from here without rune on its back.',
     waves: 9,
     monsters: [
-      { name: 'Abyssal Leech',  icon: '🪱', hp: 56,  atk: 80, def: 35, maxHit: 6 },
-      { name: 'Void Stalker',   icon: '👁️', hp: 75, atk: 88, def: 39, maxHit: 7 }
+      { name: 'Abyssal Leech',  icon: '🪱', hp: 80,  atk: 80, def: 35, maxHit: 9 },
+      { name: 'Void Stalker',   icon: '👁️', hp: 107, atk: 88, def: 39, maxHit: 10 }
     ],
-    boss: { name: 'The Hollow King', icon: '👑', hp: 162, atk: 104, def: 54, maxHit: 11 },
+    boss: { name: 'The Hollow King', icon: '👑', hp: 232, atk: 104, def: 54, maxHit: 16 },
     drops: { dragonstone: [0, 1], dragon_ash: [1, 2] },
     clearDrops: { dragonstone: 3, dragon_ash: 4 }
   }
 ];
 function dungeonAt(i) { return DUNGEONS[i] || null; }
+
+// ============================================================
+// Boons — the in-run build
+// ============================================================
+//
+// Clearing a wave grants a run level; each run level offers a choice of three
+// boons. Lines escalate — take the first tier and the next becomes offerable —
+// so a run grows into an identity (necromancer, stormcaller, berserker).
+// NONE OF THIS PERSISTS. Boons live and die with the dungeon run; the eight
+// skills stay purely about gear.
+
+const BOON_LINES = {
+  emberbrand: {
+    name: 'Emberbrand', icon: '🔥', blurb: 'Fire',
+    tiers: [
+      { name: 'Kindling',   desc: '30% chance your strike carries +25% fire damage.' },
+      { name: 'Wildfire',   desc: 'Fire strikes set the foe alight — 3 damage a round for 2 rounds.' },
+      { name: 'Immolation', desc: 'A burning foe that dies detonates onto the next for 30% of its health.' }
+    ]
+  },
+  frostbite: {
+    name: 'Frostbite', icon: '❄️', blurb: 'Ice',
+    tiers: [
+      { name: 'Chill',     desc: '30% chance to chill — the foe\'s next blow lands for half.' },
+      { name: 'Deep Cold', desc: 'Chilled foes also lose a quarter of their armour.' },
+      { name: 'Cold Snap', desc: 'Kill a chilled foe and the next one arrives frozen, losing a turn.' }
+    ]
+  },
+  stormcaller: {
+    name: 'Stormcaller', icon: '⚡', blurb: 'Lightning',
+    tiers: [
+      { name: 'Arc',        desc: '25% chance your hit arcs, striking again for half.' },
+      { name: 'Chain',      desc: 'Arcs can arc again — lightning chains.' },
+      { name: 'Thunderhead',desc: 'Every fifth strike arcs twice, guaranteed.' }
+    ]
+  },
+  necromancy: {
+    name: 'Necromancy', icon: '💀', blurb: 'Undeath',
+    tiers: [
+      { name: 'Siphon',   desc: 'Killing a foe restores 12% of your health.' },
+      { name: 'Shade',    desc: 'Each kill raises a shade — every shade adds 30% of your max hit. Fades after 3 rounds.' },
+      { name: 'Undying',  desc: 'Shades no longer fade.' }
+    ]
+  },
+  stoneblood: {
+    name: 'Stoneblood', icon: '🪨', blurb: 'Endurance',
+    tiers: [
+      { name: 'Hardened',  desc: 'You take 15% less damage.' },
+      { name: 'Retort',    desc: 'Reflect a quarter of the damage you take.' },
+      { name: 'Last Stand',desc: 'Once a wave, survive a killing blow at 1 hp and heal a quarter.' }
+    ]
+  },
+  bloodlust: {
+    name: 'Bloodlust', icon: '🩸', blurb: 'Fury',
+    tiers: [
+      { name: 'Reckless', desc: '+3 to your max hit, but 10% off your health.' },
+      { name: 'Cornered', desc: 'Below half health you deal 50% more damage.' },
+      { name: 'Rampage',  desc: 'Every kill permanently adds +1 max hit for the rest of the run.' }
+    ]
+  },
+  voidtouched: {
+    name: 'Voidtouched', icon: '🌌', blurb: 'Arcane',
+    tiers: [
+      { name: 'Sunder',    desc: 'Your strikes ignore 30% of the foe\'s armour.' },
+      { name: 'Rupture',   desc: '20% chance a strike lands doubled.' },
+      { name: 'Devour',    desc: 'Doubled strikes heal you for half the damage dealt.' }
+    ]
+  },
+  scavenger: {
+    name: 'Scavenger', icon: '🐀', blurb: 'Cunning',
+    tiers: [
+      { name: 'Pickings',  desc: 'This run yields 50% more loot.' },
+      { name: 'Second Wind', desc: 'Recover an extra 15% health between waves.' },
+      { name: 'Opportunist', desc: 'Every wave cleared grants a free first-tier boon.' }
+    ]
+  }
+};
+const BOON_KEYS = Object.keys(BOON_LINES);
+const MAX_BOON_TIER = 3;
+
+// Each dungeon draws from its own lines, so the Crypt reliably makes
+// necromancers and the Spire makes stormcallers.
+const DUNGEON_BOONS = {
+  warren: ['scavenger', 'emberbrand', 'stoneblood', 'bloodlust'],
+  crypt:  ['frostbite', 'necromancy', 'stoneblood', 'voidtouched'],
+  spire:  ['stormcaller', 'voidtouched', 'bloodlust', 'frostbite'],
+  roost:  ['emberbrand', 'bloodlust', 'stormcaller', 'stoneblood'],
+  abyss:  ['voidtouched', 'necromancy', 'emberbrand', 'frostbite']
+};
+
+function boonTier(key) {
+  return (runState && runState.boons && runState.boons[key]) || 0;
+}
+function boonName(key, tier) {
+  const line = BOON_LINES[key];
+  return line ? line.tiers[tier - 1].name : key;
+}
+
+// Offer the next tier of lines already started (so builds compound), topped up
+// with fresh lines from this dungeon's pool.
+function rollBoonChoices(count) {
+  if (!runState) return [];
+  const pool = DUNGEON_BOONS[runState.d.key] || BOON_KEYS;
+  const upgrades = [], fresh = [];
+  pool.forEach(function (key) {
+    const t = boonTier(key);
+    if (t >= MAX_BOON_TIER) return;
+    (t > 0 ? upgrades : fresh).push({ key: key, tier: t + 1 });
+  });
+  shuffle(upgrades);
+  shuffle(fresh);
+  // Weight toward escalation, but always leave room to branch.
+  const picks = [];
+  while (picks.length < count && (upgrades.length || fresh.length)) {
+    const takeUpgrade = upgrades.length && (picks.length < count - 1 || !fresh.length);
+    picks.push(takeUpgrade ? upgrades.shift() : (fresh.shift() || upgrades.shift()));
+  }
+  return picks;
+}
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function grantBoon(key, tier) {
+  if (!runState) return;
+  runState.boons[key] = tier;
+  runLog('<span class="boon">' + BOON_LINES[key].icon + ' ' +
+    boonName(key, tier) + '</span> — ' + BOON_LINES[key].tiers[tier - 1].desc);
+  // Reckless trades health for damage the moment it's taken.
+  if (key === 'bloodlust' && tier === 1) {
+    runState.hpPenalty = 0.10;
+    G.hp = Math.min(G.hp, maxHp());
+  }
+}
 
 // ============================================================
 // State
@@ -385,7 +524,12 @@ function combatLevel() {
 // RuneScape ties life directly to the Hitpoints level; we give it a wider
 // spread so a big hit is dangerous rather than instantly lethal.
 function lifeAtLevel(hpLevel) { return 10 + hpLevel * 2; }
-function maxHp() { return lifeAtLevel(lvl('hitpoints')); }
+function maxHp() {
+  const base = lifeAtLevel(lvl('hitpoints'));
+  // Bloodlust trades health for damage, but only for the duration of a run.
+  const penalty = (runState && runState.hpPenalty) || 0;
+  return Math.max(1, Math.round(base * (1 - penalty)));
+}
 
 // Grants xp and returns how many levels it caused, so callers can celebrate.
 function addXp(key, amount) {
@@ -670,7 +814,12 @@ function regenTick() {
 function playerMaxHit() {
   const str = lvl('strength');
   const bonus = gearBonus('str');
-  return Math.max(1, Math.floor(2 + str / 7 + bonus / 45 + (str * bonus) / 420));
+  let hit = Math.max(1, Math.floor(2 + str / 7 + bonus / 45 + (str * bonus) / 420));
+  if (runState) {                       // run-only, from boons
+    if (boonTier('bloodlust') >= 1) hit += 3;
+    hit += runState.rampage || 0;
+  }
+  return hit;
 }
 function playerAttackRoll() {
   return (lvl('attack') + 8) * (gearBonus('atk') + 64);
@@ -1376,6 +1525,16 @@ function stopGathering(quiet) {
 let runState = null;
 let runTimer = null;
 
+// Combat pacing. Tests scale this to zero to run whole dungeons headlessly,
+// so balance is measured against the real combat path rather than a copy of it.
+let paceScale = 1;
+function pace(ms) { return Math.max(0, Math.round(ms * paceScale)); }
+// Global monster scalar. Lives at 1 in the shipped game; the calibration tool
+// sweeps it to find the numbers that get baked into the monster table.
+let difficultyScale = 1;
+// Optional test strategy: given the offered choices, return an index to take.
+let autoBoonPick = null;
+
 function enterDungeon(index) {
   if (G.busy || runState) return;
   const d = dungeonAt(index);
@@ -1399,7 +1558,12 @@ function enterDungeon(index) {
     foe: null,
     loot: {},
     xpStart: SKILL_KEYS.reduce(function (o, k) { o[k] = skillXp(k); return o; }, {}),
-    over: false
+    over: false,
+    // Everything below is the in-run build — discarded when the run ends.
+    boons: {}, runLevel: 0, pending: null,
+    shades: [], rampage: 0, hitCount: 0,
+    hpPenalty: 0, lastStandUsed: false,
+    carryDetonate: 0, carryFreeze: false
   };
   if (index > G.deepestAttempt) G.deepestAttempt = index;
   $('run-name').textContent = d.name;
@@ -1414,70 +1578,253 @@ function spawnFoe() {
   const d = runState.d;
   const isBoss = runState.wave > d.waves;
   const base = isBoss ? d.boss : d.monsters[rng(0, d.monsters.length - 1)];
+  const ds = difficultyScale;
+  const scaledHp = Math.max(1, Math.round(base.hp * ds));
   runState.foe = {
     name: base.name, icon: base.icon,
-    hp: base.hp, max: base.hp,
-    atk: base.atk, def: base.def, maxHit: base.maxHit,
-    boss: isBoss
+    hp: scaledHp, max: scaledHp,
+    atk: base.atk, def: base.def,
+    maxHit: Math.max(1, Math.round(base.maxHit * ds)),
+    boss: isBoss,
+    burn: null, chill: 0, frozen: 0
   };
+  const foe = runState.foe;
+  // Voidtouched sunders armour for the whole fight.
+  if (boonTier('voidtouched') >= 1) foe.def = Math.round(foe.def * 0.7);
+
   runLog(isBoss
     ? '<span class="boss">' + base.name + ' blocks the way.</span>'
     : 'Wave ' + runState.wave + ' of ' + d.waves + ' — a ' + base.name + ' attacks.');
+
+  // Capstones that carry from the previous kill onto this foe.
+  if (runState.carryDetonate) {
+    foe.hp -= runState.carryDetonate;
+    runLog('<span class="boon">🔥 Immolation</span> — the corpse detonates for ' +
+      runState.carryDetonate + '.');
+    runState.carryDetonate = 0;
+  }
+  if (runState.carryFreeze) {
+    foe.frozen = 1;
+    runLog('<span class="boon">❄️ Cold Snap</span> — it arrives frozen.');
+    runState.carryFreeze = false;
+  }
+  if (foe.hp <= 0) {
+    runLog('<span class="win">' + foe.name + ' is destroyed on arrival.</span>');
+    boonOnKill(foe);
+    rollLoot(foe);
+    renderDungeonRun();
+    runTimer = setTimeout(advanceWave, pace(800));
+    return;
+  }
   renderDungeonRun();
-  runTimer = setTimeout(combatRound, 700);
+  runTimer = setTimeout(combatRound, pace(700));
+}
+
+// ---- Boon hooks ----
+
+// Everything the player's build adds to a swing, resolved in one place.
+function boonOffence(baseDmg, foe) {
+  const out = { dmg: baseDmg, notes: [], extraHits: [] };
+  if (baseDmg <= 0) return out;   // a miss triggers nothing
+
+  // Bloodlust: fury when cornered.
+  if (boonTier('bloodlust') >= 2 && G.hp < maxHp() * 0.5) {
+    out.dmg = Math.round(out.dmg * 1.5);
+    out.notes.push('cornered');
+  }
+  // Voidtouched: rupture doubles the blow.
+  let ruptured = false;
+  if (boonTier('voidtouched') >= 2 && Math.random() < 0.20) {
+    out.dmg *= 2;
+    ruptured = true;
+    out.notes.push('rupture');
+  }
+  if (ruptured && boonTier('voidtouched') >= 3) {
+    const heal = Math.min(maxHp() - G.hp, Math.round(out.dmg * 0.5));
+    if (heal > 0) { G.hp += heal; out.notes.push('devoured +' + heal); }
+  }
+  // Emberbrand: fire rider, and the burn that follows it.
+  if (boonTier('emberbrand') >= 1 && Math.random() < 0.30) {
+    const fire = Math.max(1, Math.round(out.dmg * 0.25));
+    out.dmg += fire;
+    out.notes.push('🔥' + fire);
+    if (boonTier('emberbrand') >= 2) foe.burn = { dmg: 3, rounds: 2 };
+  }
+  // Frostbite: chill blunts their next swing and their guard.
+  if (boonTier('frostbite') >= 1 && Math.random() < 0.30) {
+    foe.chill = 2;
+    out.notes.push('❄️chilled');
+  }
+  // Necromancy: shades pile on.
+  const shades = (runState.shades || []).length;
+  if (shades > 0) {
+    const add = Math.round(playerMaxHit() * 0.3 * shades);
+    out.dmg += add;
+    out.notes.push(shades + '× shade +' + add);
+  }
+  // Stormcaller: arcs strike again.
+  runState.hitCount = (runState.hitCount || 0) + 1;
+  const guaranteed = boonTier('stormcaller') >= 3 && runState.hitCount % 5 === 0;
+  if (boonTier('stormcaller') >= 1) {
+    let arcs = 0;
+    if (guaranteed) arcs = 2;
+    else if (Math.random() < 0.25) {
+      arcs = 1;
+      // Chain: each arc can beget another.
+      while (boonTier('stormcaller') >= 2 && arcs < 3 && Math.random() < 0.25) arcs++;
+    }
+    for (let i = 0; i < arcs; i++) {
+      out.extraHits.push(Math.max(1, Math.round(out.dmg * 0.5)));
+    }
+    if (arcs) out.notes.push('⚡×' + arcs);
+  }
+  return out;
+}
+
+// Damage reduction, reflection, and the death-save.
+function boonDefence(incoming, foe) {
+  const out = { dmg: incoming, reflect: 0, notes: [] };
+  if (boonTier('stoneblood') >= 1) {
+    out.dmg = Math.round(out.dmg * 0.85);
+  }
+  if (foe.chill > 0) {
+    out.dmg = Math.round(out.dmg * 0.5);
+    out.notes.push('chilled');
+  }
+  if (boonTier('stoneblood') >= 2 && out.dmg > 0) {
+    out.reflect = Math.max(1, Math.round(out.dmg * 0.25));
+  }
+  return out;
+}
+
+function boonOnKill(foe) {
+  if (boonTier('necromancy') >= 1) {
+    const heal = Math.min(maxHp() - G.hp, Math.round(maxHp() * 0.12));
+    if (heal > 0) { G.hp += heal; runLog('<span class="boon">Siphon</span> — you drain ' + heal + ' hp.'); }
+  }
+  if (boonTier('necromancy') >= 2) {
+    if (!runState.shades) runState.shades = [];
+    runState.shades.push({ rounds: boonTier('necromancy') >= 3 ? Infinity : 3 });
+    runLog('<span class="boon">A shade rises</span> (' + runState.shades.length + ').');
+  }
+  if (boonTier('bloodlust') >= 3) {
+    runState.rampage = (runState.rampage || 0) + 1;
+  }
+  // Immolation and Cold Snap carry over onto whatever comes next.
+  if (boonTier('emberbrand') >= 3 && foe.burn) {
+    runState.carryDetonate = Math.round(foe.max * 0.30);
+  }
+  if (boonTier('frostbite') >= 3 && foe.chill > 0) {
+    runState.carryFreeze = true;
+  }
 }
 
 function combatRound() {
   if (!runState || runState.over) return;
   const foe = runState.foe;
 
+  // Frozen foes lose their turn entirely.
+  const wasFrozen = foe.frozen > 0;
+  if (wasFrozen) foe.frozen -= 1;
+
   // Your swing.
-  const dmg = rollDamage(playerMaxHit(), playerAttackRoll(), monsterDefenceRoll(foe));
-  foe.hp -= dmg;
-  awardCombatXp(dmg);
+  const raw = rollDamage(playerMaxHit(), playerAttackRoll(), monsterDefenceRoll(foe));
+  const off = boonOffence(raw, foe);
+  foe.hp -= off.dmg;
+  off.extraHits.forEach(function (h) { foe.hp -= h; });
+  const totalDealt = off.dmg + off.extraHits.reduce(function (s, h) { return s + h; }, 0);
+  awardCombatXp(totalDealt);
   flash('foe');
-  floatNum('foe', dmg);
-  runLog(dmg > 0
-    ? 'You hit <b>' + dmg + '</b> on the ' + foe.name + '.'
+  floatNum('foe', totalDealt);
+  runLog(raw > 0
+    ? 'You hit <b>' + totalDealt + '</b> on the ' + foe.name +
+      (off.notes.length ? ' <span class="boon">(' + off.notes.join(', ') + ')</span>' : '') + '.'
     : '<span class="miss">You miss the ' + foe.name + '.</span>');
+
+  // Burn ticks after your swing.
+  if (foe.burn && foe.burn.rounds > 0 && foe.hp > 0) {
+    foe.hp -= foe.burn.dmg;
+    foe.burn.rounds -= 1;
+    awardCombatXp(foe.burn.dmg);
+    runLog('<span class="boon">🔥 Burning</span> for ' + foe.burn.dmg + '.');
+  }
 
   if (foe.hp <= 0) {
     runLog('<span class="win">' + foe.name + ' is defeated.</span>');
+    boonOnKill(foe);
     rollLoot(foe);
     renderDungeonRun();
-    runTimer = setTimeout(advanceWave, 800);
+    renderTopBar();
+    runTimer = setTimeout(advanceWave, pace(800));
     return;
   }
 
-  // Its swing.
-  const back = rollDamage(foe.maxHit, monsterAttackRoll(foe), playerDefenceRoll());
-  G.hp -= back;
-  flash('you');
-  floatNum('you', back);
-  runLog(back > 0
-    ? '<span class="hurt">' + foe.name + ' hits you for <b>' + back + '</b>.</span>'
-    : '<span class="miss">' + foe.name + ' misses.</span>');
+  // Its swing — skipped entirely if frozen.
+  if (wasFrozen) {
+    runLog('<span class="boon">❄️ ' + foe.name + ' is frozen solid</span> and loses its turn.');
+  } else {
+    const incoming = rollDamage(foe.maxHit, monsterAttackRoll(foe), playerDefenceRoll());
+    const def = boonDefence(incoming, foe);
+    G.hp -= def.dmg;
+
+    // Last Stand: one death-save a wave.
+    if (G.hp <= 0 && boonTier('stoneblood') >= 3 && !runState.lastStandUsed) {
+      runState.lastStandUsed = true;
+      G.hp = Math.max(1, Math.round(maxHp() * 0.25));
+      runLog('<span class="boon">🪨 Last Stand</span> — you refuse to fall, at ' + G.hp + ' hp.');
+    }
+    flash('you');
+    floatNum('you', def.dmg);
+    runLog(def.dmg > 0
+      ? '<span class="hurt">' + foe.name + ' hits you for <b>' + def.dmg + '</b>' +
+        (def.notes.length ? ' (' + def.notes.join(', ') + ')' : '') + '.</span>'
+      : '<span class="miss">' + foe.name + ' misses.</span>');
+
+    if (def.reflect > 0) {
+      foe.hp -= def.reflect;
+      awardCombatXp(def.reflect);
+      runLog('<span class="boon">🪨 Retort</span> — ' + def.reflect + ' back at it.');
+      if (foe.hp <= 0) {
+        runLog('<span class="win">' + foe.name + ' is defeated.</span>');
+        boonOnKill(foe);
+        rollLoot(foe);
+        renderDungeonRun();
+        runTimer = setTimeout(advanceWave, pace(800));
+        return;
+      }
+    }
+  }
+
+  // Statuses decay at the end of the round.
+  if (foe.chill > 0) foe.chill -= 1;
+  if (runState.shades) {
+    runState.shades.forEach(function (s) { s.rounds -= 1; });
+    runState.shades = runState.shades.filter(function (s) { return s.rounds > 0; });
+  }
 
   renderDungeonRun();
   renderTopBar();
 
   if (G.hp <= 0) {
     G.hp = 0;
-    runTimer = setTimeout(function () { endRun(false); }, 700);
+    runTimer = setTimeout(function () { endRun(false); }, pace(700));
     return;
   }
-  runTimer = setTimeout(combatRound, 750);
+  runTimer = setTimeout(combatRound, pace(750));
 }
 
 function rollLoot(foe) {
   const drops = runState.d.drops;
+  const mult = boonTier('scavenger') >= 1 ? 1.5 : 1;
   for (const k in drops) {
-    const q = rng(drops[k][0], drops[k][1]);
+    const q = Math.round(rng(drops[k][0], drops[k][1]) * mult);
     if (q > 0) runState.loot[k] = (runState.loot[k] || 0) + q;
   }
   if (foe.boss) {
     const bonus = runState.d.clearDrops;
-    for (const k in bonus) runState.loot[k] = (runState.loot[k] || 0) + bonus[k];
+    for (const k in bonus) {
+      runState.loot[k] = (runState.loot[k] || 0) + Math.round(bonus[k] * mult);
+    }
   }
 }
 
@@ -1489,13 +1836,99 @@ function advanceWave() {
   if (!runState || runState.over) return;
   if (runState.foe && runState.foe.boss) return endRun(true);
   runState.wave += 1;
-  const heal = Math.min(maxHp() - G.hp, Math.ceil(maxHp() * WAVE_HEAL_PCT / 100));
+  runState.lastStandUsed = false;
+
+  let pct = WAVE_HEAL_PCT + (boonTier('scavenger') >= 2 ? 15 : 0);
+  const heal = Math.min(maxHp() - G.hp, Math.ceil(maxHp() * pct / 100));
   if (heal > 0) {
     G.hp += heal;
     runLog('<span class="win">You catch your breath. +' + heal + ' hp.</span>');
     renderTopBar();
   }
+
+  // Opportunist hands out a free first tier before the offered choice.
+  if (boonTier('scavenger') >= 3) {
+    const free = rollBoonChoices(1).filter(function (c) { return c.tier === 1; })[0];
+    if (free) {
+      runLog('<span class="boon">🐀 Opportunist</span> — a boon for nothing.');
+      grantBoon(free.key, free.tier);
+    }
+  }
+
+  offerBoons();
+}
+
+// ---- The between-wave level up ----
+
+function offerBoons() {
+  if (!runState) return;
+  const choices = rollBoonChoices(3);
+  if (!choices.length) { spawnFoe(); return; }   // every line maxed out
+  runState.runLevel = (runState.runLevel || 0) + 1;
+  runState.pending = choices;
+  if (autoBoonPick) {                       // headless balance runs
+    const idx = autoBoonPick(choices, runState);
+    if (typeof idx === 'number' && idx >= 0) {
+      chooseBoon(idx);
+    } else {                                // negative index = decline the level
+      runState.pending = null;
+      spawnFoe();
+    }
+    return;
+  }
+  renderBoonPick();
+  document.body.classList.add('picking-boon');
+}
+
+function chooseBoon(index) {
+  if (!runState || !runState.pending) return;
+  const pick = runState.pending[index];
+  if (!pick) return;
+  runState.pending = null;
+  document.body.classList.remove('picking-boon');
+  grantBoon(pick.key, pick.tier);
+  renderDungeonRun();
+  renderTopBar();
   spawnFoe();
+}
+
+function renderBoonPick() {
+  if (!runState || !runState.pending) return;
+  $('bp-level').textContent = 'Delve Level ' + runState.runLevel;
+  $('bp-sub').textContent = runState.d.name + ' — wave ' + runState.wave +
+    ' of ' + runState.d.waves;
+  const wrap = $('bp-choices');
+  wrap.innerHTML = '';
+  runState.pending.forEach(function (c, i) {
+    const line = BOON_LINES[c.key];
+    const t = line.tiers[c.tier - 1];
+    const card = el('button', 'boon-card' + (c.tier > 1 ? ' upgrade' : ''));
+    card.innerHTML =
+      '<div class="bc-head">' +
+        '<span class="bc-ico">' + line.icon + '</span>' +
+        '<span class="bc-line">' + line.name + '</span>' +
+        '<span class="bc-tier">' + (c.tier > 1 ? 'UPGRADE ' : '') +
+          'I'.repeat(c.tier) + '</span>' +
+      '</div>' +
+      '<div class="bc-name">' + t.name + '</div>' +
+      '<div class="bc-desc">' + t.desc + '</div>';
+    card.onclick = function () { chooseBoon(i); };
+    wrap.appendChild(card);
+  });
+}
+
+// The build so far, shown above the fight.
+function renderBoonBar() {
+  const bar = $('run-boons');
+  if (!bar || !runState) return;
+  const keys = Object.keys(runState.boons || {});
+  if (!keys.length) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  bar.innerHTML = keys.map(function (k) {
+    const t = runState.boons[k];
+    return '<span class="boon-chip" title="' + esc(boonName(k, t)) + '">' +
+      BOON_LINES[k].icon + '<i>' + 'I'.repeat(t) + '</i></span>';
+  }).join('');
 }
 
 function endRun(cleared) {
@@ -1532,6 +1965,14 @@ function endRun(cleared) {
   xpGains.forEach(function (r) {
     row(SKILLS[r.key].icon + ' ' + SKILLS[r.key].name, '+' + Math.round(r.gain).toLocaleString() + ' xp');
   });
+  // The build you finished with — a record of the run, not a reward.
+  const boonKeys = Object.keys(rs.boons || {});
+  if (boonKeys.length) {
+    row('Delve build', boonKeys.map(function (k) {
+      return BOON_LINES[k].icon + ' ' + boonName(k, rs.boons[k]) +
+        ' <span class="rr-tier">' + 'I'.repeat(rs.boons[k]) + '</span>';
+    }).join('<br>'));
+  }
   const lootKeys = Object.keys(rs.loot);
   if (lootKeys.length) {
     row('Loot', lootKeys.map(function (k) { return itemIcon(k) + ' ' + rs.loot[k] + '× ' + itemName(k); }).join('<br>'));
@@ -1552,6 +1993,7 @@ function endRun(cleared) {
 
   runState = null;
   document.body.classList.remove('in-run');
+  document.body.classList.remove('picking-boon');
   resultsOpen = true;
   render();
 }
@@ -1577,6 +2019,15 @@ function renderDungeonRun() {
   $('you-hp').textContent = Math.max(0, Math.floor(G.hp)) + ' / ' + maxHp();
   const w = G.equipped.weapon;
   $('you-ico').textContent = w && GEAR[w] ? GEAR[w].icon : '🧍';
+  // Status pips so the build's effects are legible mid-fight.
+  const st = [];
+  if (foe.burn && foe.burn.rounds > 0) st.push('🔥');
+  if (foe.chill > 0) st.push('❄️');
+  if (foe.frozen > 0) st.push('🧊');
+  $('foe-status').textContent = st.join(' ');
+  $('you-status').textContent = (runState.shades && runState.shades.length)
+    ? '💀×' + runState.shades.length : '';
+  renderBoonBar();
 }
 
 function runLog(html) {
@@ -1667,6 +2118,23 @@ window.__rf = {
   rollDamage: rollDamage, awardCombatXp: awardCombatXp,
   addXp: addXp, addItem: addItem, have: have, gearBonus: gearBonus,
   gearScore: gearScore, upgradeDelta: upgradeDelta, bestOwnedPerSlot: bestOwnedPerSlot,
+  BOON_LINES: BOON_LINES, BOON_KEYS: BOON_KEYS, DUNGEON_BOONS: DUNGEON_BOONS,
+  boonTier: boonTier, boonName: boonName,
+  runInfo: function () {
+    if (!runState) return null;
+    return {
+      wave: runState.wave, runLevel: runState.runLevel,
+      boons: Object.assign({}, runState.boons),
+      pending: (runState.pending || []).map(function (p) { return p.key + ':' + p.tier; }),
+      shades: (runState.shades || []).length, rampage: runState.rampage || 0
+    };
+  },
+  forceBoon: function (key, tier) { if (runState) runState.boons[key] = tier; },
+  setPace: function (scale) { paceScale = scale; },
+  setDifficulty: function (scale) { difficultyScale = scale; },
+  setAutoBoon: function (fn) { autoBoonPick = fn; },
+  enterDungeon: function (i) { enterDungeon(i); },
+  isInRun: function () { return !!runState; },
   salvageYield: salvageYield, SALVAGE_CHANCE: SALVAGE_CHANCE,
   defaultState: defaultState,
   setLevels: function (levels) {
