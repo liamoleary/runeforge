@@ -154,10 +154,18 @@ Boons changed that picture — a roguelite's content has to assume you build, so
 `tools/boon-calibrate.js` re-tunes difficulty around them. It drives the **real
 `combatRound()`** with pacing scaled to zero rather than re-implementing the
 logic, binary-searching a monster scalar until a middling (random-pick) build
-wins ~60%. It then reports what a no-build and a good-build run do at that same
-difficulty — the gap between those two is the reward for playing well.
-`tools/apply-scalars.js` bakes the result into the monster table. Monsters
-currently sit at roughly 1.4–1.6× their pre-boon hp and max hit.
+wins ~60%. `tools/apply-scalars.js` bakes the result into the monster table;
+monsters currently sit at roughly 1.4–1.6× their pre-boon hp and max hit.
+
+That gap is stark. A run that declines every boon wins **0–5%**; a run that
+takes them at random wins **~60%**. The choices, not the gear, are what carry
+a delve.
+
+There's no single right way to spend them. Deepening one line beats spreading
+in the Spire and loses to it in the Crypt, because a dungeon of frequent small
+hits rewards a second damage-reduction line more than a third tier of the
+first. That's the design working — the pool is what makes each dungeon a
+different puzzle.
 
 `tools/journey.js` plays a bot from level 1 to the last boss using the game's
 own combat and recipe functions, farming until each dungeon looks winnable. It

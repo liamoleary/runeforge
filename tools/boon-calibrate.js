@@ -3,8 +3,11 @@
 // Boons are the expected baseline in a roguelite, so the content has to assume
 // you build. For each dungeon this binary-searches a monster scalar until a
 // MIDDLING build (random picks) wins about as often as we want, then reports
-// what a no-build and a good-build run do at that same difficulty — the spread
-// between those two is the reward for playing well.
+// what a no-build run and a deepen-one-line run do at that same difficulty.
+//
+// `deepen` is a heuristic, not optimal play — in dungeons where breadth beats
+// depth it loses to random, and that's the design working. The number that
+// matters is no-build vs any-build: that gap is what the choices are worth.
 //
 // It drives the real combatRound() with pacing at zero, so the numbers can't
 // drift from the shipped logic.
@@ -95,7 +98,7 @@ const TARGETS = [
   }, { TARGET_RANDOM_WINRATE, TRIALS, SEARCH_TRIALS, TARGETS });
 
   console.log(`\n══════ CALIBRATION (target: random build wins ${(TARGET_RANDOM_WINRATE * 100).toFixed(0)}%) ══════\n`);
-  console.log('dungeon     scalar   no build   random   good build   skill spread');
+  console.log('dungeon     scalar   no build   random   deepen       build spread');
   console.log('──────────────────────────────────────────────────────────────────');
   results.forEach(r => {
     const pct = (x) => (x * 100).toFixed(0) + '%';

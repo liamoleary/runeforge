@@ -290,10 +290,10 @@ const DUNGEONS = [
     blurb: 'A barrow sealed in black ice. The cold bites through bronze.',
     waves: 6,
     monsters: [
-      { name: 'Frost Ghoul',  icon: '🧟', hp: 24, atk: 22, def: 6, maxHit: 5 },
-      { name: 'Ice Wraith',   icon: '👻', hp: 33, atk: 24, def: 7, maxHit: 7 }
+      { name: 'Frost Ghoul',  icon: '🧟', hp: 22, atk: 22, def: 6, maxHit: 5 },
+      { name: 'Ice Wraith',   icon: '👻', hp: 30, atk: 24, def: 7, maxHit: 6 }
     ],
-    boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 60, atk: 30, def: 12, maxHit: 8 },
+    boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 54, atk: 30, def: 12, maxHit: 7 },
     drops: { frost_shard: [1, 2], emerald: [0, 1] },
     clearDrops: { frost_shard: 3, emerald: 2 }
   },
@@ -302,10 +302,10 @@ const DUNGEONS = [
     blurb: 'A tower struck by lightning so often the stone has turned to glass.',
     waves: 7,
     monsters: [
-      { name: 'Storm Sprite',  icon: '⚡', hp: 37,  atk: 39, def: 14, maxHit: 5 },
-      { name: 'Thunder Golem', icon: '🗿', hp: 49,  atk: 43, def: 16, maxHit: 7 }
+      { name: 'Storm Sprite',  icon: '⚡', hp: 41,  atk: 39, def: 14, maxHit: 6 },
+      { name: 'Thunder Golem', icon: '🗿', hp: 54,  atk: 43, def: 16, maxHit: 8 }
     ],
-    boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 97, atk: 52, def: 25, maxHit: 10 },
+    boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 108, atk: 52, def: 25, maxHit: 11 },
     drops: { storm_crystal: [1, 2], ruby: [0, 1] },
     clearDrops: { storm_crystal: 3, ruby: 2 }
   },
@@ -326,10 +326,10 @@ const DUNGEONS = [
     blurb: 'Nothing comes back from here without rune on its back.',
     waves: 9,
     monsters: [
-      { name: 'Abyssal Leech',  icon: '🪱', hp: 80,  atk: 80, def: 35, maxHit: 9 },
-      { name: 'Void Stalker',   icon: '👁️', hp: 107, atk: 88, def: 39, maxHit: 10 }
+      { name: 'Abyssal Leech',  icon: '🪱', hp: 86,  atk: 80, def: 35, maxHit: 10 },
+      { name: 'Void Stalker',   icon: '👁️', hp: 116, atk: 88, def: 39, maxHit: 11 }
     ],
-    boss: { name: 'The Hollow King', icon: '👑', hp: 232, atk: 104, def: 54, maxHit: 16 },
+    boss: { name: 'The Hollow King', icon: '👑', hp: 251, atk: 104, def: 54, maxHit: 17 },
     drops: { dragonstone: [0, 1], dragon_ash: [1, 2] },
     clearDrops: { dragonstone: 3, dragon_ash: 4 }
   }
