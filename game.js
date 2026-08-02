@@ -276,65 +276,65 @@ const DUNGEONS = [
   {
     key: 'warren', name: 'Rat Warren', icon: '🐀',
     blurb: 'Damp tunnels under the village. Something has been breeding down here.',
-    waves: 8,
+    waves: 12,
     monsters: [
       { name: 'Giant Rat',   icon: '🐀', hp: 11,  atk: 6,  def: 1, maxHit: 5 , calls: 0.3 },
       { name: 'Cave Slime',  icon: '🟢', hp: 15,  atk: 7,  def: 1, maxHit: 6 , calls: 0.3 }
     ],
     boss: { name: 'Warren Brood-Mother', icon: '🕷️', hp: 26, atk: 10, def: 2, maxHit: 10 , calls: 0.5 },
-    summon: { name: 'Rat Swarm', icon: '🐁', hp: 8, atk: 6, def: 1, maxHit: 2 },
+    summonPrefix: 'Brood',
     drops: { ember_core: [1, 2], sapphire: [0, 1] },
     clearDrops: { ember_core: 3, sapphire: 2 }
   },
   {
     key: 'crypt', name: 'Frozen Crypt', icon: '❄️',
     blurb: 'A barrow sealed in black ice. The cold bites through bronze.',
-    waves: 10,
+    waves: 14,
     monsters: [
       { name: 'Frost Ghoul',  icon: '🧟', hp: 22, atk: 22, def: 6, maxHit: 5 , calls: 0.3 },
       { name: 'Ice Wraith',   icon: '👻', hp: 30, atk: 24, def: 7, maxHit: 6 , calls: 0.32 }
     ],
     boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 54, atk: 30, def: 12, maxHit: 7 , calls: 0.5 },
-    summon: { name: 'Frost Shade', icon: '🌫️', hp: 14, atk: 20, def: 5, maxHit: 2 },
+    summonPrefix: 'Frost',
     drops: { frost_shard: [1, 2], emerald: [0, 1] },
     clearDrops: { frost_shard: 3, emerald: 2 }
   },
   {
     key: 'spire', name: 'Storm Spire', icon: '⚡',
     blurb: 'A tower struck by lightning so often the stone has turned to glass.',
-    waves: 11,
+    waves: 16,
     monsters: [
       { name: 'Storm Sprite',  icon: '⚡', hp: 41,  atk: 39, def: 14, maxHit: 6 , calls: 0.32 },
       { name: 'Thunder Golem', icon: '🗿', hp: 54,  atk: 43, def: 16, maxHit: 8 , calls: 0.3 }
     ],
     boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 108, atk: 52, def: 25, maxHit: 11 , calls: 0.5 },
-    summon: { name: 'Storm Wisp', icon: '✨', hp: 22, atk: 38, def: 12, maxHit: 3 },
+    summonPrefix: 'Storm',
     drops: { storm_crystal: [1, 2], ruby: [0, 1] },
     clearDrops: { storm_crystal: 3, ruby: 2 }
   },
   {
     key: 'roost', name: "Dragon's Roost", icon: '🐲',
     blurb: 'The heat alone kills the unprepared. Bring the best steel you have.',
-    waves: 12,
+    waves: 18,
     monsters: [
       { name: 'Whelp',        icon: '🦎', hp: 60,  atk: 57, def: 24, maxHit: 7 , calls: 0.34 },
       { name: 'Ember Drake',  icon: '🐉', hp: 81,  atk: 63, def: 27, maxHit: 9 , calls: 0.3 }
     ],
     boss: { name: 'Ashmaw the Elder', icon: '🐲', hp: 167, atk: 75, def: 39, maxHit: 13 , calls: 0.55 },
-    summon: { name: 'Ash Whelp', icon: '🔥', hp: 34, atk: 55, def: 20, maxHit: 3 },
+    summonPrefix: 'Ash',
     drops: { dragon_ash: [1, 2], diamond: [0, 1] },
     clearDrops: { dragon_ash: 3, diamond: 2 }
   },
   {
     key: 'abyss', name: 'The Abyss', icon: '🌌',
     blurb: 'Nothing comes back from here without rune on its back.',
-    waves: 13,
+    waves: 20,
     monsters: [
       { name: 'Abyssal Leech',  icon: '🪱', hp: 86,  atk: 80, def: 35, maxHit: 10 , calls: 0.34 },
       { name: 'Void Stalker',   icon: '👁️', hp: 116, atk: 88, def: 39, maxHit: 11 , calls: 0.32 }
     ],
     boss: { name: 'The Hollow King', icon: '👑', hp: 251, atk: 104, def: 54, maxHit: 17 , calls: 0.6 },
-    summon: { name: 'Void Spawn', icon: '🌑', hp: 46, atk: 78, def: 30, maxHit: 4 },
+    summonPrefix: 'Void',
     drops: { dragonstone: [0, 1], dragon_ash: [1, 2] },
     clearDrops: { dragonstone: 3, dragon_ash: 4 }
   }
@@ -1944,7 +1944,7 @@ function enterDungeon(index) {
     retinue: [], fallen: 0, peakHost: 0,
     foes: [], orders: {}, focus: null, phase: 'orders', auto: autoFightDefault,
     idSeq: 0, bossWave: false, summoned: 0,
-    fury: 0, powerArmed: false, bindPending: null,
+    fury: 0, powerArmed: false, bindPending: null, rot: null,
     rampage: 0, hitCount: 0, round: 0,
     hpPenalty: 0, lastStandUsed: false,
     carryDetonate: 0, carryFreeze: false
@@ -1967,7 +1967,19 @@ function enterDungeon(index) {
 // Every summon is a whole extra attack per round, so they have to be rare
 // and bounded — a caller that replenishes faster than you clear is an
 // unwinnable wave, not a hard one.
-const FOE_MINION_CAP = 3;
+const FOE_MINION_CAP = 4;
+
+// What the other side can put on the board. Stats come off the caller, so a
+// Void Warden is as far above a Brood Warden as its master is.
+const FOE_MINION_KINDS = [
+  { name: 'Warden',  icon: '🛡️', keys: ['taunt'],  hp: 1.35, dmg: 0.7 },
+  { name: 'Shade',   icon: '🌫️', keys: ['ward'],   hp: 1.00, dmg: 1.0 },
+  { name: 'Reaver',  icon: '⚔️', keys: ['double'], hp: 0.80, dmg: 0.6 },
+  { name: 'Rotling', icon: '☠️', keys: ['wither'], hp: 1.00, dmg: 0.9 },
+  { name: 'Leech',   icon: '🩸', keys: ['drain'],  hp: 1.00, dmg: 1.0 }
+];
+const MINION_HP_SHARE = 0.60;      // of whatever called it
+const MINION_HIT_SHARE = 0.70;
 
 // Fury builds as you trade blows and buys one enormous swing. It is the
 // decision AUTO cannot take away from you.
@@ -1983,6 +1995,33 @@ const SUMMON_BUDGET_MOB = 2;
 function nextId() {
   runState.idSeq = (runState.idSeq || 0) + 1;
   return 'c' + runState.idSeq;
+}
+
+// A minion of whatever called it, in one of the five shapes.
+function makeMinion(parent) {
+  const kind = FOE_MINION_KINDS[rng(0, FOE_MINION_KINDS.length - 1)];
+  const prefix = runState.d.summonPrefix || 'Lesser';
+  const hp = Math.max(1, Math.round(parent.max * MINION_HP_SHARE * kind.hp));
+  const f = {
+    id: nextId(),
+    name: prefix + ' ' + kind.name, icon: kind.icon,
+    hp: hp, max: hp,
+    atk: parent.atk, def: Math.round(parent.def * 0.8),
+    maxHit: Math.max(1, Math.round(parent.maxHit * MINION_HIT_SHARE * kind.dmg)),
+    boss: false, minion: true,
+    keys: kind.keys.slice(), warded: kind.keys.indexOf('ward') >= 0,
+    calls: 0, summonCd: 99, summonsLeft: 0,
+    burn: null, chill: 0, frozen: 0, wither: null,
+    intent: null
+  };
+  if (boonTier('voidtouched') >= 1) f.def = Math.round(f.def * 0.7);
+  f.intent = { kind: 'attack', icon: '⚔', label: String(f.maxHit) };
+  return f;
+}
+
+function foeHasKey(f, k) { return !!(f.keys && f.keys.indexOf(k) >= 0); }
+function tauntingFoe() {
+  return aliveFoes().filter(function (f) { return foeHasKey(f, 'taunt'); })[0] || null;
 }
 
 function makeFoe(base, opts) {
@@ -2032,6 +2071,9 @@ function startWave() {
   runState.foes = [makeFoe(base, { boss: isBoss })];
   runState.orders = {};
   const foe = runState.foes[0];
+  // Neither side walks in alone.
+  runState.foes.push(makeMinion(foe));
+  if (!hostUnits().length) raiseUnit(true);
 
   runLog(isBoss
     ? '<span class="boss">' + base.name + ' blocks the way.</span>'
@@ -2163,7 +2205,18 @@ function stepAttack(queue, i) {
   }, pace(230));
 }
 
-function playerSwing(target) {
+// A guarded enemy line: single blows land on the wall, splash goes past it.
+function throughTaunt(target) {
+  const guard = tauntingFoe();
+  return (guard && guard !== target && !foeHasKey(target, 'taunt')) ? guard : target;
+}
+
+function playerSwing(aimed) {
+  const target = throughTaunt(aimed);
+  if (target !== aimed) {
+    runLog('<span class="boss">' + target.name + ' steps in front of the ' +
+      aimed.name + '.</span>');
+  }
   const power = !!runState.powerArmed;
   let raw = rollDamage(playerMaxHit(), playerAttackRoll(), monsterDefenceRoll(target));
   let crit = false;
@@ -2177,6 +2230,13 @@ function playerSwing(target) {
     crit = true;
   }
   const off = boonOffence(raw, target);
+  if (off.dmg > 0 && target.warded) {
+    target.warded = false;
+    runLog('<span class="boss">✨ ' + target.name + '\'s ward holds.</span>');
+    floatOn('foe-' + target.id, 0);
+    addFury(FURY_PER_HIT);
+    return;
+  }
   target.hp -= off.dmg;
   awardCombatXp(off.dmg);
   if (raw > 0) addFury(FURY_PER_HIT);
@@ -2213,16 +2273,26 @@ function playerSwing(target) {
 
 function unitSwing(u, target) {
   const swings = unitHasKey(u, 'double') ? 2 : 1;
-  for (let i = 0; i < swings && target.hp > 0; i++) unitStrike(u, target);
+  for (let i = 0; i < swings; i++) {
+    if (!aliveFoes().length) return;
+    unitStrike(u, target.hp > 0 ? target : aliveFoes()[0]);
+  }
 }
 
-function unitStrike(u, target) {
+function unitStrike(u, aimed) {
+  const target = throughTaunt(aimed);
   const name = unitLabel(u);
   let dealt = rollDamage(unitStats(u).dmg, playerAttackRoll(), monsterDefenceRoll(target));
   let crit = false;
   if (dealt > 0 && Math.random() < CRIT_CHANCE) { dealt = Math.round(dealt * CRIT_MULT); crit = true; }
   if (dealt <= 0) {
     runLog('<span class="miss">Your ' + name + ' claws at nothing.</span>');
+    return;
+  }
+  if (target.warded) {
+    target.warded = false;
+    runLog('<span class="boss">✨ ' + target.name + '\'s ward holds.</span>');
+    floatOn('foe-' + target.id, 0);
     return;
   }
   target.hp -= dealt;
@@ -2316,6 +2386,20 @@ function stepFoe(queue, i) {
   if (intent.kind === 'summon') { doSummon(f); renderDungeonRun(); return next(); }
   if (intent.kind === 'enrage') { doEnrage(f); renderDungeonRun(); return next(); }
 
+  const swings = foeHasKey(f, 'double') ? 2 : 1;
+  for (let s = 0; s < swings; s++) foeStrike(f);
+  renderDungeonRun();
+  renderTopBar();
+  if (G.hp <= 0) {
+    G.hp = 0;
+    runTimer = setTimeout(function () { endRun(false); }, pace(700));
+    return;
+  }
+  next();
+}
+
+function foeStrike(f) {
+  if (!runState || runState.over || f.hp <= 0 || G.hp <= 0) return;
   const incoming = rollDamage(f.maxHit, monsterAttackRoll(f), playerDefenceRoll());
   const def = boonDefence(incoming, f);
 
@@ -2342,21 +2426,27 @@ function stepFoe(queue, i) {
       : '<span class="miss">' + f.name + ' misses.</span>');
   }
 
+  // Rotling strikes leave you bleeding; a Leech takes what it deals.
+  if (def.dmg > 0 && !blocked) {
+    if (foeHasKey(f, 'wither')) {
+      runState.rot = { dmg: Math.max(2, Math.round(f.maxHit * 0.4)), rounds: 2 };
+      runLog('<span class="hurt">☠ ' + f.name + ' leaves you rotting.</span>');
+    }
+    if (foeHasKey(f, 'drain')) {
+      const back = Math.min(f.max - f.hp, Math.max(1, Math.round(def.dmg * 0.5)));
+      if (back > 0) {
+        f.hp += back;
+        runLog('<span class="hurt">🩸 ' + f.name + ' drinks ' + back + ' back.</span>');
+      }
+    }
+  }
+
   if (def.reflect > 0) {
     f.hp -= def.reflect;
     awardCombatXp(def.reflect);
     floatOn('foe-' + f.id, def.reflect);
     runLog('<span class="boon">🪨 Retort</span> — ' + def.reflect + ' back at it.');
   }
-
-  renderDungeonRun();
-  renderTopBar();
-  if (G.hp <= 0) {
-    G.hp = 0;
-    runTimer = setTimeout(function () { endRun(false); }, pace(700));
-    return;
-  }
-  next();
 }
 
 // A foe calls up a minion of its dungeon's kind, on a cooldown and under a cap.
@@ -2377,8 +2467,7 @@ function decideIntent(f) {
 }
 
 function willSummon(f) {
-  const tpl = runState.d.summon;
-  if (!tpl || !f.calls || f.summonsLeft <= 0) return false;
+  if (!f.calls || f.summonsLeft <= 0) return false;
   if (f.summonCd > 0) { f.summonCd -= 1; return false; }
   if (runState.foes.filter(function (x) { return x.minion && x.hp > 0; }).length >= FOE_MINION_CAP) return false;
   return Math.random() < f.calls;
@@ -2387,7 +2476,7 @@ function willSummon(f) {
 function doSummon(f) {
   f.summonCd = 3;
   f.summonsLeft -= 1;
-  const m = makeFoe(runState.d.summon, { minion: true });
+  const m = makeMinion(f);
   runState.foes.push(m);
   runState.summoned = (runState.summoned || 0) + 1;
   runLog('<span class="boss">' + f.name + ' calls up a ' + m.name + '.</span>');
@@ -2420,6 +2509,12 @@ function endOfRound() {
     }
     if (f.chill > 0) f.chill -= 1;
   });
+  if (runState.rot && runState.rot.rounds > 0) {
+    G.hp -= runState.rot.dmg;
+    runState.rot.rounds -= 1;
+    floatOn('you-card', runState.rot.dmg);
+    runLog('<span class="hurt">☠ The rot takes ' + runState.rot.dmg + '.</span>');
+  }
   reapFoes();
   renderDungeonRun();
   renderTopBar();
@@ -2572,6 +2667,7 @@ function advanceWave() {
   runState.lastStandUsed = false;
   // Wards reform between waves.
   hostUnits().forEach(function (u) { if (unitHasKey(u, 'ward')) u.warded = true; });
+  runState.rot = null;
 
   let pct = WAVE_HEAL_PCT + (boonTier('scavenger') >= 2 ? 15 : 0);
   const heal = Math.min(maxHp() - G.hp, Math.ceil(maxHp() * pct / 100));
@@ -2806,7 +2902,8 @@ function renderDungeonRun() {
 
 function foeCard(f) {
   const card = el('div', 'combatant foe' + (f.minion ? ' minion' : '') +
-    (f.boss ? ' boss' : '') + (runState.focus === f.id ? ' focused' : ''));
+    (f.boss ? ' boss' : '') + (runState.focus === f.id ? ' focused' : '') +
+    (foeHasKey(f, 'taunt') ? ' guard' : ''));
   card.id = 'foe-' + f.id;
   const st = [];
   if (f.burn && f.burn.rounds > 0) st.push('🔥');
@@ -2818,8 +2915,13 @@ function foeCard(f) {
     return runState.orders[a.id] === f.id;
   }).length;
   const it = f.intent;
+  const fkw = (f.keys || []).map(function (k) {
+    return '<span class="f-kw' + (k === 'ward' && !f.warded ? ' spent' : '') +
+      '" title="' + esc(KEYWORDS[k].name) + '">' + KEYWORDS[k].icon + '</span>';
+  }).join('');
   card.innerHTML =
     (it ? '<div class="intent ' + it.kind + '">' + it.icon + ' ' + it.label + '</div>' : '') +
+    (fkw ? '<div class="f-keys">' + fkw + '</div>' : '') +
     '<div class="ico">' + f.icon + '</div>' +
     '<div class="status">' + st.join(' ') + '</div>' +
     '<div class="nm">' + esc(f.name) + '</div>' +
@@ -3122,7 +3224,7 @@ window.__rf = {
   unleashFury: unleashFury, FURY_MAX: FURY_MAX,
   performBind: performBind, bindableTier: bindableTier, BIND_COUNT: BIND_COUNT,
   completeBind: completeBind, bindOffers: bindOffers, BIND_FORMS: BIND_FORMS,
-  KEYWORDS: KEYWORDS,
+  KEYWORDS: KEYWORDS, FOE_MINION_KINDS: FOE_MINION_KINDS,
   setAutoBind: function (fn) { autoBindPick = fn; },
   // Headless runs need the board to play itself.
   setAutoFight: function (on) { autoFightDefault = !!on; if (runState) { runState.auto = !!on; if (on) enterOrders(); } },
@@ -3144,8 +3246,11 @@ window.__rf = {
     return {
       phase: runState.phase, auto: !!runState.auto, round: runState.round || 0,
       foes: runState.foes.map(function (f) {
-        return { id: f.id, name: f.name, hp: f.hp, max: f.max, minion: !!f.minion, boss: !!f.boss };
+        return { id: f.id, name: f.name, hp: f.hp, max: f.max,
+                 minion: !!f.minion, boss: !!f.boss,
+                 keys: (f.keys || []).slice(), warded: !!f.warded };
       }),
+      rot: runState.rot ? runState.rot.rounds : 0,
       allies: hostUnits().map(function (u) {
         return { id: u.id, tier: u.tier, hp: u.hp, max: u.max,
                  bound: !!u.bound, dmg: unitStats(u).dmg,

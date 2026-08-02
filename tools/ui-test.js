@@ -3,6 +3,7 @@
 const { chromium } = require('playwright');
 const BASE = process.env.RF_URL || 'http://localhost:3111/';
 const __rfFuryMax = 100;
+const __rfKeywords = { taunt:1, ward:1, wither:1, double:1, sweep:1, drain:1, reborn:1 };
 let fails = 0;
 function check(name, cond, extra) {
   if (!cond) fails++;
@@ -47,8 +48,8 @@ async function necromancyChecks(page, check) {
     return { before: before, after: __rf.runInfo().host.length,
              tier: __rf.runInfo().host[0] };
   });
-  check('taking Raise Dead raises a skeleton immediately',
-    onTake.before === 0 && onTake.after === 1, `${onTake.before} → ${onTake.after}`);
+  check('taking Raise Dead adds a servant there and then',
+    onTake.after === onTake.before + 1, `${onTake.before} → ${onTake.after}`);
   check('and it is a Skeleton', onTake.tier === 0, onTake.tier);
 
   const opened = await page.evaluate(() =>
@@ -124,6 +125,25 @@ async function necromancyChecks(page, check) {
   check('the power meter has filled', parseFloat(meter.width) > 0, meter.width);
   check('the stage is tinted by the host', parseFloat(meter.necro) > 0, meter.necro);
   check('a full host reads as a legion', meter.legion === true);
+
+  console.log('\n== Countering what they bring ==');
+  const sym = await page.evaluate(() => {
+    // Line up one of each enemy shape and check the board reads them.
+    const kinds = __rf.FOE_MINION_KINDS.map(k => k.name);
+    return { kinds: kinds, keys: __rf.FOE_MINION_KINDS.map(k => k.keys[0]) };
+  });
+  check('the enemy has five minion shapes', sym.kinds.length === 5, sym.kinds.join(','));
+  check('each carries a keyword of its own',
+    sym.keys.every(k => !!__rfKeywords[k]), sym.keys.join(','));
+  const guardTest = await page.evaluate(() => {
+    __rf.setAutoFight(false);
+    const b = __rf.board();
+    const guard = b.foes.filter(f => f.keys.indexOf('taunt') >= 0)[0];
+    return { hasGuard: !!guard, guardId: guard ? guard.id : null,
+             others: b.foes.filter(f => !guard || f.id !== guard.id).length };
+  });
+  check('a guarded enemy line is legible on the board',
+    !guardTest.hasGuard || (await page.locator('.combatant.foe.guard').count()) >= 1);
 
   // ---- The Rite of Binding ----
   // The host at this point is a Bone Dragon and five Wights, so the rite is
@@ -222,12 +242,16 @@ async function boardChecks(page, check) {
 
   const b0 = await page.evaluate(() => __rf.board());
   check('a wave opens waiting for orders', b0.phase === 'orders', b0.phase);
-  check('the enemy stands at the top', b0.foes.length === 1, b0.foes.length);
-  check('you are given a default target', b0.orders.you === b0.foes[0].id,
-    JSON.stringify(b0.orders));
+  check('neither side walks in alone', b0.foes.length === 2 && b0.allies.length === 1,
+    `${b0.foes.length} foes, ${b0.allies.length} allies`);
+  check('their escort is a minion with a keyword',
+    b0.foes.some(f => f.minion && f.keys.length >= 1),
+    b0.foes.map(f => f.name + '[' + f.keys.join(',') + ']').join(' '));
+  check('and yours is a Skeleton', b0.allies[0].tier === 0);
+  check('you are given a default target', !!b0.orders.you, JSON.stringify(b0.orders));
   check('FIGHT is offered', await page.isEnabled('#run-fight'));
   check('the enemy shows how many are aimed at it',
-    (await page.locator('#foe-main .aimed').count()) === 1);
+    (await page.locator('.combatant.foe .aimed').count()) >= 1);
 
   // Nothing happens until you say so.
   const held = await page.evaluate(async () => {
@@ -243,27 +267,36 @@ async function boardChecks(page, check) {
   check('FIGHT plays the round', (await page.evaluate(() => __rf.board().round)) >= 1);
 
   // Give the player a host and a second enemy to choose between.
-  await page.evaluate(() => {
+  await page.waitForFunction(() => __rf.board() && __rf.board().phase === 'orders', { timeout: 30000 });
+  const b1 = await page.evaluate(() => {
     __rf.forceBoon('necromancy', 1);
     for (let i = 0; i < 3; i++) __rf.raiseUnit(true);
     __rf.summonForTest();
+    window.render();          // nothing is resolving, so render by hand
+    return __rf.board();
   });
-  await page.waitForFunction(() => __rf.board() && __rf.board().phase === 'orders', { timeout: 30000 });
-  const b1 = await page.evaluate(() => __rf.board());
-  check('an enemy summon joins the board', b1.foes.length === 2,
+  check('an enemy summon joins the board', b1.foes.length >= 2,
     b1.foes.map(f => f.name).join(', '));
   check('the summon is marked a minion', b1.foes.some(f => f.minion));
   check('summons render in their own row',
-    (await page.locator('#foe-minions .combatant').count()) === 1);
+    (await page.locator('#foe-minions .combatant').count()) >= 1);
   check('your risen render in front of you',
-    (await page.locator('#ally-minions .unit').count()) === 3);
+    (await page.locator('#ally-minions .unit').count()) === b1.allies.length,
+    b1.allies.length);
   check('every attacker has an order',
     Object.keys(b1.orders).length === 1 + b1.allies.length,
     Object.keys(b1.orders).length);
 
-  // With two enemies, orders become a real choice.
-  const minionId = b1.foes.filter(f => f.minion)[0].id;
-  const mainId = b1.foes.filter(f => !f.minion)[0].id;
+  // With two enemies, orders become a real choice. The wave leader may
+  // already be dead by now, so just take two distinct live foes.
+  const two = await page.evaluate(() => {
+    while (__rf.board().foes.length < 2) if (!__rf.summonForTest()) break;
+    window.render();
+    return __rf.board().foes.map(f => f.id);
+  });
+  check('two enemies are standing', two.length >= 2, two.length);
+  const minionId = two[1];
+  const mainId = two[0];
   check('order badges appear once there is a choice',
     (await page.locator('.ord').count()) > 0, await page.locator('.ord').count());
 

@@ -111,39 +111,41 @@ orders and honoured when the round resolves:
 That is what makes targeting a decision rather than a formality: a summoner
 winding up is worth more than the boss's health bar this round.
 
-**Enemies summon too, and nearly everything does it.** Every monster in every
-dungeon can call up minions of its own kind, bosses most often of all. A
-summon costs the caller its turn, three minions cap the board, each caller has
-a per-wave budget, and they drop nothing — so a caller is buying time rather
-than farming you. They still have to be killed, and a board with three extra
-bodies on it is three extra attacks a round coming your way.
+### Both sides bring an army
 
-Dungeons run 8 to 13 waves. That is long enough that a run is a campaign
-rather than a scrap: you get a delve level per wave, so a build actually
-matures, and the decisions about who eats damage and what your host becomes
-have time to matter.
+**Neither side walks in alone.** Every wave opens with the enemy leader and an
+escort, and you with a Skeleton of your own — the Necromancy path is what turns
+that one servant into a host, but you are never standing there by yourself.
 
-### Fury
+Their minions are built from whatever called them — 60% of its health, 70% of
+its hit — so a Void Warden is as far above a Brood Warden as its master is.
+And they come in the same five shapes, each with a keyword you have to answer:
 
-Trading blows fills a **fury** meter — faster when you land hits, slower when
-you take them. Fill it and the bar under the board lights up: spend it to arm a
-**Power Strike**, a swing that cannot miss, lands for two and a half times
-damage, and cleaves half of that into everything else on the board.
+| | | |
+|---|---|---|
+| 🛡️ **Warden** | Taunt | every blow you aim past it lands on it instead |
+| 🌫️ **Shade** | Warded | shrugs off the first hit it takes |
+| ⚔️ **Reaver** | Doubled | strikes twice a round |
+| ☠️ **Rotling** | Withering | leaves you bleeding for two rounds |
+| 🩸 **Leech** | Draining | drinks back half of what it deals |
 
-It is the one decision AUTO cannot take from you — hold it for a boss's enrage
-turn, or dump it into a wave that has got away from you. (AUTO will spend it
-for you if you leave it running, since at that point it is playing everything
-else too.)
+That is where the counterplay lives. A Warden walls off the leader, so you
+either grind through it or bind a **Sweeping** form whose splash goes straight
+past. A Shade eats your Power Strike if you lead with it. A Reaver hits twice,
+so a **Taunt** wall of your own is worth more than damage that round. Rotlings
+punish you for taking hits at all, which is what a **Draining** form answers.
 
-Hits crit at 8% for half again, with a gold number and a shove of the whole
-board.
+You read their board, then choose orders and shapes against it. Everything
+they can do, you can do — that is the whole design.
 
-### The callout
+**Callers keep calling.** Nearly every monster can summon, bosses most of all;
+four minions cap the board, a summon costs the caller its turn, each caller
+has a per-wave budget, and summons drop nothing — so a caller buys time rather
+than farming you.
 
-There is no combat log. Damage is told by the numbers floating off the
-combatants, and only the lines that carry a moment — a kill, a boon, a summon,
-an enrage, a power strike — flash over the middle of the board and fade. The
-board gets the space the log used to take.
+Dungeons run 12 to 20 waves. That is a campaign rather than a scrap: a delve
+level per wave means a build matures fully, and there is room for the board to
+swing several times before it is over.
 
 ### Boons
 
