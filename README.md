@@ -13,8 +13,8 @@ You start at level 1 with nothing but an axe and a pick.
 2. **Smelt and smith.** Ore becomes bars; bars plus logs become a sword, a
    platebody and a shield. Smithing gates what you can make, Attack and Defence
    gate what you can wear.
-3. **Dive a dungeon.** Waves of monsters, then a boss, fought automatically.
-   Damage dealt trains Attack, Strength, Defence and Hitpoints.
+3. **Dive a dungeon.** Waves of monsters, then a boss, fought on a board you
+   give orders to. Damage dealt trains Attack, Strength, Defence and Hitpoints.
 4. **Come back with the good stuff.** Each dungeon drops the reagent the *next*
    metal tier needs, plus gems for Crafting. No Ember Cores, no steel gear.
 
@@ -75,9 +75,31 @@ Note that crafting an item and breaking it down is a slightly more
 xp-efficient use of bars than smelting alone — that's an intentional trade
 against the bench time it costs.
 
-## Delving: the in-run build
+## Delving: the board
 
 Skilling is the idle half of the game. Dungeons are the part you play.
+
+A wave is a board, not a duel. **Enemies stand at the top, you at the bottom,
+and anything you summon lines up in front of you.** Each round you assign a
+target to every attacker you control — yourself and each risen unit — then hit
+**FIGHT** and your orders play out, each attacker leaning into whatever you
+pointed it at.
+
+Tap an ally to select it, tap an enemy to aim it; the selection walks to the
+next attacker so a run of taps sets the whole board. Double-tap an enemy to
+aim everything at it. There is always a legal default — anything without a live
+target falls back to the wave's main enemy — so FIGHT alone is a valid move and
+the tactics stay optional until they matter. **AUTO** plays each round with
+your standing orders when you would rather not tap.
+
+Orders only become a decision when there is more than one thing to hit, and
+target badges stay hidden until then. **Enemies summon too:** bosses in every
+dungeon call up minions of their own kind, and the deeper dungeons have elites
+that do it as well. A summon costs the caller its turn, minions are capped at
+three, and they drop nothing — so a boss that keeps calling is buying time, not
+farming you for loot. They still have to be killed.
+
+### Boons
 
 Clear a wave and you gain a **delve level** — pick one of three **boons**. Boons
 come in lines that escalate, so taking one opens its next tier as a future
@@ -119,19 +141,20 @@ start appearing in your offers.
 **The root raises the dead.** A slain foe has a 40% chance to get back up on
 your side; Dark Mastery takes that to three quarters and guarantees bosses;
 Lord of Bones raises everything, in pairs. Risen units form your **host**, up
-to seven strong. The host swings as one after you every round, rolling to hit
-off your own accuracy — and it's a wall as well as a weapon, soaking blows that
-would otherwise land on you, more often the bigger it gets.
+to seven strong. Each unit takes its own turn after you, against whatever you
+aimed it at, rolling to hit off your own accuracy — and the host is a wall as
+well as a weapon, soaking blows that would otherwise land on you, more often the
+bigger it gets.
 
 **Bone Legion decides what you raise.** Skeleton → Ghoul → Wight, with the
 eldest of the host rising again as a **Bone Dragon** at the capstone. Taking a
 tier remakes the host you're already standing with, on the spot — it doesn't
 wait for the next kill. Wights also drain a quarter of their damage back to you.
 
-**Death Magic spends the host.** Death Ripple washes decay out for 2 per unit
-every third round; Animate Dead brings back half your fallen between waves; and
-Unholy Bargain lets a killing blow crumble your host instead of you, each unit
-spent buying back 20% health.
+**Death Magic spends the host.** Death Ripple washes decay across *every*
+enemy on the board for 2 per unit every third round; Animate Dead brings back half your fallen between waves;
+and Unholy Bargain lets a killing blow crumble your host instead of you, each
+unit spent buying back 20% health.
 
 The two branches pull against each other: Bone Legion wants a big host kept
 alive, Death Magic is happy to burn it down. Nine nodes, and a run only hands
@@ -141,13 +164,13 @@ Everything on this page dies with the run, the same as every other boon.
 
 #### Watching it escalate
 
-The host has its own rail under the fight: a chip per unit with its own health,
-a count, and a power meter reading the host's max hit against your own. Units
-claw up out of the floor when they rise, the rail shudders when one shatters,
-and promotions flare through every chip at once when Bone Legion deepens. The
-stage itself greens over as the host grows, and crossing three, five and seven
-units throws a proclamation across the screen. All of it respects
-`prefers-reduced-motion`.
+Your risen stand on the board in front of you, each with its own health and its
+own order badge, and a strip under the fight reads the host's size and its max
+hit against your own. Units claw up out of the floor when they rise, the strip
+shudders when one shatters, and promotions flare through every unit at once
+when Bone Legion deepens. The board itself greens over as the host grows, and
+crossing three, five and seven units throws a proclamation across the screen.
+All of it respects `prefers-reduced-motion`.
 
 ## Skills
 

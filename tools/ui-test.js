@@ -22,6 +22,7 @@ async function necromancyChecks(page, check) {
     window.G.dungeonsCleared = 4;
     window.G.hp = __rf.maxHp();
     __rf.setPace(0);
+    __rf.setAutoFight(false);   // hold in the orders phase: nothing resolves under us
     __rf.setAutoBoon(() => -1);            // decline, so we control the build
     __rf.enterDungeon(1);
   });
@@ -53,6 +54,7 @@ async function necromancyChecks(page, check) {
   const raised = await page.evaluate(() => {
     const before = __rf.runInfo().host.length;
     for (let i = 0; i < 6; i++) __rf.raiseUnit(true);
+    window.render();          // nothing is resolving, so render by hand
     return { before: before, after: __rf.runInfo().host.length };
   });
   check('the slain rise into a host', raised.after > raised.before,
@@ -61,8 +63,8 @@ async function necromancyChecks(page, check) {
   await page.waitForSelector('#run-host', { state: 'visible', timeout: 30000 });
   check('the host rail is showing', await page.isVisible('#run-host'));
   check('one chip per risen unit',
-    (await page.locator('#host-units .unit').count()) === raised.after,
-    await page.locator('#host-units .unit').count());
+    (await page.locator('#ally-minions .unit').count()) === raised.after,
+    await page.locator('#ally-minions .unit').count());
   check('the host has a max hit of its own',
     (await page.evaluate(() => __rf.hostMaxHit())) > 0,
     await page.evaluate(() => __rf.hostMaxHit()));
@@ -72,42 +74,46 @@ async function necromancyChecks(page, check) {
     (await page.evaluate(() => __rf.runInfo().host)).every(t => t === 0));
 
   // Bone Legion rewrites what is already standing.
-  await page.evaluate(() => __rf.forceBoon('bonelegion', 1));
+  await page.evaluate(() => { __rf.forceBoon('bonelegion', 1); window.render(); });
   check('Grave Rot rots the standing host into ghouls',
     (await page.evaluate(() => __rf.runInfo().host)).every(t => t === 1));
-  await page.evaluate(() => __rf.forceBoon('bonelegion', 2));
+  await page.evaluate(() => { __rf.forceBoon('bonelegion', 2); window.render(); });
   check('Wight Lords promotes them again',
     (await page.evaluate(() => __rf.runInfo().host)).every(t => t === 2));
 
   const beforeDragon = await page.evaluate(() => __rf.hostMaxHit());
-  await page.evaluate(() => __rf.forceBoon('bonelegion', 3));
+  await page.evaluate(() => { __rf.forceBoon('bonelegion', 3); window.render(); });
   const dragons = await page.evaluate(() => __rf.runInfo().host.filter(t => t === 3).length);
   check('exactly one Bone Dragon leads the host', dragons === 1, dragons);
   check('and the host hits harder for it',
     (await page.evaluate(() => __rf.hostMaxHit())) > beforeDragon);
   check('the dragon gets its own chip style',
-    (await page.locator('#host-units .unit.t3').count()) === 1);
+    (await page.locator('#ally-minions .unit.t3').count()) === 1);
 
   // The host is capped.
   const capped = await page.evaluate(() => {
     for (let i = 0; i < 20; i++) __rf.raiseUnit(true);
+    window.render();
     return { size: __rf.runInfo().host.length, cap: __rf.HOST_CAP };
   });
   check('the host is capped at seven', capped.size === capped.cap,
     `${capped.size}/${capped.cap}`);
 
-  // Power meter and stage tint react.
-  const meter = await page.evaluate(() => ({
-    width: document.getElementById('host-power').style.width,
-    necro: document.getElementById('run-stage').style.getPropertyValue('--necro'),
-    legion: document.getElementById('run-host').classList.contains('legion')
-  }));
+  // Power meter and board tint react, read in the same pass as the render.
+  const meter = await page.evaluate(() => {
+    window.render();
+    return {
+      width: document.getElementById('host-power').style.width,
+      necro: document.getElementById('run-board').style.getPropertyValue('--necro'),
+      legion: document.getElementById('run-host').classList.contains('legion')
+    };
+  });
   check('the power meter has filled', parseFloat(meter.width) > 0, meter.width);
   check('the stage is tinted by the host', parseFloat(meter.necro) > 0, meter.necro);
   check('a full host reads as a legion', meter.legion === true);
 
   // Finish the run and confirm none of it survives.
-  await page.evaluate(() => { __rf.setAutoBoon(() => 0); });
+  await page.evaluate(() => { __rf.setAutoBoon(() => 0); __rf.setAutoFight(true); });
   await page.waitForSelector('#screen-results.active', { timeout: 120000 });
   const res = await page.evaluate(() => ({
     rows: Array.from(document.querySelectorAll('.res-row')).map(r => r.textContent),
@@ -123,7 +129,104 @@ async function necromancyChecks(page, check) {
     !JSON.stringify(window.G).includes('bonelegion')));
   check('the host rail is hidden outside a run',
     !(await page.isVisible('#run-host')));
-  await page.evaluate(() => { __rf.setAutoBoon(null); __rf.setPace(1); });
+  await page.evaluate(() => { __rf.setAutoBoon(null); __rf.setAutoFight(false); __rf.setPace(1); });
+}
+
+
+// ---- The board: orders, targeting, enemy summons -------------------------
+async function boardChecks(page, check) {
+  console.log('\n== The board ==');
+
+  await page.evaluate(() => {
+    __rf.setLevels({ attack: 70, strength: 70, defence: 70, hitpoints: 70 });
+    ['rune_sword', 'rune_platebody', 'rune_shield'].forEach(k => __rf.addItem(k, 1));
+    __rf.setGear(['rune_sword', 'rune_platebody', 'rune_shield']);
+    window.G.dungeonsCleared = 4;
+    window.G.hp = __rf.maxHp();
+    __rf.setPace(0);
+    __rf.setAutoFight(false);           // we drive FIGHT by hand here
+    __rf.setAutoBoon(() => -1);
+    __rf.enterDungeon(1);
+  });
+
+  const b0 = await page.evaluate(() => __rf.board());
+  check('a wave opens waiting for orders', b0.phase === 'orders', b0.phase);
+  check('the enemy stands at the top', b0.foes.length === 1, b0.foes.length);
+  check('you are given a default target', b0.orders.you === b0.foes[0].id,
+    JSON.stringify(b0.orders));
+  check('FIGHT is offered', await page.isEnabled('#run-fight'));
+  check('the enemy shows how many are aimed at it',
+    (await page.locator('#foe-main .aimed').count()) === 1);
+
+  // Nothing happens until you say so.
+  const held = await page.evaluate(async () => {
+    const before = __rf.board().round;
+    await new Promise(r => setTimeout(r, 250));
+    return { before: before, after: __rf.board().round };
+  });
+  check('the round does not play until FIGHT', held.before === held.after,
+    `${held.before} → ${held.after}`);
+
+  await page.click('#run-fight');
+  await page.waitForFunction(() => __rf.board() && __rf.board().round > 0, { timeout: 30000 });
+  check('FIGHT plays the round', (await page.evaluate(() => __rf.board().round)) >= 1);
+
+  // Give the player a host and a second enemy to choose between.
+  await page.evaluate(() => {
+    __rf.forceBoon('necromancy', 1);
+    for (let i = 0; i < 3; i++) __rf.raiseUnit(true);
+    __rf.summonForTest();
+  });
+  await page.waitForFunction(() => __rf.board() && __rf.board().phase === 'orders', { timeout: 30000 });
+  const b1 = await page.evaluate(() => __rf.board());
+  check('an enemy summon joins the board', b1.foes.length === 2,
+    b1.foes.map(f => f.name).join(', '));
+  check('the summon is marked a minion', b1.foes.some(f => f.minion));
+  check('summons render in their own row',
+    (await page.locator('#foe-minions .combatant').count()) === 1);
+  check('your risen render in front of you',
+    (await page.locator('#ally-minions .unit').count()) === 3);
+  check('every attacker has an order',
+    Object.keys(b1.orders).length === 1 + b1.allies.length,
+    Object.keys(b1.orders).length);
+
+  // With two enemies, orders become a real choice.
+  const minionId = b1.foes.filter(f => f.minion)[0].id;
+  const mainId = b1.foes.filter(f => !f.minion)[0].id;
+  check('order badges appear once there is a choice',
+    (await page.locator('.ord').count()) > 0, await page.locator('.ord').count());
+
+  await page.evaluate((id) => { __rf.selectAttacker('you'); __rf.assignTarget(id); }, minionId);
+  const b2 = await page.evaluate(() => __rf.board());
+  check('you can aim at the summon instead', b2.orders.you === minionId,
+    b2.orders.you === minionId ? 'aimed' : JSON.stringify(b2.orders));
+  check('assigning advances to the next attacker', b2.sel !== 'you', b2.sel);
+
+  await page.evaluate((id) => __rf.targetAll(id), mainId);
+  const b3 = await page.evaluate(() => __rf.board());
+  check('target-all points everything at one enemy',
+    Object.keys(b3.orders).every(k => b3.orders[k] === mainId));
+
+  // A dead target releases its orders rather than stranding them.
+  await page.evaluate((id) => {
+    const bd = __rf.board();
+    __rf.selectAttacker('you');
+    __rf.assignTarget(id);
+    __rf.killFoeForTest(id);
+  }, minionId);
+  await page.click('#run-fight');
+  await page.waitForFunction(() => __rf.board() && __rf.board().phase === 'orders', { timeout: 30000 });
+  const b4 = await page.evaluate(() => __rf.board());
+  check('orders on a dead enemy fall back to a live one',
+    Object.keys(b4.orders).every(k => b4.foes.some(f => f.id === b4.orders[k])),
+    JSON.stringify(b4.orders));
+
+  // AUTO takes over so a run can be played without tapping.
+  await page.evaluate(() => { __rf.setAutoBoon(() => 0); __rf.setAutoFight(true); });
+  await page.waitForSelector('#screen-results.active', { timeout: 120000 });
+  check('AUTO plays the run out to a result', true);
+  await page.click('#result-continue');
+  await page.evaluate(() => { __rf.setAutoBoon(null); __rf.setAutoFight(false); __rf.setPace(1); });
 }
 
 (async () => {
@@ -366,6 +469,7 @@ async function necromancyChecks(page, check) {
   await page.evaluate(() => {
     __rf.setLevels({ attack: 12, strength: 12, defence: 12, hitpoints: 14 });
     __rf.setPace(0.15);           // keep the suite quick
+    __rf.setAutoFight(true);      // rounds play themselves; the board section tests FIGHT
     window.render();
   });
   await page.locator('.dun-card .dc-go').first().click();
@@ -449,7 +553,7 @@ async function necromancyChecks(page, check) {
   await page.locator('.boon-card').first().click();
   await page.waitForSelector('#screen-results.active', { timeout: 120000 });
   await page.click('#result-continue');
-  await page.evaluate(() => { __rf.setAutoBoon(null); __rf.setPace(1); });
+  await page.evaluate(() => { __rf.setAutoBoon(null); __rf.setAutoFight(false); __rf.setPace(1); });
 
   console.log('\n== Each dungeon has its own character ==');
   const pools = await page.evaluate(() => ({
@@ -467,6 +571,7 @@ async function necromancyChecks(page, check) {
     pools.branches.sort().join(',') === 'bonelegion,deathmagic', pools.branches.join(','));
 
   await necromancyChecks(page, check);
+  await boardChecks(page, check);
 
   console.log('\n== Persistence ==');
   await page.evaluate(() => window.save());

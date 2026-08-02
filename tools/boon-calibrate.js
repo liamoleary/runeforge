@@ -37,6 +37,7 @@ const TARGETS = [
   const results = await page.evaluate(async (cfg) => {
     const R = window.__rf, G = window.G;
     R.setPace(0);
+    R.setAutoFight(true);   // the board plays its own orders
 
     const strat = {
       none:   () => -1,

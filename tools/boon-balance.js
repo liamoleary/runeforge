@@ -30,6 +30,7 @@ const TRIALS = +(process.env.TRIALS || 60);
     const R = window.__rf;
     const G = window.G;
     R.setPace(0);
+    R.setAutoFight(true);   // the board plays its own orders
 
     function setup(t) {
       R.setLevels({ attack: t.combat, strength: t.combat, defence: t.combat, hitpoints: t.hp });

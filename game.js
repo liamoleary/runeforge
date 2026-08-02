@@ -281,7 +281,8 @@ const DUNGEONS = [
       { name: 'Giant Rat',   icon: '🐀', hp: 11,  atk: 6,  def: 1, maxHit: 5 },
       { name: 'Cave Slime',  icon: '🟢', hp: 15,  atk: 7,  def: 1, maxHit: 6 }
     ],
-    boss: { name: 'Warren Brood-Mother', icon: '🕷️', hp: 26, atk: 10, def: 2, maxHit: 10 },
+    boss: { name: 'Warren Brood-Mother', icon: '🕷️', hp: 26, atk: 10, def: 2, maxHit: 10 , calls: 0.5 },
+    summon: { name: 'Rat Swarm', icon: '🐁', hp: 8, atk: 6, def: 1, maxHit: 3 },
     drops: { ember_core: [1, 2], sapphire: [0, 1] },
     clearDrops: { ember_core: 3, sapphire: 2 }
   },
@@ -293,7 +294,8 @@ const DUNGEONS = [
       { name: 'Frost Ghoul',  icon: '🧟', hp: 22, atk: 22, def: 6, maxHit: 5 },
       { name: 'Ice Wraith',   icon: '👻', hp: 30, atk: 24, def: 7, maxHit: 6 }
     ],
-    boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 54, atk: 30, def: 12, maxHit: 7 },
+    boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 54, atk: 30, def: 12, maxHit: 7 , calls: 0.5 },
+    summon: { name: 'Frost Shade', icon: '🌫️', hp: 14, atk: 20, def: 5, maxHit: 4 },
     drops: { frost_shard: [1, 2], emerald: [0, 1] },
     clearDrops: { frost_shard: 3, emerald: 2 }
   },
@@ -303,9 +305,10 @@ const DUNGEONS = [
     waves: 7,
     monsters: [
       { name: 'Storm Sprite',  icon: '⚡', hp: 41,  atk: 39, def: 14, maxHit: 6 },
-      { name: 'Thunder Golem', icon: '🗿', hp: 54,  atk: 43, def: 16, maxHit: 8 }
+      { name: 'Thunder Golem', icon: '🗿', hp: 54,  atk: 43, def: 16, maxHit: 8 , calls: 0.2 }
     ],
-    boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 108, atk: 52, def: 25, maxHit: 11 },
+    boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 108, atk: 52, def: 25, maxHit: 11 , calls: 0.5 },
+    summon: { name: 'Storm Wisp', icon: '✨', hp: 22, atk: 38, def: 12, maxHit: 4 },
     drops: { storm_crystal: [1, 2], ruby: [0, 1] },
     clearDrops: { storm_crystal: 3, ruby: 2 }
   },
@@ -315,9 +318,10 @@ const DUNGEONS = [
     waves: 8,
     monsters: [
       { name: 'Whelp',        icon: '🦎', hp: 60,  atk: 57, def: 24, maxHit: 7 },
-      { name: 'Ember Drake',  icon: '🐉', hp: 81,  atk: 63, def: 27, maxHit: 9 }
+      { name: 'Ember Drake',  icon: '🐉', hp: 81,  atk: 63, def: 27, maxHit: 9 , calls: 0.2 }
     ],
-    boss: { name: 'Ashmaw the Elder', icon: '🐲', hp: 167, atk: 75, def: 39, maxHit: 13 },
+    boss: { name: 'Ashmaw the Elder', icon: '🐲', hp: 167, atk: 75, def: 39, maxHit: 13 , calls: 0.55 },
+    summon: { name: 'Ash Whelp', icon: '🔥', hp: 34, atk: 55, def: 20, maxHit: 5 },
     drops: { dragon_ash: [1, 2], diamond: [0, 1] },
     clearDrops: { dragon_ash: 3, diamond: 2 }
   },
@@ -327,9 +331,10 @@ const DUNGEONS = [
     waves: 9,
     monsters: [
       { name: 'Abyssal Leech',  icon: '🪱', hp: 86,  atk: 80, def: 35, maxHit: 10 },
-      { name: 'Void Stalker',   icon: '👁️', hp: 116, atk: 88, def: 39, maxHit: 11 }
+      { name: 'Void Stalker',   icon: '👁️', hp: 116, atk: 88, def: 39, maxHit: 11 , calls: 0.25 }
     ],
-    boss: { name: 'The Hollow King', icon: '👑', hp: 251, atk: 104, def: 54, maxHit: 17 },
+    boss: { name: 'The Hollow King', icon: '👑', hp: 251, atk: 104, def: 54, maxHit: 17 , calls: 0.6 },
+    summon: { name: 'Void Spawn', icon: '🌑', hp: 46, atk: 78, def: 30, maxHit: 6 },
     drops: { dragonstone: [0, 1], dragon_ash: [1, 2] },
     clearDrops: { dragonstone: 3, dragon_ash: 4 }
   }
@@ -560,7 +565,7 @@ function raiseUnit(quiet) {
   }
 
   const s = undeadStats(tier);
-  const u = { tier: tier, hp: s.hp, max: s.hp, fresh: true };
+  const u = { id: nextId(), tier: tier, hp: s.hp, max: s.hp, fresh: true };
   host.push(u);
   if (!quiet) {
     runLog('<span class="boon">' + UNDEAD_TIERS[tier].icon + ' A ' +
@@ -600,40 +605,23 @@ function promoteHost() {
   }
 }
 
-// The host swings as one, rolling to hit off your own accuracy.
-function hostStrike(foe) {
-  const host = hostUnits();
-  if (!host.length) return 0;
-  const dealt = rollDamage(hostMaxHit(), playerAttackRoll(), monsterDefenceRoll(foe));
-  if (dealt <= 0) {
-    runLog('<span class="miss">Your host claws at nothing.</span>');
-    return 0;
-  }
-  foe.hp -= dealt;
-  awardCombatXp(dealt);
-  floatNum('foe', dealt, 'necro');
-  let note = '';
-  // Wight Lords drain back to you.
-  if (boonTier('bonelegion') >= 2) {
-    const heal = Math.min(maxHp() - G.hp, Math.max(1, Math.round(dealt * 0.25)));
-    if (heal > 0) { G.hp += heal; note = ' <span class="boon">(drains ' + heal + ')</span>'; }
-  }
-  runLog('<span class="boon">Your host tears in for <b>' + dealt + '</b></span>' + note + '.');
-  return dealt;
-}
-
-// Death Ripple: decay washing off the whole host, every third round.
-function deathRipple(foe) {
+// Death Ripple: decay washing off the whole host onto everything standing.
+function deathRipple() {
   if (boonTier('deathmagic') < 1) return 0;
   const units = hostUnits().length;
   if (!units) return 0;
   if (runState.round % 3 !== 0) return 0;
   const dmg = units * 2;
-  foe.hp -= dmg;
-  awardCombatXp(dmg);
-  floatNum('foe', dmg, 'necro');
-  runLog('<span class="boon">🕯️ Death Ripple</span> washes out for ' + dmg + '.');
-  return dmg;
+  let total = 0;
+  aliveFoes().forEach(function (f) {
+    f.hp -= dmg;
+    total += dmg;
+    floatOn('foe-' + f.id, dmg, 'necro');
+  });
+  if (!total) return 0;
+  awardCombatXp(total);
+  runLog('<span class="boon">🕯️ Death Ripple</span> washes out for ' + total + '.');
+  return total;
 }
 
 // The foe swings at the host instead of you — more often, the bigger it is.
@@ -1730,6 +1718,7 @@ function pace(ms) { return Math.max(0, Math.round(ms * paceScale)); }
 let difficultyScale = 1;
 // Optional test strategy: given the offered choices, return an index to take.
 let autoBoonPick = null;
+let autoFightDefault = false;
 
 function enterDungeon(index) {
   if (G.busy || runState) return;
@@ -1758,6 +1747,8 @@ function enterDungeon(index) {
     // Everything below is the in-run build — discarded when the run ends.
     boons: {}, runLevel: 0, pending: null,
     retinue: [], fallen: 0, peakHost: 0,
+    foes: [], orders: {}, phase: 'orders', auto: autoFightDefault,
+    idSeq: 0, bossWave: false, summoned: 0,
     rampage: 0, hitCount: 0, round: 0,
     hpPenalty: 0, lastStandUsed: false,
     carryDetonate: 0, carryFreeze: false
@@ -1766,28 +1757,67 @@ function enterDungeon(index) {
   $('run-name').textContent = d.name;
   $('run-log').innerHTML = '';
   document.body.classList.add('in-run');
-  spawnFoe();
+  startWave();
   render();
 }
 
-function spawnFoe() {
+// ============================================================
+// The board
+// ============================================================
+// A wave is a board, not a duel: one or more enemies at the top, you and
+// your risen at the bottom. Each round you assign a target to every
+// attacker you control, then FIGHT plays those orders out.
+
+const FOE_MINION_CAP = 3;
+
+function nextId() {
+  runState.idSeq = (runState.idSeq || 0) + 1;
+  return 'c' + runState.idSeq;
+}
+
+function makeFoe(base, opts) {
+  const ds = difficultyScale;
+  const hp = Math.max(1, Math.round(base.hp * ds));
+  const f = {
+    id: nextId(),
+    name: base.name, icon: base.icon,
+    hp: hp, max: hp,
+    atk: base.atk, def: base.def,
+    maxHit: Math.max(1, Math.round(base.maxHit * ds)),
+    boss: !!(opts && opts.boss),
+    minion: !!(opts && opts.minion),
+    calls: base.calls || 0, summonCd: 2,
+    burn: null, chill: 0, frozen: 0
+  };
+  // Voidtouched sunders armour for the whole fight.
+  if (boonTier('voidtouched') >= 1) f.def = Math.round(f.def * 0.7);
+  return f;
+}
+
+function aliveFoes() {
+  return runState ? runState.foes.filter(function (f) { return f.hp > 0; }) : [];
+}
+function mainFoe() { return (runState && runState.foes[0]) || null; }
+function foeById(id) {
+  return aliveFoes().filter(function (f) { return f.id === id; })[0] || null;
+}
+
+// Everything you command this round: you, then every risen unit.
+function attackerList() {
+  const list = [{ id: 'you', kind: 'you' }];
+  hostUnits().forEach(function (u) { list.push({ id: u.id, kind: 'unit', unit: u }); });
+  return list;
+}
+
+function startWave() {
   if (!runState) return;
   const d = runState.d;
   const isBoss = runState.wave > d.waves;
   const base = isBoss ? d.boss : d.monsters[rng(0, d.monsters.length - 1)];
-  const ds = difficultyScale;
-  const scaledHp = Math.max(1, Math.round(base.hp * ds));
-  runState.foe = {
-    name: base.name, icon: base.icon,
-    hp: scaledHp, max: scaledHp,
-    atk: base.atk, def: base.def,
-    maxHit: Math.max(1, Math.round(base.maxHit * ds)),
-    boss: isBoss,
-    burn: null, chill: 0, frozen: 0
-  };
-  const foe = runState.foe;
-  // Voidtouched sunders armour for the whole fight.
-  if (boonTier('voidtouched') >= 1) foe.def = Math.round(foe.def * 0.7);
+  runState.bossWave = isBoss;
+  runState.foes = [makeFoe(base, { boss: isBoss })];
+  runState.orders = {};
+  const foe = runState.foes[0];
 
   runLog(isBoss
     ? '<span class="boss">' + base.name + ' blocks the way.</span>'
@@ -1809,12 +1839,275 @@ function spawnFoe() {
     runLog('<span class="win">' + foe.name + ' is destroyed on arrival.</span>');
     boonOnKill(foe);
     rollLoot(foe);
+    runState.foes = [];
     renderDungeonRun();
     runTimer = setTimeout(advanceWave, pace(800));
     return;
   }
   renderDungeonRun();
-  runTimer = setTimeout(combatRound, pace(700));
+  enterOrders();
+}
+
+// ---- Giving orders --------------------------------------------------
+
+let orderSel = 'you';     // whichever attacker the next tap assigns
+
+function enterOrders() {
+  if (!runState || runState.over) return;
+  if (!aliveFoes().length) { runTimer = setTimeout(advanceWave, pace(600)); return; }
+  runState.phase = 'orders';
+  defaultOrders();
+  const list = attackerList();
+  if (!list.some(function (a) { return a.id === orderSel; })) orderSel = list[0].id;
+  renderDungeonRun();
+  // AUTO keeps last round's orders and plays them out without a tap.
+  if (runState.auto) runTimer = setTimeout(resolveTurn, pace(340));
+}
+
+// Anything without a live target falls back to the wave's main enemy, so
+// FIGHT alone is always a legal move.
+function defaultOrders() {
+  const alive = aliveFoes();
+  if (!alive.length) return;
+  const main = mainFoe();
+  const fallback = (main && main.hp > 0 ? main : alive[0]).id;
+  attackerList().forEach(function (a) {
+    if (!foeById(runState.orders[a.id])) runState.orders[a.id] = fallback;
+  });
+}
+
+function selectAttacker(id) {
+  if (!runState || runState.phase !== 'orders') return;
+  orderSel = id;
+  renderDungeonRun();
+}
+
+// Tapping an enemy assigns the selected attacker and moves on to the next,
+// so a run of taps sets the whole board.
+function assignTarget(foeId) {
+  if (!runState || runState.phase !== 'orders') return;
+  if (!foeById(foeId)) return;
+  const list = attackerList();
+  let i = list.map(function (a) { return a.id; }).indexOf(orderSel);
+  if (i < 0) i = 0;
+  runState.orders[list[i].id] = foeId;
+  orderSel = list[(i + 1) % list.length].id;
+  renderDungeonRun();
+}
+
+function targetAll(foeId) {
+  if (!runState || runState.phase !== 'orders' || !foeById(foeId)) return;
+  attackerList().forEach(function (a) { runState.orders[a.id] = foeId; });
+  renderDungeonRun();
+}
+
+function toggleAuto() {
+  if (!runState) return;
+  runState.auto = !runState.auto;
+  renderDungeonRun();
+  if (runState.auto && runState.phase === 'orders') resolveTurn();
+}
+
+// ---- Playing the orders out ----------------------------------------
+
+function resolveTurn() {
+  if (!runState || runState.over || runState.phase === 'resolving') return;
+  if (!aliveFoes().length) return;
+  runState.phase = 'resolving';
+  runState.round = (runState.round || 0) + 1;
+  renderDungeonRun();
+  stepAttack(attackerList(), 0);
+}
+
+function stepAttack(queue, i) {
+  if (!runState || runState.over) return;
+  if (i >= queue.length) return afterPlayerPhase();
+  const a = queue[i];
+  // A unit can be gone by the time its turn comes round.
+  if (a.kind === 'unit' && hostUnits().indexOf(a.unit) < 0) return stepAttack(queue, i + 1);
+  const target = foeById(runState.orders[a.id]) || aliveFoes()[0];
+  if (!target) return afterPlayerPhase();
+
+  lunge(a.kind === 'you' ? 'you-card' : 'ally-' + a.id, 'foe-' + target.id);
+  runTimer = setTimeout(function () {
+    if (!runState || runState.over) return;
+    if (a.kind === 'you') playerSwing(target); else unitSwing(a.unit, target);
+    renderDungeonRun();
+    renderTopBar();
+    runTimer = setTimeout(function () { stepAttack(queue, i + 1); }, pace(150));
+  }, pace(230));
+}
+
+function playerSwing(target) {
+  const raw = rollDamage(playerMaxHit(), playerAttackRoll(), monsterDefenceRoll(target));
+  const off = boonOffence(raw, target);
+  target.hp -= off.dmg;
+  awardCombatXp(off.dmg);
+  flashCard('foe-' + target.id);
+  floatOn('foe-' + target.id, off.dmg);
+  runLog(raw > 0
+    ? 'You hit <b>' + off.dmg + '</b> on the ' + target.name +
+      (off.notes.length ? ' <span class="boon">(' + off.notes.join(', ') + ')</span>' : '') + '.'
+    : '<span class="miss">You miss the ' + target.name + '.</span>');
+
+  // Stormcaller arcs spill onto whatever else is standing.
+  off.extraHits.forEach(function (h) {
+    const others = aliveFoes().filter(function (f) { return f !== target; });
+    const hit = others.length ? others[rng(0, others.length - 1)] : target;
+    hit.hp -= h;
+    awardCombatXp(h);
+    floatOn('foe-' + hit.id, h);
+    runLog('<span class="boon">⚡ Arc</span> — ' + h + ' on the ' + hit.name + '.');
+  });
+}
+
+function unitSwing(u, target) {
+  const t = UNDEAD_TIERS[u.tier];
+  const dealt = rollDamage(undeadStats(u.tier).dmg, playerAttackRoll(), monsterDefenceRoll(target));
+  if (dealt <= 0) {
+    runLog('<span class="miss">Your ' + t.name + ' claws at nothing.</span>');
+    return;
+  }
+  target.hp -= dealt;
+  awardCombatXp(dealt);
+  flashCard('foe-' + target.id);
+  floatOn('foe-' + target.id, dealt, 'necro');
+  let note = '';
+  // Wight Lords drain back to you.
+  if (boonTier('bonelegion') >= 2) {
+    const heal = Math.min(maxHp() - G.hp, Math.max(1, Math.round(dealt * 0.25)));
+    if (heal > 0) { G.hp += heal; note = ' <span class="boon">(drains ' + heal + ')</span>'; }
+  }
+  runLog('<span class="boon">Your ' + t.name + ' hits ' + target.name +
+    ' for <b>' + dealt + '</b></span>' + note + '.');
+}
+
+function afterPlayerPhase() {
+  if (!runState || runState.over) return;
+  deathRipple();
+  reapFoes();
+  renderDungeonRun();
+  renderTopBar();
+  if (!aliveFoes().length) { runTimer = setTimeout(advanceWave, pace(700)); return; }
+  runTimer = setTimeout(function () { stepFoe(aliveFoes().slice(), 0); }, pace(300));
+}
+
+// ---- The enemy's turn ----------------------------------------------
+
+function stepFoe(queue, i) {
+  if (!runState || runState.over) return;
+  if (i >= queue.length) return endOfRound();
+  const f = queue[i];
+  const next = function () {
+    runTimer = setTimeout(function () { stepFoe(queue, i + 1); }, pace(150));
+  };
+  if (f.hp <= 0) return stepFoe(queue, i + 1);
+
+  // Frozen things lose the turn entirely.
+  if (f.frozen > 0) {
+    f.frozen -= 1;
+    runLog('<span class="boon">❄️ ' + f.name + ' is frozen solid</span> and loses its turn.');
+    renderDungeonRun();
+    return next();
+  }
+  // Calling for help costs the turn — the trade that makes summons fair.
+  if (maybeSummon(f)) { renderDungeonRun(); return next(); }
+
+  const incoming = rollDamage(f.maxHit, monsterAttackRoll(f), playerDefenceRoll());
+  const def = boonDefence(incoming, f);
+
+  // The host is a wall as well as a weapon.
+  const blocked = def.dmg > 0 && hostTakesHit(f, def.dmg);
+  if (blocked) {
+    def.reflect = 0;                       // you never took it, so nothing bounces
+  } else {
+    lunge('foe-' + f.id, 'you-card');
+    G.hp -= def.dmg;
+    if (G.hp <= 0 && unholyBargain()) {
+      // the host paid for it
+    } else if (G.hp <= 0 && boonTier('stoneblood') >= 3 && !runState.lastStandUsed) {
+      runState.lastStandUsed = true;
+      G.hp = Math.max(1, Math.round(maxHp() * 0.25));
+      runLog('<span class="boon">🪨 Last Stand</span> — you refuse to fall, at ' + G.hp + ' hp.');
+    }
+    flashCard('you-card');
+    floatOn('you-card', def.dmg);
+    runLog(def.dmg > 0
+      ? '<span class="hurt">' + f.name + ' hits you for <b>' + def.dmg + '</b>' +
+        (def.notes.length ? ' (' + def.notes.join(', ') + ')' : '') + '.</span>'
+      : '<span class="miss">' + f.name + ' misses.</span>');
+  }
+
+  if (def.reflect > 0) {
+    f.hp -= def.reflect;
+    awardCombatXp(def.reflect);
+    floatOn('foe-' + f.id, def.reflect);
+    runLog('<span class="boon">🪨 Retort</span> — ' + def.reflect + ' back at it.');
+  }
+
+  renderDungeonRun();
+  renderTopBar();
+  if (G.hp <= 0) {
+    G.hp = 0;
+    runTimer = setTimeout(function () { endRun(false); }, pace(700));
+    return;
+  }
+  next();
+}
+
+// A foe calls up a minion of its dungeon's kind, on a cooldown and under a cap.
+function maybeSummon(f) {
+  const tpl = runState.d.summon;
+  if (!tpl || !f.calls) return false;
+  if (f.summonCd > 0) { f.summonCd -= 1; return false; }
+  if (runState.foes.filter(function (x) { return x.minion && x.hp > 0; }).length >= FOE_MINION_CAP) return false;
+  if (Math.random() >= f.calls) return false;
+  f.summonCd = 3;
+  const m = makeFoe(tpl, { minion: true });
+  runState.foes.push(m);
+  runState.summoned = (runState.summoned || 0) + 1;
+  runLog('<span class="boss">' + f.name + ' calls up a ' + m.name + '.</span>');
+  return true;
+}
+
+function endOfRound() {
+  if (!runState || runState.over) return;
+  // Burn ticks and chill decays across the whole board.
+  aliveFoes().forEach(function (f) {
+    if (f.burn && f.burn.rounds > 0) {
+      f.hp -= f.burn.dmg;
+      f.burn.rounds -= 1;
+      awardCombatXp(f.burn.dmg);
+      floatOn('foe-' + f.id, f.burn.dmg);
+      runLog('<span class="boon">🔥 ' + f.name + ' burns</span> for ' + f.burn.dmg + '.');
+    }
+    if (f.chill > 0) f.chill -= 1;
+  });
+  reapFoes();
+  renderDungeonRun();
+  renderTopBar();
+  if (G.hp <= 0) {
+    G.hp = 0;
+    runTimer = setTimeout(function () { endRun(false); }, pace(700));
+    return;
+  }
+  if (!aliveFoes().length) { runTimer = setTimeout(advanceWave, pace(700)); return; }
+  enterOrders();
+}
+
+// Clear out the dead, paying out for each. Summoned minions give combat xp
+// through the damage you dealt them, but no drops — otherwise a boss that
+// keeps calling is a loot fountain.
+function reapFoes() {
+  if (!runState) return;
+  const dead = runState.foes.filter(function (f) { return f.hp <= 0; });
+  if (!dead.length) return;
+  dead.forEach(function (f) {
+    runLog('<span class="win">' + f.name + ' is defeated.</span>');
+    boonOnKill(f);
+    if (!f.minion) rollLoot(f);
+  });
+  runState.foes = runState.foes.filter(function (f) { return f.hp > 0; });
 }
 
 // ---- Boon hooks ----
@@ -1916,109 +2209,6 @@ function boonOnKill(foe) {
   }
 }
 
-function combatRound() {
-  if (!runState || runState.over) return;
-  const foe = runState.foe;
-  runState.round = (runState.round || 0) + 1;
-
-  // Frozen foes lose their turn entirely.
-  const wasFrozen = foe.frozen > 0;
-  if (wasFrozen) foe.frozen -= 1;
-
-  // Your swing.
-  const raw = rollDamage(playerMaxHit(), playerAttackRoll(), monsterDefenceRoll(foe));
-  const off = boonOffence(raw, foe);
-  foe.hp -= off.dmg;
-  off.extraHits.forEach(function (h) { foe.hp -= h; });
-  const totalDealt = off.dmg + off.extraHits.reduce(function (s, h) { return s + h; }, 0);
-  awardCombatXp(totalDealt);
-  flash('foe');
-  floatNum('foe', totalDealt);
-  runLog(raw > 0
-    ? 'You hit <b>' + totalDealt + '</b> on the ' + foe.name +
-      (off.notes.length ? ' <span class="boon">(' + off.notes.join(', ') + ')</span>' : '') + '.'
-    : '<span class="miss">You miss the ' + foe.name + '.</span>');
-
-  // Burn ticks after your swing.
-  if (foe.burn && foe.burn.rounds > 0 && foe.hp > 0) {
-    foe.hp -= foe.burn.dmg;
-    foe.burn.rounds -= 1;
-    awardCombatXp(foe.burn.dmg);
-    runLog('<span class="boon">🔥 Burning</span> for ' + foe.burn.dmg + '.');
-  }
-
-  // Then the dead take their turn.
-  if (foe.hp > 0) { hostStrike(foe); deathRipple(foe); }
-
-  if (foe.hp <= 0) {
-    runLog('<span class="win">' + foe.name + ' is defeated.</span>');
-    boonOnKill(foe);
-    rollLoot(foe);
-    renderDungeonRun();
-    renderTopBar();
-    runTimer = setTimeout(advanceWave, pace(800));
-    return;
-  }
-
-  // Its swing — skipped entirely if frozen.
-  if (wasFrozen) {
-    runLog('<span class="boon">❄️ ' + foe.name + ' is frozen solid</span> and loses its turn.');
-  } else {
-    const incoming = rollDamage(foe.maxHit, monsterAttackRoll(foe), playerDefenceRoll());
-    const def = boonDefence(incoming, foe);
-
-    // The host is a wall as well as a weapon — the bigger it is, the more
-    // often something else eats the blow.
-    if (def.dmg > 0 && hostTakesHit(foe, def.dmg)) {
-      def.reflect = 0;                      // you never took it, so nothing bounces
-    } else {
-      G.hp -= def.dmg;
-
-      // Last Stand: one death-save a wave. Unholy Bargain first refusal.
-      if (G.hp <= 0 && unholyBargain()) {
-        // the host paid for it
-      } else if (G.hp <= 0 && boonTier('stoneblood') >= 3 && !runState.lastStandUsed) {
-        runState.lastStandUsed = true;
-        G.hp = Math.max(1, Math.round(maxHp() * 0.25));
-        runLog('<span class="boon">🪨 Last Stand</span> — you refuse to fall, at ' + G.hp + ' hp.');
-      }
-      flash('you');
-      floatNum('you', def.dmg);
-      runLog(def.dmg > 0
-        ? '<span class="hurt">' + foe.name + ' hits you for <b>' + def.dmg + '</b>' +
-          (def.notes.length ? ' (' + def.notes.join(', ') + ')' : '') + '.</span>'
-        : '<span class="miss">' + foe.name + ' misses.</span>');
-    }
-
-    if (def.reflect > 0) {
-      foe.hp -= def.reflect;
-      awardCombatXp(def.reflect);
-      runLog('<span class="boon">🪨 Retort</span> — ' + def.reflect + ' back at it.');
-      if (foe.hp <= 0) {
-        runLog('<span class="win">' + foe.name + ' is defeated.</span>');
-        boonOnKill(foe);
-        rollLoot(foe);
-        renderDungeonRun();
-        runTimer = setTimeout(advanceWave, pace(800));
-        return;
-      }
-    }
-  }
-
-  // Statuses decay at the end of the round.
-  if (foe.chill > 0) foe.chill -= 1;
-
-  renderDungeonRun();
-  renderTopBar();
-
-  if (G.hp <= 0) {
-    G.hp = 0;
-    runTimer = setTimeout(function () { endRun(false); }, pace(700));
-    return;
-  }
-  runTimer = setTimeout(combatRound, pace(750));
-}
-
 function rollLoot(foe) {
   const drops = runState.d.drops;
   const mult = boonTier('scavenger') >= 1 ? 1.5 : 1;
@@ -2040,7 +2230,7 @@ const WAVE_HEAL_PCT = 20;
 
 function advanceWave() {
   if (!runState || runState.over) return;
-  if (runState.foe && runState.foe.boss) return endRun(true);
+  if (runState.bossWave) return endRun(true);
   runState.wave += 1;
   runState.lastStandUsed = false;
 
@@ -2082,7 +2272,7 @@ function advanceWave() {
 function offerBoons() {
   if (!runState) return;
   const choices = rollBoonChoices(3);
-  if (!choices.length) { spawnFoe(); return; }   // every line maxed out
+  if (!choices.length) { startWave(); return; }   // every line maxed out
   runState.runLevel = (runState.runLevel || 0) + 1;
   runState.pending = choices;
   if (autoBoonPick) {                       // headless balance runs
@@ -2091,7 +2281,7 @@ function offerBoons() {
       chooseBoon(idx);
     } else {                                // negative index = decline the level
       runState.pending = null;
-      spawnFoe();
+      startWave();
     }
     return;
   }
@@ -2108,7 +2298,7 @@ function chooseBoon(index) {
   grantBoon(pick.key, pick.tier);
   renderDungeonRun();
   renderTopBar();
-  spawnFoe();
+  startWave();
 }
 
 function renderBoonPick() {
@@ -2245,26 +2435,111 @@ function fleeRun() {
 
 function renderDungeonRun() {
   if (!runState) return;
-  const foe = runState.foe;
   const d = runState.d;
-  $('run-wave').textContent = runState.wave > d.waves ? 'BOSS' : 'Wave ' + runState.wave + ' / ' + d.waves;
-  $('foe-ico').textContent = foe.icon;
-  $('foe-name').textContent = foe.name;
-  $('foe-fill').style.width = Math.max(0, (foe.hp / foe.max) * 100) + '%';
-  $('foe-hp').textContent = Math.max(0, foe.hp) + ' / ' + foe.max;
-  $('you-fill').style.width = Math.max(0, (G.hp / maxHp()) * 100) + '%';
-  $('you-hp').textContent = Math.max(0, Math.floor(G.hp)) + ' / ' + maxHp();
-  const w = G.equipped.weapon;
-  $('you-ico').textContent = w && GEAR[w] ? GEAR[w].icon : '🧍';
-  // Status pips so the build's effects are legible mid-fight.
-  const st = [];
-  if (foe.burn && foe.burn.rounds > 0) st.push('🔥');
-  if (foe.chill > 0) st.push('❄️');
-  if (foe.frozen > 0) st.push('🧊');
-  $('foe-status').textContent = st.join(' ');
-  $('you-status').textContent = '';
+  $('run-wave').textContent = runState.bossWave ? 'BOSS' : 'Wave ' + runState.wave + ' / ' + d.waves;
+
+  // Anything raised mid-phase still needs somewhere to point.
+  if (runState.phase === 'orders') defaultOrders();
+  const ordering = runState.phase === 'orders' && !runState.auto;
+  document.body.classList.toggle('ordering', ordering);
+
+  // --- enemies, at the top. Summons stand in front of whatever called them.
+  const mainWrap = $('foe-main'), minWrap = $('foe-minions');
+  mainWrap.innerHTML = ''; minWrap.innerHTML = '';
+  runState.foes.forEach(function (f) {
+    (f.minion ? minWrap : mainWrap).appendChild(foeCard(f));
+  });
+
+  // --- your risen, in front of you; you at the bottom.
+  const allies = $('ally-minions');
+  allies.innerHTML = '';
+  hostUnits().forEach(function (u) { allies.appendChild(allyCard(u)); });
+  renderYouCard();
+
+  renderOrderBar();
   renderHost();
   renderBoonBar();
+}
+
+function foeCard(f) {
+  const card = el('div', 'combatant foe' + (f.minion ? ' minion' : '') + (f.boss ? ' boss' : ''));
+  card.id = 'foe-' + f.id;
+  const st = [];
+  if (f.burn && f.burn.rounds > 0) st.push('🔥');
+  if (f.chill > 0) st.push('❄️');
+  if (f.frozen > 0) st.push('🧊');
+  // How many of your attackers are pointed at this one.
+  const aimed = attackerList().filter(function (a) {
+    return runState.orders[a.id] === f.id;
+  }).length;
+  card.innerHTML =
+    '<div class="ico">' + f.icon + '</div>' +
+    '<div class="status">' + st.join(' ') + '</div>' +
+    '<div class="nm">' + esc(f.name) + '</div>' +
+    '<div class="track"><div class="fill" style="width:' +
+      Math.max(0, (f.hp / f.max) * 100) + '%"></div></div>' +
+    '<div class="hpv">' + Math.max(0, f.hp) + ' / ' + f.max + '</div>' +
+    (aimed ? '<div class="aimed">⚔ ' + aimed + '</div>' : '');
+  card.onclick = function () { assignTarget(f.id); };
+  card.ondblclick = function () { targetAll(f.id); };
+  return card;
+}
+
+function allyCard(u) {
+  const t = UNDEAD_TIERS[u.tier];
+  const card = el('div', 'unit t' + u.tier +
+    (u.fresh ? ' rising' : '') + (u.promoted ? ' promoted' : '') +
+    (orderSel === u.id ? ' picking' : ''));
+  card.id = 'ally-' + u.id;
+  card.innerHTML =
+    '<span class="u-ico">' + t.icon + '</span>' +
+    '<span class="u-bar"><i style="width:' + Math.max(0, (u.hp / u.max) * 100) + '%"></i></span>' +
+    orderBadge(u.id);
+  card.title = t.name + ' — ' + Math.max(0, u.hp) + '/' + u.max;
+  card.onclick = function () { selectAttacker(u.id); };
+  u.fresh = false; u.promoted = false;
+  return card;
+}
+
+function renderYouCard() {
+  const card = $('you-card');
+  if (!card) return;
+  card.classList.toggle('picking', orderSel === 'you');
+  const w = G.equipped.weapon;
+  card.innerHTML =
+    '<div class="ico">' + (w && GEAR[w] ? GEAR[w].icon : '🧍') + '</div>' +
+    '<div class="nm">You</div>' +
+    '<div class="track"><div class="fill" style="width:' +
+      Math.max(0, (G.hp / maxHp()) * 100) + '%"></div></div>' +
+    '<div class="hpv">' + Math.max(0, Math.floor(G.hp)) + ' / ' + maxHp() + '</div>' +
+    orderBadge('you');
+  card.onclick = function () { selectAttacker('you'); };
+}
+
+// Which enemy this attacker is pointed at. Hidden when there is only one
+// thing to hit — no decision, no clutter.
+function orderBadge(id) {
+  if (aliveFoes().length < 2) return '';
+  const t = foeById(runState.orders[id]);
+  if (!t) return '';
+  return '<span class="ord">→ ' + t.icon + '</span>';
+}
+
+function renderOrderBar() {
+  const fight = $('run-fight'), auto = $('run-auto'), hint = $('order-hint');
+  if (!fight) return;
+  const ordering = runState.phase === 'orders' && !runState.auto;
+  fight.disabled = !ordering;
+  fight.textContent = ordering ? 'FIGHT' : '…';
+  auto.classList.toggle('on', !!runState.auto);
+  auto.textContent = runState.auto ? 'AUTO ON' : 'AUTO';
+  if (!hint) return;
+  if (!ordering) { hint.textContent = ''; return; }
+  const many = aliveFoes().length > 1;
+  const sel = orderSel === 'you' ? 'You' : 'Your risen';
+  hint.innerHTML = many
+    ? sel + ' — tap an enemy to aim, double-tap to aim everything.'
+    : 'Tap FIGHT to play the round.';
 }
 
 // The host, its condition, and how hard it hits — the escalation made visible.
@@ -2275,26 +2550,11 @@ function renderHost() {
   if (!host.length) {
     wrap.style.display = 'none';
     wrap.classList.remove('legion');
-    $('run-stage').style.setProperty('--necro', 0);
+    $('run-board').style.setProperty('--necro', 0);
     return;
   }
   wrap.style.display = '';
   wrap.classList.toggle('legion', host.length >= HOST_CAP);
-
-  const units = $('host-units');
-  units.innerHTML = '';
-  host.forEach(function (u) {
-    const t = UNDEAD_TIERS[u.tier];
-    const chip = el('div', 'unit t' + u.tier +
-      (u.fresh ? ' rising' : '') + (u.promoted ? ' promoted' : ''));
-    chip.innerHTML =
-      '<span class="u-ico">' + t.icon + '</span>' +
-      '<span class="u-bar"><i style="width:' +
-        Math.max(0, (u.hp / u.max) * 100) + '%"></i></span>';
-    chip.title = t.name + ' — ' + Math.max(0, u.hp) + '/' + u.max;
-    units.appendChild(chip);
-    u.fresh = false; u.promoted = false;
-  });
 
   $('host-count').textContent = host.length + ' / ' + HOST_CAP + ' · ' +
     hostMaxHit() + ' max hit';
@@ -2302,12 +2562,12 @@ function renderHost() {
   const share = hostMaxHit() / Math.max(1, playerMaxHit() + hostMaxHit());
   $('host-power').style.width = Math.min(100, share * 200) + '%';
   // Tint the stage as the host grows — subtle, but you feel it building.
-  $('run-stage').style.setProperty('--necro', Math.min(1, host.length / HOST_CAP));
+  $('run-board').style.setProperty('--necro', Math.min(1, host.length / HOST_CAP));
 }
 
 // A unit clawing its way up out of the floor on your side of the stage.
 function riseFx(tier) {
-  const stage = $('run-stage');
+  const stage = $('run-board');
   if (!stage) return;
   const g = el('div', 'rise-ghost', UNDEAD_TIERS[tier].icon);
   g.style.left = (14 + rng(0, 22)) + '%';
@@ -2325,7 +2585,7 @@ function fallFx() {
 
 // A one-line proclamation across the stage for the big moments.
 function hostBanner(text) {
-  const stage = $('run-stage');
+  const stage = $('run-board');
   if (!stage) return;
   const b = el('div', 'host-banner', text);
   stage.appendChild(b);
@@ -2340,22 +2600,43 @@ function runLog(html) {
   while (l.children.length > 40) l.removeChild(l.firstChild);
 }
 
-function flash(who) {
-  const n = $(who === 'foe' ? 'foe-ico' : 'you-ico');
+function flashCard(id) {
+  const n = $(id);
   if (!n) return;
-  n.classList.remove('hit');
-  void n.offsetWidth;
-  n.classList.add('hit');
+  const ico = n.querySelector('.ico') || n;
+  ico.classList.remove('hit');
+  void ico.offsetWidth;
+  ico.classList.add('hit');
 }
 
-function floatNum(who, dmg, kind) {
-  const stage = $('run-stage');
-  if (!stage) return;
-  const d = el('div', 'float ' + who + (dmg > 0 ? '' : ' zero') + (kind ? ' ' + kind : ''),
+// The attacker leans into its target and springs back — the swing you can see.
+function lunge(fromId, toId) {
+  if (paceScale === 0) return;
+  const a = $(fromId), b = $(toId);
+  if (!a || !b) return;
+  const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+  a.style.setProperty('--dx', ((rb.left + rb.width / 2) - (ra.left + ra.width / 2)) * 0.5 + 'px');
+  a.style.setProperty('--dy', ((rb.top + rb.height / 2) - (ra.top + ra.height / 2)) * 0.5 + 'px');
+  a.classList.remove('lunge');
+  void a.offsetWidth;
+  a.classList.add('lunge');
+  setTimeout(function () {
+    const n = $(fromId);
+    if (n) n.classList.remove('lunge');
+  }, 460);
+}
+
+// A damage number over whichever card took it.
+function floatOn(id, dmg, kind) {
+  const board = $('run-board'), t = $(id);
+  if (!board || !t) return;
+  const rb = board.getBoundingClientRect(), rt = t.getBoundingClientRect();
+  const d = el('div', 'float' + (dmg > 0 ? '' : ' zero') + (kind ? ' ' + kind : ''),
     dmg > 0 ? String(dmg) : '0');
-  if (kind === 'necro') d.style.top = (44 + rng(0, 14)) + '%';
-  stage.appendChild(d);
-  setTimeout(function () { try { stage.removeChild(d); } catch (e) {} }, 900);
+  d.style.left = (rt.left - rb.left + rt.width / 2) + 'px';
+  d.style.top = (rt.top - rb.top + rt.height * 0.25) + 'px';
+  board.appendChild(d);
+  setTimeout(function () { try { board.removeChild(d); } catch (e) {} }, 900);
 }
 
 // ============================================================
@@ -2365,6 +2646,10 @@ function floatNum(who, dmg, kind) {
 function wire() {
   const flee = $('run-flee');
   if (flee) flee.onclick = fleeRun;
+  const fight = $('run-fight');
+  if (fight) fight.onclick = function () { resolveTurn(); };
+  const auto = $('run-auto');
+  if (auto) auto.onclick = toggleAuto;
   const cont = $('result-continue');
   if (cont) cont.onclick = function () { showTab('dungeon'); };
   const stop = $('ga-stop');
@@ -2426,6 +2711,33 @@ window.__rf = {
   UNDEAD_TIERS: UNDEAD_TIERS, HOST_CAP: HOST_CAP,
   boonTier: boonTier, boonName: boonName, boonUnlocked: boonUnlocked,
   hostMaxHit: hostMaxHit, raiseUnit: raiseUnit, rollBoonChoices: rollBoonChoices,
+  // Headless runs need the board to play itself.
+  setAutoFight: function (on) { autoFightDefault = !!on; if (runState) { runState.auto = !!on; if (on) enterOrders(); } },
+  fight: function () { resolveTurn(); },
+  assignTarget: assignTarget, selectAttacker: selectAttacker, targetAll: targetAll,
+  summonForTest: function () {
+    if (!runState || !runState.d.summon) return null;
+    const m = makeFoe(runState.d.summon, { minion: true });
+    runState.foes.push(m);
+    renderDungeonRun();
+    return m.id;
+  },
+  killFoeForTest: function (id) {
+    if (!runState) return;
+    runState.foes.forEach(function (f) { if (f.id === id) f.hp = 0; });
+  },
+  board: function () {
+    if (!runState) return null;
+    return {
+      phase: runState.phase, auto: !!runState.auto, round: runState.round || 0,
+      foes: runState.foes.map(function (f) {
+        return { id: f.id, name: f.name, hp: f.hp, max: f.max, minion: !!f.minion, boss: !!f.boss };
+      }),
+      allies: hostUnits().map(function (u) { return { id: u.id, tier: u.tier, hp: u.hp }; }),
+      orders: Object.assign({}, runState.orders),
+      sel: orderSel, summoned: runState.summoned || 0
+    };
+  },
   runInfo: function () {
     if (!runState) return null;
     return {
