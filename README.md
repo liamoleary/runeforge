@@ -366,78 +366,13 @@ The Abyss sits at the bottom of it, which is the right shape for a last
 dungeon.
 
 `tools/journey.js` plays a bot from level 1 to the last boss using the game's
-own combat and recipe functions, farming until each dungeon looks winnable. It
-takes **no boons at all**, so its **132 minutes** is the pessimistic floor — the
-time it takes if you throw every delve level away. A player who actually builds
-spends less of that on combat farming.
+own recipe and xp functions, farming until each dungeon looks winnable.
 
-`tools/ui-test.js` drives the real UI through the whole loop. All of these need
-a local server and Playwright:
-
-```bash
-npm start &
-node tools/tune.js            # solve monster stats for a target hit chance
-node tools/boon-calibrate.js  # re-tune difficulty around the boon system
-node tools/apply-scalars.js warren=1.4 crypt=1.9 …   # bake the result in
-node tools/boon-balance.js    # measure what boons are worth
-node tools/journey.js         # measure end-to-end playtime
-node tools/ui-test.js         # end-to-end UI checks
-```
-
-They point at `localhost:3111` by default — edit the URL at the top if you run
-on another port.
-
-## Running locally
-
-```bash
-npm install
-npm start
-```
-
-Defaults to port `3000`. Override with `PORT`.
-
-## Environment variables
-
-| Var | Required | Notes |
-|---|---|---|
-| `PORT` | no | Listen port (default `3000`) |
-| `SESSION_SECRET` | no | Cookie signing secret. If unset, a random one is generated per restart (sessions won't survive restarts) and a warning is logged. Set this in production. |
-| `SECURE_COOKIES` | no | `true`/`false` to force the `Secure` session-cookie flag. Defaults to on when `RAILWAY_ENVIRONMENT` is set or `NODE_ENV=production`, off otherwise — a Secure cookie is never returned over plain HTTP, so leave it off for local development. |
-| `NODE_ENV` | no | `production` enables Secure cookies and caches the assembled `index.html` in memory. In development the page is re-read per request so edits show up without a restart. |
-| `ADMIN_RESET_SECRET` | no | Enables `POST /api/admin-reset`. **The endpoint is disabled and returns 503 if this is unset.** Set it to a long random string and never commit it. |
-| `RAILWAY_VOLUME_MOUNT_PATH` | no | Path to the SQLite store on Railway. Falls back to `/tmp` on Railway, otherwise the repo root. |
-
-## Builds
-
-`game.js` and `auth.js` are served with a content hash in the query string, so
-a deploy can never be answered out of a stale browser cache. The same hash is
-printed at the bottom of the screen as `build xxxxxxxx` and exposed as
-`__rf.BUILD` — if a change appears to be missing, compare that against
-`git rev-parse` output for the deployed commit before looking anywhere else.
-
-## Admin reset
-
-When `ADMIN_RESET_SECRET` is set, you can wipe a single user's save:
-
-```bash
-curl -X POST https://YOUR-DOMAIN/api/admin-reset \
-  -H "Content-Type: application/json" \
-  -d '{"username":"someone","secret":"YOUR_SECRET"}'
-```
-
-This deletes the row from `saves` for that user. The account itself stays.
-
-`/api/login` and `/api/register` are rate limited to 12 attempts per IP per 15 minutes.
-
-## Saves
-
-Saves carry a `version`. The current format is **2**; the pre-skilling game was
-version 1 and nothing in it maps onto skills, so a v1 save is ignored and the
-character starts fresh rather than loading as a broken hybrid.
-
-## Dependencies
-
-`package-lock.json` is committed — keep it that way. `connect-sqlite3` is pinned to an
-exact version because 0.9.16 changed `options.db` from a filename to an already-open
-database handle in a patch release; installing `^0.9.15` picks up the newer API and the
-server throws `this.db.exec is not a function` at boot.
+**Its combat numbers are stale and it is kept for the gathering and smithing
+half only.** It re-implements a one-on-one exchange from before the board
+existed — no host, no enemy minions, no keywords, no boons, no wave ramp — so
+its old 132-minute figure no longer describes this game. The time it reports
+for chopping, mining and forging is still sound, because none of that changed.
+Rewriting its combat to drive the real `combatRound()` the way
+`boon-balance.js` does is the fix, and until that happens treat its totals as
+a gathering benchmark rather than a playtime estimate.

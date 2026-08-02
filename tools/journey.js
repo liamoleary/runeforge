@@ -88,7 +88,11 @@ const { chromium } = require('playwright');
     }
 
     // ---- combat ----------------------------------------------------
-    // Runs a dungeon for real: rolls every hit, awards xp, spends time.
+    // STALE: this is a one-on-one exchange from before the board existed. It
+    // models no host, no enemy minions, no keywords, no boons and no wave
+    // ramp, so its win rates and round counts no longer describe the game.
+    // Use tools/boon-balance.js for anything combat-related; what is still
+    // trustworthy here is the gathering and smithing time either side of it.
     function runDungeon(d) {
       let hp = R.maxHp();
       let rounds = 0;
