@@ -80,10 +80,13 @@ against the bench time it costs.
 Skilling is the idle half of the game. Dungeons are the part you play.
 
 A wave is a board, not a duel. **Enemies stand at the top, you at the bottom,
-and anything you summon lines up in front of you.** Each round you assign a
-target to every attacker you control — yourself and each risen unit — then hit
-**FIGHT** and your orders play out, each attacker leaning into whatever you
-pointed it at.
+and anything you summon lines up in front of you.**
+
+A turn is a **planning phase** and then an **exchange**. While you are
+planning, nothing moves: aim every attacker you control, fuse three of a kind
+into something new, spend a full fury meter, fire off your units' abilities.
+Then **FIGHT**, and the board plays three rounds on its own — your orders, your
+abilities, their answer — and hands control back so you can plan the next one.
 
 Tap an ally to select it, tap an enemy to aim it; the selection walks to the
 next attacker so a run of taps sets the whole board. Double-tap an enemy to
@@ -91,10 +94,9 @@ aim everything at it. There is always a legal default — anything without a liv
 target falls back to the wave's main enemy — so FIGHT alone is a valid move and
 the tactics stay optional until they matter.
 
-**AUTO** plays each round with your standing orders, and while it runs a single
-tap on an enemy focuses *everything* on it until that enemy is dead. So you can
-let a run play and still call the shots that matter, without stepping through
-every round.
+**AUTO** plays exchange after exchange with your standing orders, spending
+fury and abilities as they come up, and while it runs a single tap on an enemy
+focuses *everything* on it until that enemy is dead.
 
 ### Reading the board
 
@@ -221,6 +223,22 @@ trading stats against a keyword:
 | Ghoul | 🪦 **Gravewarden** *(Taunt)* · 🧟 **Plague Ghoul** *(Withering)* · 🩸 **Ravener** *(Draining)* |
 | Wight | 🛡️ **Barrow Knight** *(Taunt, Warded)* · ⚡ **Storm Wight** *(Doubled)* · 👑 **Grave Tyrant** *(Sweeping)* |
 | Dragon | 🐉 **Bone Dragon** *(Sweeping, Warded)* · 💀 **Lich Dragon** *(Withering, Doubled)* · 🦴 **Bulwark Wyrm** *(Taunt, Undying)* |
+
+Every form also carries **one ability you can fire during planning**, once a
+wave — the part that makes an army feel like an army rather than a damage
+number:
+
+| Form | Ability | |
+|---|---|---|
+| Gravewarden | 🛡 **Bulwark** | your whole side takes no damage for the coming exchange |
+| Plague Ghoul | ☠ **Miasma** | every enemy starts rotting |
+| Ravener | 🩸 **Feast** | tear a chunk from the weakest enemy and drink it |
+| Barrow Knight | ✨ **Shield Wall** | every unit you have gains a ward |
+| Storm Wight | ⚡ **Chain Strike** | strike every enemy on the board once |
+| Grave Tyrant | 👑 **Onslaught** | the whole host strikes at once, right now |
+| Bone Dragon | 🔥 **Dragonfire** | burn every enemy for its full damage |
+| Lich Dragon | 💀 **Soul Harvest** | finish every enemy already below a quarter health |
+| Bulwark Wyrm | 🔁 **Wake the Dead** | two of the fallen claw their way back |
 
 The keywords:
 

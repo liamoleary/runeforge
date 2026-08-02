@@ -2,10 +2,14 @@
 // Bakes the per-dungeon scalars from tools/boon-calibrate.js into game.js.
 //
 //   node tools/apply-scalars.js warren=1.4 crypt=1.9 spire=2.1 ...
+//   node tools/apply-scalars.js crypt=1.0,0.5        # hp x1.0, maxHit x0.5
 //
-// Multiplies each monster's hp and maxHit (the two levers the calibrator
-// sweeps) for the named dungeons, in place. Accuracy (`atk`) and armour
-// (`def`) are left alone — those set hit chance, which tune.js owns.
+// Multiplies each monster's hp and maxHit for the named dungeons, in place.
+// One value scales both; two scale them separately, which is what you want
+// when the board has more bodies on it than it used to — more enemies each
+// hitting for less is a longer fight, not a harder one.
+// Accuracy (`atk`) and armour (`def`) are left alone — those set hit chance,
+// which tune.js owns.
 const fs = require('fs');
 const path = require('path');
 
@@ -30,9 +34,10 @@ const scalars = {};
 args.forEach(a => {
   const [k, v] = a.split('=');
   if (!DUNGEON_MONSTERS[k]) { console.error(`unknown dungeon: ${k}`); process.exit(1); }
-  const n = parseFloat(v);
-  if (!(n > 0)) { console.error(`bad scalar for ${k}: ${v}`); process.exit(1); }
-  scalars[k] = n;
+  const parts = String(v).split(',').map(parseFloat);
+  const hp = parts[0], hit = parts.length > 1 ? parts[1] : parts[0];
+  if (!(hp > 0) || !(hit > 0)) { console.error(`bad scalar for ${k}: ${v}`); process.exit(1); }
+  scalars[k] = { hp: hp, hit: hit };
 });
 
 let src = fs.readFileSync(GAME, 'utf8');
@@ -48,12 +53,12 @@ Object.keys(scalars).forEach(dungeon => {
     let body = m[1];
     const before = body;
     body = body.replace(/hp: (\d+)/, (_, n) =>
-      'hp: ' + Math.max(1, Math.round(+n * scale)));
+      'hp: ' + Math.max(1, Math.round(+n * scale.hp)));
     body = body.replace(/maxHit: (\d+)/, (_, n) =>
-      'maxHit: ' + Math.max(1, Math.round(+n * scale)));
+      'maxHit: ' + Math.max(1, Math.round(+n * scale.hit)));
     if (body !== before) {
       src = src.replace(before, body);
-      changes.push(`${dungeon.padEnd(8)} ${name.padEnd(22)} ×${scale}`);
+      changes.push(`${dungeon.padEnd(8)} ${name.padEnd(22)} hp ×${scale.hp}  hit ×${scale.hit}`);
     }
   });
 });

@@ -278,10 +278,10 @@ const DUNGEONS = [
     blurb: 'Damp tunnels under the village. Something has been breeding down here.',
     waves: 12,
     monsters: [
-      { name: 'Giant Rat',   icon: '🐀', hp: 11,  atk: 6,  def: 1, maxHit: 5 , calls: 0.3 },
-      { name: 'Cave Slime',  icon: '🟢', hp: 15,  atk: 7,  def: 1, maxHit: 6 , calls: 0.3 }
+      { name: 'Giant Rat',   icon: '🐀', hp: 7,  atk: 6,  def: 1, maxHit: 3 , calls: 0.3 },
+      { name: 'Cave Slime',  icon: '🟢', hp: 9,  atk: 7,  def: 1, maxHit: 3 , calls: 0.3 }
     ],
-    boss: { name: 'Warren Brood-Mother', icon: '🕷️', hp: 26, atk: 10, def: 2, maxHit: 10 , calls: 0.5 },
+    boss: { name: 'Warren Brood-Mother', icon: '🕷️', hp: 16, atk: 10, def: 2, maxHit: 5 , calls: 0.5 },
     summonPrefix: 'Brood',
     drops: { ember_core: [1, 2], sapphire: [0, 1] },
     clearDrops: { ember_core: 3, sapphire: 2 }
@@ -291,10 +291,10 @@ const DUNGEONS = [
     blurb: 'A barrow sealed in black ice. The cold bites through bronze.',
     waves: 14,
     monsters: [
-      { name: 'Frost Ghoul',  icon: '🧟', hp: 22, atk: 22, def: 6, maxHit: 5 , calls: 0.3 },
-      { name: 'Ice Wraith',   icon: '👻', hp: 30, atk: 24, def: 7, maxHit: 6 , calls: 0.32 }
+      { name: 'Frost Ghoul',  icon: '🧟', hp: 13, atk: 22, def: 6, maxHit: 3 , calls: 0.3 },
+      { name: 'Ice Wraith',   icon: '👻', hp: 18, atk: 24, def: 7, maxHit: 3 , calls: 0.32 }
     ],
-    boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 54, atk: 30, def: 12, maxHit: 7 , calls: 0.5 },
+    boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 32, atk: 30, def: 12, maxHit: 4 , calls: 0.5 },
     summonPrefix: 'Frost',
     drops: { frost_shard: [1, 2], emerald: [0, 1] },
     clearDrops: { frost_shard: 3, emerald: 2 }
@@ -304,10 +304,10 @@ const DUNGEONS = [
     blurb: 'A tower struck by lightning so often the stone has turned to glass.',
     waves: 16,
     monsters: [
-      { name: 'Storm Sprite',  icon: '⚡', hp: 41,  atk: 39, def: 14, maxHit: 6 , calls: 0.32 },
-      { name: 'Thunder Golem', icon: '🗿', hp: 54,  atk: 43, def: 16, maxHit: 8 , calls: 0.3 }
+      { name: 'Storm Sprite',  icon: '⚡', hp: 25,  atk: 39, def: 14, maxHit: 3 , calls: 0.32 },
+      { name: 'Thunder Golem', icon: '🗿', hp: 32,  atk: 43, def: 16, maxHit: 4 , calls: 0.3 }
     ],
-    boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 108, atk: 52, def: 25, maxHit: 11 , calls: 0.5 },
+    boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 65, atk: 52, def: 25, maxHit: 6 , calls: 0.5 },
     summonPrefix: 'Storm',
     drops: { storm_crystal: [1, 2], ruby: [0, 1] },
     clearDrops: { storm_crystal: 3, ruby: 2 }
@@ -317,10 +317,10 @@ const DUNGEONS = [
     blurb: 'The heat alone kills the unprepared. Bring the best steel you have.',
     waves: 18,
     monsters: [
-      { name: 'Whelp',        icon: '🦎', hp: 60,  atk: 57, def: 24, maxHit: 7 , calls: 0.34 },
-      { name: 'Ember Drake',  icon: '🐉', hp: 81,  atk: 63, def: 27, maxHit: 9 , calls: 0.3 }
+      { name: 'Whelp',        icon: '🦎', hp: 36,  atk: 57, def: 24, maxHit: 4 , calls: 0.34 },
+      { name: 'Ember Drake',  icon: '🐉', hp: 49,  atk: 63, def: 27, maxHit: 5 , calls: 0.3 }
     ],
-    boss: { name: 'Ashmaw the Elder', icon: '🐲', hp: 167, atk: 75, def: 39, maxHit: 13 , calls: 0.55 },
+    boss: { name: 'Ashmaw the Elder', icon: '🐲', hp: 100, atk: 75, def: 39, maxHit: 7 , calls: 0.55 },
     summonPrefix: 'Ash',
     drops: { dragon_ash: [1, 2], diamond: [0, 1] },
     clearDrops: { dragon_ash: 3, diamond: 2 }
@@ -330,10 +330,10 @@ const DUNGEONS = [
     blurb: 'Nothing comes back from here without rune on its back.',
     waves: 20,
     monsters: [
-      { name: 'Abyssal Leech',  icon: '🪱', hp: 86,  atk: 80, def: 35, maxHit: 10 , calls: 0.34 },
-      { name: 'Void Stalker',   icon: '👁️', hp: 116, atk: 88, def: 39, maxHit: 11 , calls: 0.32 }
+      { name: 'Abyssal Leech',  icon: '🪱', hp: 52,  atk: 80, def: 35, maxHit: 5 , calls: 0.34 },
+      { name: 'Void Stalker',   icon: '👁️', hp: 70, atk: 88, def: 39, maxHit: 6 , calls: 0.32 }
     ],
-    boss: { name: 'The Hollow King', icon: '👑', hp: 251, atk: 104, def: 54, maxHit: 17 , calls: 0.6 },
+    boss: { name: 'The Hollow King', icon: '👑', hp: 151, atk: 104, def: 54, maxHit: 9 , calls: 0.6 },
     summonPrefix: 'Void',
     drops: { dragonstone: [0, 1], dragon_ash: [1, 2] },
     clearDrops: { dragonstone: 3, dragon_ash: 4 }
@@ -445,10 +445,10 @@ const MAX_BOON_TIER = 3;
 // What the risen look like. Damage and life are read off the player, so a
 // host is always worth something relative to where you are.
 const UNDEAD_TIERS = [
-  { name: 'Skeleton',    icon: '🦴', dmg: 0.15, hp: 0.20 },
-  { name: 'Ghoul',       icon: '🧟', dmg: 0.22, hp: 0.30 },
-  { name: 'Wight',       icon: '👻', dmg: 0.30, hp: 0.40 },
-  { name: 'Bone Dragon', icon: '🐉', dmg: 0.60, hp: 0.80 }
+  { name: 'Skeleton',    icon: '🦴', dmg: 0.24, hp: 0.20 },
+  { name: 'Ghoul',       icon: '🧟', dmg: 0.36, hp: 0.30 },
+  { name: 'Wight',       icon: '👻', dmg: 0.50, hp: 0.40 },
+  { name: 'Bone Dragon', icon: '🐉', dmg: 0.95, hp: 0.80 }
 ];
 const HOST_CAP = 6;             // six stacks, laid out three to a rank
 
@@ -474,19 +474,28 @@ const KEYWORDS = {
 // Keyed by the tier the rite produces.
 const BIND_FORMS = {
   1: [
-    { name: 'Gravewarden', icon: '🪦', keys: ['taunt'],  hp: 1.2, dmg: 0.7 },
-    { name: 'Plague Ghoul', icon: '🧟', keys: ['wither'], hp: 1.0, dmg: 1.0 },
-    { name: 'Ravener',     icon: '🩸', keys: ['drain'],  hp: 0.9, dmg: 1.1 }
+    { name: 'Gravewarden', icon: '🪦', keys: ['taunt'],  hp: 1.2, dmg: 0.7,
+      ability: { key: 'bulwark', name: 'Bulwark', icon: '🛡', desc: 'Your whole side takes no damage for the coming exchange.' } },
+    { name: 'Plague Ghoul', icon: '🧟', keys: ['wither'], hp: 1.0, dmg: 1.0,
+      ability: { key: 'miasma', name: 'Miasma', icon: '☠', desc: 'Every enemy on the board starts rotting.' } },
+    { name: 'Ravener',     icon: '🩸', keys: ['drain'],  hp: 0.9, dmg: 1.1,
+      ability: { key: 'feast', name: 'Feast', icon: '🩸', desc: 'Tear a chunk from the weakest enemy and drink it.' } }
   ],
   2: [
-    { name: 'Barrow Knight', icon: '🛡️', keys: ['taunt', 'ward'], hp: 1.3, dmg: 0.6 },
-    { name: 'Storm Wight',   icon: '⚡', keys: ['double'],        hp: 0.8, dmg: 0.6 },
-    { name: 'Grave Tyrant',  icon: '👑', keys: ['sweep'],         hp: 1.0, dmg: 1.0 }
+    { name: 'Barrow Knight', icon: '🛡️', keys: ['taunt', 'ward'], hp: 1.3, dmg: 0.6,
+      ability: { key: 'shieldwall', name: 'Shield Wall', icon: '✨', desc: 'Every unit you have gains a ward.' } },
+    { name: 'Storm Wight',   icon: '⚡', keys: ['double'],        hp: 0.8, dmg: 0.6,
+      ability: { key: 'chain', name: 'Chain Strike', icon: '⚡', desc: 'Strike every enemy on the board once.' } },
+    { name: 'Grave Tyrant',  icon: '👑', keys: ['sweep'],         hp: 1.0, dmg: 1.0,
+      ability: { key: 'onslaught', name: 'Onslaught', icon: '👑', desc: 'The whole host strikes at once, right now.' } }
   ],
   3: [
-    { name: 'Bone Dragon',  icon: '🐉', keys: ['sweep', 'ward'],   hp: 1.1, dmg: 1.0 },
-    { name: 'Lich Dragon',  icon: '💀', keys: ['wither', 'double'], hp: 0.9, dmg: 0.6 },
-    { name: 'Bulwark Wyrm', icon: '🦴', keys: ['taunt', 'reborn'],  hp: 1.4, dmg: 0.7 }
+    { name: 'Bone Dragon',  icon: '🐉', keys: ['sweep', 'ward'],   hp: 1.1, dmg: 1.0,
+      ability: { key: 'dragonfire', name: 'Dragonfire', icon: '🔥', desc: 'Burn every enemy for its full damage.' } },
+    { name: 'Lich Dragon',  icon: '💀', keys: ['wither', 'double'], hp: 0.9, dmg: 0.6,
+      ability: { key: 'harvest', name: 'Soul Harvest', icon: '💀', desc: 'Finish every enemy already below a quarter health.' } },
+    { name: 'Bulwark Wyrm', icon: '🦴', keys: ['taunt', 'reborn'],  hp: 1.4, dmg: 0.7,
+      ability: { key: 'wake', name: 'Wake the Dead', icon: '🔁', desc: 'Two of the fallen claw their way back.' } }
   ]
 };
 function unitHasKey(u, k) { return !!(u.keys && u.keys.indexOf(k) >= 0); }
@@ -1945,6 +1954,7 @@ function enterDungeon(index) {
     foes: [], orders: {}, focus: null, phase: 'orders', auto: autoFightDefault,
     idSeq: 0, bossWave: false, summoned: 0,
     fury: 0, powerArmed: false, bindPending: null, rot: null,
+    exchange: 0, bulwark: false,
     rampage: 0, hitCount: 0, round: 0,
     hpPenalty: 0, lastStandUsed: false,
     carryDetonate: 0, carryFreeze: false
@@ -1983,6 +1993,10 @@ const MINION_HIT_SHARE = 0.70;
 
 // Fury builds as you trade blows and buys one enormous swing. It is the
 // decision AUTO cannot take away from you.
+// A turn is a planning phase and then an exchange the board plays out on its
+// own. You are not tapping through single swings.
+const ROUNDS_PER_TURN = 3;
+
 const FURY_MAX = 100;
 const FURY_PER_HIT = 9;
 const FURY_PER_TAKEN = 6;
@@ -2117,11 +2131,14 @@ function enterOrders() {
   const list = attackerList();
   if (!list.some(function (a) { return a.id === orderSel; })) orderSel = list[0].id;
   renderDungeonRun();
-  // AUTO keeps last round's orders and plays them out without a tap — and
-  // spends a full fury meter, since it is playing everything else too.
+  // AUTO plays the next exchange without a tap — and spends a full fury meter
+  // and any ready ability, since it is playing everything else too.
   if (runState.auto) {
     if ((runState.fury || 0) >= FURY_MAX && !runState.powerArmed) unleashFury();
-    runTimer = setTimeout(resolveTurn, pace(340));
+    hostUnits().forEach(function (u) {
+      if (u.form && u.form.ability && !u.abilityUsed) useAbility(u.id);
+    });
+    runTimer = setTimeout(resolveTurn, pace(300));
   }
 }
 
@@ -2180,8 +2197,16 @@ function toggleAuto() {
 function resolveTurn() {
   if (!runState || runState.over || runState.phase === 'resolving') return;
   if (!aliveFoes().length) return;
+  runState.exchange = ROUNDS_PER_TURN;
+  runState.bulwark = false;          // a Bulwark covers one exchange
+  playRound();
+}
+
+function playRound() {
+  if (!runState || runState.over || !aliveFoes().length) return;
   runState.phase = 'resolving';
   runState.round = (runState.round || 0) + 1;
+  runState.exchange -= 1;
   renderDungeonRun();
   stepAttack(attackerList(), 0);
 }
@@ -2201,8 +2226,8 @@ function stepAttack(queue, i) {
     if (a.kind === 'you') playerSwing(target); else unitSwing(a.unit, target);
     renderDungeonRun();
     renderTopBar();
-    runTimer = setTimeout(function () { stepAttack(queue, i + 1); }, pace(150));
-  }, pace(230));
+    runTimer = setTimeout(function () { stepAttack(queue, i + 1); }, pace(70));
+  }, pace(150));
 }
 
 // A guarded enemy line: single blows land on the wall, splash goes past it.
@@ -2352,14 +2377,105 @@ function quake() {
   b.classList.add('quake');
 }
 
+// ---- What your army can do while you are still deciding ----
+
+function useAbility(unitId) {
+  if (!runState || runState.over || runState.phase === 'resolving') return false;
+  const u = hostUnits().filter(function (x) { return x.id === unitId; })[0];
+  if (!u || !u.form || !u.form.ability || u.abilityUsed) return false;
+  const a = u.form.ability;
+  const foes = aliveFoes();
+  const st = unitStats(u);
+  let done = true;
+
+  switch (a.key) {
+    case 'bulwark':
+      runState.bulwark = true;
+      break;
+    case 'miasma':
+      if (!foes.length) { done = false; break; }
+      foes.forEach(function (f) { f.wither = { dmg: 3, rounds: 2 }; });
+      break;
+    case 'feast': {
+      if (!foes.length) { done = false; break; }
+      const prey = foes.slice().sort(function (x, y) { return x.hp - y.hp; })[0];
+      const dmg = st.dmg * 2;
+      prey.hp -= dmg;
+      awardCombatXp(dmg);
+      floatOn('foe-' + prey.id, dmg, 'necro');
+      const heal = Math.min(maxHp() - G.hp, dmg);
+      if (heal > 0) G.hp += heal;
+      break;
+    }
+    case 'shieldwall':
+      hostUnits().forEach(function (x) { x.warded = true; });
+      break;
+    case 'chain':
+      if (!foes.length) { done = false; break; }
+      foes.forEach(function (f) {
+        f.hp -= st.dmg;
+        awardCombatXp(st.dmg);
+        floatOn('foe-' + f.id, st.dmg, 'necro');
+      });
+      break;
+    case 'onslaught':
+      if (!foes.length) { done = false; break; }
+      hostUnits().forEach(function (x) {
+        const t = foeById(runState.orders[x.id]) || aliveFoes()[0];
+        if (t) unitSwing(x, t);
+      });
+      break;
+    case 'dragonfire':
+      if (!foes.length) { done = false; break; }
+      foes.forEach(function (f) {
+        f.hp -= st.dmg;
+        awardCombatXp(st.dmg);
+        floatOn('foe-' + f.id, st.dmg, 'crit');
+      });
+      quake();
+      break;
+    case 'harvest': {
+      const doomed = foes.filter(function (f) { return f.hp <= f.max * 0.25; });
+      if (!doomed.length) { done = false; break; }
+      doomed.forEach(function (f) {
+        awardCombatXp(f.hp);
+        floatOn('foe-' + f.id, f.hp, 'crit');
+        f.hp = 0;
+      });
+      break;
+    }
+    case 'wake':
+      if (!(runState.fallen > 0)) { done = false; break; }
+      for (let i = 0; i < 2 && runState.fallen > 0; i++) {
+        if (raiseUnit(true)) runState.fallen -= 1;
+      }
+      break;
+    default:
+      done = false;
+  }
+
+  if (!done) { toast('Nothing for ' + a.name + ' to do yet.'); return false; }
+  u.abilityUsed = true;
+  runLog('<span class="fury">' + a.icon + ' ' + a.name + '</span> — ' +
+    unitLabel(u) + ' acts.');
+  hostBanner(a.name.toUpperCase());
+  reapFoes();
+  renderDungeonRun();
+  renderTopBar();
+  if (!aliveFoes().length) {
+    runTimer = setTimeout(advanceWave, pace(700));
+  }
+  return true;
+}
+
 function afterPlayerPhase() {
   if (!runState || runState.over) return;
   deathRipple();
   reapFoes();
   renderDungeonRun();
   renderTopBar();
-  if (!aliveFoes().length) { runTimer = setTimeout(advanceWave, pace(700)); return; }
-  runTimer = setTimeout(function () { stepFoe(aliveFoes().slice(), 0); }, pace(300));
+  if (!aliveFoes().length) { runTimer = setTimeout(advanceWave, pace(500)); return; }
+  runTimer = setTimeout(function () { stepFoe(aliveFoes().slice(), 0); }, pace(170));
 }
 
 // ---- The enemy's turn ----------------------------------------------
@@ -2369,7 +2485,7 @@ function stepFoe(queue, i) {
   if (i >= queue.length) return endOfRound();
   const f = queue[i];
   const next = function () {
-    runTimer = setTimeout(function () { stepFoe(queue, i + 1); }, pace(150));
+    runTimer = setTimeout(function () { stepFoe(queue, i + 1); }, pace(90));
   };
   if (f.hp <= 0) return stepFoe(queue, i + 1);
 
@@ -2400,6 +2516,10 @@ function stepFoe(queue, i) {
 
 function foeStrike(f) {
   if (!runState || runState.over || f.hp <= 0 || G.hp <= 0) return;
+  if (runState.bulwark) {
+    runLog('<span class="boon">🛡 The bulwark holds</span> — ' + f.name + ' does nothing.');
+    return;
+  }
   const incoming = rollDamage(f.maxHit, monsterAttackRoll(f), playerDefenceRoll());
   const def = boonDefence(incoming, f);
 
@@ -2523,7 +2643,12 @@ function endOfRound() {
     runTimer = setTimeout(function () { endRun(false); }, pace(700));
     return;
   }
-  if (!aliveFoes().length) { runTimer = setTimeout(advanceWave, pace(700)); return; }
+  if (!aliveFoes().length) { runTimer = setTimeout(advanceWave, pace(500)); return; }
+  // Mid-exchange the board keeps swinging; at the end of one you plan again.
+  if (runState.exchange > 0) {
+    runTimer = setTimeout(playRound, pace(150));
+    return;
+  }
   enterOrders();
 }
 
@@ -2658,7 +2783,7 @@ function rollLoot(foe) {
 
 // A breather between waves. Without this a long dungeon is unwinnable at any
 // level — chip damage across 8 waves plus a boss always outruns your life bar.
-const WAVE_HEAL_PCT = 20;
+const WAVE_HEAL_PCT = 30;
 
 function advanceWave() {
   if (!runState || runState.over) return;
@@ -2666,8 +2791,12 @@ function advanceWave() {
   runState.wave += 1;
   runState.lastStandUsed = false;
   // Wards reform between waves.
-  hostUnits().forEach(function (u) { if (unitHasKey(u, 'ward')) u.warded = true; });
+  hostUnits().forEach(function (u) {
+    if (unitHasKey(u, 'ward')) u.warded = true;
+    u.abilityUsed = false;
+  });
   runState.rot = null;
+  runState.bulwark = false;
 
   let pct = WAVE_HEAL_PCT + (boonTier('scavenger') >= 2 ? 15 : 0);
   const heal = Math.min(maxHp() - G.hp, Math.ceil(maxHp() * pct / 100));
@@ -2953,10 +3082,18 @@ function allyCard(u, doomed) {
     '<span class="u-bar"><i style="width:' + Math.max(0, (u.hp / u.max) * 100) + '%"></i></span>' +
     '<span class="u-hp">' + Math.max(0, u.hp) + ' / ' + u.max + '</span>' +
     '<span class="u-dmg">⚔ ' + st.dmg + '</span>' +
-    orderBadge(u.id);
+    orderBadge(u.id) +
+    (u.form && u.form.ability
+      ? '<button class="u-act' + (u.abilityUsed ? ' spent' : '') + '"' +
+        (u.abilityUsed ? ' disabled' : '') + ' title="' +
+        esc(u.form.ability.name + ' — ' + u.form.ability.desc) + '">' +
+        u.form.ability.icon + '</button>'
+      : '');
   card.title = unitLabel(u) + ' — ' + Math.max(0, u.hp) + '/' + u.max + ', hits for ' + st.dmg +
     ((u.keys || []).length ? ' · ' + u.keys.map(function (k) { return KEYWORDS[k].name; }).join(', ') : '');
   card.onclick = function () { selectAttacker(u.id); };
+  const act = card.querySelector('.u-act');
+  if (act) act.onclick = function (e) { e.stopPropagation(); useAbility(u.id); };
   u.fresh = false; u.promoted = false;
   return card;
 }
@@ -2991,6 +3128,8 @@ function renderOrderBar() {
   const ordering = runState.phase === 'orders' && !runState.auto;
   fight.disabled = !ordering;
   fight.textContent = ordering ? 'FIGHT' : '…';
+  const board = $('run-board');
+  if (board) board.classList.toggle('planning', ordering);
   auto.classList.toggle('on', !!runState.auto);
   auto.textContent = runState.auto ? 'AUTO ON' : 'AUTO';
 
@@ -3028,11 +3167,20 @@ function renderOrderBar() {
       : 'Playing itself — tap AUTO to take the reins back.';
     return;
   }
-  if (!ordering) { hint.textContent = ''; return; }
+  if (!ordering) { hint.textContent = 'Fighting…'; return; }
+  const ready = hostUnits().filter(function (u) {
+    return u.form && u.form.ability && !u.abilityUsed;
+  }).length;
+  if (ready) {
+    hint.innerHTML = 'Planning — <b>' + ready + '</b> ' +
+      (ready === 1 ? 'ability' : 'abilities') + ' ready. FIGHT plays ' +
+      ROUNDS_PER_TURN + ' rounds.';
+    return;
+  }
   const sel = orderSel === 'you' ? 'You' : 'Your risen';
   hint.innerHTML = many
-    ? sel + ' — tap an enemy to aim, double-tap to aim everything.'
-    : 'Tap FIGHT to play the round.';
+    ? 'Planning — ' + sel + ': tap an enemy to aim, double-tap for all.'
+    : 'Planning — FIGHT plays ' + ROUNDS_PER_TURN + ' rounds.';
 }
 
 // The host, its condition, and how hard it hits — the escalation made visible.
@@ -3223,6 +3371,7 @@ window.__rf = {
   hostMaxHit: hostMaxHit, raiseUnit: raiseUnit, rollBoonChoices: rollBoonChoices,
   unleashFury: unleashFury, FURY_MAX: FURY_MAX,
   performBind: performBind, bindableTier: bindableTier, BIND_COUNT: BIND_COUNT,
+  useAbility: useAbility, ROUNDS_PER_TURN: ROUNDS_PER_TURN,
   completeBind: completeBind, bindOffers: bindOffers, BIND_FORMS: BIND_FORMS,
   KEYWORDS: KEYWORDS, FOE_MINION_KINDS: FOE_MINION_KINDS,
   setAutoBind: function (fn) { autoBindPick = fn; },
@@ -3251,11 +3400,14 @@ window.__rf = {
                  keys: (f.keys || []).slice(), warded: !!f.warded };
       }),
       rot: runState.rot ? runState.rot.rounds : 0,
+      exchange: runState.exchange || 0, bulwark: !!runState.bulwark,
       allies: hostUnits().map(function (u) {
         return { id: u.id, tier: u.tier, hp: u.hp, max: u.max,
                  bound: !!u.bound, dmg: unitStats(u).dmg,
                  form: u.form ? u.form.name : null, keys: (u.keys || []).slice(),
-                 warded: !!u.warded };
+                 warded: !!u.warded,
+                 ability: (u.form && u.form.ability) ? u.form.ability.key : null,
+                 abilityUsed: !!u.abilityUsed };
       }),
       bindable: bindableTier(), bindings: runState.bindings || 0,
       bindPending: (runState.bindPending || []).map(function (f) { return f.name; }),

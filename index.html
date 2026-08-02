@@ -551,7 +551,7 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
 }
 @media (prefers-reduced-motion: reduce) {
   .rise-ghost, .host-banner, .unit.rising, .unit.promoted, #run-host.shudder, .lunge,
-  #run-board.quake, #fury-bar.ready, .intent.enrage, #bind-bar,
+  #run-board.quake, #fury-bar.ready, .intent.enrage, #bind-bar, .u-act,
   #ally-minions .unit.binding {
     animation-duration: .01ms !important;
   }
@@ -582,6 +582,22 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
 #ally-minions .unit .u-kw.spent { opacity: .3; }
 #ally-minions .unit.taunt { border-color: #7a6a3a; box-shadow: inset 0 0 12px rgba(240,192,64,.16); }
 #ally-minions .unit.warded { box-shadow: 0 0 12px rgba(150,220,255,.45); }
+#ally-minions .unit .u-act {
+  position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%);
+  width: 22px; height: 18px; padding: 0; line-height: 16px; font-size: 11px;
+  background: linear-gradient(180deg, #3a2a0c, #241a08);
+  border: 1px solid var(--gold); border-radius: 6px; color: var(--gold2);
+  cursor: pointer; z-index: 3;
+  box-shadow: 0 0 9px rgba(240,192,64,.5);
+  animation: furyPulse 1.3s ease-in-out infinite;
+}
+#ally-minions .unit .u-act.spent {
+  border-color: var(--bdr); color: var(--text3); box-shadow: none;
+  animation: none; opacity: .5; cursor: default;
+}
+#ally-minions { padding-bottom: 5px; }
+/* Planning: the board is yours to poke at. */
+#run-board.planning { box-shadow: inset 0 0 0 1px rgba(240,192,64,.14); }
 #ally-minions .unit .u-dmg {
   position: absolute; top: 2px; right: 4px;
   font-family: 'Cinzel', serif; font-size: 8px; color: #ffb0a0;
