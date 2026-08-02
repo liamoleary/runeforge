@@ -2037,7 +2037,7 @@ function enterDungeon(index) {
     xpStart: SKILL_KEYS.reduce(function (o, k) { o[k] = skillXp(k); return o; }, {}),
     over: false,
     // Everything below is the in-run build — discarded when the run ends.
-    boons: {}, runLevel: 0, pending: null,
+    boons: {}, runLevel: 0, pending: null, banked: [],
     retinue: [], fallen: 0, peakHost: 0,
     foes: [], orders: {}, focus: null, phase: 'orders', auto: autoFightDefault,
     idSeq: 0, bossWave: false, summoned: 0,
@@ -2249,14 +2249,20 @@ function enterOrders() {
   const list = attackerList();
   if (!list.some(function (a) { return a.id === orderSel; })) orderSel = list[0].id;
   renderDungeonRun();
-  // Headless runs drive themselves; there is no auto button in the game.
-  if (runState.auto) {
-    if ((runState.fury || 0) >= FURY_MAX && !runState.powerArmed) unleashFury();
-    hostUnits().forEach(function (u) {
-      if (u.form && u.form.ability && !u.abilityUsed) useAbility(u.id);
-    });
-    runTimer = setTimeout(resolveTurn, pace(300));
-  }
+  if (runState.auto) autoPlan();
+}
+
+// Headless runs drive themselves; there is no auto button in the game. Split
+// out of enterOrders so a reward spent mid-planning can hand control back
+// without re-entering the phase.
+function autoPlan() {
+  if (!runState || runState.over || runState.phase !== 'orders') return;
+  if (bankedCount() > 0 && autoBoonPick) { offerBoons(); return; }
+  if ((runState.fury || 0) >= FURY_MAX && !runState.powerArmed) unleashFury();
+  hostUnits().forEach(function (u) {
+    if (u.form && u.form.ability && !u.abilityUsed) useAbility(u.id);
+  });
+  runTimer = setTimeout(resolveTurn, pace(300));
 }
 
 // Anything without a live target falls back to the wave's main enemy, so
@@ -2765,7 +2771,8 @@ function endOfRound() {
   // Every exchange is paid for; clearing the wave pays a tree node instead.
   runState.bulwark = false;
   if (!aliveFoes().length) return waveCleared();
-  runTimer = setTimeout(function () { offerBoons('orders'); }, pace(200));
+  bankReward(false);
+  runTimer = setTimeout(enterOrders, pace(200));
 }
 
 // Clear out the dead, paying out for each. Summoned minions give combat xp
@@ -2948,15 +2955,43 @@ function advanceWave() {
 
 // ---- The between-wave level up ----
 
-function offerBoons(next) {
+// Rewards are banked, not forced on you.
+//
+// A full-screen pick after every exchange is what made the spoils feel like
+// paperwork — the choice itself was never the problem, the interruption was.
+// A cleared wave's tree node and an exchange's spoils both queue up on a bar
+// you tap during planning, alongside the rite and your abilities. The fight
+// never stops; ignore the bar through a tense wave and spend three at once
+// afterwards if you like.
+function bankReward(major) {
   if (!runState || runState.over) return;
-  runState.afterBoon = next || 'wave';
-  // Clearing a wave earns a tree node; surviving an exchange earns spoils.
-  const major = runState.afterBoon === 'wave';
+  runState.banked = runState.banked || [];
+  runState.banked.push({ major: !!major });
+  if (major) {
+    runState.runLevel = (runState.runLevel || 0) + 1;
+    runLog('<span class="boon">⬆ Delve Level ' + runState.runLevel +
+      '</span> — a boon is waiting.');
+  }
+}
+function bankedCount() {
+  return runState && runState.banked ? runState.banked.length : 0;
+}
+
+// Opens whatever is at the front of the queue. Choices are rolled when you
+// spend rather than when you earn, so a tier gated on depth is judged against
+// the wave you are actually on.
+function offerBoons() {
+  if (!runState || runState.over) return;
+  const q = runState.banked || [];
+  if (!q.length) return;
+  const major = !!q[0].major;
   const choices = major ? rollBoonChoices(3) : rollMinors(3);
+  if (!choices.length) {                    // every line maxed out
+    q.shift();
+    return offerBoons();
+  }
+  runState.afterBoon = 'orders';
   runState.pendingMinor = !major;
-  if (!choices.length) return afterBoonPick();   // every line maxed out
-  runState.runLevel = (runState.runLevel || 0) + 1;
   runState.pending = choices;
   if (autoBoonPick) {                       // headless balance runs
     const idx = autoBoonPick(choices, runState);
@@ -2964,6 +2999,7 @@ function offerBoons(next) {
       chooseBoon(idx);
     } else {                                // negative index = decline
       runState.pending = null;
+      q.shift();
       afterBoonPick();
     }
     return;
@@ -2974,19 +3010,24 @@ function offerBoons(next) {
 
 // What happens once the pick is made: either the next wave walks in, or you
 // go back to planning against what is still standing.
-// One door out of a cleared wave, so the major boon can never be skipped.
+// One door out of a cleared wave, so the tree node can never be skipped.
 function waveCleared() {
   if (!runState || runState.over) return;
-  runTimer = setTimeout(function () { offerBoons('wave'); }, pace(400));
+  bankReward(true);
+  runTimer = setTimeout(advanceWave, pace(400));
 }
 
+// A reward spent from the planning phase hands control straight back. Going
+// through enterOrders would re-plan the enemy's intents, which would turn the
+// bar into a way to re-roll a turn you did not like the look of.
 function afterBoonPick() {
   if (!runState || runState.over) return;
-  if (runState.afterBoon === 'wave') {
-    runTimer = setTimeout(advanceWave, pace(400));
-  } else {
-    enterOrders();
+  if (runState.phase === 'orders') {
+    renderDungeonRun();
+    if (runState.auto) autoPlan();
+    return;
   }
+  enterOrders();
 }
 
 function chooseBoon(index) {
@@ -2994,6 +3035,7 @@ function chooseBoon(index) {
   const pick = runState.pending[index];
   if (!pick) return;
   runState.pending = null;
+  if (runState.banked && runState.banked.length) runState.banked.shift();
   document.body.classList.remove('picking-boon');
   if (pick.minor) grantMinor(pick.minor);
   else grantBoon(pick.key, pick.tier);
@@ -3172,7 +3214,9 @@ function fleeRun() {
 function renderDungeonRun() {
   if (!runState) return;
   const d = runState.d;
-  $('run-wave').textContent = runState.bossWave ? 'BOSS' : 'Wave ' + runState.wave + ' / ' + d.waves;
+  $('run-wave').textContent =
+    (runState.bossWave ? 'BOSS' : 'Wave ' + runState.wave + ' / ' + d.waves) +
+    ' · Delve ' + (runState.runLevel || 0);
 
   // Anything raised mid-phase still needs somewhere to point.
   if (runState.phase === 'orders') defaultOrders();
@@ -3301,6 +3345,22 @@ function renderOrderBar() {
   fight.textContent = ordering ? 'FIGHT' : 'FIGHTING…';
   const board = $('run-board');
   if (board) board.classList.toggle('planning', ordering);
+
+  // Unspent rewards, waiting on you rather than interrupting you.
+  const bb = $('boon-bar');
+  if (bb) {
+    const q = runState.banked || [];
+    if (!ordering || !q.length) {
+      bb.style.display = 'none';
+    } else {
+      const majors = q.filter(function (x) { return x.major; }).length;
+      bb.style.display = '';
+      bb.textContent = (q[0].major
+        ? '⬆ DELVE LEVEL ' + runState.runLevel + ' — CHOOSE A BOON'
+        : '✦ SPOILS — TAKE YOUR PICK') +
+        (q.length > 1 ? '  (' + q.length + (majors ? ', ' + majors + ' ⬆' : '') + ')' : '');
+    }
+  }
 
   // The rite, offered only when three of a kind are standing.
   const bind = $('bind-bar');
@@ -3469,6 +3529,8 @@ function wire() {
   if (fury) fury.onclick = unleashFury;
   const bind = $('bind-bar');
   if (bind) bind.onclick = performBind;
+  const boonBar = $('boon-bar');
+  if (boonBar) boonBar.onclick = function () { offerBoons(); };
   const cont = $('result-continue');
   if (cont) cont.onclick = function () { showTab('dungeon'); };
   const stop = $('ga-stop');
@@ -3603,7 +3665,7 @@ window.__rf = {
       pending: (runState.pending || []).map(function (p) {
         return p.minor ? 'minor:' + p.minor : p.key + ':' + p.tier;
       }),
-      pendingMinor: !!runState.pendingMinor,
+      pendingMinor: !!runState.pendingMinor, banked: bankedCount(),
       minors: Object.assign({}, runState.minors || {}),
       host: (runState.retinue || []).map(function (u) { return u.tier; }),
       fallen: runState.fallen || 0, peakHost: runState.peakHost || 0,

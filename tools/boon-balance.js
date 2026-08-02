@@ -17,6 +17,12 @@ const TARGETS = [
 
 const STRATEGIES = (process.env.STRATS || 'none,random,greedy').split(',');
 const TRIALS = +(process.env.TRIALS || 60);
+// Restrict to a subset of dungeons by key, so the five can be measured in
+// parallel processes instead of one long serial crawl.
+const ONLY = (process.env.DUNGEONS || '').split(',').filter(Boolean);
+// A run is capped by wall clock, so an overloaded machine turns wins into
+// recorded losses. Keep the cap generous and the parallelism at core count.
+const RUN_CAP_MS = +(process.env.RUN_CAP_MS || 60000);
 
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
@@ -26,7 +32,7 @@ const TRIALS = +(process.env.TRIALS || 60);
   await page.evaluate(() => localStorage.removeItem('rforge'));
   await page.reload({ waitUntil: 'networkidle' });
 
-  const results = await page.evaluate(async ({ TARGETS, STRATEGIES, TRIALS }) => {
+  const results = await page.evaluate(async ({ TARGETS, STRATEGIES, TRIALS, ONLY, RUN_CAP_MS }) => {
     const R = window.__rf;
     const G = window.G;
     R.setPace(0);
@@ -85,7 +91,7 @@ const TRIALS = +(process.env.TRIALS || 60);
             clearInterval(poll);
             const title = document.getElementById('result-title');
             resolve({ win: /CLEARED/.test(title.textContent) });
-          } else if (Date.now() - started > 25000) {
+          } else if (Date.now() - started > RUN_CAP_MS) {
             clearInterval(poll);
             resolve({ win: false, stalled: true });
           }
@@ -95,6 +101,7 @@ const TRIALS = +(process.env.TRIALS || 60);
 
     const out = [];
     for (const t of TARGETS) {
+      if (ONLY.length && !ONLY.includes(t.key)) continue;
       const row = { key: t.key, byStrategy: {} };
       for (const strat of STRATEGIES) {
         R.setAutoBoon(strategyFn(strat));
@@ -126,7 +133,7 @@ const TRIALS = +(process.env.TRIALS || 60);
     R.setAutoBoon(null);
     R.setPace(1);
     return out;
-  }, { TARGETS, STRATEGIES, TRIALS });
+  }, { TARGETS, STRATEGIES, TRIALS, ONLY, RUN_CAP_MS });
 
   console.log(`\n══════ BOON IMPACT (${TRIALS} runs each) ══════\n`);
   const head = 'dungeon'.padEnd(11) + STRATEGIES.map(x => x.padEnd(10)).join('');

@@ -553,7 +553,7 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
 }
 @media (prefers-reduced-motion: reduce) {
   .rise-ghost, .host-banner, .unit.rising, .unit.promoted, #run-host.shudder, .lunge,
-  #run-board.quake, #fury-bar.ready, .intent.enrage, #bind-bar, .u-act,
+  #run-board.quake, #fury-bar.ready, .intent.enrage, #bind-bar, #boon-bar, .u-act,
   #ally-minions .unit.binding {
     animation-duration: .01ms !important;
   }
@@ -617,6 +617,20 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
 @keyframes bindPulse {
   0%,100% { border-color: #4a3a6b; }
   50% { border-color: #c9a0ff; box-shadow: 0 0 14px rgba(201,160,255,.5); }
+}
+
+@keyframes boonPulse {
+  0%,100% { border-color: #6b5a2a; }
+  50% { border-color: #ffd98a; box-shadow: 0 0 14px rgba(255,210,120,.55); }
+}
+#boon-bar {
+  display: block; width: calc(100% - 28px); margin: 0 14px 5px;
+  background: linear-gradient(180deg, #3a2f14, #221a0c);
+  border: 1px solid #a08a4f; border-radius: 7px; padding: 6px;
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 1.5px;
+  color: #ffe9b8; cursor: pointer;
+  box-shadow: 0 0 14px rgba(220,180,90,.3);
+  animation: boonPulse 1.4s ease-in-out infinite;
 }
 
 #bind-bar {
@@ -1175,6 +1189,7 @@ body.in-run #nav { display: none; }
     <div class="host-power"><i id="host-power" style="width:0%"></i></div>
   </div>
 
+  <button id="boon-bar" style="display:none;"></button>
   <button id="bind-bar" style="display:none;"></button>
   <button id="fury-bar" disabled>
     <i id="fury-fill"></i>
