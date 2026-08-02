@@ -282,7 +282,7 @@ const DUNGEONS = [
       { name: 'Cave Slime',  icon: '🟢', hp: 15,  atk: 7,  def: 1, maxHit: 6 }
     ],
     boss: { name: 'Warren Brood-Mother', icon: '🕷️', hp: 26, atk: 10, def: 2, maxHit: 10 , calls: 0.5 },
-    summon: { name: 'Rat Swarm', icon: '🐁', hp: 8, atk: 6, def: 1, maxHit: 3 },
+    summon: { name: 'Rat Swarm', icon: '🐁', hp: 8, atk: 6, def: 1, maxHit: 2 },
     drops: { ember_core: [1, 2], sapphire: [0, 1] },
     clearDrops: { ember_core: 3, sapphire: 2 }
   },
@@ -295,7 +295,7 @@ const DUNGEONS = [
       { name: 'Ice Wraith',   icon: '👻', hp: 30, atk: 24, def: 7, maxHit: 6 }
     ],
     boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 54, atk: 30, def: 12, maxHit: 7 , calls: 0.5 },
-    summon: { name: 'Frost Shade', icon: '🌫️', hp: 14, atk: 20, def: 5, maxHit: 4 },
+    summon: { name: 'Frost Shade', icon: '🌫️', hp: 14, atk: 20, def: 5, maxHit: 2 },
     drops: { frost_shard: [1, 2], emerald: [0, 1] },
     clearDrops: { frost_shard: 3, emerald: 2 }
   },
@@ -308,7 +308,7 @@ const DUNGEONS = [
       { name: 'Thunder Golem', icon: '🗿', hp: 54,  atk: 43, def: 16, maxHit: 8 , calls: 0.2 }
     ],
     boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 108, atk: 52, def: 25, maxHit: 11 , calls: 0.5 },
-    summon: { name: 'Storm Wisp', icon: '✨', hp: 22, atk: 38, def: 12, maxHit: 4 },
+    summon: { name: 'Storm Wisp', icon: '✨', hp: 22, atk: 38, def: 12, maxHit: 3 },
     drops: { storm_crystal: [1, 2], ruby: [0, 1] },
     clearDrops: { storm_crystal: 3, ruby: 2 }
   },
@@ -318,10 +318,10 @@ const DUNGEONS = [
     waves: 8,
     monsters: [
       { name: 'Whelp',        icon: '🦎', hp: 60,  atk: 57, def: 24, maxHit: 7 },
-      { name: 'Ember Drake',  icon: '🐉', hp: 81,  atk: 63, def: 27, maxHit: 9 , calls: 0.2 }
+      { name: 'Ember Drake',  icon: '🐉', hp: 81,  atk: 63, def: 27, maxHit: 9 , calls: 0.12 }
     ],
     boss: { name: 'Ashmaw the Elder', icon: '🐲', hp: 167, atk: 75, def: 39, maxHit: 13 , calls: 0.55 },
-    summon: { name: 'Ash Whelp', icon: '🔥', hp: 34, atk: 55, def: 20, maxHit: 5 },
+    summon: { name: 'Ash Whelp', icon: '🔥', hp: 34, atk: 55, def: 20, maxHit: 3 },
     drops: { dragon_ash: [1, 2], diamond: [0, 1] },
     clearDrops: { dragon_ash: 3, diamond: 2 }
   },
@@ -334,7 +334,7 @@ const DUNGEONS = [
       { name: 'Void Stalker',   icon: '👁️', hp: 116, atk: 88, def: 39, maxHit: 11 , calls: 0.25 }
     ],
     boss: { name: 'The Hollow King', icon: '👑', hp: 251, atk: 104, def: 54, maxHit: 17 , calls: 0.6 },
-    summon: { name: 'Void Spawn', icon: '🌑', hp: 46, atk: 78, def: 30, maxHit: 6 },
+    summon: { name: 'Void Spawn', icon: '🌑', hp: 46, atk: 78, def: 30, maxHit: 4 },
     drops: { dragonstone: [0, 1], dragon_ash: [1, 2] },
     clearDrops: { dragonstone: 3, dragon_ash: 4 }
   }
@@ -1772,7 +1772,12 @@ function enterDungeon(index) {
 // your risen at the bottom. Each round you assign a target to every
 // attacker you control, then FIGHT plays those orders out.
 
-const FOE_MINION_CAP = 3;
+// Every summon is a whole extra attack per round, so they have to be rare
+// and bounded — a caller that replenishes faster than you clear is an
+// unwinnable wave, not a hard one.
+const FOE_MINION_CAP = 2;
+const SUMMON_BUDGET_BOSS = 2;
+const SUMMON_BUDGET_MOB = 1;
 
 function nextId() {
   runState.idSeq = (runState.idSeq || 0) + 1;
@@ -1791,6 +1796,7 @@ function makeFoe(base, opts) {
     boss: !!(opts && opts.boss),
     minion: !!(opts && opts.minion),
     calls: base.calls || 0, summonCd: 2,
+    summonsLeft: (opts && opts.boss) ? SUMMON_BUDGET_BOSS : SUMMON_BUDGET_MOB,
     burn: null, chill: 0, frozen: 0
   };
   // Voidtouched sunders armour for the whole fight.
@@ -2062,11 +2068,12 @@ function stepFoe(queue, i) {
 // A foe calls up a minion of its dungeon's kind, on a cooldown and under a cap.
 function maybeSummon(f) {
   const tpl = runState.d.summon;
-  if (!tpl || !f.calls) return false;
+  if (!tpl || !f.calls || f.summonsLeft <= 0) return false;
   if (f.summonCd > 0) { f.summonCd -= 1; return false; }
   if (runState.foes.filter(function (x) { return x.minion && x.hp > 0; }).length >= FOE_MINION_CAP) return false;
   if (Math.random() >= f.calls) return false;
-  f.summonCd = 3;
+  f.summonCd = 4;
+  f.summonsLeft -= 1;
   const m = makeFoe(tpl, { minion: true });
   runState.foes.push(m);
   runState.summoned = (runState.summoned || 0) + 1;
