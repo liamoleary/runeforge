@@ -906,6 +906,7 @@ function unholyBargain() {
   const spent = Math.min(host.length, Math.max(1, needed));
   runState.retinue = host.slice(spent);
   runState.fallen = (runState.fallen || 0) + spent;
+  runState.saves = (runState.saves || 0) + 1;
   G.hp = Math.min(maxHp(), Math.max(1, Math.round(maxHp() * spent * 0.20)));
   runLog('<span class="boon">🕯️ Unholy Bargain</span> — ' + spent +
     ' of your host crumble so you do not. You stand at ' + G.hp + ' hp.');
@@ -2079,10 +2080,17 @@ const FOE_MINION_KINDS = [
 ];
 // You gain a boon every exchange, so the far end of a delve has to be a
 // different proposition from the near end or the back half is a mop-up.
-const WAVE_RAMP = 0.07;
+const WAVE_RAMP = 1.08;
 function waveScale() {
-  return 1 + WAVE_RAMP * ((runState ? runState.wave : 1) - 1);
+  return Math.pow(WAVE_RAMP, (runState ? runState.wave : 1) - 1);
 }
+// More bodies is the natural counter to a six-wide host — a wall that soaks
+// every blow only works while there are blows enough to go round.
+function openingMinions() {
+  return 1 + Math.floor(((runState ? runState.wave : 1) - 1) / 4);
+}
+const ELITE_EVERY = 4;
+const ELITE_KEYS = ['sweep', 'taunt', 'ward'];
 
 const MINION_HP_SHARE = 0.60;      // of whatever called it
 const MINION_HIT_SHARE = 0.70;
@@ -2181,8 +2189,22 @@ function startWave() {
   runState.foes = [makeFoe(base, { boss: isBoss })];
   runState.orders = {};
   const foe = runState.foes[0];
-  // Neither side walks in alone.
-  runState.foes.push(makeMinion(foe));
+
+  // Every fourth wave the leader is an elite: tougher, and carrying one of
+  // your own tricks.
+  if (!isBoss && runState.wave % ELITE_EVERY === 0) {
+    foe.elite = true;
+    foe.max = Math.round(foe.max * 1.4);
+    foe.hp = foe.max;
+    const k = ELITE_KEYS[rng(0, ELITE_KEYS.length - 1)];
+    foe.keys = [k];
+    if (k === 'ward') foe.warded = true;
+    foe.name = 'Elite ' + foe.name;
+  }
+
+  // Neither side walks in alone, and the escort grows as you go deeper.
+  const escort = openingMinions();
+  for (let i = 0; i < escort; i++) runState.foes.push(makeMinion(foe));
   if (!hostUnits().length) raiseUnit(true);
 
   runLog(isBoss
@@ -2615,6 +2637,7 @@ function foeStrike(f) {
       // the host paid for it
     } else if (G.hp <= 0 && boonTier('stoneblood') >= 3 && !runState.lastStandUsed) {
       runState.lastStandUsed = true;
+      runState.saves = (runState.saves || 0) + 1;
       G.hp = Math.max(1, Math.round(maxHp() * 0.25));
       runLog('<span class="boon">🪨 Last Stand</span> — you refuse to fall, at ' + G.hp + ' hp.');
     }
@@ -2625,6 +2648,21 @@ function foeStrike(f) {
       ? '<span class="hurt">' + f.name + ' hits you for <b>' + def.dmg + '</b>' +
         (def.notes.length ? ' (' + def.notes.join(', ') + ')' : '') + '.</span>'
       : '<span class="miss">' + f.name + ' misses.</span>');
+  }
+
+  // Sweeping enemies wash across the host itself.
+  if (foeHasKey(f, 'sweep') && def.dmg > 0) {
+    const splash = Math.max(1, Math.round(def.dmg * 0.5));
+    hostUnits().slice().forEach(function (u) {
+      u.hp -= splash;
+      floatOn('ally-' + u.id, splash);
+      if (u.hp <= 0) {
+        runState.retinue = hostUnits().filter(function (x) { return x !== u; });
+        runState.fallen = (runState.fallen || 0) + 1;
+      }
+    });
+    runLog('<span class="hurt">🌊 ' + f.name + ' sweeps across your host.</span>');
+    fallFx();
   }
 
   // Rotling strikes leave you bleeding; a Leech takes what it deals.
@@ -3165,7 +3203,7 @@ function renderDungeonRun() {
 function foeCard(f) {
   const card = el('div', 'combatant foe' + (f.minion ? ' minion' : '') +
     (f.boss ? ' boss' : '') + (runState.focus === f.id ? ' focused' : '') +
-    (foeHasKey(f, 'taunt') ? ' guard' : ''));
+    (foeHasKey(f, 'taunt') ? ' guard' : '') + (f.elite ? ' elite' : ''));
   card.id = 'foe-' + f.id;
   const st = [];
   if (f.burn && f.burn.rounds > 0) st.push('🔥');
@@ -3535,10 +3573,11 @@ window.__rf = {
       foes: runState.foes.map(function (f) {
         return { id: f.id, name: f.name, hp: f.hp, max: f.max,
                  minion: !!f.minion, boss: !!f.boss,
-                 keys: (f.keys || []).slice(), warded: !!f.warded };
+                 keys: (f.keys || []).slice(), warded: !!f.warded,
+                 elite: !!f.elite };
       }),
       rot: runState.rot ? runState.rot.rounds : 0,
-      bulwark: !!runState.bulwark, waveScale: +waveScale().toFixed(2),
+      bulwark: !!runState.bulwark, saves: runState.saves || 0, waveScale: +waveScale().toFixed(2),
       allies: hostUnits().map(function (u) {
         return { id: u.id, tier: u.tier, hp: u.hp, max: u.max,
                  bound: !!u.bound, dmg: unitStats(u).dmg,
