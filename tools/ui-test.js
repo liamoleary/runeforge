@@ -38,7 +38,18 @@ async function necromancyChecks(page, check) {
     gated.before.every(x => x === false), gated.before.join(','));
   check('the root itself needs nothing', gated.rootFree === true);
 
-  await page.evaluate(() => __rf.forceBoon('necromancy', 1));
+  // Taking the root should put a servant on the board there and then.
+  const onTake = await page.evaluate(() => {
+    const before = __rf.runInfo().host.length;
+    __rf.takeBoon('necromancy', 1);
+    window.render();
+    return { before: before, after: __rf.runInfo().host.length,
+             tier: __rf.runInfo().host[0] };
+  });
+  check('taking Raise Dead raises a skeleton immediately',
+    onTake.before === 0 && onTake.after === 1, `${onTake.before} → ${onTake.after}`);
+  check('and it is a Skeleton', onTake.tier === 0, onTake.tier);
+
   const opened = await page.evaluate(() =>
     ['bonelegion', 'deathmagic'].map(k => __rf.boonUnlocked(k)));
   check('taking Necromancy opens both branches', opened.every(x => x === true),
@@ -97,7 +108,7 @@ async function necromancyChecks(page, check) {
     window.render();
     return { size: __rf.runInfo().host.length, cap: __rf.HOST_CAP };
   });
-  check('the host is capped at seven', capped.size === capped.cap,
+  check('the host is capped at six', capped.size === capped.cap && capped.cap === 6,
     `${capped.size}/${capped.cap}`);
 
   // Power meter and board tint react, read in the same pass as the render.
@@ -112,6 +123,44 @@ async function necromancyChecks(page, check) {
   check('the power meter has filled', parseFloat(meter.width) > 0, meter.width);
   check('the stage is tinted by the host', parseFloat(meter.necro) > 0, meter.necro);
   check('a full host reads as a legion', meter.legion === true);
+
+  // ---- The Rite of Binding ----
+  // The host at this point is a Bone Dragon and five Wights, so the rite is
+  // available on the Wights.
+  const bindState = await page.evaluate(() => {
+    const before = __rf.board();
+    return { bindable: before.bindable, allies: before.allies.length };
+  });
+  check('a full host of one kind offers the rite', bindState.bindable >= 0,
+    `tier ${bindState.bindable} of ${bindState.allies}`);
+  check('the bind control is showing', await page.isVisible('#bind-bar'));
+
+  const bound = await page.evaluate(() => {
+    const b0 = __rf.board();
+    const tier = b0.bindable;
+    const sameTier = b0.allies.filter(a => a.tier === tier);
+    const sumDmg = sameTier.slice(0, 3).reduce((s, a) => s + a.dmg, 0);
+    __rf.performBind();
+    window.render();
+    const b1 = __rf.board();
+    const made = b1.allies.filter(a => a.bound);
+    return {
+      tier: tier, before: b0.allies.length, after: b1.allies.length,
+      made: made.length, madeTier: made.length ? made[0].tier : -1,
+      madeDmg: made.length ? made[0].dmg : 0, sumDmg: sumDmg,
+      bindings: b1.bindings
+    };
+  });
+  check('three fuse into one', bound.after === bound.before - 2,
+    `${bound.before} → ${bound.after}`);
+  check('the result is one tier up', bound.madeTier === bound.tier + 1,
+    `tier ${bound.tier} → ${bound.madeTier}`);
+  check('and it is marked bound', bound.made >= 1);
+  check('worth more than the three that made it', bound.madeDmg > bound.sumDmg,
+    `${bound.madeDmg} vs ${bound.sumDmg}`);
+  check('the rite is counted', bound.bindings === 1, bound.bindings);
+  check('a bound unit shows as bound on the board',
+    (await page.locator('#ally-minions .unit.bound').count()) >= 1);
 
   // Finish the run and confirm none of it survives.
   await page.evaluate(() => { __rf.setAutoBoon(() => 0); __rf.setAutoFight(true); });

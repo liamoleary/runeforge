@@ -543,7 +543,8 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
 }
 @media (prefers-reduced-motion: reduce) {
   .rise-ghost, .host-banner, .unit.rising, .unit.promoted, #run-host.shudder, .lunge,
-  #run-board.quake, #fury-bar.ready, .intent.enrage {
+  #run-board.quake, #fury-bar.ready, .intent.enrage, #bind-bar,
+  #ally-minions .unit.binding {
     animation-duration: .01ms !important;
   }
 }
@@ -551,12 +552,49 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
   font-size: 12px; height: 14px; line-height: 14px;
   letter-spacing: 2px;
 }
-#ally-minions .unit { width: 44px; cursor: pointer; position: relative; }
-#ally-minions .unit.t3 { width: 54px; }
-#ally-minions .unit .u-ico { font-size: 22px; }
-#ally-minions .unit.t3 .u-ico { font-size: 26px; }
-#ally-minions .unit.picking { border-color: var(--gold); box-shadow: 0 0 12px rgba(240,192,64,.35); }
+#ally-minions { gap: 6px; width: 100%; }
+#ally-minions .unit {
+  position: relative; cursor: pointer;
+  width: calc(33.333% - 4px); max-width: 118px;
+  padding: 5px 3px 4px; border-radius: 8px;
+}
+#ally-minions .unit .u-ico { font-size: 26px; }
+#ally-minions .unit.t3 .u-ico { font-size: 30px; }
+#ally-minions .unit .u-nm {
+  display: block; font-family: 'Cinzel', serif; font-size: 9px;
+  color: var(--text2); line-height: 1.2; margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#ally-minions .unit .u-bar { margin: 4px 5px 0; height: 4px; }
+#ally-minions .unit .u-hp { display: block; font-size: 8px; color: var(--text3); margin-top: 1px; }
+#ally-minions .unit .u-dmg {
+  position: absolute; top: 2px; right: 4px;
+  font-family: 'Cinzel', serif; font-size: 8px; color: #ffb0a0;
+}
 #ally-minions .unit .ord { font-size: 9px; margin-top: 1px; }
+#ally-minions .unit.picking { border-color: var(--gold); box-shadow: 0 0 12px rgba(240,192,64,.35); }
+/* Fused: worth more than the three that made it. */
+#ally-minions .unit.bound {
+  border-color: var(--gold); background: linear-gradient(180deg, #241c08, #0f0c05);
+  box-shadow: 0 0 12px rgba(240,192,64,.28);
+}
+#ally-minions .unit.bound .u-nm { color: var(--gold2); }
+/* The three the rite would consume. */
+#ally-minions .unit.binding { animation: bindPulse 1s ease-in-out infinite; }
+@keyframes bindPulse {
+  0%,100% { border-color: #4a3a6b; }
+  50% { border-color: #c9a0ff; box-shadow: 0 0 14px rgba(201,160,255,.5); }
+}
+
+#bind-bar {
+  display: block; width: calc(100% - 28px); margin: 0 14px 6px;
+  background: linear-gradient(180deg, #251a3a, #150f22);
+  border: 1px solid #6b4fa0; border-radius: 7px; padding: 8px;
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 1.5px;
+  color: #d9c0ff; cursor: pointer;
+  box-shadow: 0 0 14px rgba(150,100,220,.3);
+  animation: bindPulse 1.4s ease-in-out infinite;
+}
 
 /* Active build, shown above the fight */
 #run-boons {
@@ -649,7 +687,7 @@ body.picking-boon #boon-pick { display: flex; }
 
 /* Notable events flash over the board and fade — no scrollback, no panel. */
 #callout {
-  position: absolute; left: 0; right: 0; top: 50%; z-index: 7;
+  position: absolute; left: 0; right: 0; top: 38%; z-index: 7;
   transform: translateY(-50%);
   display: flex; flex-direction: column-reverse; align-items: center;
   gap: 2px; padding: 0 14px; pointer-events: none;
@@ -1073,6 +1111,7 @@ body.in-run #nav { display: none; }
     <div class="host-power"><i id="host-power" style="width:0%"></i></div>
   </div>
 
+  <button id="bind-bar" style="display:none;"></button>
   <button id="fury-bar" disabled>
     <i id="fury-fill"></i>
     <span id="fury-label">FURY</span>

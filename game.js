@@ -450,7 +450,13 @@ const UNDEAD_TIERS = [
   { name: 'Wight',       icon: '👻', dmg: 0.30, hp: 0.40 },
   { name: 'Bone Dragon', icon: '🐉', dmg: 0.60, hp: 0.80 }
 ];
-const HOST_CAP = 7;             // seven stacks, as an army should be
+const HOST_CAP = 6;             // six stacks, laid out three to a rank
+
+// The Rite of Binding: three of a kind fuse into one of the next kind, worth
+// a quarter more than all three together. You trade bodies for quality —
+// fewer units means fewer blows soaked off you, so it is never free.
+const BIND_COUNT = 3;
+const BIND_BONUS = 1.25;
 
 // Each dungeon draws from its own lines, so the Crypt reliably makes
 // necromancers and the Spire makes stormcallers. Branch lines sit in the
@@ -472,7 +478,8 @@ function boonTier(key) {
 }
 function boonName(key, tier) {
   const line = BOON_LINES[key];
-  return line ? line.tiers[tier - 1].name : key;
+  const t = line && line.tiers[tier - 1];
+  return t ? t.name : key;
 }
 // A branch is only offerable once its root is deep enough.
 function boonUnlocked(key) {
@@ -526,6 +533,9 @@ function grantBoon(key, tier) {
   // Bone Legion rewrites the host you already have — the payoff should be
   // visible the instant you take it, not on the next kill.
   if (key === 'bonelegion') promoteHost();
+  // And taking up Necromancy raises your first servant there and then, rather
+  // than leaving you to wonder whether it did anything.
+  if (key === 'necromancy' && tier === 1) raiseUnit();
 }
 
 // ============================================================
@@ -543,9 +553,73 @@ function undeadStats(tier) {
   };
 }
 
+// What a specific unit is worth, tier times whatever binding has made of it.
+function unitStats(u) {
+  const s = undeadStats(u.tier);
+  const p = u.power || 1;
+  return {
+    dmg: Math.max(1, Math.round(s.dmg * p)),
+    hp: Math.max(1, Math.round(s.hp * p))
+  };
+}
+function unitLabel(u) {
+  return (u.bound ? 'Bound ' : '') + UNDEAD_TIERS[u.tier].name;
+}
+
 function hostUnits() { return (runState && runState.retinue) || []; }
 function hostMaxHit() {
-  return hostUnits().reduce(function (s, u) { return s + undeadStats(u.tier).dmg; }, 0);
+  return hostUnits().reduce(function (s, u) { return s + unitStats(u).dmg; }, 0);
+}
+
+// The deepest tier with enough of a kind standing to fuse.
+function bindableTier() {
+  if (!runState) return -1;
+  const counts = {};
+  hostUnits().forEach(function (u) {
+    if (u.tier < UNDEAD_TIERS.length - 1) counts[u.tier] = (counts[u.tier] || 0) + 1;
+  });
+  let best = -1;
+  Object.keys(counts).forEach(function (t) {
+    if (counts[t] >= BIND_COUNT && +t > best) best = +t;
+  });
+  return best;
+}
+
+// Which units the rite would actually consume — the most spent ones first,
+// so binding never throws away your healthiest.
+function bindPool() {
+  const t = bindableTier();
+  if (t < 0) return [];
+  return hostUnits()
+    .filter(function (u) { return u.tier === t; })
+    .sort(function (a, b) { return (a.hp / a.max) - (b.hp / b.max); })
+    .slice(0, BIND_COUNT);
+}
+
+function performBind() {
+  if (!runState || runState.over) return;
+  const pool = bindPool();
+  if (pool.length < BIND_COUNT) return;
+  const from = pool[0].tier, to = from + 1;
+  const sumDmg = pool.reduce(function (s, u) { return s + unitStats(u).dmg; }, 0);
+
+  runState.retinue = hostUnits().filter(function (u) { return pool.indexOf(u) < 0; });
+  const base = undeadStats(to);
+  const u = {
+    id: nextId(), tier: to, bound: true, fresh: true,
+    power: (BIND_BONUS * sumDmg) / base.dmg
+  };
+  const st = unitStats(u);
+  u.hp = st.hp; u.max = st.hp;
+  runState.retinue.push(u);
+  runState.bindings = (runState.bindings || 0) + 1;
+
+  runLog('<span class="boon">🔗 Rite of Binding</span> — three ' +
+    UNDEAD_TIERS[from].name + 's fuse into a bound ' + UNDEAD_TIERS[to].name + '.');
+  hostBanner('RITE OF BINDING');
+  riseFx(to);
+  addFury(12);
+  renderDungeonRun();
 }
 
 function raiseUnit(quiet) {
@@ -568,8 +642,9 @@ function raiseUnit(quiet) {
     return null;
   }
 
-  const s = undeadStats(tier);
-  const u = { id: nextId(), tier: tier, hp: s.hp, max: s.hp, fresh: true };
+  const u = { id: nextId(), tier: tier, power: 1, fresh: true };
+  const s = unitStats(u);
+  u.hp = s.hp; u.max = s.hp;
   host.push(u);
   if (!quiet) {
     runLog('<span class="boon">' + UNDEAD_TIERS[tier].icon + ' A ' +
@@ -589,8 +664,8 @@ function promoteHost() {
     if (u.tier === 3) return;             // the dragon is already the top
     if (u.tier < target) {
       const ratio = u.hp / u.max;
-      const s = undeadStats(target);
       u.tier = target;
+      const s = unitStats(u);
       u.max = s.hp;
       u.hp = Math.max(1, Math.round(s.hp * ratio));
       u.promoted = true;
@@ -599,8 +674,9 @@ function promoteHost() {
   });
   if (boonTier('bonelegion') >= 3 && !host.some(function (u) { return u.tier === 3; })) {
     const eldest = host[0];
-    const s = undeadStats(3);
-    eldest.tier = 3; eldest.max = s.hp; eldest.hp = s.hp; eldest.promoted = true;
+    eldest.tier = 3;
+    const s = unitStats(eldest);
+    eldest.max = s.hp; eldest.hp = s.hp; eldest.promoted = true;
     changed = true;
   }
   if (changed) {
@@ -2021,8 +2097,8 @@ function playerSwing(target) {
 }
 
 function unitSwing(u, target) {
-  const t = UNDEAD_TIERS[u.tier];
-  let dealt = rollDamage(undeadStats(u.tier).dmg, playerAttackRoll(), monsterDefenceRoll(target));
+  const t = { name: unitLabel(u) };
+  let dealt = rollDamage(unitStats(u).dmg, playerAttackRoll(), monsterDefenceRoll(target));
   let crit = false;
   if (dealt > 0 && Math.random() < CRIT_CHANCE) { dealt = Math.round(dealt * CRIT_MULT); crit = true; }
   if (dealt <= 0) {
@@ -2451,7 +2527,8 @@ function renderBoonPick() {
 function renderBoonBar() {
   const bar = $('run-boons');
   if (!bar || !runState) return;
-  const keys = Object.keys(runState.boons || {});
+  const keys = Object.keys(runState.boons || {})
+    .filter(function (k) { return runState.boons[k] >= 1 && BOON_LINES[k]; });
   if (!keys.length) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
   bar.style.display = '';
   bar.innerHTML = keys.map(function (k) {
@@ -2568,7 +2645,10 @@ function renderDungeonRun() {
   // --- your risen, in front of you; you at the bottom.
   const allies = $('ally-minions');
   allies.innerHTML = '';
-  hostUnits().forEach(function (u) { allies.appendChild(allyCard(u)); });
+  const doomed = bindPool();
+  hostUnits().forEach(function (u) {
+    allies.appendChild(allyCard(u, doomed.indexOf(u) >= 0));
+  });
   renderYouCard();
 
   renderOrderBar();
@@ -2603,17 +2683,22 @@ function foeCard(f) {
   return card;
 }
 
-function allyCard(u) {
+function allyCard(u, doomed) {
   const t = UNDEAD_TIERS[u.tier];
+  const st = unitStats(u);
   const card = el('div', 'unit t' + u.tier +
     (u.fresh ? ' rising' : '') + (u.promoted ? ' promoted' : '') +
+    (u.bound ? ' bound' : '') + (doomed ? ' binding' : '') +
     (orderSel === u.id ? ' picking' : ''));
   card.id = 'ally-' + u.id;
   card.innerHTML =
     '<span class="u-ico">' + t.icon + '</span>' +
+    '<span class="u-nm">' + unitLabel(u) + '</span>' +
     '<span class="u-bar"><i style="width:' + Math.max(0, (u.hp / u.max) * 100) + '%"></i></span>' +
+    '<span class="u-hp">' + Math.max(0, u.hp) + ' / ' + u.max + '</span>' +
+    '<span class="u-dmg">⚔ ' + st.dmg + '</span>' +
     orderBadge(u.id);
-  card.title = t.name + ' — ' + Math.max(0, u.hp) + '/' + u.max;
+  card.title = unitLabel(u) + ' — ' + Math.max(0, u.hp) + '/' + u.max + ', hits for ' + st.dmg;
   card.onclick = function () { selectAttacker(u.id); };
   u.fresh = false; u.promoted = false;
   return card;
@@ -2651,6 +2736,19 @@ function renderOrderBar() {
   fight.textContent = ordering ? 'FIGHT' : '…';
   auto.classList.toggle('on', !!runState.auto);
   auto.textContent = runState.auto ? 'AUTO ON' : 'AUTO';
+
+  // The rite, offered only when three of a kind are standing.
+  const bind = $('bind-bar');
+  if (bind) {
+    const t = bindableTier();
+    if (t < 0) {
+      bind.style.display = 'none';
+    } else {
+      bind.style.display = '';
+      bind.textContent = '🔗 BIND 3 ' + UNDEAD_TIERS[t].name.toUpperCase() +
+        'S → ' + UNDEAD_TIERS[t + 1].name.toUpperCase();
+    }
+  }
 
   // Fury.
   const bar = $('fury-bar'), fill = $('fury-fill'), label = $('fury-label');
@@ -2798,6 +2896,8 @@ function wire() {
   if (auto) auto.onclick = toggleAuto;
   const fury = $('fury-bar');
   if (fury) fury.onclick = unleashFury;
+  const bind = $('bind-bar');
+  if (bind) bind.onclick = performBind;
   const cont = $('result-continue');
   if (cont) cont.onclick = function () { showTab('dungeon'); };
   const stop = $('ga-stop');
@@ -2865,6 +2965,7 @@ window.__rf = {
   boonTier: boonTier, boonName: boonName, boonUnlocked: boonUnlocked,
   hostMaxHit: hostMaxHit, raiseUnit: raiseUnit, rollBoonChoices: rollBoonChoices,
   unleashFury: unleashFury, FURY_MAX: FURY_MAX,
+  performBind: performBind, bindableTier: bindableTier, BIND_COUNT: BIND_COUNT,
   // Headless runs need the board to play itself.
   setAutoFight: function (on) { autoFightDefault = !!on; if (runState) { runState.auto = !!on; if (on) enterOrders(); } },
   fight: function () { resolveTurn(); },
@@ -2887,7 +2988,11 @@ window.__rf = {
       foes: runState.foes.map(function (f) {
         return { id: f.id, name: f.name, hp: f.hp, max: f.max, minion: !!f.minion, boss: !!f.boss };
       }),
-      allies: hostUnits().map(function (u) { return { id: u.id, tier: u.tier, hp: u.hp }; }),
+      allies: hostUnits().map(function (u) {
+        return { id: u.id, tier: u.tier, hp: u.hp, max: u.max,
+                 bound: !!u.bound, dmg: unitStats(u).dmg };
+      }),
+      bindable: bindableTier(), bindings: runState.bindings || 0,
       orders: Object.assign({}, runState.orders),
       focus: runState.focus || null,
       fury: runState.fury || 0, powerArmed: !!runState.powerArmed,
@@ -2906,6 +3011,7 @@ window.__rf = {
       rampage: runState.rampage || 0
     };
   },
+  takeBoon: grantBoon,          // the real grant path, side effects and all
   forceBoon: function (key, tier) {
     if (!runState) return;
     runState.boons[key] = tier;

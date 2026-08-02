@@ -183,13 +183,14 @@ start appearing in your offers.
    Bone Dragon              Unholy Bargain
 ```
 
-**The root raises the dead.** A slain foe has a 40% chance to get back up on
+**The root raises the dead.** Taking Raise Dead puts a Skeleton on the board
+straight away, and from then on a slain foe has a 40% chance to get back up on
 your side; Dark Mastery takes that to three quarters and guarantees bosses;
 Lord of Bones raises everything, in pairs. Risen units form your **host**, up
-to seven strong. Each unit takes its own turn after you, against whatever you
-aimed it at, rolling to hit off your own accuracy — and the host is a wall as
-well as a weapon, soaking blows that would otherwise land on you, more often the
-bigger it gets.
+to six strong, laid out three to a rank in front of you. Each takes its own
+turn after you, against whatever you aimed it at, rolling to hit off your own
+accuracy — and the host is a wall as well as a weapon, soaking blows that
+would otherwise land on you, more often the bigger it gets.
 
 **Bone Legion decides what you raise.** Skeleton → Ghoul → Wight, with the
 eldest of the host rising again as a **Bone Dragon** at the capstone. Taking a
@@ -197,9 +198,27 @@ tier remakes the host you're already standing with, on the spot — it doesn't
 wait for the next kill. Wights also drain a quarter of their damage back to you.
 
 **Death Magic spends the host.** Death Ripple washes decay across *every*
-enemy on the board for 2 per unit every third round; Animate Dead brings back half your fallen between waves;
-and Unholy Bargain lets a killing blow crumble your host instead of you, each
-unit spent buying back 20% health.
+enemy on the board for 2 per unit every third round; Animate Dead brings back
+half your fallen between waves; and Unholy Bargain lets a killing blow crumble
+your host instead of you, each unit spent buying back 20% health.
+
+#### The Rite of Binding
+
+Three of a kind standing at once can be **fused into one of the next kind**,
+and the result is worth a quarter more than all three together — three
+Skeletons make a Ghoul, three Ghouls a Wight, three Wights a **Bone Dragon**.
+A bound unit wears a gold frame and keeps compounding: bind three bound Ghouls
+and the Wight you get carries all of their strength forward.
+
+It is never free. The host is your wall as well as your weapon, and the chance
+a blow lands on a unit instead of you scales with how many are standing — so
+every rite trades bodies for quality. Six weak units soak more than two strong
+ones; two strong ones kill faster. That is the whole decision, and it runs the
+other way depending on whether you are being ground down or racing a boss's
+health bar.
+
+The three units the rite would consume pulse before you commit, and the bar
+naming the trade only appears when it is available.
 
 The two branches pull against each other: Bone Legion wants a big host kept
 alive, Death Magic is happy to burn it down. Nine nodes, and a run only hands
@@ -214,7 +233,7 @@ own order badge, and a strip under the fight reads the host's size and its max
 hit against your own. Units claw up out of the floor when they rise, the strip
 shudders when one shatters, and promotions flare through every unit at once
 when Bone Legion deepens. The board itself greens over as the host grows, and
-crossing three, five and seven units throws a proclamation across the screen.
+crossing three, five and six units throws a proclamation across the screen.
 All of it respects `prefers-reduced-motion`.
 
 ## Skills
