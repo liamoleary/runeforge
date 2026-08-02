@@ -912,7 +912,10 @@ function combatLevel() {
 // spread so a big hit is dangerous rather than instantly lethal.
 function lifeAtLevel(hpLevel) { return 10 + hpLevel * 2; }
 function maxHp() {
-  const base = lifeAtLevel(lvl('hitpoints'));
+  // Frozen for the duration of a delve — see runSnapshot().
+  const base = (runState && runState.snap)
+    ? runState.snap.maxHp
+    : lifeAtLevel(lvl('hitpoints'));
   // Bloodlust trades health for damage, but only for the duration of a run.
   const penalty = (runState && runState.hpPenalty) || 0;
   return Math.max(1, Math.round(base * (1 - penalty)));
@@ -1198,20 +1201,39 @@ function regenTick() {
 
 // Shaped like the OSRS max-hit formula, scaled up a little so early fights
 // aren't decided one point of damage at a time.
-function playerMaxHit() {
+function baseMaxHit() {
   const str = lvl('strength');
   const bonus = gearBonus('str');
-  let hit = Math.max(1, Math.floor(2 + str / 7 + bonus / 45 + (str * bonus) / 420));
+  return Math.max(1, Math.floor(2 + str / 7 + bonus / 45 + (str * bonus) / 420));
+}
+
+// What you walked in with. A delve reads these and nothing else, so the xp you
+// earn inside one pays off on the NEXT one rather than inflating this one.
+// Without it the host — priced as a fraction of your max hit — multiplies a
+// number it is itself driving up, and the curve runs away.
+function runSnapshot() {
+  return {
+    maxHit: baseMaxHit(),
+    atkRoll: (lvl('attack') + 8) * (gearBonus('atk') + 64),
+    defRoll: (lvl('defence') + 8) * (gearBonus('def') + 64),
+    maxHp: lifeAtLevel(lvl('hitpoints'))
+  };
+}
+
+function playerMaxHit() {
+  let hit = (runState && runState.snap) ? runState.snap.maxHit : baseMaxHit();
   if (runState) {                       // run-only, from boons
     if (boonTier('bloodlust') >= 1) hit += 3;
-    hit += runState.rampage || 0;
+    hit += Math.min(RAMPAGE_CAP, runState.rampage || 0);
   }
-  return hit;
+  return Math.max(1, hit);
 }
 function playerAttackRoll() {
+  if (runState && runState.snap) return runState.snap.atkRoll;
   return (lvl('attack') + 8) * (gearBonus('atk') + 64);
 }
 function playerDefenceRoll() {
+  if (runState && runState.snap) return runState.snap.defRoll;
   return (lvl('defence') + 8) * (gearBonus('def') + 64);
 }
 function monsterAttackRoll(m) { return (m.atk + 8) * 64; }
@@ -1232,6 +1254,10 @@ function rollDamage(maxHit, attRoll, defRoll) {
 // point of damage to the style you're using plus 1.33 Hitpoints; with no
 // style switching to manage, every combat skill takes a share each hit.
 const COMBAT_XP_PER_DAMAGE = 8;
+// Only what you land yourself trains you. Paying full xp for host damage let a
+// necromancer level several times faster than any other build and walk into
+// the next dungeon overlevelled.
+function awardHostXp() {}
 function awardCombatXp(damage) {
   if (damage <= 0) return;
   addXp('attack', damage * COMBAT_XP_PER_DAMAGE);
@@ -1948,7 +1974,9 @@ function enterDungeon(index) {
   }
 
   G.busy = true;
+  const snap = runSnapshot();
   runState = {
+    snap: snap,
     index: index, d: d,
     wave: 1,
     foe: null,
@@ -2014,6 +2042,7 @@ const FURY_PER_HIT = 9;
 const FURY_PER_TAKEN = 6;
 const POWER_MULT = 2.5;
 const CRIT_CHANCE = 0.08;
+const RAMPAGE_CAP = 10;      // Bloodlust III, bounded
 const CRIT_MULT = 1.5;
 const SUMMON_BUDGET_BOSS = 4;
 const SUMMON_BUDGET_MOB = 2;
@@ -2317,7 +2346,7 @@ function unitStrike(u, aimed) {
     return;
   }
   target.hp -= dealt;
-  awardCombatXp(dealt);
+  awardHostXp(dealt);
   flashCard('foe-' + target.id);
   floatOn('foe-' + target.id, dealt, crit ? 'crit' : 'necro');
 
@@ -2339,7 +2368,7 @@ function unitStrike(u, aimed) {
     const splash = Math.max(1, Math.round(dealt * 0.5));
     aliveFoes().filter(function (f) { return f !== target; }).forEach(function (f) {
       f.hp -= splash;
-      awardCombatXp(splash);
+      awardHostXp(splash);
       floatOn('foe-' + f.id, splash, 'necro');
     });
     notes.push('🌊 sweeps');
@@ -2397,7 +2426,7 @@ function useAbility(unitId) {
       const prey = foes.slice().sort(function (x, y) { return x.hp - y.hp; })[0];
       const dmg = st.dmg * 2;
       prey.hp -= dmg;
-      awardCombatXp(dmg);
+      awardHostXp(dmg);
       floatOn('foe-' + prey.id, dmg, 'necro');
       const heal = Math.min(maxHp() - G.hp, dmg);
       if (heal > 0) G.hp += heal;
@@ -2410,7 +2439,7 @@ function useAbility(unitId) {
       if (!foes.length) { done = false; break; }
       foes.forEach(function (f) {
         f.hp -= st.dmg;
-        awardCombatXp(st.dmg);
+        awardHostXp(st.dmg);
         floatOn('foe-' + f.id, st.dmg, 'necro');
       });
       break;
@@ -2425,7 +2454,7 @@ function useAbility(unitId) {
       if (!foes.length) { done = false; break; }
       foes.forEach(function (f) {
         f.hp -= st.dmg;
-        awardCombatXp(st.dmg);
+        awardHostXp(st.dmg);
         floatOn('foe-' + f.id, st.dmg, 'crit');
       });
       quake();
@@ -2434,7 +2463,7 @@ function useAbility(unitId) {
       const doomed = foes.filter(function (f) { return f.hp <= f.max * 0.25; });
       if (!doomed.length) { done = false; break; }
       doomed.forEach(function (f) {
-        awardCombatXp(f.hp);
+        awardHostXp(f.hp);
         floatOn('foe-' + f.id, f.hp, 'crit');
         f.hp = 0;
       });
@@ -2612,7 +2641,7 @@ function endOfRound() {
     if (f.wither && f.wither.rounds > 0) {
       f.hp -= f.wither.dmg;
       f.wither.rounds -= 1;
-      awardCombatXp(f.wither.dmg);
+      awardHostXp(f.wither.dmg);
       floatOn('foe-' + f.id, f.wither.dmg, 'necro');
       runLog('<span class="boon">☠ ' + f.name + ' rots</span> for ' + f.wither.dmg + '.');
     }
