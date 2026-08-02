@@ -218,6 +218,14 @@ rewards a second damage-reduction line more than a third tier of the first,
 and which is true flips when the monster table moves. That's the design
 working: the pool is what makes each dungeon a different puzzle.
 
+A faction has to earn its place without taking over, so `boon-balance.js`
+carries a `necro` strategy that commits to the Necromancy path wherever it is
+offered. In the two dungeons that offer it, a committed necromancer wins 60%
+(Crypt) and 54% (Abyss) against 58% and 44% for random picks — competitive,
+not dominant, and inside the same band as everything else. The path needed no
+retune, and the dungeon scalars stay calibrated against non-faction builds
+rather than bending around one path.
+
 **Don't over-tune this.** An 11% change to a dungeon's hp and max hit swings
 its win rate by roughly 25 points, and 60 trials only resolves to about ±6.
 Corrections smaller than ~10% are inside the noise, and the shipped 48–73%
