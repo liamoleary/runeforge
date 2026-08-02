@@ -24,6 +24,7 @@ async function necromancyChecks(page, check) {
     window.G.hp = __rf.maxHp();
     __rf.setPace(0);
     __rf.setAutoFight(false);   // hold in the orders phase: nothing resolves under us
+    __rf.setAutoBind(null);
     __rf.setAutoBoon(() => -1);            // decline, so we control the build
     __rf.enterDungeon(1);
   });
@@ -135,12 +136,25 @@ async function necromancyChecks(page, check) {
     `tier ${bindState.bindable} of ${bindState.allies}`);
   check('the bind control is showing', await page.isVisible('#bind-bar'));
 
+  // Tapping the bar should ask what they become, not just decide.
+  await page.evaluate(() => __rf.performBind());
+  check('the rite asks what they should become',
+    await page.isVisible('#bind-pick'));
+  const forms = await page.evaluate(() => __rf.board().bindPending);
+  check('three forms are offered', forms.length === 3, forms.join(', '));
+  check('each form carries a keyword', await page.evaluate(() =>
+    __rf.bindOffers().every(f => f.keys.length >= 1)));
+  check('the forms are not all the same shape', await page.evaluate(() => {
+    const f = __rf.bindOffers();
+    return new Set(f.map(x => x.keys.join('+'))).size === f.length;
+  }));
+
   const bound = await page.evaluate(() => {
     const b0 = __rf.board();
     const tier = b0.bindable;
     const sameTier = b0.allies.filter(a => a.tier === tier);
     const sumDmg = sameTier.slice(0, 3).reduce((s, a) => s + a.dmg, 0);
-    __rf.performBind();
+    __rf.completeBind(0);
     window.render();
     const b1 = __rf.board();
     const made = b1.allies.filter(a => a.bound);
@@ -161,6 +175,13 @@ async function necromancyChecks(page, check) {
   check('the rite is counted', bound.bindings === 1, bound.bindings);
   check('a bound unit shows as bound on the board',
     (await page.locator('#ally-minions .unit.bound').count()) >= 1);
+  const kw = await page.evaluate(() => __rf.board().allies.filter(a => a.bound)[0]);
+  check('the bound unit carries its form and keywords',
+    !!kw.form && kw.keys.length >= 1, `${kw.form} [${kw.keys.join(',')}]`);
+  check('a taunt form reads as a wall on the board',
+    kw.keys.indexOf('taunt') < 0 ||
+    (await page.locator('#ally-minions .unit.taunt').count()) >= 1);
+  check('the choice panel closed', !(await page.isVisible('#bind-pick')));
 
   // Finish the run and confirm none of it survives.
   await page.evaluate(() => { __rf.setAutoBoon(() => 0); __rf.setAutoFight(true); });
@@ -561,6 +582,7 @@ async function boardChecks(page, check) {
     __rf.setLevels({ attack: 12, strength: 12, defence: 12, hitpoints: 14 });
     __rf.setPace(0.15);           // keep the suite quick
     __rf.setAutoFight(true);      // rounds play themselves; the board section tests FIGHT
+    __rf.setAutoBind(() => 0);
     window.render();
   });
   await page.locator('.dun-card .dc-go').first().click();

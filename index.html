@@ -368,7 +368,7 @@ body.in-run #run-overlay { display: flex; }
   --necro: 0;
   position: relative; flex: 1 1 auto; min-height: 0;
   display: flex; flex-direction: column; justify-content: space-between;
-  padding: 20px 12px 10px;
+  padding: 18px 10px 8px; overflow-y: auto;
   background: linear-gradient(180deg, rgba(60,10,10,.32), rgba(0,0,0,.5));
   overflow: hidden;
 }
@@ -397,15 +397,15 @@ body.in-run #run-overlay { display: flex; }
 }
 
 .combatant {
-  text-align: center; width: 104px; position: relative; z-index: 2;
-  border-radius: 8px; padding: 13px 2px 4px; border: 1px solid transparent;
+  text-align: center; width: 96px; position: relative; z-index: 2;
+  border-radius: 8px; padding: 12px 2px 3px; border: 1px solid transparent;
   transition: border-color .15s, transform .12s;
 }
 .combatant.foe { cursor: pointer; }
-.combatant.minion { width: 78px; opacity: .95; }
+.combatant.minion { width: 70px; opacity: .95; }
 .combatant.boss .nm { color: var(--gold); }
-.combatant .ico { font-size: 42px; line-height: 1; display: inline-block; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)); }
-.combatant.minion .ico { font-size: 28px; }
+.combatant .ico { font-size: 34px; line-height: 1; display: inline-block; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)); }
+.combatant.minion .ico { font-size: 24px; }
 .combatant .ico.hit { animation: shake .35s ease; }
 @keyframes shake {
   0%,100% { transform: translateX(0); filter: brightness(1); }
@@ -414,14 +414,14 @@ body.in-run #run-overlay { display: flex; }
 }
 .combatant .nm { font-family: 'Cinzel', serif; font-size: 10px; color: var(--text2); margin-top: 3px; line-height: 1.2; }
 .combatant.minion .nm { font-size: 9px; }
-.combatant .track { height: 6px; background: #0a0804; border: 1px solid var(--bdr); border-radius: 4px; overflow: hidden; margin: 4px auto 2px; }
+.combatant .track { height: 5px; background: #0a0804; border: 1px solid var(--bdr); border-radius: 4px; overflow: hidden; margin: 4px auto 2px; }
 .combatant .fill { height: 100%; transition: width .25s; }
 .combatant.you .fill { background: linear-gradient(90deg, #2c9c2c, #5af05a); }
 .combatant.foe .fill { background: linear-gradient(90deg, #a01818, #f03030); }
 .combatant .hpv { font-size: 9px; color: var(--text3); }
 /* How many of your attackers are pointed here. */
 .combatant .aimed {
-  position: absolute; bottom: -6px; right: 4px;
+  position: absolute; top: 10px; left: 2px;
   font-family: 'Cinzel', serif; font-size: 9px; color: var(--gold);
   background: rgba(0,0,0,.72); border: 1px solid var(--bdr2);
   border-radius: 8px; padding: 0 5px;
@@ -485,7 +485,7 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
 }
 
 #run-host {
-  flex-shrink: 0; padding: 7px 14px 9px;
+  flex-shrink: 0; padding: 4px 14px 5px;
   border-top: 1px solid #1e3a28; border-bottom: 1px solid #1e3a28;
   background: linear-gradient(180deg, rgba(16,40,26,.72), rgba(6,14,10,.72));
 }
@@ -501,7 +501,7 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
   font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 2px; color: #7ad39a;
 }
 .host-count { font-size: 9px; color: var(--text3); }
-#host-units { display: flex; flex-wrap: wrap; gap: 5px; min-height: 30px; }
+
 .unit {
   width: 30px; border-radius: 5px; padding: 2px 0 3px;
   background: #0d1a12; border: 1px solid #24503a; text-align: center;
@@ -556,22 +556,29 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
 #ally-minions .unit {
   position: relative; cursor: pointer;
   width: calc(33.333% - 4px); max-width: 118px;
-  padding: 5px 3px 4px; border-radius: 8px;
+  padding: 3px 3px 2px; border-radius: 8px;
 }
-#ally-minions .unit .u-ico { font-size: 26px; }
-#ally-minions .unit.t3 .u-ico { font-size: 30px; }
+#ally-minions .unit .u-ico { font-size: 21px; }
+#ally-minions .unit.t3 .u-ico { font-size: 24px; }
 #ally-minions .unit .u-nm {
-  display: block; font-family: 'Cinzel', serif; font-size: 9px;
-  color: var(--text2); line-height: 1.2; margin-top: 2px;
+  display: block; font-family: 'Cinzel', serif; font-size: 8px;
+  color: var(--text2); line-height: 1.15; margin-top: 1px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-#ally-minions .unit .u-bar { margin: 4px 5px 0; height: 4px; }
-#ally-minions .unit .u-hp { display: block; font-size: 8px; color: var(--text3); margin-top: 1px; }
+#ally-minions .unit .u-bar { margin: 3px 5px 0; height: 4px; }
+#ally-minions .unit .u-hp { display: block; font-size: 8px; color: var(--text3); }
+#ally-minions .unit .u-keys {
+  position: absolute; top: 2px; left: 4px;
+  display: flex; gap: 2px; font-size: 9px; line-height: 1;
+}
+#ally-minions .unit .u-kw.spent { opacity: .3; }
+#ally-minions .unit.taunt { border-color: #7a6a3a; box-shadow: inset 0 0 12px rgba(240,192,64,.16); }
+#ally-minions .unit.warded { box-shadow: 0 0 12px rgba(150,220,255,.45); }
 #ally-minions .unit .u-dmg {
   position: absolute; top: 2px; right: 4px;
   font-family: 'Cinzel', serif; font-size: 8px; color: #ffb0a0;
 }
-#ally-minions .unit .ord { font-size: 9px; margin-top: 1px; }
+#ally-minions .unit .ord { font-size: 8px; line-height: 1.1; }
 #ally-minions .unit.picking { border-color: var(--gold); box-shadow: 0 0 12px rgba(240,192,64,.35); }
 /* Fused: worth more than the three that made it. */
 #ally-minions .unit.bound {
@@ -587,9 +594,9 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
 }
 
 #bind-bar {
-  display: block; width: calc(100% - 28px); margin: 0 14px 6px;
+  display: block; width: calc(100% - 28px); margin: 0 14px 5px;
   background: linear-gradient(180deg, #251a3a, #150f22);
-  border: 1px solid #6b4fa0; border-radius: 7px; padding: 8px;
+  border: 1px solid #6b4fa0; border-radius: 7px; padding: 6px;
   font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 1.5px;
   color: #d9c0ff; cursor: pointer;
   box-shadow: 0 0 14px rgba(150,100,220,.3);
@@ -622,6 +629,28 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
   -webkit-backdrop-filter: blur(3px);
 }
 body.picking-boon #boon-pick { display: flex; }
+#bind-pick {
+  position: absolute; inset: 0; z-index: 11;
+  display: none; align-items: center; justify-content: center; padding: 16px;
+  background: radial-gradient(ellipse at center, rgba(24,44,32,.6) 0%, rgba(3,6,4,.94) 70%);
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+}
+body.picking-bind #bind-pick { display: flex; }
+#bd-card { width: 100%; max-width: 380px; animation: bpIn .4s cubic-bezier(.2,1.3,.4,1) both; }
+#bd-title {
+  font-family: 'Cinzel', serif; font-size: 15px; font-weight: 900;
+  color: #8bffbe; letter-spacing: 3px; text-align: center;
+  text-shadow: 0 0 16px rgba(60,220,120,.55);
+}
+#bd-sub { text-align: center; font-size: 11px; color: var(--text2); font-style: italic; margin: 4px 0 12px; }
+#bd-choices { display: flex; flex-direction: column; gap: 8px; }
+#bd-foot { text-align: center; font-size: 10px; color: var(--text3); font-style: italic; margin-top: 11px; }
+.bc-keys { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0 4px; }
+.bc-keys .kw {
+  font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: .5px;
+  color: #8bffbe; background: rgba(60,220,120,.12);
+  border: 1px solid #2f7a4e; border-radius: 8px; padding: 1px 6px;
+}
 #bp-card {
   width: 100%; max-width: 380px;
   animation: bpIn .4s cubic-bezier(.2, 1.3, .4, 1) both;
@@ -687,13 +716,14 @@ body.picking-boon #boon-pick { display: flex; }
 
 /* Notable events flash over the board and fade — no scrollback, no panel. */
 #callout {
-  position: absolute; left: 0; right: 0; top: 38%; z-index: 7;
-  transform: translateY(-50%);
+  flex: 0 0 auto; height: 32px; overflow: hidden;
   display: flex; flex-direction: column-reverse; align-items: center;
-  gap: 2px; padding: 0 14px; pointer-events: none;
+  justify-content: flex-start; gap: 1px; padding: 2px 14px 0;
+  pointer-events: none; border-top: 1px solid var(--bdr);
 }
 #callout p {
-  font-size: 12px; line-height: 1.35; text-align: center;
+  font-size: 11px; line-height: 1.45; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
   color: var(--text2); text-shadow: 0 1px 4px rgba(0,0,0,.95);
   animation: calloutFade 2.8s ease forwards;
 }
@@ -712,7 +742,7 @@ body.picking-boon #boon-pick { display: flex; }
 
 #fury-bar {
   position: relative; display: block; width: calc(100% - 28px);
-  margin: 0 14px; height: 30px; overflow: hidden;
+  margin: 0 14px; height: 26px; overflow: hidden;
   background: #140d05; border: 1px solid var(--bdr); border-radius: 7px;
   cursor: default; padding: 0;
 }
@@ -722,7 +752,7 @@ body.picking-boon #boon-pick { display: flex; }
   transition: width .3s;
 }
 #fury-label {
-  position: relative; z-index: 2; display: block; line-height: 30px;
+  position: relative; z-index: 2; display: block; line-height: 26px;
   font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 3px;
   color: #ffdcb0;
   text-shadow: 0 1px 3px rgba(0,0,0,.95), 0 0 8px rgba(0,0,0,.8);
@@ -767,11 +797,11 @@ body.picking-boon #boon-pick { display: flex; }
 }
 
 #order-hint {
-  padding: 5px 14px 0; font-size: 11px; font-style: italic;
-  color: var(--text2); text-align: center; min-height: 18px;
+  padding: 3px 14px 0; font-size: 10px; font-style: italic;
+  color: var(--text2); text-align: center; min-height: 14px;
 }
 #run-actions {
-  padding: 8px 14px calc(10px + env(safe-area-inset-bottom));
+  padding: 6px 14px calc(8px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--bdr);
   display: flex; gap: 7px;
 }
@@ -1099,8 +1129,8 @@ body.in-run #nav { display: none; }
       <div id="ally-minions"></div>
       <div class="combatant you" id="you-card"></div>
     </div>
-    <div id="callout"></div>
   </div>
+  <div id="callout"></div>
 
   <!-- The risen retinue of the Necromancy path -->
   <div id="run-host" style="display:none;">
@@ -1121,6 +1151,16 @@ body.in-run #nav { display: none; }
     <button id="run-fight">FIGHT</button>
     <button id="run-auto">AUTO</button>
     <button id="run-flee">RETREAT</button>
+  </div>
+
+  <!-- The rite: choose what three of a kind become -->
+  <div id="bind-pick">
+    <div id="bd-card">
+      <div id="bd-title">🔗 RITE OF BINDING</div>
+      <div id="bd-sub"></div>
+      <div id="bd-choices"></div>
+      <div id="bd-foot">Three bodies for one shape. Choose well.</div>
+    </div>
   </div>
 
   <!-- Between-wave level up: pick a boon -->

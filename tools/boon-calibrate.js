@@ -38,6 +38,7 @@ const TARGETS = [
     const R = window.__rf, G = window.G;
     R.setPace(0);
     R.setAutoFight(true);   // the board plays its own orders
+    R.setAutoBind((forms) => Math.floor(Math.random() * forms.length));
 
     const strat = {
       none:   () => -1,
@@ -62,7 +63,7 @@ const TARGETS = [
             const won = /CLEARED/.test(document.getElementById('result-title').textContent);
             document.getElementById('result-continue').click();
             resolve(won);
-          } else if (Date.now() - t0 > 8000) {
+          } else if (Date.now() - t0 > 25000) {
             clearInterval(poll); resolve(false);
           }
         }, 0);

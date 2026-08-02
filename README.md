@@ -111,11 +111,17 @@ orders and honoured when the round resolves:
 That is what makes targeting a decision rather than a formality: a summoner
 winding up is worth more than the boss's health bar this round.
 
-**Enemies summon too.** Bosses in every dungeon call up minions of their own
-kind, and the deeper dungeons have elites that do it as well. A summon costs
-the caller its turn, minions cap at two on the board, each caller has a
-per-wave budget, and they drop nothing — so a boss that keeps calling is
-buying time, not farming you. They still have to be killed.
+**Enemies summon too, and nearly everything does it.** Every monster in every
+dungeon can call up minions of its own kind, bosses most often of all. A
+summon costs the caller its turn, three minions cap the board, each caller has
+a per-wave budget, and they drop nothing — so a caller is buying time rather
+than farming you. They still have to be killed, and a board with three extra
+bodies on it is three extra attacks a round coming your way.
+
+Dungeons run 8 to 13 waves. That is long enough that a run is a campaign
+rather than a scrap: you get a delve level per wave, so a build actually
+matures, and the decisions about who eats damage and what your host becomes
+have time to matter.
 
 ### Fury
 
@@ -204,21 +210,40 @@ your host instead of you, each unit spent buying back 20% health.
 
 #### The Rite of Binding
 
-Three of a kind standing at once can be **fused into one of the next kind**,
-and the result is worth a quarter more than all three together — three
-Skeletons make a Ghoul, three Ghouls a Wight, three Wights a **Bone Dragon**.
-A bound unit wears a gold frame and keeps compounding: bind three bound Ghouls
-and the Wight you get carries all of their strength forward.
+Three of a kind standing at once can be **fused into one of the next kind** —
+and *what* they become is your choice. The rite offers three forms, each
+trading stats against a keyword:
+
+| Tier | Forms |
+|---|---|
+| Ghoul | 🪦 **Gravewarden** *(Taunt)* · 🧟 **Plague Ghoul** *(Withering)* · 🩸 **Ravener** *(Draining)* |
+| Wight | 🛡️ **Barrow Knight** *(Taunt, Warded)* · ⚡ **Storm Wight** *(Doubled)* · 👑 **Grave Tyrant** *(Sweeping)* |
+| Dragon | 🐉 **Bone Dragon** *(Sweeping, Warded)* · 💀 **Lich Dragon** *(Withering, Doubled)* · 🦴 **Bulwark Wyrm** *(Taunt, Undying)* |
+
+The keywords:
+
+- 🛡 **Taunt** — every blow aimed at you hits this instead, while it stands
+- ✨ **Warded** — ignores the first hit it takes each wave
+- ☠ **Withering** — its strikes rot, 3 a round for 2 rounds
+- ⚡ **Doubled** — strikes twice a round
+- 🌊 **Sweeping** — half its damage splashes onto every other enemy
+- 🩸 **Draining** — heals you for half of what it deals
+- 🔁 **Undying** — the first time it falls, it gets back up at 1 health
+
+A bound unit keeps the strength that went into it — a quarter more than all
+three together, then shaped by its form — so a Gravewarden is a wall and a
+Ravener is a knife made from the same three bodies. Binding bound units
+compounds, and Bone Legion leaves them alone: once a thing has been through
+the rite it keeps its shape.
 
 It is never free. The host is your wall as well as your weapon, and the chance
 a blow lands on a unit instead of you scales with how many are standing — so
-every rite trades bodies for quality. Six weak units soak more than two strong
-ones; two strong ones kill faster. That is the whole decision, and it runs the
-other way depending on whether you are being ground down or racing a boss's
-health bar.
+every rite trades bodies for quality. That is the whole decision, and it runs
+the other way depending on whether you are being ground down or racing a
+boss's health bar.
 
-The three units the rite would consume pulse before you commit, and the bar
-naming the trade only appears when it is available.
+The three units the rite would consume pulse before you commit, and it always
+takes your most damaged ones.
 
 The two branches pull against each other: Bone Legion wants a big host kept
 alive, Death Magic is happy to burn it down. Nine nodes, and a run only hands

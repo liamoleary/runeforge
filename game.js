@@ -276,10 +276,10 @@ const DUNGEONS = [
   {
     key: 'warren', name: 'Rat Warren', icon: '🐀',
     blurb: 'Damp tunnels under the village. Something has been breeding down here.',
-    waves: 5,
+    waves: 8,
     monsters: [
-      { name: 'Giant Rat',   icon: '🐀', hp: 11,  atk: 6,  def: 1, maxHit: 5 },
-      { name: 'Cave Slime',  icon: '🟢', hp: 15,  atk: 7,  def: 1, maxHit: 6 }
+      { name: 'Giant Rat',   icon: '🐀', hp: 11,  atk: 6,  def: 1, maxHit: 5 , calls: 0.3 },
+      { name: 'Cave Slime',  icon: '🟢', hp: 15,  atk: 7,  def: 1, maxHit: 6 , calls: 0.3 }
     ],
     boss: { name: 'Warren Brood-Mother', icon: '🕷️', hp: 26, atk: 10, def: 2, maxHit: 10 , calls: 0.5 },
     summon: { name: 'Rat Swarm', icon: '🐁', hp: 8, atk: 6, def: 1, maxHit: 2 },
@@ -289,10 +289,10 @@ const DUNGEONS = [
   {
     key: 'crypt', name: 'Frozen Crypt', icon: '❄️',
     blurb: 'A barrow sealed in black ice. The cold bites through bronze.',
-    waves: 6,
+    waves: 10,
     monsters: [
-      { name: 'Frost Ghoul',  icon: '🧟', hp: 22, atk: 22, def: 6, maxHit: 5 },
-      { name: 'Ice Wraith',   icon: '👻', hp: 30, atk: 24, def: 7, maxHit: 6 }
+      { name: 'Frost Ghoul',  icon: '🧟', hp: 22, atk: 22, def: 6, maxHit: 5 , calls: 0.3 },
+      { name: 'Ice Wraith',   icon: '👻', hp: 30, atk: 24, def: 7, maxHit: 6 , calls: 0.32 }
     ],
     boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 54, atk: 30, def: 12, maxHit: 7 , calls: 0.5 },
     summon: { name: 'Frost Shade', icon: '🌫️', hp: 14, atk: 20, def: 5, maxHit: 2 },
@@ -302,10 +302,10 @@ const DUNGEONS = [
   {
     key: 'spire', name: 'Storm Spire', icon: '⚡',
     blurb: 'A tower struck by lightning so often the stone has turned to glass.',
-    waves: 7,
+    waves: 11,
     monsters: [
-      { name: 'Storm Sprite',  icon: '⚡', hp: 41,  atk: 39, def: 14, maxHit: 6 },
-      { name: 'Thunder Golem', icon: '🗿', hp: 54,  atk: 43, def: 16, maxHit: 8 , calls: 0.2 }
+      { name: 'Storm Sprite',  icon: '⚡', hp: 41,  atk: 39, def: 14, maxHit: 6 , calls: 0.32 },
+      { name: 'Thunder Golem', icon: '🗿', hp: 54,  atk: 43, def: 16, maxHit: 8 , calls: 0.3 }
     ],
     boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 108, atk: 52, def: 25, maxHit: 11 , calls: 0.5 },
     summon: { name: 'Storm Wisp', icon: '✨', hp: 22, atk: 38, def: 12, maxHit: 3 },
@@ -315,10 +315,10 @@ const DUNGEONS = [
   {
     key: 'roost', name: "Dragon's Roost", icon: '🐲',
     blurb: 'The heat alone kills the unprepared. Bring the best steel you have.',
-    waves: 8,
+    waves: 12,
     monsters: [
-      { name: 'Whelp',        icon: '🦎', hp: 60,  atk: 57, def: 24, maxHit: 7 },
-      { name: 'Ember Drake',  icon: '🐉', hp: 81,  atk: 63, def: 27, maxHit: 9 , calls: 0.12 }
+      { name: 'Whelp',        icon: '🦎', hp: 60,  atk: 57, def: 24, maxHit: 7 , calls: 0.34 },
+      { name: 'Ember Drake',  icon: '🐉', hp: 81,  atk: 63, def: 27, maxHit: 9 , calls: 0.3 }
     ],
     boss: { name: 'Ashmaw the Elder', icon: '🐲', hp: 167, atk: 75, def: 39, maxHit: 13 , calls: 0.55 },
     summon: { name: 'Ash Whelp', icon: '🔥', hp: 34, atk: 55, def: 20, maxHit: 3 },
@@ -328,10 +328,10 @@ const DUNGEONS = [
   {
     key: 'abyss', name: 'The Abyss', icon: '🌌',
     blurb: 'Nothing comes back from here without rune on its back.',
-    waves: 9,
+    waves: 13,
     monsters: [
-      { name: 'Abyssal Leech',  icon: '🪱', hp: 86,  atk: 80, def: 35, maxHit: 10 },
-      { name: 'Void Stalker',   icon: '👁️', hp: 116, atk: 88, def: 39, maxHit: 11 , calls: 0.25 }
+      { name: 'Abyssal Leech',  icon: '🪱', hp: 86,  atk: 80, def: 35, maxHit: 10 , calls: 0.34 },
+      { name: 'Void Stalker',   icon: '👁️', hp: 116, atk: 88, def: 39, maxHit: 11 , calls: 0.32 }
     ],
     boss: { name: 'The Hollow King', icon: '👑', hp: 251, atk: 104, def: 54, maxHit: 17 , calls: 0.6 },
     summon: { name: 'Void Spawn', icon: '🌑', hp: 46, atk: 78, def: 30, maxHit: 4 },
@@ -458,6 +458,39 @@ const HOST_CAP = 6;             // six stacks, laid out three to a rank
 const BIND_COUNT = 3;
 const BIND_BONUS = 1.25;
 
+// What the rite can make. Three of a kind fuse into one of the next kind, but
+// *which* one is your call — the forms trade stats against a keyword, so the
+// same three bodies can become a wall, a poisoner or a second attacker.
+const KEYWORDS = {
+  taunt:  { icon: '🛡', name: 'Taunt',   desc: 'Every blow aimed your way hits this instead, while it stands.' },
+  ward:   { icon: '✨', name: 'Warded',  desc: 'Ignores the first hit it takes, every wave.' },
+  wither: { icon: '☠', name: 'Withering', desc: 'Its strikes rot — 3 damage a round for 2 rounds.' },
+  double: { icon: '⚡', name: 'Doubled', desc: 'Strikes twice each round.' },
+  sweep:  { icon: '🌊', name: 'Sweeping', desc: 'Half its damage splashes onto every other enemy.' },
+  drain:  { icon: '🩸', name: 'Draining', desc: 'Heals you for half of what it deals.' },
+  reborn: { icon: '🔁', name: 'Undying', desc: 'The first time it falls, it gets back up at 1 health.' }
+};
+
+// Keyed by the tier the rite produces.
+const BIND_FORMS = {
+  1: [
+    { name: 'Gravewarden', icon: '🪦', keys: ['taunt'],  hp: 1.2, dmg: 0.7 },
+    { name: 'Plague Ghoul', icon: '🧟', keys: ['wither'], hp: 1.0, dmg: 1.0 },
+    { name: 'Ravener',     icon: '🩸', keys: ['drain'],  hp: 0.9, dmg: 1.1 }
+  ],
+  2: [
+    { name: 'Barrow Knight', icon: '🛡️', keys: ['taunt', 'ward'], hp: 1.3, dmg: 0.6 },
+    { name: 'Storm Wight',   icon: '⚡', keys: ['double'],        hp: 0.8, dmg: 0.6 },
+    { name: 'Grave Tyrant',  icon: '👑', keys: ['sweep'],         hp: 1.0, dmg: 1.0 }
+  ],
+  3: [
+    { name: 'Bone Dragon',  icon: '🐉', keys: ['sweep', 'ward'],   hp: 1.1, dmg: 1.0 },
+    { name: 'Lich Dragon',  icon: '💀', keys: ['wither', 'double'], hp: 0.9, dmg: 0.6 },
+    { name: 'Bulwark Wyrm', icon: '🦴', keys: ['taunt', 'reborn'],  hp: 1.4, dmg: 0.7 }
+  ]
+};
+function unitHasKey(u, k) { return !!(u.keys && u.keys.indexOf(k) >= 0); }
+
 // Each dungeon draws from its own lines, so the Crypt reliably makes
 // necromancers and the Spire makes stormcallers. Branch lines sit in the
 // pool from the start but stay hidden until their root is taken.
@@ -555,6 +588,8 @@ function undeadStats(tier) {
 
 // What a specific unit is worth, tier times whatever binding has made of it.
 function unitStats(u) {
+  // A bound unit is worth what its parts were worth, not what its tier is.
+  if (u.absDmg) return { dmg: u.absDmg, hp: u.absHp };
   const s = undeadStats(u.tier);
   const p = u.power || 1;
   return {
@@ -562,9 +597,8 @@ function unitStats(u) {
     hp: Math.max(1, Math.round(s.hp * p))
   };
 }
-function unitLabel(u) {
-  return (u.bound ? 'Bound ' : '') + UNDEAD_TIERS[u.tier].name;
-}
+function unitLabel(u) { return u.form ? u.form.name : UNDEAD_TIERS[u.tier].name; }
+function unitIcon(u) { return u.form ? u.form.icon : UNDEAD_TIERS[u.tier].icon; }
 
 function hostUnits() { return (runState && runState.retinue) || []; }
 function hostMaxHit() {
@@ -596,30 +630,87 @@ function bindPool() {
     .slice(0, BIND_COUNT);
 }
 
+function bindOffers() {
+  const t = bindableTier();
+  if (t < 0) return [];
+  return BIND_FORMS[t + 1] || [];
+}
+
+// Step one: ask what they should become.
 function performBind() {
-  if (!runState || runState.over) return;
+  if (!runState || runState.over || runState.phase === 'binding') return;
+  if (bindPool().length < BIND_COUNT) return;
+  const forms = bindOffers();
+  if (!forms.length) return;
+  runState.bindPending = forms;
+  if (autoBindPick || runState.auto) {
+    const i = autoBindPick ? autoBindPick(forms, runState) : 0;
+    completeBind(i >= 0 ? i : 0);
+    return;
+  }
+  renderBindPick();
+  document.body.classList.add('picking-bind');
+}
+
+// Step two: make it.
+function completeBind(index) {
+  if (!runState || !runState.bindPending) return;
+  const form = runState.bindPending[index];
+  runState.bindPending = null;
+  document.body.classList.remove('picking-bind');
+  if (!form) return;
   const pool = bindPool();
-  if (pool.length < BIND_COUNT) return;
+  if (pool.length < BIND_COUNT) { renderDungeonRun(); return; }
+
   const from = pool[0].tier, to = from + 1;
   const sumDmg = pool.reduce(function (s, u) { return s + unitStats(u).dmg; }, 0);
-
+  const sumHp = pool.reduce(function (s, u) { return s + u.max; }, 0);
   runState.retinue = hostUnits().filter(function (u) { return pool.indexOf(u) < 0; });
-  const base = undeadStats(to);
+
   const u = {
     id: nextId(), tier: to, bound: true, fresh: true,
-    power: (BIND_BONUS * sumDmg) / base.dmg
+    form: form, keys: form.keys.slice(),
+    absDmg: Math.max(1, Math.round(BIND_BONUS * sumDmg * form.dmg)),
+    absHp: Math.max(1, Math.round(BIND_BONUS * sumHp * form.hp))
   };
-  const st = unitStats(u);
-  u.hp = st.hp; u.max = st.hp;
+  u.hp = u.absHp; u.max = u.absHp;
+  if (unitHasKey(u, 'ward')) u.warded = true;
   runState.retinue.push(u);
   runState.bindings = (runState.bindings || 0) + 1;
 
   runLog('<span class="boon">🔗 Rite of Binding</span> — three ' +
-    UNDEAD_TIERS[from].name + 's fuse into a bound ' + UNDEAD_TIERS[to].name + '.');
-  hostBanner('RITE OF BINDING');
+    UNDEAD_TIERS[from].name + 's rise again as a ' + form.name + '.');
+  hostBanner(form.name.toUpperCase());
   riseFx(to);
   addFury(12);
   renderDungeonRun();
+}
+
+function renderBindPick() {
+  if (!runState || !runState.bindPending) return;
+  const from = bindPool()[0];
+  $('bd-sub').textContent = 'Three ' + UNDEAD_TIERS[from.tier].name +
+    's give up their shape. Choose what stands back up.';
+  const wrap = $('bd-choices');
+  wrap.innerHTML = '';
+  runState.bindPending.forEach(function (f, i) {
+    const probe = { tier: from.tier + 1, form: f, power: 1 };
+    const card = el('button', 'boon-card fac-necromancy');
+    card.innerHTML =
+      '<div class="bc-head">' +
+        '<span class="bc-ico">' + f.icon + '</span>' +
+        '<span class="bc-line">' + esc(f.name) + '</span>' +
+        '<span class="bc-tier">' + (f.hp >= 1.5 ? 'TOUGH' : (f.dmg >= 1 ? 'SHARP' : 'ODD')) + '</span>' +
+      '</div>' +
+      '<div class="bc-keys">' + f.keys.map(function (k) {
+        return '<span class="kw">' + KEYWORDS[k].icon + ' ' + KEYWORDS[k].name + '</span>';
+      }).join('') + '</div>' +
+      '<div class="bc-desc">' + f.keys.map(function (k) {
+        return KEYWORDS[k].desc;
+      }).join(' ') + '</div>';
+    card.onclick = function () { completeBind(i); };
+    wrap.appendChild(card);
+  });
 }
 
 function raiseUnit(quiet) {
@@ -661,6 +752,7 @@ function promoteHost() {
   const target = raiseTier();
   let changed = false;
   host.forEach(function (u) {
+    if (u.form) return;                   // already been through the rite
     if (u.tier === 3) return;             // the dragon is already the top
     if (u.tier < target) {
       const ratio = u.hp / u.max;
@@ -708,17 +800,39 @@ function deathRipple() {
 function hostTakesHit(foe, incoming) {
   const host = hostUnits();
   if (!host.length) return false;
-  if (Math.random() >= Math.min(0.55, 0.12 * host.length)) return false;
-  const u = host[rng(0, host.length - 1)];
+  // A taunt unit stands in front of everything, always.
+  const guards = host.filter(function (u) { return unitHasKey(u, 'taunt'); });
+  let u;
+  if (guards.length) {
+    u = guards[rng(0, guards.length - 1)];
+  } else {
+    if (Math.random() >= Math.min(0.55, 0.12 * host.length)) return false;
+    u = host[rng(0, host.length - 1)];
+  }
+  const name = unitLabel(u);
+
+  // Warded shrugs off the first blow of the wave.
+  if (u.warded) {
+    u.warded = false;
+    runLog('<span class="boon">✨ ' + name + '\'s ward shatters</span> — no damage.');
+    floatOn('ally-' + u.id, 0);
+    return true;
+  }
+
   u.hp -= incoming;
-  const t = UNDEAD_TIERS[u.tier];
   if (u.hp <= 0) {
+    if (unitHasKey(u, 'reborn') && !u.rebornUsed) {
+      u.rebornUsed = true;
+      u.hp = 1;
+      runLog('<span class="boon">🔁 ' + name + ' will not stay down</span> — back at 1.');
+      return true;
+    }
     runState.retinue = host.filter(function (x) { return x !== u; });
     runState.fallen = (runState.fallen || 0) + 1;
-    runLog('<span class="hurt">' + foe.name + ' shatters your ' + t.name + '.</span>');
+    runLog('<span class="hurt">' + foe.name + ' shatters your ' + name + '.</span>');
     fallFx();
   } else {
-    runLog(foe.name + ' tears into your ' + t.name + ' for ' + incoming + '.');
+    floatOn('ally-' + u.id, incoming);
   }
   return true;
 }
@@ -1799,6 +1913,7 @@ let difficultyScale = 1;
 // Optional test strategy: given the offered choices, return an index to take.
 let autoBoonPick = null;
 let autoFightDefault = false;
+let autoBindPick = null;
 
 function enterDungeon(index) {
   if (G.busy || runState) return;
@@ -1829,7 +1944,7 @@ function enterDungeon(index) {
     retinue: [], fallen: 0, peakHost: 0,
     foes: [], orders: {}, focus: null, phase: 'orders', auto: autoFightDefault,
     idSeq: 0, bossWave: false, summoned: 0,
-    fury: 0, powerArmed: false,
+    fury: 0, powerArmed: false, bindPending: null,
     rampage: 0, hitCount: 0, round: 0,
     hpPenalty: 0, lastStandUsed: false,
     carryDetonate: 0, carryFreeze: false
@@ -1852,7 +1967,7 @@ function enterDungeon(index) {
 // Every summon is a whole extra attack per round, so they have to be rare
 // and bounded — a caller that replenishes faster than you clear is an
 // unwinnable wave, not a hard one.
-const FOE_MINION_CAP = 2;
+const FOE_MINION_CAP = 3;
 
 // Fury builds as you trade blows and buys one enormous swing. It is the
 // decision AUTO cannot take away from you.
@@ -1862,8 +1977,8 @@ const FURY_PER_TAKEN = 6;
 const POWER_MULT = 2.5;
 const CRIT_CHANCE = 0.08;
 const CRIT_MULT = 1.5;
-const SUMMON_BUDGET_BOSS = 2;
-const SUMMON_BUDGET_MOB = 1;
+const SUMMON_BUDGET_BOSS = 4;
+const SUMMON_BUDGET_MOB = 2;
 
 function nextId() {
   runState.idSeq = (runState.idSeq || 0) + 1;
@@ -1883,7 +1998,7 @@ function makeFoe(base, opts) {
     minion: !!(opts && opts.minion),
     calls: base.calls || 0, summonCd: 2,
     summonsLeft: (opts && opts.boss) ? SUMMON_BUDGET_BOSS : SUMMON_BUDGET_MOB,
-    burn: null, chill: 0, frozen: 0,
+    burn: null, chill: 0, frozen: 0, wither: null,
     intent: null
   };
   // Voidtouched sunders armour for the whole fight.
@@ -2097,26 +2212,50 @@ function playerSwing(target) {
 }
 
 function unitSwing(u, target) {
-  const t = { name: unitLabel(u) };
+  const swings = unitHasKey(u, 'double') ? 2 : 1;
+  for (let i = 0; i < swings && target.hp > 0; i++) unitStrike(u, target);
+}
+
+function unitStrike(u, target) {
+  const name = unitLabel(u);
   let dealt = rollDamage(unitStats(u).dmg, playerAttackRoll(), monsterDefenceRoll(target));
   let crit = false;
   if (dealt > 0 && Math.random() < CRIT_CHANCE) { dealt = Math.round(dealt * CRIT_MULT); crit = true; }
   if (dealt <= 0) {
-    runLog('<span class="miss">Your ' + t.name + ' claws at nothing.</span>');
+    runLog('<span class="miss">Your ' + name + ' claws at nothing.</span>');
     return;
   }
   target.hp -= dealt;
   awardCombatXp(dealt);
   flashCard('foe-' + target.id);
   floatOn('foe-' + target.id, dealt, crit ? 'crit' : 'necro');
-  let note = '';
-  // Wight Lords drain back to you.
-  if (boonTier('bonelegion') >= 2) {
-    const heal = Math.min(maxHp() - G.hp, Math.max(1, Math.round(dealt * 0.25)));
-    if (heal > 0) { G.hp += heal; note = ' <span class="boon">(drains ' + heal + ')</span>'; }
+
+  const notes = [];
+  // Wight Lords drain a quarter; a Draining form takes half.
+  let drainPct = boonTier('bonelegion') >= 2 ? 0.25 : 0;
+  if (unitHasKey(u, 'drain')) drainPct = Math.max(drainPct, 0.5);
+  if (drainPct > 0) {
+    const heal = Math.min(maxHp() - G.hp, Math.max(1, Math.round(dealt * drainPct)));
+    if (heal > 0) { G.hp += heal; notes.push('drains ' + heal); }
   }
-  runLog('<span class="boon">Your ' + t.name + ' hits ' + target.name +
-    ' for <b>' + dealt + '</b></span>' + note + '.');
+  // Withering rots whatever it touches.
+  if (unitHasKey(u, 'wither')) {
+    target.wither = { dmg: 3, rounds: 2 };
+    notes.push('☠ rotting');
+  }
+  // Sweeping spills onto the rest of the board.
+  if (unitHasKey(u, 'sweep')) {
+    const splash = Math.max(1, Math.round(dealt * 0.5));
+    aliveFoes().filter(function (f) { return f !== target; }).forEach(function (f) {
+      f.hp -= splash;
+      awardCombatXp(splash);
+      floatOn('foe-' + f.id, splash, 'necro');
+    });
+    notes.push('🌊 sweeps');
+  }
+  runLog('<span class="boon">Your ' + name + ' hits ' + target.name +
+    ' for <b>' + dealt + '</b></span>' +
+    (notes.length ? ' <span class="boon">(' + notes.join(', ') + ')</span>' : '') + '.');
 }
 
 function addFury(n) {
@@ -2246,7 +2385,7 @@ function willSummon(f) {
 }
 
 function doSummon(f) {
-  f.summonCd = 4;
+  f.summonCd = 3;
   f.summonsLeft -= 1;
   const m = makeFoe(runState.d.summon, { minion: true });
   runState.foes.push(m);
@@ -2265,6 +2404,13 @@ function endOfRound() {
   if (!runState || runState.over) return;
   // Burn ticks and chill decays across the whole board.
   aliveFoes().forEach(function (f) {
+    if (f.wither && f.wither.rounds > 0) {
+      f.hp -= f.wither.dmg;
+      f.wither.rounds -= 1;
+      awardCombatXp(f.wither.dmg);
+      floatOn('foe-' + f.id, f.wither.dmg, 'necro');
+      runLog('<span class="boon">☠ ' + f.name + ' rots</span> for ' + f.wither.dmg + '.');
+    }
     if (f.burn && f.burn.rounds > 0) {
       f.hp -= f.burn.dmg;
       f.burn.rounds -= 1;
@@ -2424,6 +2570,8 @@ function advanceWave() {
   if (runState.bossWave) return endRun(true);
   runState.wave += 1;
   runState.lastStandUsed = false;
+  // Wards reform between waves.
+  hostUnits().forEach(function (u) { if (unitHasKey(u, 'ward')) u.warded = true; });
 
   let pct = WAVE_HEAL_PCT + (boonTier('scavenger') >= 2 ? 15 : 0);
   const heal = Math.min(maxHp() - G.hp, Math.ceil(maxHp() * pct / 100));
@@ -2662,6 +2810,7 @@ function foeCard(f) {
   card.id = 'foe-' + f.id;
   const st = [];
   if (f.burn && f.burn.rounds > 0) st.push('🔥');
+  if (f.wither && f.wither.rounds > 0) st.push('☠');
   if (f.chill > 0) st.push('❄️');
   if (f.frozen > 0) st.push('🧊');
   // How many of your attackers are pointed at this one.
@@ -2677,28 +2826,34 @@ function foeCard(f) {
     '<div class="track"><div class="fill" style="width:' +
       Math.max(0, (f.hp / f.max) * 100) + '%"></div></div>' +
     '<div class="hpv">' + Math.max(0, f.hp) + ' / ' + f.max + '</div>' +
-    (aimed ? '<div class="aimed">🎯 ' + aimed + '</div>' : '');
+    (aimed ? '<div class="aimed">🎯' + aimed + '</div>' : '');
   card.onclick = function () { assignTarget(f.id); };
   card.ondblclick = function () { targetAll(f.id); };
   return card;
 }
 
 function allyCard(u, doomed) {
-  const t = UNDEAD_TIERS[u.tier];
   const st = unitStats(u);
   const card = el('div', 'unit t' + u.tier +
     (u.fresh ? ' rising' : '') + (u.promoted ? ' promoted' : '') +
     (u.bound ? ' bound' : '') + (doomed ? ' binding' : '') +
+    (unitHasKey(u, 'taunt') ? ' taunt' : '') + (u.warded ? ' warded' : '') +
     (orderSel === u.id ? ' picking' : ''));
   card.id = 'ally-' + u.id;
+  const kw = (u.keys || []).map(function (k) {
+    return '<span class="u-kw' + (k === 'ward' && !u.warded ? ' spent' : '') +
+      '" title="' + esc(KEYWORDS[k].name) + '">' + KEYWORDS[k].icon + '</span>';
+  }).join('');
   card.innerHTML =
-    '<span class="u-ico">' + t.icon + '</span>' +
-    '<span class="u-nm">' + unitLabel(u) + '</span>' +
+    '<span class="u-ico">' + unitIcon(u) + '</span>' +
+    (kw ? '<span class="u-keys">' + kw + '</span>' : '') +
+    '<span class="u-nm">' + esc(unitLabel(u)) + '</span>' +
     '<span class="u-bar"><i style="width:' + Math.max(0, (u.hp / u.max) * 100) + '%"></i></span>' +
     '<span class="u-hp">' + Math.max(0, u.hp) + ' / ' + u.max + '</span>' +
     '<span class="u-dmg">⚔ ' + st.dmg + '</span>' +
     orderBadge(u.id);
-  card.title = unitLabel(u) + ' — ' + Math.max(0, u.hp) + '/' + u.max + ', hits for ' + st.dmg;
+  card.title = unitLabel(u) + ' — ' + Math.max(0, u.hp) + '/' + u.max + ', hits for ' + st.dmg +
+    ((u.keys || []).length ? ' · ' + u.keys.map(function (k) { return KEYWORDS[k].name; }).join(', ') : '');
   card.onclick = function () { selectAttacker(u.id); };
   u.fresh = false; u.promoted = false;
   return card;
@@ -2841,7 +2996,7 @@ function runLog(html) {
   const p = el('p', '', html);
   c.appendChild(p);
   setTimeout(function () { try { c.removeChild(p); } catch (e) {} }, 2800);
-  while (c.children.length > 4) c.removeChild(c.firstChild);
+  while (c.children.length > 2) c.removeChild(c.firstChild);
 }
 
 function flashCard(id) {
@@ -2966,6 +3121,9 @@ window.__rf = {
   hostMaxHit: hostMaxHit, raiseUnit: raiseUnit, rollBoonChoices: rollBoonChoices,
   unleashFury: unleashFury, FURY_MAX: FURY_MAX,
   performBind: performBind, bindableTier: bindableTier, BIND_COUNT: BIND_COUNT,
+  completeBind: completeBind, bindOffers: bindOffers, BIND_FORMS: BIND_FORMS,
+  KEYWORDS: KEYWORDS,
+  setAutoBind: function (fn) { autoBindPick = fn; },
   // Headless runs need the board to play itself.
   setAutoFight: function (on) { autoFightDefault = !!on; if (runState) { runState.auto = !!on; if (on) enterOrders(); } },
   fight: function () { resolveTurn(); },
@@ -2990,9 +3148,12 @@ window.__rf = {
       }),
       allies: hostUnits().map(function (u) {
         return { id: u.id, tier: u.tier, hp: u.hp, max: u.max,
-                 bound: !!u.bound, dmg: unitStats(u).dmg };
+                 bound: !!u.bound, dmg: unitStats(u).dmg,
+                 form: u.form ? u.form.name : null, keys: (u.keys || []).slice(),
+                 warded: !!u.warded };
       }),
       bindable: bindableTier(), bindings: runState.bindings || 0,
+      bindPending: (runState.bindPending || []).map(function (f) { return f.name; }),
       orders: Object.assign({}, runState.orders),
       focus: runState.focus || null,
       fury: runState.fury || 0, powerArmed: !!runState.powerArmed,

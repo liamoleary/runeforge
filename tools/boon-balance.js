@@ -31,6 +31,7 @@ const TRIALS = +(process.env.TRIALS || 60);
     const G = window.G;
     R.setPace(0);
     R.setAutoFight(true);   // the board plays its own orders
+    R.setAutoBind((forms) => Math.floor(Math.random() * forms.length));
 
     function setup(t) {
       R.setLevels({ attack: t.combat, strength: t.combat, defence: t.combat, hitpoints: t.hp });
@@ -76,7 +77,7 @@ const TRIALS = +(process.env.TRIALS || 60);
             clearInterval(poll);
             const title = document.getElementById('result-title');
             resolve({ win: /CLEARED/.test(title.textContent) });
-          } else if (Date.now() - started > 8000) {
+          } else if (Date.now() - started > 25000) {
             clearInterval(poll);
             resolve({ win: false, stalled: true });
           }
