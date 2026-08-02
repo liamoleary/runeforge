@@ -278,10 +278,10 @@ const DUNGEONS = [
     blurb: 'Damp tunnels under the village. Something has been breeding down here.',
     waves: 12,
     monsters: [
-      { name: 'Giant Rat',   icon: '🐀', hp: 7,  atk: 6,  def: 1, maxHit: 3 , calls: 0.3 },
-      { name: 'Cave Slime',  icon: '🟢', hp: 9,  atk: 7,  def: 1, maxHit: 3 , calls: 0.3 }
+      { name: 'Giant Rat',   icon: '🐀', hp: 10,  atk: 6,  def: 1, maxHit: 5 , calls: 0.3 },
+      { name: 'Cave Slime',  icon: '🟢', hp: 13,  atk: 7,  def: 1, maxHit: 5 , calls: 0.3 }
     ],
-    boss: { name: 'Warren Brood-Mother', icon: '🕷️', hp: 16, atk: 10, def: 2, maxHit: 5 , calls: 0.5 },
+    boss: { name: 'Warren Brood-Mother', icon: '🕷️', hp: 22, atk: 10, def: 2, maxHit: 8 , calls: 0.5 },
     summonPrefix: 'Brood',
     drops: { ember_core: [1, 2], sapphire: [0, 1] },
     clearDrops: { ember_core: 3, sapphire: 2 }
@@ -291,10 +291,10 @@ const DUNGEONS = [
     blurb: 'A barrow sealed in black ice. The cold bites through bronze.',
     waves: 14,
     monsters: [
-      { name: 'Frost Ghoul',  icon: '🧟', hp: 13, atk: 22, def: 6, maxHit: 3 , calls: 0.3 },
-      { name: 'Ice Wraith',   icon: '👻', hp: 18, atk: 24, def: 7, maxHit: 3 , calls: 0.32 }
+      { name: 'Frost Ghoul',  icon: '🧟', hp: 18, atk: 22, def: 6, maxHit: 5 , calls: 0.3 },
+      { name: 'Ice Wraith',   icon: '👻', hp: 25, atk: 24, def: 7, maxHit: 5 , calls: 0.32 }
     ],
-    boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 32, atk: 30, def: 12, maxHit: 4 , calls: 0.5 },
+    boss: { name: 'The Hoarfrost Knight', icon: '🛡️', hp: 45, atk: 30, def: 12, maxHit: 6 , calls: 0.5 },
     summonPrefix: 'Frost',
     drops: { frost_shard: [1, 2], emerald: [0, 1] },
     clearDrops: { frost_shard: 3, emerald: 2 }
@@ -304,10 +304,10 @@ const DUNGEONS = [
     blurb: 'A tower struck by lightning so often the stone has turned to glass.',
     waves: 16,
     monsters: [
-      { name: 'Storm Sprite',  icon: '⚡', hp: 25,  atk: 39, def: 14, maxHit: 3 , calls: 0.32 },
-      { name: 'Thunder Golem', icon: '🗿', hp: 32,  atk: 43, def: 16, maxHit: 4 , calls: 0.3 }
+      { name: 'Storm Sprite',  icon: '⚡', hp: 35,  atk: 39, def: 14, maxHit: 5 , calls: 0.32 },
+      { name: 'Thunder Golem', icon: '🗿', hp: 45,  atk: 43, def: 16, maxHit: 6 , calls: 0.3 }
     ],
-    boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 65, atk: 52, def: 25, maxHit: 6 , calls: 0.5 },
+    boss: { name: 'Skyfather Vool', icon: '🌩️', hp: 91, atk: 52, def: 25, maxHit: 9 , calls: 0.5 },
     summonPrefix: 'Storm',
     drops: { storm_crystal: [1, 2], ruby: [0, 1] },
     clearDrops: { storm_crystal: 3, ruby: 2 }
@@ -317,10 +317,10 @@ const DUNGEONS = [
     blurb: 'The heat alone kills the unprepared. Bring the best steel you have.',
     waves: 18,
     monsters: [
-      { name: 'Whelp',        icon: '🦎', hp: 36,  atk: 57, def: 24, maxHit: 4 , calls: 0.34 },
-      { name: 'Ember Drake',  icon: '🐉', hp: 49,  atk: 63, def: 27, maxHit: 5 , calls: 0.3 }
+      { name: 'Whelp',        icon: '🦎', hp: 50,  atk: 57, def: 24, maxHit: 6 , calls: 0.34 },
+      { name: 'Ember Drake',  icon: '🐉', hp: 69,  atk: 63, def: 27, maxHit: 8 , calls: 0.3 }
     ],
-    boss: { name: 'Ashmaw the Elder', icon: '🐲', hp: 100, atk: 75, def: 39, maxHit: 7 , calls: 0.55 },
+    boss: { name: 'Ashmaw the Elder', icon: '🐲', hp: 140, atk: 75, def: 39, maxHit: 11 , calls: 0.55 },
     summonPrefix: 'Ash',
     drops: { dragon_ash: [1, 2], diamond: [0, 1] },
     clearDrops: { dragon_ash: 3, diamond: 2 }
@@ -330,10 +330,10 @@ const DUNGEONS = [
     blurb: 'Nothing comes back from here without rune on its back.',
     waves: 20,
     monsters: [
-      { name: 'Abyssal Leech',  icon: '🪱', hp: 52,  atk: 80, def: 35, maxHit: 5 , calls: 0.34 },
-      { name: 'Void Stalker',   icon: '👁️', hp: 70, atk: 88, def: 39, maxHit: 6 , calls: 0.32 }
+      { name: 'Abyssal Leech',  icon: '🪱', hp: 73,  atk: 80, def: 35, maxHit: 8 , calls: 0.34 },
+      { name: 'Void Stalker',   icon: '👁️', hp: 98, atk: 88, def: 39, maxHit: 9 , calls: 0.32 }
     ],
-    boss: { name: 'The Hollow King', icon: '👑', hp: 151, atk: 104, def: 54, maxHit: 9 , calls: 0.6 },
+    boss: { name: 'The Hollow King', icon: '👑', hp: 211, atk: 104, def: 54, maxHit: 14 , calls: 0.6 },
     summonPrefix: 'Void',
     drops: { dragonstone: [0, 1], dragon_ash: [1, 2] },
     clearDrops: { dragonstone: 3, dragon_ash: 4 }
@@ -1995,6 +1995,13 @@ const FOE_MINION_KINDS = [
   { name: 'Rotling', icon: '☠️', keys: ['wither'], hp: 1.00, dmg: 0.9 },
   { name: 'Leech',   icon: '🩸', keys: ['drain'],  hp: 1.00, dmg: 1.0 }
 ];
+// You gain a boon every exchange, so the far end of a delve has to be a
+// different proposition from the near end or the back half is a mop-up.
+const WAVE_RAMP = 0.07;
+function waveScale() {
+  return 1 + WAVE_RAMP * ((runState ? runState.wave : 1) - 1);
+}
+
 const MINION_HP_SHARE = 0.60;      // of whatever called it
 const MINION_HIT_SHARE = 0.70;
 
@@ -2044,7 +2051,7 @@ function tauntingFoe() {
 }
 
 function makeFoe(base, opts) {
-  const ds = difficultyScale;
+  const ds = difficultyScale * waveScale();
   const hp = Math.max(1, Math.round(base.hp * ds));
   const f = {
     id: nextId(),
@@ -3405,7 +3412,7 @@ window.__rf = {
                  keys: (f.keys || []).slice(), warded: !!f.warded };
       }),
       rot: runState.rot ? runState.rot.rounds : 0,
-      bulwark: !!runState.bulwark,
+      bulwark: !!runState.bulwark, waveScale: +waveScale().toFixed(2),
       allies: hostUnits().map(function (u) {
         return { id: u.id, tier: u.tier, hp: u.hp, max: u.max,
                  bound: !!u.bound, dmg: unitStats(u).dmg,
