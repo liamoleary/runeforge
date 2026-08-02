@@ -1751,15 +1751,16 @@ function enterDungeon(index) {
     // Everything below is the in-run build — discarded when the run ends.
     boons: {}, runLevel: 0, pending: null,
     retinue: [], fallen: 0, peakHost: 0,
-    foes: [], orders: {}, phase: 'orders', auto: autoFightDefault,
+    foes: [], orders: {}, focus: null, phase: 'orders', auto: autoFightDefault,
     idSeq: 0, bossWave: false, summoned: 0,
+    fury: 0, powerArmed: false,
     rampage: 0, hitCount: 0, round: 0,
     hpPenalty: 0, lastStandUsed: false,
     carryDetonate: 0, carryFreeze: false
   };
   if (index > G.deepestAttempt) G.deepestAttempt = index;
   $('run-name').textContent = d.name;
-  $('run-log').innerHTML = '';
+  const co = $('callout'); if (co) co.innerHTML = '';
   document.body.classList.add('in-run');
   startWave();
   render();
@@ -1776,6 +1777,15 @@ function enterDungeon(index) {
 // and bounded — a caller that replenishes faster than you clear is an
 // unwinnable wave, not a hard one.
 const FOE_MINION_CAP = 2;
+
+// Fury builds as you trade blows and buys one enormous swing. It is the
+// decision AUTO cannot take away from you.
+const FURY_MAX = 100;
+const FURY_PER_HIT = 9;
+const FURY_PER_TAKEN = 6;
+const POWER_MULT = 2.5;
+const CRIT_CHANCE = 0.08;
+const CRIT_MULT = 1.5;
 const SUMMON_BUDGET_BOSS = 2;
 const SUMMON_BUDGET_MOB = 1;
 
@@ -1797,10 +1807,13 @@ function makeFoe(base, opts) {
     minion: !!(opts && opts.minion),
     calls: base.calls || 0, summonCd: 2,
     summonsLeft: (opts && opts.boss) ? SUMMON_BUDGET_BOSS : SUMMON_BUDGET_MOB,
-    burn: null, chill: 0, frozen: 0
+    burn: null, chill: 0, frozen: 0,
+    intent: null
   };
   // Voidtouched sunders armour for the whole fight.
   if (boonTier('voidtouched') >= 1) f.def = Math.round(f.def * 0.7);
+  // Born telegraphing a plain attack; planIntents refines it each round.
+  f.intent = { kind: 'attack', icon: '⚔', label: String(f.maxHit) };
   return f;
 }
 
@@ -1866,12 +1879,17 @@ function enterOrders() {
   if (!runState || runState.over) return;
   if (!aliveFoes().length) { runTimer = setTimeout(advanceWave, pace(600)); return; }
   runState.phase = 'orders';
+  planIntents();
   defaultOrders();
   const list = attackerList();
   if (!list.some(function (a) { return a.id === orderSel; })) orderSel = list[0].id;
   renderDungeonRun();
-  // AUTO keeps last round's orders and plays them out without a tap.
-  if (runState.auto) runTimer = setTimeout(resolveTurn, pace(340));
+  // AUTO keeps last round's orders and plays them out without a tap — and
+  // spends a full fury meter, since it is playing everything else too.
+  if (runState.auto) {
+    if ((runState.fury || 0) >= FURY_MAX && !runState.powerArmed) unleashFury();
+    runTimer = setTimeout(resolveTurn, pace(340));
+  }
 }
 
 // Anything without a live target falls back to the wave's main enemy, so
@@ -1879,15 +1897,17 @@ function enterOrders() {
 function defaultOrders() {
   const alive = aliveFoes();
   if (!alive.length) return;
+  if (runState.focus && !foeById(runState.focus)) runState.focus = null;
   const main = mainFoe();
-  const fallback = (main && main.hp > 0 ? main : alive[0]).id;
+  const fallback = runState.focus ||
+    (main && main.hp > 0 ? main : alive[0]).id;
   attackerList().forEach(function (a) {
     if (!foeById(runState.orders[a.id])) runState.orders[a.id] = fallback;
   });
 }
 
 function selectAttacker(id) {
-  if (!runState || runState.phase !== 'orders') return;
+  if (!runState) return;
   orderSel = id;
   renderDungeonRun();
 }
@@ -1895,8 +1915,11 @@ function selectAttacker(id) {
 // Tapping an enemy assigns the selected attacker and moves on to the next,
 // so a run of taps sets the whole board.
 function assignTarget(foeId) {
-  if (!runState || runState.phase !== 'orders') return;
+  if (!runState) return;
   if (!foeById(foeId)) return;
+  // While it plays itself, a tap means "everything on that one" — focus fire
+  // you can redirect mid-fight without stopping to give orders.
+  if (runState.auto) return targetAll(foeId);
   const list = attackerList();
   let i = list.map(function (a) { return a.id; }).indexOf(orderSel);
   if (i < 0) i = 0;
@@ -1906,7 +1929,8 @@ function assignTarget(foeId) {
 }
 
 function targetAll(foeId) {
-  if (!runState || runState.phase !== 'orders' || !foeById(foeId)) return;
+  if (!runState || !foeById(foeId)) return;
+  runState.focus = foeId;
   attackerList().forEach(function (a) { runState.orders[a.id] = foeId; });
   renderDungeonRun();
 }
@@ -1949,16 +1973,41 @@ function stepAttack(queue, i) {
 }
 
 function playerSwing(target) {
-  const raw = rollDamage(playerMaxHit(), playerAttackRoll(), monsterDefenceRoll(target));
+  const power = !!runState.powerArmed;
+  let raw = rollDamage(playerMaxHit(), playerAttackRoll(), monsterDefenceRoll(target));
+  let crit = false;
+  if (power) {
+    // A power strike never whiffs.
+    raw = Math.max(raw, Math.round(playerMaxHit() * 0.6));
+    raw = Math.round(raw * POWER_MULT);
+    runState.powerArmed = false;
+  } else if (raw > 0 && Math.random() < CRIT_CHANCE) {
+    raw = Math.round(raw * CRIT_MULT);
+    crit = true;
+  }
   const off = boonOffence(raw, target);
   target.hp -= off.dmg;
   awardCombatXp(off.dmg);
+  if (raw > 0) addFury(FURY_PER_HIT);
   flashCard('foe-' + target.id);
-  floatOn('foe-' + target.id, off.dmg);
-  runLog(raw > 0
-    ? 'You hit <b>' + off.dmg + '</b> on the ' + target.name +
-      (off.notes.length ? ' <span class="boon">(' + off.notes.join(', ') + ')</span>' : '') + '.'
-    : '<span class="miss">You miss the ' + target.name + '.</span>');
+  floatOn('foe-' + target.id, off.dmg, (power || crit) ? 'crit' : '');
+  if (power || crit) quake();
+  runLog(power
+    ? '<span class="fury">⚡ POWER STRIKE</span> — <b>' + off.dmg + '</b> into the ' + target.name + '.'
+    : (raw > 0
+      ? (crit ? '<span class="win">Critical!</span> ' : '') + 'You hit <b>' + off.dmg + '</b> on the ' + target.name +
+        (off.notes.length ? ' <span class="boon">(' + off.notes.join(', ') + ')</span>' : '') + '.'
+      : '<span class="miss">You miss the ' + target.name + '.</span>'));
+
+  // A power strike cleaves into everything else on the board.
+  if (power) {
+    const splash = Math.max(1, Math.round(off.dmg * 0.5));
+    aliveFoes().filter(function (f) { return f !== target; }).forEach(function (f) {
+      f.hp -= splash;
+      awardCombatXp(splash);
+      floatOn('foe-' + f.id, splash);
+    });
+  }
 
   // Stormcaller arcs spill onto whatever else is standing.
   off.extraHits.forEach(function (h) {
@@ -1973,7 +2022,9 @@ function playerSwing(target) {
 
 function unitSwing(u, target) {
   const t = UNDEAD_TIERS[u.tier];
-  const dealt = rollDamage(undeadStats(u.tier).dmg, playerAttackRoll(), monsterDefenceRoll(target));
+  let dealt = rollDamage(undeadStats(u.tier).dmg, playerAttackRoll(), monsterDefenceRoll(target));
+  let crit = false;
+  if (dealt > 0 && Math.random() < CRIT_CHANCE) { dealt = Math.round(dealt * CRIT_MULT); crit = true; }
   if (dealt <= 0) {
     runLog('<span class="miss">Your ' + t.name + ' claws at nothing.</span>');
     return;
@@ -1981,7 +2032,7 @@ function unitSwing(u, target) {
   target.hp -= dealt;
   awardCombatXp(dealt);
   flashCard('foe-' + target.id);
-  floatOn('foe-' + target.id, dealt, 'necro');
+  floatOn('foe-' + target.id, dealt, crit ? 'crit' : 'necro');
   let note = '';
   // Wight Lords drain back to you.
   if (boonTier('bonelegion') >= 2) {
@@ -1990,6 +2041,30 @@ function unitSwing(u, target) {
   }
   runLog('<span class="boon">Your ' + t.name + ' hits ' + target.name +
     ' for <b>' + dealt + '</b></span>' + note + '.');
+}
+
+function addFury(n) {
+  if (!runState) return;
+  runState.fury = Math.min(FURY_MAX, (runState.fury || 0) + n);
+}
+
+// Spend a full meter to arm the next swing.
+function unleashFury() {
+  if (!runState || runState.over) return;
+  if ((runState.fury || 0) < FURY_MAX || runState.powerArmed) return;
+  runState.fury = 0;
+  runState.powerArmed = true;
+  runLog('<span class="fury">⚡ Fury unleashed</span> — your next blow lands like a hammer.');
+  hostBanner('POWER STRIKE');
+  renderDungeonRun();
+}
+
+function quake() {
+  const b = $('run-board');
+  if (!b || paceScale === 0) return;
+  b.classList.remove('quake');
+  void b.offsetWidth;
+  b.classList.add('quake');
 }
 
 function afterPlayerPhase() {
@@ -2020,8 +2095,11 @@ function stepFoe(queue, i) {
     renderDungeonRun();
     return next();
   }
-  // Calling for help costs the turn — the trade that makes summons fair.
-  if (maybeSummon(f)) { renderDungeonRun(); return next(); }
+  // Calling for help, or finding a second wind, costs the turn — the trade
+  // that makes both fair, and what the telegraph promised.
+  const intent = f.intent || decideIntent(f);
+  if (intent.kind === 'summon') { doSummon(f); renderDungeonRun(); return next(); }
+  if (intent.kind === 'enrage') { doEnrage(f); renderDungeonRun(); return next(); }
 
   const incoming = rollDamage(f.maxHit, monsterAttackRoll(f), playerDefenceRoll());
   const def = boonDefence(incoming, f);
@@ -2040,6 +2118,7 @@ function stepFoe(queue, i) {
       G.hp = Math.max(1, Math.round(maxHp() * 0.25));
       runLog('<span class="boon">🪨 Last Stand</span> — you refuse to fall, at ' + G.hp + ' hp.');
     }
+    if (def.dmg > 0) addFury(FURY_PER_TAKEN);
     flashCard('you-card');
     floatOn('you-card', def.dmg);
     runLog(def.dmg > 0
@@ -2066,19 +2145,44 @@ function stepFoe(queue, i) {
 }
 
 // A foe calls up a minion of its dungeon's kind, on a cooldown and under a cap.
-function maybeSummon(f) {
+// Everything an enemy might do next, decided before you give orders so the
+// board can telegraph it. A read you can act on is the whole point.
+function planIntents() {
+  aliveFoes().forEach(function (f) { f.intent = decideIntent(f); });
+}
+
+function decideIntent(f) {
+  if (f.frozen > 0) return { kind: 'frozen', icon: '🧊', label: 'frozen' };
+  // A boss finds a second wind at half health, once.
+  if (f.boss && !f.enraged && f.hp <= f.max * 0.5) {
+    return { kind: 'enrage', icon: '😤', label: 'ENRAGE' };
+  }
+  if (willSummon(f)) return { kind: 'summon', icon: '💀', label: 'calling' };
+  return { kind: 'attack', icon: '⚔', label: String(f.maxHit) };
+}
+
+function willSummon(f) {
   const tpl = runState.d.summon;
   if (!tpl || !f.calls || f.summonsLeft <= 0) return false;
   if (f.summonCd > 0) { f.summonCd -= 1; return false; }
   if (runState.foes.filter(function (x) { return x.minion && x.hp > 0; }).length >= FOE_MINION_CAP) return false;
-  if (Math.random() >= f.calls) return false;
+  return Math.random() < f.calls;
+}
+
+function doSummon(f) {
   f.summonCd = 4;
   f.summonsLeft -= 1;
-  const m = makeFoe(tpl, { minion: true });
+  const m = makeFoe(runState.d.summon, { minion: true });
   runState.foes.push(m);
   runState.summoned = (runState.summoned || 0) + 1;
   runLog('<span class="boss">' + f.name + ' calls up a ' + m.name + '.</span>');
-  return true;
+}
+
+function doEnrage(f) {
+  f.enraged = true;
+  f.maxHit = Math.max(f.maxHit + 1, Math.round(f.maxHit * 1.5));
+  runLog('<span class="boss">' + f.name + ' is enraged</span> — it hits far harder now.');
+  hostBanner('ENRAGED');
 }
 
 function endOfRound() {
@@ -2473,7 +2577,8 @@ function renderDungeonRun() {
 }
 
 function foeCard(f) {
-  const card = el('div', 'combatant foe' + (f.minion ? ' minion' : '') + (f.boss ? ' boss' : ''));
+  const card = el('div', 'combatant foe' + (f.minion ? ' minion' : '') +
+    (f.boss ? ' boss' : '') + (runState.focus === f.id ? ' focused' : ''));
   card.id = 'foe-' + f.id;
   const st = [];
   if (f.burn && f.burn.rounds > 0) st.push('🔥');
@@ -2483,14 +2588,16 @@ function foeCard(f) {
   const aimed = attackerList().filter(function (a) {
     return runState.orders[a.id] === f.id;
   }).length;
+  const it = f.intent;
   card.innerHTML =
+    (it ? '<div class="intent ' + it.kind + '">' + it.icon + ' ' + it.label + '</div>' : '') +
     '<div class="ico">' + f.icon + '</div>' +
     '<div class="status">' + st.join(' ') + '</div>' +
     '<div class="nm">' + esc(f.name) + '</div>' +
     '<div class="track"><div class="fill" style="width:' +
       Math.max(0, (f.hp / f.max) * 100) + '%"></div></div>' +
     '<div class="hpv">' + Math.max(0, f.hp) + ' / ' + f.max + '</div>' +
-    (aimed ? '<div class="aimed">⚔ ' + aimed + '</div>' : '');
+    (aimed ? '<div class="aimed">🎯 ' + aimed + '</div>' : '');
   card.onclick = function () { assignTarget(f.id); };
   card.ondblclick = function () { targetAll(f.id); };
   return card;
@@ -2544,9 +2651,29 @@ function renderOrderBar() {
   fight.textContent = ordering ? 'FIGHT' : '…';
   auto.classList.toggle('on', !!runState.auto);
   auto.textContent = runState.auto ? 'AUTO ON' : 'AUTO';
+
+  // Fury.
+  const bar = $('fury-bar'), fill = $('fury-fill'), label = $('fury-label');
+  if (bar) {
+    const f = runState.fury || 0;
+    const ready = f >= FURY_MAX && !runState.powerArmed;
+    fill.style.width = (f / FURY_MAX * 100) + '%';
+    bar.classList.toggle('ready', ready);
+    bar.classList.toggle('armed', !!runState.powerArmed);
+    bar.disabled = !ready;
+    label.textContent = runState.powerArmed ? '⚡ POWER STRIKE READY'
+      : (ready ? '⚡ UNLEASH FURY' : 'FURY ' + Math.round(f) + '%');
+  }
+
   if (!hint) return;
-  if (!ordering) { hint.textContent = ''; return; }
   const many = aliveFoes().length > 1;
+  if (runState.auto) {
+    hint.textContent = many
+      ? 'Tap an enemy to focus everything on it.'
+      : 'Playing itself — tap AUTO to take the reins back.';
+    return;
+  }
+  if (!ordering) { hint.textContent = ''; return; }
   const sel = orderSel === 'you' ? 'You' : 'Your risen';
   hint.innerHTML = many
     ? sel + ' — tap an enemy to aim, double-tap to aim everything.'
@@ -2598,17 +2725,25 @@ function fallFx() {
 function hostBanner(text) {
   const stage = $('run-board');
   if (!stage) return;
+  const prev = stage.querySelector('.host-banner');
+  if (prev) stage.removeChild(prev);
   const b = el('div', 'host-banner', text);
   stage.appendChild(b);
   setTimeout(function () { try { stage.removeChild(b); } catch (e) {} }, 1600);
 }
 
+// Ordinary hits are told by the floating numbers. Only the lines that carry
+// a decision or a moment reach the callout — everything else is dropped.
+const NOTABLE = /class="(boon|win|boss|lose|fury)"/;
+
 function runLog(html) {
-  const l = $('run-log');
-  if (!l) return;
-  l.appendChild(el('p', '', html));
-  l.scrollTop = l.scrollHeight;
-  while (l.children.length > 40) l.removeChild(l.firstChild);
+  if (!NOTABLE.test(html)) return;
+  const c = $('callout');
+  if (!c) return;
+  const p = el('p', '', html);
+  c.appendChild(p);
+  setTimeout(function () { try { c.removeChild(p); } catch (e) {} }, 2800);
+  while (c.children.length > 4) c.removeChild(c.firstChild);
 }
 
 function flashCard(id) {
@@ -2661,6 +2796,8 @@ function wire() {
   if (fight) fight.onclick = function () { resolveTurn(); };
   const auto = $('run-auto');
   if (auto) auto.onclick = toggleAuto;
+  const fury = $('fury-bar');
+  if (fury) fury.onclick = unleashFury;
   const cont = $('result-continue');
   if (cont) cont.onclick = function () { showTab('dungeon'); };
   const stop = $('ga-stop');
@@ -2727,6 +2864,7 @@ window.__rf = {
   UNDEAD_TIERS: UNDEAD_TIERS, HOST_CAP: HOST_CAP,
   boonTier: boonTier, boonName: boonName, boonUnlocked: boonUnlocked,
   hostMaxHit: hostMaxHit, raiseUnit: raiseUnit, rollBoonChoices: rollBoonChoices,
+  unleashFury: unleashFury, FURY_MAX: FURY_MAX,
   // Headless runs need the board to play itself.
   setAutoFight: function (on) { autoFightDefault = !!on; if (runState) { runState.auto = !!on; if (on) enterOrders(); } },
   fight: function () { resolveTurn(); },
@@ -2751,6 +2889,9 @@ window.__rf = {
       }),
       allies: hostUnits().map(function (u) { return { id: u.id, tier: u.tier, hp: u.hp }; }),
       orders: Object.assign({}, runState.orders),
+      focus: runState.focus || null,
+      fury: runState.fury || 0, powerArmed: !!runState.powerArmed,
+      intents: runState.foes.map(function (f) { return f.intent ? f.intent.kind : null; }),
       sel: orderSel, summoned: runState.summoned || 0
     };
   },

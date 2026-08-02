@@ -2,6 +2,7 @@
 // Needs a local server (default port 3111) and Playwright.
 const { chromium } = require('playwright');
 const BASE = process.env.RF_URL || 'http://localhost:3111/';
+const __rfFuryMax = 100;
 let fails = 0;
 function check(name, cond, extra) {
   if (!cond) fails++;
@@ -220,6 +221,47 @@ async function boardChecks(page, check) {
   check('orders on a dead enemy fall back to a live one',
     Object.keys(b4.orders).every(k => b4.foes.some(f => f.id === b4.orders[k])),
     JSON.stringify(b4.orders));
+
+  console.log('\n== Fury, crits and telegraphs ==');
+  const tele = await page.evaluate(() => __rf.board());
+  check('every enemy telegraphs its next move',
+    tele.intents.length > 0 && tele.intents.every(k => k !== null),
+    tele.intents.join(','));
+  check('the fury meter is not spendable until full',
+    !(await page.isEnabled('#fury-bar')));
+
+  const fury0 = await page.evaluate(() => __rf.board().fury);
+  await page.click('#run-fight');
+  await page.waitForFunction(() => __rf.board() && __rf.board().phase === 'orders', { timeout: 30000 });
+  const fury1 = await page.evaluate(() => __rf.board().fury);
+  check('fury builds as you trade blows', fury1 > fury0, `${fury0} → ${fury1}`);
+
+  // Charge it by fighting rather than by poking state.
+  await page.evaluate(async () => {
+    __rf.setAutoFight(true);
+    await new Promise(r => {
+      const t = setInterval(() => {
+        const b = __rf.board();
+        if (!b || !__rf.isInRun() || b.fury >= __rf.FURY_MAX || b.powerArmed) {
+          clearInterval(t); r();
+        }
+      }, 0);
+    });
+    __rf.setAutoFight(false);
+  });
+  const full = await page.evaluate(() => __rf.board());
+  check('fury fills from ordinary fighting',
+    !!full && (full.fury >= __rfFuryMax || full.powerArmed), full && full.fury);
+  if (full && !full.powerArmed) await page.evaluate(() => __rf.unleashFury());
+  const armed = await page.evaluate(() => __rf.board());
+  check('unleashing arms a power strike', !!armed && armed.powerArmed === true);
+  check('and empties the meter', !!armed && armed.fury === 0, armed && armed.fury);
+  await page.waitForFunction(() => !__rf.isInRun() || !__rf.board().powerArmed ||
+    __rf.board().phase === 'orders', { timeout: 30000 });
+  if (await page.isEnabled('#run-fight')) await page.click('#run-fight');
+  await page.waitForFunction(() => !__rf.isInRun() || !__rf.board().powerArmed, { timeout: 30000 });
+  check('the strike is spent on the next swing',
+    await page.evaluate(() => !__rf.isInRun() || !__rf.board().powerArmed));
 
   // AUTO takes over so a run can be played without tapping.
   await page.evaluate(() => { __rf.setAutoBoon(() => 0); __rf.setAutoFight(true); });

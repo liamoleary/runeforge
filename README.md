@@ -89,15 +89,55 @@ Tap an ally to select it, tap an enemy to aim it; the selection walks to the
 next attacker so a run of taps sets the whole board. Double-tap an enemy to
 aim everything at it. There is always a legal default — anything without a live
 target falls back to the wave's main enemy — so FIGHT alone is a valid move and
-the tactics stay optional until they matter. **AUTO** plays each round with
-your standing orders when you would rather not tap.
+the tactics stay optional until they matter.
 
-Orders only become a decision when there is more than one thing to hit, and
-target badges stay hidden until then. **Enemies summon too:** bosses in every
-dungeon call up minions of their own kind, and the deeper dungeons have elites
-that do it as well. A summon costs the caller its turn, minions are capped at
-three, and they drop nothing — so a boss that keeps calling is buying time, not
-farming you for loot. They still have to be killed.
+**AUTO** plays each round with your standing orders, and while it runs a single
+tap on an enemy focuses *everything* on it until that enemy is dead. So you can
+let a run play and still call the shots that matter, without stepping through
+every round.
+
+### Reading the board
+
+Every enemy telegraphs its next move above its head, decided before you give
+orders and honoured when the round resolves:
+
+| | |
+|---|---|
+| ⚔ **7** | it will attack, for up to 7 |
+| 💀 **calling** | it will summon — kill it now or fight two |
+| 😤 **ENRAGE** | a boss at half health, about to hit far harder |
+| 🧊 **frozen** | it loses the turn |
+
+That is what makes targeting a decision rather than a formality: a summoner
+winding up is worth more than the boss's health bar this round.
+
+**Enemies summon too.** Bosses in every dungeon call up minions of their own
+kind, and the deeper dungeons have elites that do it as well. A summon costs
+the caller its turn, minions cap at two on the board, each caller has a
+per-wave budget, and they drop nothing — so a boss that keeps calling is
+buying time, not farming you. They still have to be killed.
+
+### Fury
+
+Trading blows fills a **fury** meter — faster when you land hits, slower when
+you take them. Fill it and the bar under the board lights up: spend it to arm a
+**Power Strike**, a swing that cannot miss, lands for two and a half times
+damage, and cleaves half of that into everything else on the board.
+
+It is the one decision AUTO cannot take from you — hold it for a boss's enrage
+turn, or dump it into a wave that has got away from you. (AUTO will spend it
+for you if you leave it running, since at that point it is playing everything
+else too.)
+
+Hits crit at 8% for half again, with a gold number and a shove of the whole
+board.
+
+### The callout
+
+There is no combat log. Damage is told by the numbers floating off the
+combatants, and only the lines that carry a moment — a kill, a boon, a summon,
+an enrage, a power strike — flash over the middle of the board and fade. The
+board gets the space the log used to take.
 
 ### Boons
 

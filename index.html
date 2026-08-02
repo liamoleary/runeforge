@@ -366,9 +366,9 @@ body.in-run #run-overlay { display: flex; }
 /* ===== The board: enemies at the top, you and your risen at the bottom ===== */
 #run-board {
   --necro: 0;
-  position: relative; flex: 0 0 auto;
+  position: relative; flex: 1 1 auto; min-height: 0;
   display: flex; flex-direction: column; justify-content: space-between;
-  padding: 12px 12px 10px;
+  padding: 20px 12px 10px;
   background: linear-gradient(180deg, rgba(60,10,10,.32), rgba(0,0,0,.5));
   overflow: hidden;
 }
@@ -379,9 +379,11 @@ body.in-run #run-overlay { display: flex; }
   opacity: var(--necro); transition: opacity .6s;
 }
 #foe-side, #ally-side {
-  position: relative; z-index: 2;
+  position: relative; z-index: 2; flex: 1; min-height: 0;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
 }
+#foe-side { justify-content: flex-start; }
+#ally-side { justify-content: flex-end; }
 #foe-main, #foe-minions, #ally-minions {
   display: flex; flex-wrap: wrap; align-items: flex-start;
   justify-content: center; gap: 8px;
@@ -396,7 +398,7 @@ body.in-run #run-overlay { display: flex; }
 
 .combatant {
   text-align: center; width: 104px; position: relative; z-index: 2;
-  border-radius: 8px; padding: 4px 2px; border: 1px solid transparent;
+  border-radius: 8px; padding: 13px 2px 4px; border: 1px solid transparent;
   transition: border-color .15s, transform .12s;
 }
 .combatant.foe { cursor: pointer; }
@@ -419,7 +421,7 @@ body.in-run #run-overlay { display: flex; }
 .combatant .hpv { font-size: 9px; color: var(--text3); }
 /* How many of your attackers are pointed here. */
 .combatant .aimed {
-  position: absolute; top: 0; right: 2px;
+  position: absolute; bottom: -6px; right: 4px;
   font-family: 'Cinzel', serif; font-size: 9px; color: var(--gold);
   background: rgba(0,0,0,.72); border: 1px solid var(--bdr2);
   border-radius: 8px; padding: 0 5px;
@@ -540,7 +542,8 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
   box-shadow: 0 0 8px rgba(90,240,150,.7);
 }
 @media (prefers-reduced-motion: reduce) {
-  .rise-ghost, .host-banner, .unit.rising, .unit.promoted, #run-host.shudder, .lunge {
+  .rise-ghost, .host-banner, .unit.rising, .unit.promoted, #run-host.shudder, .lunge,
+  #run-board.quake, #fury-bar.ready, .intent.enrage {
     animation-duration: .01ms !important;
   }
 }
@@ -570,7 +573,6 @@ body.ordering .combatant.foe:hover { border-color: var(--gold); }
   font-style: normal; font-family: 'Cinzel', serif;
   font-size: 8px; color: var(--gold); letter-spacing: 1px;
 }
-#run-log .boon { color: #c9a0ff; font-weight: 600; }
 
 /* ===== Between-wave boon pick ===== */
 #boon-pick {
@@ -645,18 +647,87 @@ body.picking-boon #boon-pick { display: flex; }
 }
 .rr-tier { color: var(--text3); font-size: 9px; }
 
-#run-log {
-  flex: 1 1 0; min-height: 60px; overflow-y: auto; padding: 10px 14px;
-  font-size: 12px; color: var(--text2); line-height: 1.5;
-  border-top: 1px solid var(--bdr);
+/* Notable events flash over the board and fade — no scrollback, no panel. */
+#callout {
+  position: absolute; left: 0; right: 0; top: 50%; z-index: 7;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column-reverse; align-items: center;
+  gap: 2px; padding: 0 14px; pointer-events: none;
 }
-#run-log p { margin-bottom: 2px; }
-#run-log b { color: var(--gold2); }
-#run-log .miss { color: var(--text3); font-style: italic; }
-#run-log .hurt { color: #f08080; }
-#run-log .win { color: var(--green); font-weight: 600; }
-#run-log .lose { color: var(--red); font-weight: 600; }
-#run-log .boss { color: var(--gold); font-weight: 700; letter-spacing: .5px; }
+#callout p {
+  font-size: 12px; line-height: 1.35; text-align: center;
+  color: var(--text2); text-shadow: 0 1px 4px rgba(0,0,0,.95);
+  animation: calloutFade 2.8s ease forwards;
+}
+@keyframes calloutFade {
+  0% { opacity: 0; transform: translateY(6px); }
+  12% { opacity: 1; transform: none; }
+  72% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+#callout b { color: var(--gold2); }
+#callout .win { color: var(--green); font-weight: 600; }
+#callout .lose { color: var(--red); font-weight: 600; }
+#callout .boss { color: var(--gold); font-weight: 700; letter-spacing: .5px; }
+#callout .boon { color: #c9a0ff; font-weight: 600; }
+#callout .fury { color: #ff9c3c; font-weight: 700; letter-spacing: 1px; }
+
+#fury-bar {
+  position: relative; display: block; width: calc(100% - 28px);
+  margin: 0 14px; height: 30px; overflow: hidden;
+  background: #140d05; border: 1px solid var(--bdr); border-radius: 7px;
+  cursor: default; padding: 0;
+}
+#fury-fill {
+  position: absolute; inset: 0; width: 0%;
+  background: linear-gradient(90deg, #7a3a08, #ff9c3c);
+  transition: width .3s;
+}
+#fury-label {
+  position: relative; z-index: 2; display: block; line-height: 30px;
+  font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 3px;
+  color: #ffdcb0;
+  text-shadow: 0 1px 3px rgba(0,0,0,.95), 0 0 8px rgba(0,0,0,.8);
+}
+#fury-bar.ready {
+  border-color: #ff9c3c; cursor: pointer;
+  box-shadow: 0 0 16px rgba(255,156,60,.45);
+  animation: furyPulse 1.1s ease-in-out infinite;
+}
+#fury-bar.ready #fury-label { color: #ffe0b0; }
+@keyframes furyPulse {
+  0%,100% { box-shadow: 0 0 10px rgba(255,156,60,.35); }
+  50% { box-shadow: 0 0 22px rgba(255,156,60,.7); }
+}
+#fury-bar.armed { border-color: var(--gold); animation: none; }
+#fury-bar.armed #fury-fill { background: linear-gradient(90deg, #6b4f22, var(--gold)); width: 100% !important; }
+#fury-bar.armed #fury-label { color: #1a1208; font-weight: 700; }
+
+/* Enemy intent: what it is about to do, before you commit. */
+.intent {
+  position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;
+  font-family: 'Cinzel', serif; font-size: 10px; font-weight: 700;
+  background: rgba(0,0,0,.82); border: 1px solid var(--bdr2);
+  border-radius: 9px; padding: 1px 7px; color: #ffb0a0;
+}
+.intent.summon { color: #c9a0ff; border-color: #4a3a6b; }
+.intent.enrage { color: #ff7a3c; border-color: #a04010; animation: furyPulse 1s ease-in-out infinite; }
+.intent.frozen { color: #9ad6ff; border-color: #2a5a7a; }
+/* The one everything is pointed at. */
+.combatant.focused { border-color: var(--gold); box-shadow: 0 0 16px rgba(240,192,64,.35); }
+
+.float.crit {
+  font-size: 30px; color: #ffd24a;
+  text-shadow: 0 0 14px rgba(255,180,40,.9), 0 2px 5px rgba(0,0,0,.9);
+}
+#run-board.quake { animation: quake .32s ease; }
+@keyframes quake {
+  0%,100% { transform: translate(0,0); }
+  25% { transform: translate(-4px, 2px); }
+  60% { transform: translate(3px, -2px); }
+}
+
 #order-hint {
   padding: 5px 14px 0; font-size: 11px; font-style: italic;
   color: var(--text2); text-align: center; min-height: 18px;
@@ -990,6 +1061,7 @@ body.in-run #nav { display: none; }
       <div id="ally-minions"></div>
       <div class="combatant you" id="you-card"></div>
     </div>
+    <div id="callout"></div>
   </div>
 
   <!-- The risen retinue of the Necromancy path -->
@@ -1001,7 +1073,10 @@ body.in-run #nav { display: none; }
     <div class="host-power"><i id="host-power" style="width:0%"></i></div>
   </div>
 
-  <div id="run-log"></div>
+  <button id="fury-bar" disabled>
+    <i id="fury-fill"></i>
+    <span id="fury-label">FURY</span>
+  </button>
   <div id="order-hint"></div>
   <div id="run-actions">
     <button id="run-fight">FIGHT</button>
