@@ -371,12 +371,34 @@ const BOON_LINES = {
       { name: 'Thunderhead',desc: 'Every fifth strike arcs twice, guaranteed.' }
     ]
   },
+  // ---- The Necromancy path ----------------------------------------
+  // A root line that opens two branches, in the old Might and Magic
+  // shape: one mastery ladder, then specialisations you can only reach
+  // by committing to it first.
   necromancy: {
-    name: 'Necromancy', icon: '💀', blurb: 'Undeath',
+    name: 'Necromancy', icon: '💀', blurb: 'Undeath', faction: 'necromancy', root: true,
     tiers: [
-      { name: 'Siphon',   desc: 'Killing a foe restores 12% of your health.' },
-      { name: 'Shade',    desc: 'Each kill raises a shade — every shade adds 30% of your max hit. Fades after 3 rounds.' },
-      { name: 'Undying',  desc: 'Shades no longer fade.' }
+      { name: 'Raise Dead',    desc: 'A slain foe has a 40% chance to rise as a Skeleton and fight for you.' },
+      { name: 'Dark Mastery',  desc: 'Three quarters of the slain rise, and a boss always does.' },
+      { name: 'Lord of Bones', desc: 'Everything you kill rises — and rises in pairs.' }
+    ]
+  },
+  bonelegion: {
+    name: 'Bone Legion', icon: '🦴', blurb: 'The host',
+    faction: 'necromancy', req: { necromancy: 1 },
+    tiers: [
+      { name: 'Grave Rot',   desc: 'Your host rises as Ghouls instead — and everything already standing rots into one.' },
+      { name: 'Wight Lords', desc: 'Ghouls become Wights, and their strikes drain a quarter back to you.' },
+      { name: 'Bone Dragon', desc: 'The eldest of your host rises again as a Bone Dragon.' }
+    ]
+  },
+  deathmagic: {
+    name: 'Death Magic', icon: '🕯️', blurb: 'Ruin',
+    faction: 'necromancy', req: { necromancy: 1 },
+    tiers: [
+      { name: 'Death Ripple',   desc: 'Every third round, decay washes out for 2 damage per risen unit.' },
+      { name: 'Animate Dead',   desc: 'Each new wave, half of your fallen claw their way back.' },
+      { name: 'Unholy Bargain', desc: 'A killing blow consumes your host instead — each unit spent restores 20% health.' }
     ]
   },
   stoneblood: {
@@ -415,14 +437,25 @@ const BOON_LINES = {
 const BOON_KEYS = Object.keys(BOON_LINES);
 const MAX_BOON_TIER = 3;
 
+// What the risen look like. Damage and life are read off the player, so a
+// host is always worth something relative to where you are.
+const UNDEAD_TIERS = [
+  { name: 'Skeleton',    icon: '🦴', dmg: 0.15, hp: 0.20 },
+  { name: 'Ghoul',       icon: '🧟', dmg: 0.22, hp: 0.30 },
+  { name: 'Wight',       icon: '👻', dmg: 0.30, hp: 0.40 },
+  { name: 'Bone Dragon', icon: '🐉', dmg: 0.60, hp: 0.80 }
+];
+const HOST_CAP = 7;             // seven stacks, as an army should be
+
 // Each dungeon draws from its own lines, so the Crypt reliably makes
-// necromancers and the Spire makes stormcallers.
+// necromancers and the Spire makes stormcallers. Branch lines sit in the
+// pool from the start but stay hidden until their root is taken.
 const DUNGEON_BOONS = {
   warren: ['scavenger', 'emberbrand', 'stoneblood', 'bloodlust'],
-  crypt:  ['frostbite', 'necromancy', 'stoneblood', 'voidtouched'],
+  crypt:  ['frostbite', 'necromancy', 'stoneblood', 'voidtouched', 'bonelegion', 'deathmagic'],
   spire:  ['stormcaller', 'voidtouched', 'bloodlust', 'frostbite'],
   roost:  ['emberbrand', 'bloodlust', 'stormcaller', 'stoneblood'],
-  abyss:  ['voidtouched', 'necromancy', 'emberbrand', 'frostbite']
+  abyss:  ['voidtouched', 'necromancy', 'emberbrand', 'frostbite', 'bonelegion', 'deathmagic']
 };
 
 function boonTier(key) {
@@ -431,6 +464,13 @@ function boonTier(key) {
 function boonName(key, tier) {
   const line = BOON_LINES[key];
   return line ? line.tiers[tier - 1].name : key;
+}
+// A branch is only offerable once its root is deep enough.
+function boonUnlocked(key) {
+  const req = BOON_LINES[key].req;
+  if (!req) return true;
+  for (const k in req) if (boonTier(k) < req[k]) return false;
+  return true;
 }
 
 // Offer the next tier of lines already started (so builds compound), topped up
@@ -442,6 +482,7 @@ function rollBoonChoices(count) {
   pool.forEach(function (key) {
     const t = boonTier(key);
     if (t >= MAX_BOON_TIER) return;
+    if (!boonUnlocked(key)) return;
     (t > 0 ? upgrades : fresh).push({ key: key, tier: t + 1 });
   });
   shuffle(upgrades);
@@ -473,6 +514,161 @@ function grantBoon(key, tier) {
     runState.hpPenalty = 0.10;
     G.hp = Math.min(G.hp, maxHp());
   }
+  // Bone Legion rewrites the host you already have — the payoff should be
+  // visible the instant you take it, not on the next kill.
+  if (key === 'bonelegion') promoteHost();
+}
+
+// ============================================================
+// The host — the Necromancy path's risen retinue
+// ============================================================
+
+// Skeleton / Ghoul / Wight, set by how deep Bone Legion runs.
+function raiseTier() { return Math.min(2, boonTier('bonelegion')); }
+
+function undeadStats(tier) {
+  const t = UNDEAD_TIERS[tier];
+  return {
+    dmg: Math.max(1, Math.round(playerMaxHit() * t.dmg)),
+    hp: Math.max(1, Math.round(maxHp() * t.hp))
+  };
+}
+
+function hostUnits() { return (runState && runState.retinue) || []; }
+function hostMaxHit() {
+  return hostUnits().reduce(function (s, u) { return s + undeadStats(u.tier).dmg; }, 0);
+}
+
+function raiseUnit(quiet) {
+  if (!runState) return null;
+  const host = runState.retinue;
+  let tier = raiseTier();
+  // Bone Dragon: exactly one, at the head of the host.
+  if (boonTier('bonelegion') >= 3 &&
+      !host.some(function (u) { return u.tier === 3; })) tier = 3;
+
+  if (host.length >= HOST_CAP) {
+    // Nowhere to put it — the strength goes into mending the weakest instead.
+    const weakest = host.slice().sort(function (a, b) {
+      return (a.hp / a.max) - (b.hp / b.max);
+    })[0];
+    if (weakest && weakest.hp < weakest.max) {
+      weakest.hp = weakest.max;
+      if (!quiet) runLog('<span class="boon">The host is full</span> — the dead knit back together instead.');
+    }
+    return null;
+  }
+
+  const s = undeadStats(tier);
+  const u = { tier: tier, hp: s.hp, max: s.hp, fresh: true };
+  host.push(u);
+  if (!quiet) {
+    runLog('<span class="boon">' + UNDEAD_TIERS[tier].icon + ' A ' +
+      UNDEAD_TIERS[tier].name + ' rises</span> to serve you.');
+    riseFx(tier);
+  }
+  return u;
+}
+
+// Everything already standing is remade when Bone Legion deepens.
+function promoteHost() {
+  const host = hostUnits();
+  if (!host.length) return;
+  const target = raiseTier();
+  let changed = false;
+  host.forEach(function (u) {
+    if (u.tier === 3) return;             // the dragon is already the top
+    if (u.tier < target) {
+      const ratio = u.hp / u.max;
+      const s = undeadStats(target);
+      u.tier = target;
+      u.max = s.hp;
+      u.hp = Math.max(1, Math.round(s.hp * ratio));
+      u.promoted = true;
+      changed = true;
+    }
+  });
+  if (boonTier('bonelegion') >= 3 && !host.some(function (u) { return u.tier === 3; })) {
+    const eldest = host[0];
+    const s = undeadStats(3);
+    eldest.tier = 3; eldest.max = s.hp; eldest.hp = s.hp; eldest.promoted = true;
+    changed = true;
+  }
+  if (changed) {
+    runLog('<span class="boon">Your host convulses and reforms.</span>');
+    hostBanner('THE HOST REFORMS');
+  }
+}
+
+// The host swings as one, rolling to hit off your own accuracy.
+function hostStrike(foe) {
+  const host = hostUnits();
+  if (!host.length) return 0;
+  const dealt = rollDamage(hostMaxHit(), playerAttackRoll(), monsterDefenceRoll(foe));
+  if (dealt <= 0) {
+    runLog('<span class="miss">Your host claws at nothing.</span>');
+    return 0;
+  }
+  foe.hp -= dealt;
+  awardCombatXp(dealt);
+  floatNum('foe', dealt, 'necro');
+  let note = '';
+  // Wight Lords drain back to you.
+  if (boonTier('bonelegion') >= 2) {
+    const heal = Math.min(maxHp() - G.hp, Math.max(1, Math.round(dealt * 0.25)));
+    if (heal > 0) { G.hp += heal; note = ' <span class="boon">(drains ' + heal + ')</span>'; }
+  }
+  runLog('<span class="boon">Your host tears in for <b>' + dealt + '</b></span>' + note + '.');
+  return dealt;
+}
+
+// Death Ripple: decay washing off the whole host, every third round.
+function deathRipple(foe) {
+  if (boonTier('deathmagic') < 1) return 0;
+  const units = hostUnits().length;
+  if (!units) return 0;
+  if (runState.round % 3 !== 0) return 0;
+  const dmg = units * 2;
+  foe.hp -= dmg;
+  awardCombatXp(dmg);
+  floatNum('foe', dmg, 'necro');
+  runLog('<span class="boon">🕯️ Death Ripple</span> washes out for ' + dmg + '.');
+  return dmg;
+}
+
+// The foe swings at the host instead of you — more often, the bigger it is.
+function hostTakesHit(foe, incoming) {
+  const host = hostUnits();
+  if (!host.length) return false;
+  if (Math.random() >= Math.min(0.55, 0.12 * host.length)) return false;
+  const u = host[rng(0, host.length - 1)];
+  u.hp -= incoming;
+  const t = UNDEAD_TIERS[u.tier];
+  if (u.hp <= 0) {
+    runState.retinue = host.filter(function (x) { return x !== u; });
+    runState.fallen = (runState.fallen || 0) + 1;
+    runLog('<span class="hurt">' + foe.name + ' shatters your ' + t.name + '.</span>');
+    fallFx();
+  } else {
+    runLog(foe.name + ' tears into your ' + t.name + ' for ' + incoming + '.');
+  }
+  return true;
+}
+
+// Unholy Bargain: spend the host to refuse a killing blow.
+function unholyBargain() {
+  if (boonTier('deathmagic') < 3) return false;
+  const host = hostUnits();
+  if (!host.length) return false;
+  const needed = Math.ceil((1 - G.hp / maxHp()) * 5);      // each unit is 20%
+  const spent = Math.min(host.length, Math.max(1, needed));
+  runState.retinue = host.slice(spent);
+  runState.fallen = (runState.fallen || 0) + spent;
+  G.hp = Math.min(maxHp(), Math.max(1, Math.round(maxHp() * spent * 0.20)));
+  runLog('<span class="boon">🕯️ Unholy Bargain</span> — ' + spent +
+    ' of your host crumble so you do not. You stand at ' + G.hp + ' hp.');
+  hostBanner('UNHOLY BARGAIN');
+  return true;
 }
 
 // ============================================================
@@ -1561,7 +1757,8 @@ function enterDungeon(index) {
     over: false,
     // Everything below is the in-run build — discarded when the run ends.
     boons: {}, runLevel: 0, pending: null,
-    shades: [], rampage: 0, hitCount: 0,
+    retinue: [], fallen: 0, peakHost: 0,
+    rampage: 0, hitCount: 0, round: 0,
     hpPenalty: 0, lastStandUsed: false,
     carryDetonate: 0, carryFreeze: false
   };
@@ -1655,13 +1852,6 @@ function boonOffence(baseDmg, foe) {
     foe.chill = 2;
     out.notes.push('❄️chilled');
   }
-  // Necromancy: shades pile on.
-  const shades = (runState.shades || []).length;
-  if (shades > 0) {
-    const add = Math.round(playerMaxHit() * 0.3 * shades);
-    out.dmg += add;
-    out.notes.push(shades + '× shade +' + add);
-  }
   // Stormcaller: arcs strike again.
   runState.hitCount = (runState.hitCount || 0) + 1;
   const guaranteed = boonTier('stormcaller') >= 3 && runState.hitCount % 5 === 0;
@@ -1698,14 +1888,21 @@ function boonDefence(incoming, foe) {
 }
 
 function boonOnKill(foe) {
-  if (boonTier('necromancy') >= 1) {
-    const heal = Math.min(maxHp() - G.hp, Math.round(maxHp() * 0.12));
-    if (heal > 0) { G.hp += heal; runLog('<span class="boon">Siphon</span> — you drain ' + heal + ' hp.'); }
-  }
-  if (boonTier('necromancy') >= 2) {
-    if (!runState.shades) runState.shades = [];
-    runState.shades.push({ rounds: boonTier('necromancy') >= 3 ? Infinity : 3 });
-    runLog('<span class="boon">A shade rises</span> (' + runState.shades.length + ').');
+  // Necromancy: the slain get back up on your side.
+  const n = boonTier('necromancy');
+  if (n >= 1) {
+    const chance = n >= 3 ? 1 : (n >= 2 ? 0.75 : 0.40);
+    if ((n >= 2 && foe.boss) || Math.random() < chance) {
+      const count = n >= 3 ? 2 : 1;
+      for (let i = 0; i < count; i++) raiseUnit();
+    }
+    const size = hostUnits().length;
+    if (size > (runState.peakHost || 0)) {
+      runState.peakHost = size;
+      if (size === 3) hostBanner('THE HOST GROWS');
+      else if (size === 5) hostBanner('THE HOST SWARMS');
+      else if (size === HOST_CAP) hostBanner('THE HOST IS LEGION');
+    }
   }
   if (boonTier('bloodlust') >= 3) {
     runState.rampage = (runState.rampage || 0) + 1;
@@ -1722,6 +1919,7 @@ function boonOnKill(foe) {
 function combatRound() {
   if (!runState || runState.over) return;
   const foe = runState.foe;
+  runState.round = (runState.round || 0) + 1;
 
   // Frozen foes lose their turn entirely.
   const wasFrozen = foe.frozen > 0;
@@ -1749,6 +1947,9 @@ function combatRound() {
     runLog('<span class="boon">🔥 Burning</span> for ' + foe.burn.dmg + '.');
   }
 
+  // Then the dead take their turn.
+  if (foe.hp > 0) { hostStrike(foe); deathRipple(foe); }
+
   if (foe.hp <= 0) {
     runLog('<span class="win">' + foe.name + ' is defeated.</span>');
     boonOnKill(foe);
@@ -1765,20 +1966,29 @@ function combatRound() {
   } else {
     const incoming = rollDamage(foe.maxHit, monsterAttackRoll(foe), playerDefenceRoll());
     const def = boonDefence(incoming, foe);
-    G.hp -= def.dmg;
 
-    // Last Stand: one death-save a wave.
-    if (G.hp <= 0 && boonTier('stoneblood') >= 3 && !runState.lastStandUsed) {
-      runState.lastStandUsed = true;
-      G.hp = Math.max(1, Math.round(maxHp() * 0.25));
-      runLog('<span class="boon">🪨 Last Stand</span> — you refuse to fall, at ' + G.hp + ' hp.');
+    // The host is a wall as well as a weapon — the bigger it is, the more
+    // often something else eats the blow.
+    if (def.dmg > 0 && hostTakesHit(foe, def.dmg)) {
+      def.reflect = 0;                      // you never took it, so nothing bounces
+    } else {
+      G.hp -= def.dmg;
+
+      // Last Stand: one death-save a wave. Unholy Bargain first refusal.
+      if (G.hp <= 0 && unholyBargain()) {
+        // the host paid for it
+      } else if (G.hp <= 0 && boonTier('stoneblood') >= 3 && !runState.lastStandUsed) {
+        runState.lastStandUsed = true;
+        G.hp = Math.max(1, Math.round(maxHp() * 0.25));
+        runLog('<span class="boon">🪨 Last Stand</span> — you refuse to fall, at ' + G.hp + ' hp.');
+      }
+      flash('you');
+      floatNum('you', def.dmg);
+      runLog(def.dmg > 0
+        ? '<span class="hurt">' + foe.name + ' hits you for <b>' + def.dmg + '</b>' +
+          (def.notes.length ? ' (' + def.notes.join(', ') + ')' : '') + '.</span>'
+        : '<span class="miss">' + foe.name + ' misses.</span>');
     }
-    flash('you');
-    floatNum('you', def.dmg);
-    runLog(def.dmg > 0
-      ? '<span class="hurt">' + foe.name + ' hits you for <b>' + def.dmg + '</b>' +
-        (def.notes.length ? ' (' + def.notes.join(', ') + ')' : '') + '.</span>'
-      : '<span class="miss">' + foe.name + ' misses.</span>');
 
     if (def.reflect > 0) {
       foe.hp -= def.reflect;
@@ -1797,10 +2007,6 @@ function combatRound() {
 
   // Statuses decay at the end of the round.
   if (foe.chill > 0) foe.chill -= 1;
-  if (runState.shades) {
-    runState.shades.forEach(function (s) { s.rounds -= 1; });
-    runState.shades = runState.shades.filter(function (s) { return s.rounds > 0; });
-  }
 
   renderDungeonRun();
   renderTopBar();
@@ -1844,6 +2050,19 @@ function advanceWave() {
     G.hp += heal;
     runLog('<span class="win">You catch your breath. +' + heal + ' hp.</span>');
     renderTopBar();
+  }
+
+  // Animate Dead: half of what you lost gets back up between waves.
+  if (boonTier('deathmagic') >= 2 && runState.fallen > 0) {
+    const back = Math.floor(runState.fallen / 2);
+    let raised = 0;
+    for (let i = 0; i < back; i++) if (raiseUnit(true)) raised++;
+    if (raised > 0) {
+      runState.fallen -= raised;
+      runLog('<span class="boon">🕯️ Animate Dead</span> — ' + raised +
+        ' of your fallen claw their way back.');
+      riseFx(raiseTier());
+    }
   }
 
   // Opportunist hands out a free first tier before the offered choice.
@@ -1902,11 +2121,17 @@ function renderBoonPick() {
   runState.pending.forEach(function (c, i) {
     const line = BOON_LINES[c.key];
     const t = line.tiers[c.tier - 1];
-    const card = el('button', 'boon-card' + (c.tier > 1 ? ' upgrade' : ''));
+    const card = el('button', 'boon-card' + (c.tier > 1 ? ' upgrade' : '') +
+      (line.faction ? ' fac-' + line.faction : ''));
+    // Branch lines show where they sit in their path.
+    const path = line.req
+      ? Object.keys(line.req).map(function (k) { return BOON_LINES[k].name; }).join(' ') +
+        ' <span class="bc-arrow">▸</span> ' + line.name
+      : line.name;
     card.innerHTML =
       '<div class="bc-head">' +
         '<span class="bc-ico">' + line.icon + '</span>' +
-        '<span class="bc-line">' + line.name + '</span>' +
+        '<span class="bc-line">' + path + '</span>' +
         '<span class="bc-tier">' + (c.tier > 1 ? 'UPGRADE ' : '') +
           'I'.repeat(c.tier) + '</span>' +
       '</div>' +
@@ -1973,6 +2198,18 @@ function endRun(cleared) {
         ' <span class="rr-tier">' + 'I'.repeat(rs.boons[k]) + '</span>';
     }).join('<br>'));
   }
+  // The host you ended with, if you walked a necromancer's run.
+  if ((rs.retinue && rs.retinue.length) || rs.peakHost) {
+    const tally = {};
+    (rs.retinue || []).forEach(function (u) {
+      tally[u.tier] = (tally[u.tier] || 0) + 1;
+    });
+    const standing = Object.keys(tally).sort().reverse().map(function (t) {
+      return UNDEAD_TIERS[t].icon + ' ' + tally[t] + '× ' + UNDEAD_TIERS[t].name;
+    }).join('<br>') || 'none left standing';
+    row('Host', standing + '<br><span class="rr-tier">peaked at ' +
+      (rs.peakHost || 0) + ', lost ' + (rs.fallen || 0) + '</span>');
+  }
   const lootKeys = Object.keys(rs.loot);
   if (lootKeys.length) {
     row('Loot', lootKeys.map(function (k) { return itemIcon(k) + ' ' + rs.loot[k] + '× ' + itemName(k); }).join('<br>'));
@@ -2025,9 +2262,74 @@ function renderDungeonRun() {
   if (foe.chill > 0) st.push('❄️');
   if (foe.frozen > 0) st.push('🧊');
   $('foe-status').textContent = st.join(' ');
-  $('you-status').textContent = (runState.shades && runState.shades.length)
-    ? '💀×' + runState.shades.length : '';
+  $('you-status').textContent = '';
+  renderHost();
   renderBoonBar();
+}
+
+// The host, its condition, and how hard it hits — the escalation made visible.
+function renderHost() {
+  const wrap = $('run-host');
+  if (!wrap) return;
+  const host = hostUnits();
+  if (!host.length) {
+    wrap.style.display = 'none';
+    wrap.classList.remove('legion');
+    $('run-stage').style.setProperty('--necro', 0);
+    return;
+  }
+  wrap.style.display = '';
+  wrap.classList.toggle('legion', host.length >= HOST_CAP);
+
+  const units = $('host-units');
+  units.innerHTML = '';
+  host.forEach(function (u) {
+    const t = UNDEAD_TIERS[u.tier];
+    const chip = el('div', 'unit t' + u.tier +
+      (u.fresh ? ' rising' : '') + (u.promoted ? ' promoted' : ''));
+    chip.innerHTML =
+      '<span class="u-ico">' + t.icon + '</span>' +
+      '<span class="u-bar"><i style="width:' +
+        Math.max(0, (u.hp / u.max) * 100) + '%"></i></span>';
+    chip.title = t.name + ' — ' + Math.max(0, u.hp) + '/' + u.max;
+    units.appendChild(chip);
+    u.fresh = false; u.promoted = false;
+  });
+
+  $('host-count').textContent = host.length + ' / ' + HOST_CAP + ' · ' +
+    hostMaxHit() + ' max hit';
+  // The meter reads host damage against your own, so a full legion fills it.
+  const share = hostMaxHit() / Math.max(1, playerMaxHit() + hostMaxHit());
+  $('host-power').style.width = Math.min(100, share * 200) + '%';
+  // Tint the stage as the host grows — subtle, but you feel it building.
+  $('run-stage').style.setProperty('--necro', Math.min(1, host.length / HOST_CAP));
+}
+
+// A unit clawing its way up out of the floor on your side of the stage.
+function riseFx(tier) {
+  const stage = $('run-stage');
+  if (!stage) return;
+  const g = el('div', 'rise-ghost', UNDEAD_TIERS[tier].icon);
+  g.style.left = (14 + rng(0, 22)) + '%';
+  stage.appendChild(g);
+  setTimeout(function () { try { stage.removeChild(g); } catch (e) {} }, 1100);
+}
+
+function fallFx() {
+  const wrap = $('run-host');
+  if (!wrap) return;
+  wrap.classList.remove('shudder');
+  void wrap.offsetWidth;
+  wrap.classList.add('shudder');
+}
+
+// A one-line proclamation across the stage for the big moments.
+function hostBanner(text) {
+  const stage = $('run-stage');
+  if (!stage) return;
+  const b = el('div', 'host-banner', text);
+  stage.appendChild(b);
+  setTimeout(function () { try { stage.removeChild(b); } catch (e) {} }, 1600);
 }
 
 function runLog(html) {
@@ -2046,10 +2348,12 @@ function flash(who) {
   n.classList.add('hit');
 }
 
-function floatNum(who, dmg) {
+function floatNum(who, dmg, kind) {
   const stage = $('run-stage');
   if (!stage) return;
-  const d = el('div', 'float ' + who + (dmg > 0 ? '' : ' zero'), dmg > 0 ? String(dmg) : '0');
+  const d = el('div', 'float ' + who + (dmg > 0 ? '' : ' zero') + (kind ? ' ' + kind : ''),
+    dmg > 0 ? String(dmg) : '0');
+  if (kind === 'necro') d.style.top = (44 + rng(0, 14)) + '%';
   stage.appendChild(d);
   setTimeout(function () { try { stage.removeChild(d); } catch (e) {} }, 900);
 }
@@ -2119,17 +2423,25 @@ window.__rf = {
   addXp: addXp, addItem: addItem, have: have, gearBonus: gearBonus,
   gearScore: gearScore, upgradeDelta: upgradeDelta, bestOwnedPerSlot: bestOwnedPerSlot,
   BOON_LINES: BOON_LINES, BOON_KEYS: BOON_KEYS, DUNGEON_BOONS: DUNGEON_BOONS,
-  boonTier: boonTier, boonName: boonName,
+  UNDEAD_TIERS: UNDEAD_TIERS, HOST_CAP: HOST_CAP,
+  boonTier: boonTier, boonName: boonName, boonUnlocked: boonUnlocked,
+  hostMaxHit: hostMaxHit, raiseUnit: raiseUnit, rollBoonChoices: rollBoonChoices,
   runInfo: function () {
     if (!runState) return null;
     return {
       wave: runState.wave, runLevel: runState.runLevel,
       boons: Object.assign({}, runState.boons),
       pending: (runState.pending || []).map(function (p) { return p.key + ':' + p.tier; }),
-      shades: (runState.shades || []).length, rampage: runState.rampage || 0
+      host: (runState.retinue || []).map(function (u) { return u.tier; }),
+      fallen: runState.fallen || 0, peakHost: runState.peakHost || 0,
+      rampage: runState.rampage || 0
     };
   },
-  forceBoon: function (key, tier) { if (runState) runState.boons[key] = tier; },
+  forceBoon: function (key, tier) {
+    if (!runState) return;
+    runState.boons[key] = tier;
+    if (key === 'bonelegion') promoteHost();
+  },
   setPace: function (scale) { paceScale = scale; },
   setDifficulty: function (scale) { difficultyScale = scale; },
   setAutoBoon: function (fn) { autoBoonPick = fn; },

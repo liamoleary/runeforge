@@ -8,6 +8,124 @@ function check(name, cond, extra) {
   console.log(`  [${cond ? 'PASS' : 'FAIL'}] ${name}${extra !== undefined ? '  → ' + extra : ''}`);
 }
 
+// ---- The Necromancy path -------------------------------------------------
+// Driven with forceBoon so the tree can be walked deterministically rather
+// than hoping the offer roll cooperates.
+async function necromancyChecks(page, check) {
+  console.log('\n== The Necromancy path ==');
+
+  // Enter the Crypt with enough behind us to survive a while.
+  await page.evaluate(() => {
+    __rf.setLevels({ attack: 60, strength: 60, defence: 60, hitpoints: 60 });
+    ['rune_sword', 'rune_platebody', 'rune_shield'].forEach(k => __rf.addItem(k, 1));
+    __rf.setGear(['rune_sword', 'rune_platebody', 'rune_shield']);
+    window.G.dungeonsCleared = 4;
+    window.G.hp = __rf.maxHp();
+    __rf.setPace(0);
+    __rf.setAutoBoon(() => -1);            // decline, so we control the build
+    __rf.enterDungeon(1);
+  });
+  check('a Crypt run is under way', await page.evaluate(() => __rf.isInRun()));
+
+  // Branches must be invisible until the root is taken.
+  const gated = await page.evaluate(() => ({
+    before: ['bonelegion', 'deathmagic'].map(k => __rf.boonUnlocked(k)),
+    rootFree: __rf.boonUnlocked('necromancy')
+  }));
+  check('Bone Legion and Death Magic are locked without Necromancy',
+    gated.before.every(x => x === false), gated.before.join(','));
+  check('the root itself needs nothing', gated.rootFree === true);
+
+  await page.evaluate(() => __rf.forceBoon('necromancy', 1));
+  const opened = await page.evaluate(() =>
+    ['bonelegion', 'deathmagic'].map(k => __rf.boonUnlocked(k)));
+  check('taking Necromancy opens both branches', opened.every(x => x === true),
+    opened.join(','));
+  check('and the branches can now be rolled', await page.evaluate(() => {
+    for (let i = 0; i < 200; i++) {
+      const picks = __rf.rollBoonChoices(3).map(p => p.key);
+      if (picks.indexOf('bonelegion') >= 0 || picks.indexOf('deathmagic') >= 0) return true;
+    }
+    return false;
+  }));
+
+  // Kills raise units.
+  const raised = await page.evaluate(() => {
+    const before = __rf.runInfo().host.length;
+    for (let i = 0; i < 6; i++) __rf.raiseUnit(true);
+    return { before: before, after: __rf.runInfo().host.length };
+  });
+  check('the slain rise into a host', raised.after > raised.before,
+    `${raised.before} → ${raised.after}`);
+  // The rail appears on the next render pass, not on the raise itself.
+  await page.waitForSelector('#run-host', { state: 'visible', timeout: 30000 });
+  check('the host rail is showing', await page.isVisible('#run-host'));
+  check('one chip per risen unit',
+    (await page.locator('#host-units .unit').count()) === raised.after,
+    await page.locator('#host-units .unit').count());
+  check('the host has a max hit of its own',
+    (await page.evaluate(() => __rf.hostMaxHit())) > 0,
+    await page.evaluate(() => __rf.hostMaxHit()));
+
+  // Skeletons by default.
+  check('a bare host is skeletons',
+    (await page.evaluate(() => __rf.runInfo().host)).every(t => t === 0));
+
+  // Bone Legion rewrites what is already standing.
+  await page.evaluate(() => __rf.forceBoon('bonelegion', 1));
+  check('Grave Rot rots the standing host into ghouls',
+    (await page.evaluate(() => __rf.runInfo().host)).every(t => t === 1));
+  await page.evaluate(() => __rf.forceBoon('bonelegion', 2));
+  check('Wight Lords promotes them again',
+    (await page.evaluate(() => __rf.runInfo().host)).every(t => t === 2));
+
+  const beforeDragon = await page.evaluate(() => __rf.hostMaxHit());
+  await page.evaluate(() => __rf.forceBoon('bonelegion', 3));
+  const dragons = await page.evaluate(() => __rf.runInfo().host.filter(t => t === 3).length);
+  check('exactly one Bone Dragon leads the host', dragons === 1, dragons);
+  check('and the host hits harder for it',
+    (await page.evaluate(() => __rf.hostMaxHit())) > beforeDragon);
+  check('the dragon gets its own chip style',
+    (await page.locator('#host-units .unit.t3').count()) === 1);
+
+  // The host is capped.
+  const capped = await page.evaluate(() => {
+    for (let i = 0; i < 20; i++) __rf.raiseUnit(true);
+    return { size: __rf.runInfo().host.length, cap: __rf.HOST_CAP };
+  });
+  check('the host is capped at seven', capped.size === capped.cap,
+    `${capped.size}/${capped.cap}`);
+
+  // Power meter and stage tint react.
+  const meter = await page.evaluate(() => ({
+    width: document.getElementById('host-power').style.width,
+    necro: document.getElementById('run-stage').style.getPropertyValue('--necro'),
+    legion: document.getElementById('run-host').classList.contains('legion')
+  }));
+  check('the power meter has filled', parseFloat(meter.width) > 0, meter.width);
+  check('the stage is tinted by the host', parseFloat(meter.necro) > 0, meter.necro);
+  check('a full host reads as a legion', meter.legion === true);
+
+  // Finish the run and confirm none of it survives.
+  await page.evaluate(() => { __rf.setAutoBoon(() => 0); });
+  await page.waitForSelector('#screen-results.active', { timeout: 120000 });
+  const res = await page.evaluate(() => ({
+    rows: Array.from(document.querySelectorAll('.res-row')).map(r => r.textContent),
+    inRun: __rf.isInRun()
+  }));
+  check('the results report the host',
+    res.rows.some(r => /^Host/.test(r)), (res.rows.find(r => /^Host/.test(r)) || '').slice(0, 70));
+  check('no NaN/undefined in the host row', !res.rows.some(r => /NaN|undefined/.test(r)));
+  await page.click('#result-continue');
+  check('the run is over', res.inRun === false);
+  check('no host survives on the save', await page.evaluate(() =>
+    !JSON.stringify(window.G).includes('retinue') &&
+    !JSON.stringify(window.G).includes('bonelegion')));
+  check('the host rail is hidden outside a run',
+    !(await page.isVisible('#run-host')));
+  await page.evaluate(() => { __rf.setAutoBoon(null); __rf.setPace(1); });
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -337,13 +455,18 @@ function check(name, cond, extra) {
   const pools = await page.evaluate(() => ({
     crypt: __rf.DUNGEON_BOONS.crypt,
     spire: __rf.DUNGEON_BOONS.spire,
-    lines: Object.keys(__rf.BOON_LINES).length
+    lines: Object.keys(__rf.BOON_LINES).length,
+    branches: Object.keys(__rf.BOON_LINES).filter(k => __rf.BOON_LINES[k].req)
   }));
-  check('eight boon lines exist', pools.lines === 8, pools.lines);
+  check('ten boon lines exist', pools.lines === 10, pools.lines);
   check('the Crypt offers necromancy', pools.crypt.indexOf('necromancy') >= 0, pools.crypt.join(','));
   check('the Spire offers stormcaller', pools.spire.indexOf('stormcaller') >= 0, pools.spire.join(','));
   check('pools differ between dungeons',
     pools.crypt.join(',') !== pools.spire.join(','));
+  check('the necromancy branches are gated behind their root',
+    pools.branches.sort().join(',') === 'bonelegion,deathmagic', pools.branches.join(','));
+
+  await necromancyChecks(page, check);
 
   console.log('\n== Persistence ==');
   await page.evaluate(() => window.save());

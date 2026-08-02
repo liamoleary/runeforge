@@ -43,6 +43,19 @@ const TRIALS = +(process.env.TRIALS || 60);
     function strategyFn(name) {
       if (name === 'none') return () => -1;   // decline every level
       if (name === 'random') return (choices) => Math.floor(Math.random() * choices.length);
+      // necro: commit to the Necromancy path wherever it is on offer.
+      if (name === 'necro') return (choices) => {
+        let best = -1, bestScore = -1;
+        choices.forEach((c, i) => {
+          const line = window.__rf.BOON_LINES[c.key];
+          // Root first, then branches, then anything else.
+          const score = line.faction === 'necromancy'
+            ? (line.root ? 100 - c.tier : 50 + c.tier)
+            : c.tier;
+          if (score > bestScore) { bestScore = score; best = i; }
+        });
+        return best;
+      };
       // greedy: always deepen the line you're furthest along in
       return (choices, run) => {
         let best = 0, bestTier = -1;

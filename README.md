@@ -88,8 +88,8 @@ offer, and a run grows into an identity:
 
 **Every dungeon draws from its own pool**, so each one makes a different kind of
 character. The Frozen Crypt offers Necromancy and Frostbite; the Storm Spire
-offers Stormcaller and Voidtouched. The eight lines are Emberbrand, Frostbite,
-Stormcaller, Necromancy, Stoneblood, Bloodlust, Voidtouched and Scavenger.
+offers Stormcaller and Voidtouched. The plain lines are Emberbrand, Frostbite,
+Stormcaller, Stoneblood, Bloodlust, Voidtouched and Scavenger.
 
 **None of it persists.** Boons live and die with the run — walk out and they're
 gone. Your eight skills stay purely about gear, so the two halves of the game
@@ -97,6 +97,57 @@ never entangle.
 
 The tension is depth versus breadth: three first tiers is a weak spread, while
 committing to one line gets you a capstone that changes how fights resolve.
+
+### The Necromancy path
+
+Necromancy isn't a line, it's a **faction** — the first one, built on the old
+Might and Magic shape: a mastery ladder that opens specialisations you can only
+reach by committing to it first. Take the root and two branches unlock and
+start appearing in your offers.
+
+```
+              💀 NECROMANCY
+    Raise Dead → Dark Mastery → Lord of Bones
+                     │
+        ┌────────────┴────────────┐
+   🦴 BONE LEGION           🕯️ DEATH MAGIC
+   Grave Rot                Death Ripple
+   Wight Lords              Animate Dead
+   Bone Dragon              Unholy Bargain
+```
+
+**The root raises the dead.** A slain foe has a 40% chance to get back up on
+your side; Dark Mastery takes that to three quarters and guarantees bosses;
+Lord of Bones raises everything, in pairs. Risen units form your **host**, up
+to seven strong. The host swings as one after you every round, rolling to hit
+off your own accuracy — and it's a wall as well as a weapon, soaking blows that
+would otherwise land on you, more often the bigger it gets.
+
+**Bone Legion decides what you raise.** Skeleton → Ghoul → Wight, with the
+eldest of the host rising again as a **Bone Dragon** at the capstone. Taking a
+tier remakes the host you're already standing with, on the spot — it doesn't
+wait for the next kill. Wights also drain a quarter of their damage back to you.
+
+**Death Magic spends the host.** Death Ripple washes decay out for 2 per unit
+every third round; Animate Dead brings back half your fallen between waves; and
+Unholy Bargain lets a killing blow crumble your host instead of you, each unit
+spent buying back 20% health.
+
+The two branches pull against each other: Bone Legion wants a big host kept
+alive, Death Magic is happy to burn it down. Nine nodes, and a run only hands
+out six or seven delve levels — you will never take them all.
+
+Everything on this page dies with the run, the same as every other boon.
+
+#### Watching it escalate
+
+The host has its own rail under the fight: a chip per unit with its own health,
+a count, and a power meter reading the host's max hit against your own. Units
+claw up out of the floor when they rise, the rail shudders when one shatters,
+and promotions flare through every chip at once when Bone Legion deepens. The
+stage itself greens over as the host grows, and crossing three, five and seven
+units throws a proclamation across the screen. All of it respects
+`prefers-reduced-motion`.
 
 ## Skills
 
