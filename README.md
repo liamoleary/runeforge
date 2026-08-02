@@ -149,14 +149,26 @@ Dungeons run 12 to 20 waves. That is a campaign rather than a scrap: a delve
 level per wave means a build matures fully, and there is room for the board to
 swing several times before it is over.
 
-### Boons
+### Boons and spoils
 
-Clear a wave and you gain a **delve level** — pick one of three **boons**. Boons
-come in lines that escalate, so taking one opens its next tier as a future
-offer, and a run grows into an identity:
+A boon follows every exchange, but what you are offered depends on what the
+exchange did.
+
+**Clear a wave and you gain a delve level** — pick one of three **boons**.
+These are the tree: lines that escalate, so taking one opens its next tier as
+a future offer, and a run grows into an identity:
 
 > 🔥 Kindling *(30% chance of bonus fire damage)* → 🔥 Wildfire *(fire also
 > burns)* → 🔥 Immolation *(a burning corpse detonates onto the next foe)*
+
+Later tiers are earned by getting deep, not by getting lucky: tier II needs
+wave 3, tier III needs to be better than halfway through the dungeon. A
+capstone lands late in a run or not at all.
+
+**Survive an exchange without clearing the wave and you take spoils** — small,
+stacking, repeatable: +1 max hit, +4 max health, a 30% heal, +20 fury, +4%
+crit, mend the host, or a guaranteed critical on your next blow. They keep the
+per-exchange rhythm without spending the tree by the midpoint.
 
 **Every dungeon draws from its own pool**, so each one makes a different kind of
 character — the Frozen Crypt offers Frostbite, the Storm Spire offers
@@ -164,13 +176,15 @@ Stormcaller. The plain lines are Emberbrand, Frostbite, Stormcaller,
 Stoneblood, Bloodlust, Voidtouched and Scavenger.
 
 The one exception is the **Necromancy path**, which is offered everywhere. It
-is the headline build, so no dungeon gets to hide it: the root turns up in
-54–76% of offers depending on the dungeon, which over a run's worth of delve
-levels means you will always be given the chance to take it.
+is the headline build, so no dungeon gets to hide it.
 
-**None of it persists.** Boons live and die with the run — walk out and they're
-gone. Your eight skills stay purely about gear, so the two halves of the game
-never entangle.
+**None of it persists.** Boons and spoils live and die with the run — walk out
+and they are gone. Your combat stats are also **frozen at the door**: max hit,
+accuracy, defence and health are read once when you enter and held for the
+whole delve. The xp you earn inside still banks to your skills, it just pays
+off on the *next* delve. Without that the host — which is priced as a fraction
+of your max hit — multiplies a number it is itself driving up, and player
+damage outruns the dungeon by an order of magnitude before the boss.
 
 The tension is depth versus breadth: three first tiers is a weak spread, while
 committing to one line gets you a capstone that changes how fights resolve.
@@ -196,7 +210,7 @@ start appearing in your offers.
 **The root raises the dead.** Taking Raise Dead puts a Skeleton on the board
 straight away, and from then on a slain foe has a 40% chance to get back up on
 your side; Dark Mastery takes that to three quarters and guarantees bosses;
-Lord of Bones raises everything, in pairs. Risen units form your **host**, up
+Lord of Bones raises everything. Risen units form your **host**, up
 to six strong, laid out three to a rank in front of you. Each takes its own
 turn after you, against whatever you aimed it at, rolling to hit off your own
 accuracy — and the host is a wall as well as a weapon, soaking blows that

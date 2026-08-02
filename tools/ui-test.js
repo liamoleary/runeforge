@@ -210,7 +210,9 @@ async function necromancyChecks(page, check) {
   check('the result is one tier up', bound.madeTier === bound.tier + 1,
     `tier ${bound.tier} → ${bound.madeTier}`);
   check('and it is marked bound', bound.made >= 1);
-  check('worth more than the three that made it', bound.madeDmg > bound.sumDmg,
+  // The rite trades three bodies for one shape — it is not a stat premium.
+  check('worth what the three that made it were worth',
+    Math.abs(bound.madeDmg - bound.sumDmg) <= 1,
     `${bound.madeDmg} vs ${bound.sumDmg}`);
   check('the rite is counted', bound.bindings === 1, bound.bindings);
   check('a bound unit shows as bound on the board',
@@ -688,11 +690,14 @@ async function boardChecks(page, check) {
   check('exactly three boons offered', (await page.locator('#bp-choices .boon-card').count()) === 3);
   const firstOffer = await page.evaluate(() => __rf.runInfo());
   check('run level starts at 1', firstOffer.runLevel === 1, firstOffer.runLevel);
-  check('all three offers are first-tier',
-    firstOffer.pending.every(p => p.endsWith(':1')), firstOffer.pending.join(', '));
-  check('offers come from this dungeon\'s pool', await page.evaluate(() => {
-    const pool = __rf.DUNGEON_BOONS.warren;
-    return __rf.runInfo().pending.every(p => pool.indexOf(p.split(':')[0]) >= 0);
+  // An exchange that did not clear the wave pays spoils, not a tree node.
+  check('surviving an exchange pays spoils',
+    firstOffer.pendingMinor === true &&
+    firstOffer.pending.every(p => p.startsWith('minor:')),
+    firstOffer.pending.join(', '));
+  check('spoils come from the minor pool', await page.evaluate(() => {
+    const keys = __rf.MINOR_BOONS.map(m => m.key);
+    return __rf.runInfo().pending.every(p => keys.indexOf(p.split(':')[1]) >= 0);
   }), firstOffer.pending.join(', '));
   check('the first boon comes after the first exchange, still on wave 1',
     (await page.evaluate(() => __rf.runInfo().wave)) === 1,
@@ -704,26 +709,56 @@ async function boardChecks(page, check) {
   }));
 
   // Taking one grants it and resumes the fight.
-  const takenKey = firstOffer.pending[0].split(':')[0];
+  const takenMinor = firstOffer.pending[0].split(':')[1];
   await page.locator('#bp-choices .boon-card').first().click();
   const afterPick = await page.evaluate(() => __rf.runInfo());
-  check('the chosen boon is granted', afterPick.boons[takenKey] === 1,
-    JSON.stringify(afterPick.boons));
+  check('the chosen spoil is granted', afterPick.minors[takenMinor] === 1,
+    JSON.stringify(afterPick.minors));
   check('choosing dismisses the panel', !(await page.isVisible('body.picking-boon')));
-  check('the build shows in the run HUD',
-    (await page.locator('#run-boons .boon-chip').count()) === 1);
+  check('the spoil shows in the run HUD',
+    (await page.locator('#run-boons .boon-chip').count()) >= 1);
 
-  // Second level up should offer that line's tier II somewhere.
-  await page.waitForSelector('body.picking-boon', { timeout: 60000 });
-  const second = await page.evaluate(() => __rf.runInfo());
-  check('run level advances', second.runLevel === 2, second.runLevel);
-  check('a taken line is offered at tier II',
-    second.pending.some(p => p === takenKey + ':2'), second.pending.join(', '));
+  // Play on until a wave clears — that is what pays a tree node.
+  let major = null;
+  for (let i = 0; i < 40 && !major; i++) {
+    await page.waitForSelector('body.picking-boon', { timeout: 60000 });
+    const info = await page.evaluate(() => __rf.runInfo());
+    if (!info.pendingMinor) { major = info; break; }
+    await page.locator('#bp-choices .boon-card').first().click();
+  }
+  check('clearing a wave pays a tree node', !!major,
+    major ? major.pending.join(', ') : 'never saw one');
+  if (major) {
+    check('and its offers are first-tier this early',
+      major.pending.every(p => p.endsWith(':1')), major.pending.join(', '));
+    check('drawn from this dungeon\'s pool', await page.evaluate(() => {
+      const pool = __rf.DUNGEON_BOONS.warren;
+      return __rf.runInfo().pending.every(p => pool.indexOf(p.split(':')[0]) >= 0);
+    }), major.pending.join(', '));
+    const takenKey = major.pending[0].split(':')[0];
+    await page.locator('#bp-choices .boon-card').first().click();
+    const afterMajor = await page.evaluate(() => __rf.runInfo());
+    check('the chosen line is granted', afterMajor.boons[takenKey] === 1,
+      JSON.stringify(afterMajor.boons));
+  }
 
-  // Drive the rest of the run automatically.
-  await page.evaluate(() => __rf.setAutoBoon(() => 0));
-  await page.locator('#bp-choices .boon-card').first().click();
-  await page.waitForSelector('#screen-results.active', { timeout: 120000 });
+  console.log('\n== Later tiers are earned by getting deep ==');
+  const gates = await page.evaluate(() => {
+    const d = __rf.DUNGEONS[0];
+    return { waves: d.waves, deep: Math.ceil(0.55 * d.waves) };
+  });
+  check('tier III is gated past the halfway mark', gates.deep > gates.waves / 2,
+    `wave ${gates.deep} of ${gates.waves}`);
+
+  // Drive the rest of the run automatically. The panel may already be gone —
+  // the major-boon walk above closes it.
+  await page.evaluate(() => { __rf.setAutoBoon(() => 0); __rf.setAutoFight(true); });
+  if (await page.isVisible('body.picking-boon') &&
+      await page.locator('#bp-choices .boon-card').count()) {
+    await page.locator('#bp-choices .boon-card').first().click();
+  }
+  await page.waitForSelector('#screen-results.active', { timeout: 180000 });
+  await page.evaluate(() => __rf.setAutoFight(false));
 
   const res = await page.evaluate(() => ({
     title: document.getElementById('result-title').textContent,
@@ -758,17 +793,24 @@ async function boardChecks(page, check) {
   await page.click('#result-continue');
   check('run overlay closed', !(await page.isVisible('#run-overlay')));
 
-  // A second run must start from a blank build.
+  // A second run must start from a blank build. Nothing moves until FIGHT.
   await page.evaluate(() => { __rf.setAutoBoon(null); window.G.hp = __rf.maxHp(); });
   await page.locator('.dun-card .dc-go').first().click();
+  const atStart = await page.evaluate(() => __rf.runInfo());
+  check('a new run starts with no boons', Object.keys(atStart.boons).length === 0,
+    JSON.stringify(atStart.boons));
+  check('and no spoils either', Object.keys(atStart.minors || {}).length === 0,
+    JSON.stringify(atStart.minors));
+  check('and back at delve level 0 until an exchange is paid for',
+    atStart.runLevel === 0, atStart.runLevel);
+  await page.click('#run-fight');
   await page.waitForSelector('body.picking-boon', { timeout: 60000 });
   const fresh = await page.evaluate(() => __rf.runInfo());
-  check('a new run starts with no boons', Object.keys(fresh.boons).length === 0,
-    JSON.stringify(fresh.boons));
-  check('and back at delve level 1', fresh.runLevel === 1, fresh.runLevel);
-  await page.evaluate(() => { __rf.setAutoBoon(() => 0); });
+  check('the first exchange pays out', fresh.runLevel === 1, fresh.runLevel);
   await page.locator('#bp-choices .boon-card').first().click();
-  await page.waitForSelector('#screen-results.active', { timeout: 120000 });
+  await page.evaluate(() => { __rf.setAutoBoon(() => 0); __rf.setAutoFight(true); });
+  await page.waitForSelector('#screen-results.active', { timeout: 180000 });
+  await page.evaluate(() => __rf.setAutoFight(false));
   await page.click('#result-continue');
   await page.evaluate(() => { __rf.setAutoBoon(null); __rf.setAutoFight(false); __rf.setPace(1); });
 

@@ -385,7 +385,7 @@ const BOON_LINES = {
     tiers: [
       { name: 'Raise Dead',    desc: 'A slain foe has a 40% chance to rise as a Skeleton and fight for you.' },
       { name: 'Dark Mastery',  desc: 'Three quarters of the slain rise, and a boss always does.' },
-      { name: 'Lord of Bones', desc: 'Everything you kill rises — and rises in pairs.' }
+      { name: 'Lord of Bones', desc: 'Everything you kill rises.' }
     ]
   },
   bonelegion: {
@@ -439,6 +439,22 @@ const BOON_LINES = {
     ]
   }
 };
+// Small, stacking, repeatable. A boon comes after every exchange, but only a
+// cleared wave pays out a tree node — mid-wave exchanges pay one of these, so
+// the rhythm survives without the tree being spent by the midpoint.
+const MINOR_BOONS = [
+  { key: 'edge',   icon: '🗡️', name: 'Whetted',   desc: '+1 to your max hit, for this delve.' },
+  { key: 'vigour', icon: '❤️', name: 'Vigour',    desc: '+4 to your max health, and heal that much.' },
+  { key: 'mend',   icon: '💚', name: 'Second Breath', desc: 'Recover 30% of your health.' },
+  { key: 'rage',   icon: '🔥', name: 'Kindled',   desc: '+20 fury, now.' },
+  { key: 'keen',   icon: '🎯', name: 'Keen Eye',  desc: '+4% critical chance (up to +24%).' },
+  { key: 'knit',   icon: '🦴', name: 'Knit Bones', desc: 'Mend your whole host to full.' },
+  { key: 'strike', icon: '⚡', name: 'Sure Strike', desc: 'Your next blow is a guaranteed critical.' }
+];
+function minorById(k) {
+  return MINOR_BOONS.filter(function (m) { return m.key === k; })[0] || null;
+}
+
 const BOON_KEYS = Object.keys(BOON_LINES);
 const MAX_BOON_TIER = 3;
 
@@ -456,7 +472,7 @@ const HOST_CAP = 6;             // six stacks, laid out three to a rank
 // a quarter more than all three together. You trade bodies for quality —
 // fewer units means fewer blows soaked off you, so it is never free.
 const BIND_COUNT = 3;
-const BIND_BONUS = 1.25;
+const BIND_BONUS = 1.0;
 
 // What the rite can make. Three of a kind fuse into one of the next kind, but
 // *which* one is your call — the forms trade stats against a keyword, so the
@@ -537,10 +553,15 @@ function rollBoonChoices(count) {
   if (!runState) return [];
   const pool = DUNGEON_BOONS[runState.d.key] || BOON_KEYS;
   const upgrades = [], fresh = [];
+  const wave = runState.wave || 1;
+  const deep = Math.ceil(0.55 * runState.d.waves);
   pool.forEach(function (key) {
     const t = boonTier(key);
     if (t >= MAX_BOON_TIER) return;
     if (!boonUnlocked(key)) return;
+    // A line's later tiers are earned by getting deep, not by getting lucky.
+    if (t + 1 === 2 && wave < 3) return;
+    if (t + 1 === 3 && wave < deep) return;
     (t > 0 ? upgrades : fresh).push({ key: key, tier: t + 1 });
   });
   shuffle(upgrades);
@@ -552,6 +573,36 @@ function rollBoonChoices(count) {
     picks.push(takeUpgrade ? upgrades.shift() : (fresh.shift() || upgrades.shift()));
   }
   return picks;
+}
+
+function rollMinors(count) {
+  const pool = MINOR_BOONS.filter(function (m) {
+    if (m.key === 'knit') return hostUnits().some(function (u) { return u.hp < u.max; });
+    if (m.key === 'mend') return G.hp < maxHp();
+    if (m.key === 'rage') return (runState.fury || 0) < FURY_MAX;
+    if (m.key === 'keen') return (runState.bonusCrit || 0) < 0.24;
+    if (m.key === 'strike') return !runState.sureStrike;
+    return true;
+  });
+  shuffle(pool);
+  return pool.slice(0, count).map(function (m) { return { minor: m.key }; });
+}
+
+function grantMinor(key) {
+  const m = minorById(key);
+  if (!m || !runState) return;
+  runState.minors = runState.minors || {};
+  runState.minors[key] = (runState.minors[key] || 0) + 1;
+  switch (key) {
+    case 'edge':   runState.bonusHit = (runState.bonusHit || 0) + 1; break;
+    case 'vigour': runState.bonusHp = (runState.bonusHp || 0) + 4; G.hp += 4; break;
+    case 'mend':   G.hp = Math.min(maxHp(), G.hp + Math.ceil(maxHp() * 0.30)); break;
+    case 'rage':   addFury(20); break;
+    case 'keen':   runState.bonusCrit = Math.min(0.24, (runState.bonusCrit || 0) + 0.04); break;
+    case 'knit':   hostUnits().forEach(function (u) { u.hp = u.max; }); break;
+    case 'strike': runState.sureStrike = true; break;
+  }
+  runLog('<span class="boon">' + m.icon + ' ' + m.name + '</span> — ' + m.desc);
 }
 
 function shuffle(a) {
@@ -914,7 +965,7 @@ function lifeAtLevel(hpLevel) { return 10 + hpLevel * 2; }
 function maxHp() {
   // Frozen for the duration of a delve — see runSnapshot().
   const base = (runState && runState.snap)
-    ? runState.snap.maxHp
+    ? runState.snap.maxHp + (runState.bonusHp || 0)
     : lifeAtLevel(lvl('hitpoints'));
   // Bloodlust trades health for damage, but only for the duration of a run.
   const penalty = (runState && runState.hpPenalty) || 0;
@@ -1225,6 +1276,7 @@ function playerMaxHit() {
   if (runState) {                       // run-only, from boons
     if (boonTier('bloodlust') >= 1) hit += 3;
     hit += Math.min(RAMPAGE_CAP, runState.rampage || 0);
+    hit += runState.bonusHit || 0;
   }
   return Math.max(1, hit);
 }
@@ -1990,6 +2042,8 @@ function enterDungeon(index) {
     idSeq: 0, bossWave: false, summoned: 0,
     fury: 0, powerArmed: false, bindPending: null, rot: null,
     afterBoon: 'wave', bulwark: false, levels: {},
+    minors: {}, bonusHit: 0, bonusHp: 0, bonusCrit: 0, sureStrike: false,
+    pendingMinor: false,
     rampage: 0, hitCount: 0, round: 0,
     hpPenalty: 0, lastStandUsed: false,
     carryDetonate: 0, carryFreeze: false
@@ -2043,6 +2097,7 @@ const FURY_PER_TAKEN = 6;
 const POWER_MULT = 2.5;
 const CRIT_CHANCE = 0.08;
 const RAMPAGE_CAP = 10;      // Bloodlust III, bounded
+function critChance() { return CRIT_CHANCE + ((runState && runState.bonusCrit) || 0); }
 const CRIT_MULT = 1.5;
 const SUMMON_BUDGET_BOSS = 4;
 const SUMMON_BUDGET_MOB = 2;
@@ -2152,7 +2207,7 @@ function startWave() {
     rollLoot(foe);
     runState.foes = [];
     renderDungeonRun();
-    runTimer = setTimeout(advanceWave, pace(800));
+    waveCleared();
     return;
   }
   renderDungeonRun();
@@ -2165,7 +2220,7 @@ let orderSel = 'you';     // whichever attacker the next tap assigns
 
 function enterOrders() {
   if (!runState || runState.over) return;
-  if (!aliveFoes().length) { runTimer = setTimeout(advanceWave, pace(600)); return; }
+  if (!aliveFoes().length) { waveCleared(); return; }
   runState.phase = 'orders';
   planIntents();
   defaultOrders();
@@ -2275,9 +2330,10 @@ function playerSwing(aimed) {
     raw = Math.max(raw, Math.round(playerMaxHit() * 0.6));
     raw = Math.round(raw * POWER_MULT);
     runState.powerArmed = false;
-  } else if (raw > 0 && Math.random() < CRIT_CHANCE) {
+  } else if (raw > 0 && (runState.sureStrike || Math.random() < critChance())) {
     raw = Math.round(raw * CRIT_MULT);
     crit = true;
+    runState.sureStrike = false;
   }
   const off = boonOffence(raw, target);
   if (off.dmg > 0 && target.warded) {
@@ -2334,7 +2390,7 @@ function unitStrike(u, aimed) {
   const name = unitLabel(u);
   let dealt = rollDamage(unitStats(u).dmg, playerAttackRoll(), monsterDefenceRoll(target));
   let crit = false;
-  if (dealt > 0 && Math.random() < CRIT_CHANCE) { dealt = Math.round(dealt * CRIT_MULT); crit = true; }
+  if (dealt > 0 && Math.random() < critChance()) { dealt = Math.round(dealt * CRIT_MULT); crit = true; }
   if (dealt <= 0) {
     runLog('<span class="miss">Your ' + name + ' claws at nothing.</span>');
     return;
@@ -2488,7 +2544,7 @@ function useAbility(unitId) {
   renderDungeonRun();
   renderTopBar();
   if (!aliveFoes().length) {
-    runTimer = setTimeout(advanceWave, pace(700));
+    waveCleared();
   }
   return true;
 }
@@ -2499,7 +2555,7 @@ function afterPlayerPhase() {
   reapFoes();
   renderDungeonRun();
   renderTopBar();
-  if (!aliveFoes().length) { runTimer = setTimeout(advanceWave, pace(500)); return; }
+  if (!aliveFoes().length) { waveCleared(); return; }
   runTimer = setTimeout(function () { stepFoe(aliveFoes().slice(), 0); }, pace(170));
 }
 
@@ -2668,12 +2724,10 @@ function endOfRound() {
     runTimer = setTimeout(function () { endRun(false); }, pace(700));
     return;
   }
-  // Every exchange is paid for, whether or not it finished the wave.
+  // Every exchange is paid for; clearing the wave pays a tree node instead.
   runState.bulwark = false;
-  const cleared = !aliveFoes().length;
-  runTimer = setTimeout(function () {
-    offerBoons(cleared ? 'wave' : 'orders');
-  }, pace(cleared ? 400 : 200));
+  if (!aliveFoes().length) return waveCleared();
+  runTimer = setTimeout(function () { offerBoons('orders'); }, pace(200));
 }
 
 // Clear out the dead, paying out for each. Summoned minions give combat xp
@@ -2767,8 +2821,7 @@ function boonOnKill(foe) {
   if (n >= 1) {
     const chance = n >= 3 ? 1 : (n >= 2 ? 0.75 : 0.40);
     if ((n >= 2 && foe.boss) || Math.random() < chance) {
-      const count = n >= 3 ? 2 : 1;
-      for (let i = 0; i < count; i++) raiseUnit();
+      raiseUnit();
     }
     const size = hostUnits().length;
     if (size > (runState.peakHost || 0)) {
@@ -2860,7 +2913,10 @@ function advanceWave() {
 function offerBoons(next) {
   if (!runState || runState.over) return;
   runState.afterBoon = next || 'wave';
-  const choices = rollBoonChoices(3);
+  // Clearing a wave earns a tree node; surviving an exchange earns spoils.
+  const major = runState.afterBoon === 'wave';
+  const choices = major ? rollBoonChoices(3) : rollMinors(3);
+  runState.pendingMinor = !major;
   if (!choices.length) return afterBoonPick();   // every line maxed out
   runState.runLevel = (runState.runLevel || 0) + 1;
   runState.pending = choices;
@@ -2880,6 +2936,12 @@ function offerBoons(next) {
 
 // What happens once the pick is made: either the next wave walks in, or you
 // go back to planning against what is still standing.
+// One door out of a cleared wave, so the major boon can never be skipped.
+function waveCleared() {
+  if (!runState || runState.over) return;
+  runTimer = setTimeout(function () { offerBoons('wave'); }, pace(400));
+}
+
 function afterBoonPick() {
   if (!runState || runState.over) return;
   if (runState.afterBoon === 'wave') {
@@ -2895,7 +2957,8 @@ function chooseBoon(index) {
   if (!pick) return;
   runState.pending = null;
   document.body.classList.remove('picking-boon');
-  grantBoon(pick.key, pick.tier);
+  if (pick.minor) grantMinor(pick.minor);
+  else grantBoon(pick.key, pick.tier);
   renderDungeonRun();
   renderTopBar();
   afterBoonPick();
@@ -2903,11 +2966,31 @@ function chooseBoon(index) {
 
 function renderBoonPick() {
   if (!runState || !runState.pending) return;
-  $('bp-level').textContent = 'Delve Level ' + runState.runLevel;
+  const minor = !!runState.pendingMinor;
+  $('bp-level').textContent = minor ? 'Spoils' : 'Delve Level ' + runState.runLevel;
   $('bp-sub').textContent = runState.d.name + ' — wave ' + runState.wave +
-    ' of ' + runState.d.waves;
+    ' of ' + runState.d.waves + (minor ? '' : ' · a wave cleared');
   const wrap = $('bp-choices');
   wrap.innerHTML = '';
+  if (minor) {
+    runState.pending.forEach(function (c, i) {
+      const m = minorById(c.minor);
+      const card = el('button', 'boon-card minor');
+      card.innerHTML =
+        '<div class="bc-head">' +
+          '<span class="bc-ico">' + m.icon + '</span>' +
+          '<span class="bc-line">Spoils</span>' +
+          '<span class="bc-tier">' +
+            ((runState.minors && runState.minors[m.key])
+              ? '×' + runState.minors[m.key] : 'NEW') + '</span>' +
+        '</div>' +
+        '<div class="bc-name">' + m.name + '</div>' +
+        '<div class="bc-desc">' + m.desc + '</div>';
+      card.onclick = function () { chooseBoon(i); };
+      wrap.appendChild(card);
+    });
+    return;
+  }
   runState.pending.forEach(function (c, i) {
     const line = BOON_LINES[c.key];
     const t = line.tiers[c.tier - 1];
@@ -2938,13 +3021,19 @@ function renderBoonBar() {
   if (!bar || !runState) return;
   const keys = Object.keys(runState.boons || {})
     .filter(function (k) { return runState.boons[k] >= 1 && BOON_LINES[k]; });
-  if (!keys.length) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
+  const anyMinor = Object.keys(runState.minors || {}).length;
+  if (!keys.length && !anyMinor) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
   bar.style.display = '';
+  const minors = Object.keys(runState.minors || {}).map(function (k) {
+    const m = minorById(k);
+    return m ? '<span class="boon-chip minor" title="' + esc(m.name) + '">' +
+      m.icon + '<i>×' + runState.minors[k] + '</i></span>' : '';
+  }).join('');
   bar.innerHTML = keys.map(function (k) {
     const t = runState.boons[k];
     return '<span class="boon-chip" title="' + esc(boonName(k, t)) + '">' +
       BOON_LINES[k].icon + '<i>' + 'I'.repeat(t) + '</i></span>';
-  }).join('');
+  }).join('') + minors;
 }
 
 function endRun(cleared) {
@@ -3413,9 +3502,17 @@ window.__rf = {
   useAbility: useAbility,
   completeBind: completeBind, bindOffers: bindOffers, BIND_FORMS: BIND_FORMS,
   KEYWORDS: KEYWORDS, FOE_MINION_KINDS: FOE_MINION_KINDS,
+  MINOR_BOONS: MINOR_BOONS,
   setAutoBind: function (fn) { autoBindPick = fn; },
   // Headless runs need the board to play itself.
-  setAutoFight: function (on) { autoFightDefault = !!on; if (runState) { runState.auto = !!on; if (on) enterOrders(); } },
+  setAutoFight: function (on) {
+    autoFightDefault = !!on;
+    if (!runState) return;
+    runState.auto = !!on;
+    // Never barge in on an open pick — that would resolve the board out from
+    // under a panel that is still waiting for an answer.
+    if (on && runState.phase === 'orders' && !runState.pending) enterOrders();
+  },
   fight: function () { resolveTurn(); },
   assignTarget: assignTarget, selectAttacker: selectAttacker, targetAll: targetAll,
   summonForTest: function () {
@@ -3464,7 +3561,11 @@ window.__rf = {
     return {
       wave: runState.wave, runLevel: runState.runLevel,
       boons: Object.assign({}, runState.boons),
-      pending: (runState.pending || []).map(function (p) { return p.key + ':' + p.tier; }),
+      pending: (runState.pending || []).map(function (p) {
+        return p.minor ? 'minor:' + p.minor : p.key + ':' + p.tier;
+      }),
+      pendingMinor: !!runState.pendingMinor,
+      minors: Object.assign({}, runState.minors || {}),
       host: (runState.retinue || []).map(function (u) { return u.tier; }),
       fallen: runState.fallen || 0, peakHost: runState.peakHost || 0,
       rampage: runState.rampage || 0

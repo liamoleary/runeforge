@@ -45,10 +45,14 @@ const TRIALS = +(process.env.TRIALS || 60);
     function strategyFn(name) {
       if (name === 'none') return () => -1;   // decline every level
       if (name === 'random') return (choices) => Math.floor(Math.random() * choices.length);
+      // A spoils offer has no tree line to reason about — take the first.
+      const isMinor = (c) => !!c.minor;
       // necro: commit to the Necromancy path wherever it is on offer.
       if (name === 'necro') return (choices) => {
+        if (choices.every(isMinor)) return 0;
         let best = -1, bestScore = -1;
         choices.forEach((c, i) => {
+          if (isMinor(c)) return;
           const line = window.__rf.BOON_LINES[c.key];
           // Root first, then branches, then anything else.
           const score = line.faction === 'necromancy'
@@ -56,12 +60,16 @@ const TRIALS = +(process.env.TRIALS || 60);
             : c.tier;
           if (score > bestScore) { bestScore = score; best = i; }
         });
-        return best;
+        return best < 0 ? 0 : best;
       };
       // greedy: always deepen the line you're furthest along in
-      return (choices, run) => {
+      return (choices) => {
+        if (choices.every(isMinor)) return 0;
         let best = 0, bestTier = -1;
-        choices.forEach((c, i) => { if (c.tier > bestTier) { bestTier = c.tier; best = i; } });
+        choices.forEach((c, i) => {
+          if (isMinor(c)) return;
+          if (c.tier > bestTier) { bestTier = c.tier; best = i; }
+        });
         return best;
       };
     }

@@ -718,6 +718,16 @@ body.picking-bind #bind-pick { display: flex; }
   color: #b79aff; border: 1px solid #4a3a6b; border-radius: 6px; padding: 1px 6px;
 }
 .boon-card.upgrade .bc-tier { color: var(--gold); border-color: var(--bdr2); }
+/* Spoils: the small repeatable pickups between waves. */
+.boon-card.minor {
+  background: linear-gradient(180deg, #241c10, #14100a);
+  border-color: var(--bdr2);
+}
+.boon-card.minor:hover { border-color: var(--gold); }
+.boon-card.minor .bc-tier { color: var(--gold2); border-color: var(--bdr2); }
+.boon-card.minor .bc-name { color: var(--gold2); }
+.boon-chip.minor { border-color: var(--bdr2); }
+.boon-chip.minor i { color: var(--text2); }
 .bc-arrow { color: #4fd98a; }
 /* Necromancy reads as its own faction the moment it's offered. */
 .boon-card.fac-necromancy, .bind-card.fac-necromancy {

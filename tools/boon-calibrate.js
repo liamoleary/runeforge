@@ -43,7 +43,7 @@ const TARGETS = [
     const strat = {
       none:   () => -1,
       random: (c) => Math.floor(Math.random() * c.length),
-      greedy: (c) => { let b = 0, t = -1; c.forEach((x, i) => { if (x.tier > t) { t = x.tier; b = i; } }); return b; }
+      greedy: (c) => { let b = 0, t = -1; c.forEach((x, i) => { if (!x.minor && x.tier > t) { t = x.tier; b = i; } }); return b; }
     };
 
     function setup(t) {
