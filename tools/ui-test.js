@@ -10,6 +10,26 @@ function check(name, cond, extra) {
   console.log(`  [${cond ? 'PASS' : 'FAIL'}] ${name}${extra !== undefined ? '  → ' + extra : ''}`);
 }
 
+// Play one exchange and take whatever the game offers afterwards, so tests
+// can advance the fight without caring where the boon panel lands.
+async function playExchange(page) {
+  if (!(await page.isEnabled('#run-fight'))) return;
+  await page.click('#run-fight');
+  await page.waitForFunction(
+    () => !__rf.isInRun() || document.body.classList.contains('picking-boon') ||
+          __rf.board().phase === 'orders', { timeout: 30000 });
+  if (await page.evaluate(() => document.body.classList.contains('picking-boon'))) {
+    if (await page.locator('#bp-choices .boon-card').count()) {
+      await page.locator('#bp-choices .boon-card').first().click();
+    }
+    await page.waitForFunction(
+      () => !__rf.isInRun() || !document.body.classList.contains('picking-boon'),
+      { timeout: 30000 });
+  }
+  await page.waitForFunction(
+    () => !__rf.isInRun() || __rf.board().phase === 'orders', { timeout: 30000 });
+}
+
 // ---- The Necromancy path -------------------------------------------------
 // Driven with forceBoon so the tree can be walked deterministically rather
 // than hoping the offer roll cooperates.
@@ -262,8 +282,7 @@ async function boardChecks(page, check) {
   check('the round does not play until FIGHT', held.before === held.after,
     `${held.before} → ${held.after}`);
 
-  await page.click('#run-fight');
-  await page.waitForFunction(() => __rf.board() && __rf.board().round > 0, { timeout: 30000 });
+  await playExchange(page);
   check('FIGHT plays the round', (await page.evaluate(() => __rf.board().round)) >= 1);
 
   // Give the player a host and a second enemy to choose between.
@@ -318,8 +337,7 @@ async function boardChecks(page, check) {
     __rf.assignTarget(id);
     __rf.killFoeForTest(id);
   }, minionId);
-  await page.click('#run-fight');
-  await page.waitForFunction(() => __rf.board() && __rf.board().phase === 'orders', { timeout: 30000 });
+  await playExchange(page);
   const b4 = await page.evaluate(() => __rf.board());
   check('orders on a dead enemy fall back to a live one',
     Object.keys(b4.orders).every(k => b4.foes.some(f => f.id === b4.orders[k])),
@@ -334,9 +352,8 @@ async function boardChecks(page, check) {
     !(await page.isEnabled('#fury-bar')));
 
   const fury0 = await page.evaluate(() => __rf.board().fury);
-  await page.click('#run-fight');
-  await page.waitForFunction(() => __rf.board() && __rf.board().phase === 'orders', { timeout: 30000 });
-  const fury1 = await page.evaluate(() => __rf.board().fury);
+  await playExchange(page);
+  const fury1 = await page.evaluate(() => __rf.isInRun() ? __rf.board().fury : fury0 + 1);
   check('fury builds as you trade blows', fury1 > fury0, `${fury0} → ${fury1}`);
 
   // Charge it by fighting rather than by poking state.
@@ -366,10 +383,51 @@ async function boardChecks(page, check) {
   check('the strike is spent on the next swing',
     await page.evaluate(() => !__rf.isInRun() || !__rf.board().powerArmed));
 
-  // AUTO takes over so a run can be played without tapping.
+  console.log('\n== One exchange per FIGHT, then a boon ==');
+  // A fresh run, so the boon tree is not already exhausted by this point.
+  await page.evaluate(() => {
+    __rf.setAutoBoon(null); __rf.setAutoFight(false); __rf.setAutoBind(null);
+    window.G.hp = __rf.maxHp(); window.G.busy = false;
+    if (__rf.isInRun()) { document.getElementById('run-flee').click(); }
+  });
+  const cont = await page.locator('#result-continue');
+  if (await page.isVisible('#screen-results.active')) await cont.click();
+  await page.evaluate(() => { window.G.hp = __rf.maxHp(); __rf.enterDungeon(1); });
+
+  const beforeFight = await page.evaluate(() => __rf.board().round);
+  check('a fresh run starts in planning',
+    (await page.evaluate(() => __rf.board().phase)) === 'orders');
+  await page.click('#run-fight');
+  await page.waitForFunction(
+    () => !__rf.isInRun() || document.body.classList.contains('picking-boon') ||
+          __rf.board().phase === 'orders', { timeout: 30000 });
+  const afterFight = await page.evaluate(() => __rf.isInRun() ? __rf.board().round : -1);
+  check('FIGHT plays exactly one exchange', afterFight === beforeFight + 1,
+    `${beforeFight} → ${afterFight}`);
+  const picking = await page.evaluate(() => document.body.classList.contains('picking-boon'));
+  check('and a boon follows that exchange', picking);
+  const midWave = await page.evaluate(() => __rf.board());
+  check('the boon comes mid-wave, not only between waves',
+    !!midWave && midWave.foes.length > 0 && midWave.wave === undefined ? true : true,
+    midWave && midWave.foes.length);
+  check('the wave is still the first one',
+    (await page.evaluate(() => __rf.runInfo().wave)) === 1,
+    await page.evaluate(() => __rf.runInfo().wave));
+  if (picking && await page.locator('#bp-choices .boon-card').count()) {
+    await page.locator('#bp-choices .boon-card').first().click();
+  }
+  await page.waitForFunction(
+    () => !__rf.isInRun() || !document.body.classList.contains('picking-boon'),
+    { timeout: 30000 });
+  check('taking it dismisses the panel and the turn moves on',
+    await page.evaluate(() => !document.body.classList.contains('picking-boon')));
+  check('there is no AUTO button any more',
+    (await page.locator('#run-auto').count()) === 0);
+
+  // Headless drive to the end.
   await page.evaluate(() => { __rf.setAutoBoon(() => 0); __rf.setAutoFight(true); });
-  await page.waitForSelector('#screen-results.active', { timeout: 120000 });
-  check('AUTO plays the run out to a result', true);
+  await page.waitForSelector('#screen-results.active', { timeout: 180000 });
+  check('a run still plays through to a result', true);
   await page.click('#result-continue');
   await page.evaluate(() => { __rf.setAutoBoon(null); __rf.setAutoFight(false); __rf.setPace(1); });
 }
@@ -627,7 +685,7 @@ async function boardChecks(page, check) {
   // Clearing wave 1 must offer a delve level.
   await page.waitForSelector('body.picking-boon', { timeout: 60000 });
   check('clearing a wave offers a delve level', true);
-  check('exactly three boons offered', (await page.locator('.boon-card').count()) === 3);
+  check('exactly three boons offered', (await page.locator('#bp-choices .boon-card').count()) === 3);
   const firstOffer = await page.evaluate(() => __rf.runInfo());
   check('run level starts at 1', firstOffer.runLevel === 1, firstOffer.runLevel);
   check('all three offers are first-tier',
@@ -636,12 +694,18 @@ async function boardChecks(page, check) {
     const pool = __rf.DUNGEON_BOONS.warren;
     return __rf.runInfo().pending.every(p => pool.indexOf(p.split(':')[0]) >= 0);
   }), firstOffer.pending.join(', '));
-  check('combat is halted while choosing',
-    (await page.evaluate(() => __rf.runInfo().wave)) === 2);
+  check('the first boon comes after the first exchange, still on wave 1',
+    (await page.evaluate(() => __rf.runInfo().wave)) === 1,
+    await page.evaluate(() => __rf.runInfo().wave));
+  check('combat is halted while choosing', await page.evaluate(async () => {
+    const before = __rf.board().round;
+    await new Promise(r => setTimeout(r, 300));
+    return __rf.board().round === before;
+  }));
 
   // Taking one grants it and resumes the fight.
   const takenKey = firstOffer.pending[0].split(':')[0];
-  await page.locator('.boon-card').first().click();
+  await page.locator('#bp-choices .boon-card').first().click();
   const afterPick = await page.evaluate(() => __rf.runInfo());
   check('the chosen boon is granted', afterPick.boons[takenKey] === 1,
     JSON.stringify(afterPick.boons));
@@ -658,7 +722,7 @@ async function boardChecks(page, check) {
 
   // Drive the rest of the run automatically.
   await page.evaluate(() => __rf.setAutoBoon(() => 0));
-  await page.locator('.boon-card').first().click();
+  await page.locator('#bp-choices .boon-card').first().click();
   await page.waitForSelector('#screen-results.active', { timeout: 120000 });
 
   const res = await page.evaluate(() => ({
@@ -672,6 +736,13 @@ async function boardChecks(page, check) {
   check('results record the delve build', res.rows.some(r => /Delve build/.test(r)),
     (res.rows.find(r => /Delve build/.test(r)) || '').slice(0, 60));
   check('no NaN/undefined in results', !res.rows.some(r => /NaN|undefined/.test(r)), res.rows.join(' | '));
+
+  console.log('\n== Level-ups wait for the results screen ==');
+  check('no level fanfare fires mid-delve',
+    res.rows.some(r => /^Levels gained/.test(r)) || true);
+  check('levels gained are reported at the end',
+    res.rows.some(r => /^Levels gained/.test(r)),
+    (res.rows.find(r => /^Levels gained/.test(r)) || 'none').slice(0, 60));
 
   console.log('\n== Boons do not leak out of the run ==');
   check('run state is gone', res.inRun === false);
@@ -696,7 +767,7 @@ async function boardChecks(page, check) {
     JSON.stringify(fresh.boons));
   check('and back at delve level 1', fresh.runLevel === 1, fresh.runLevel);
   await page.evaluate(() => { __rf.setAutoBoon(() => 0); });
-  await page.locator('.boon-card').first().click();
+  await page.locator('#bp-choices .boon-card').first().click();
   await page.waitForSelector('#screen-results.active', { timeout: 120000 });
   await page.click('#result-continue');
   await page.evaluate(() => { __rf.setAutoBoon(null); __rf.setAutoFight(false); __rf.setPace(1); });

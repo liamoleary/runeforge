@@ -693,15 +693,15 @@ body.picking-bind #bind-pick { display: flex; }
   font-style: italic; margin: 3px 0 12px;
 }
 #bp-choices { display: flex; flex-direction: column; gap: 8px; }
-.boon-card {
+.boon-card, .bind-card {
   width: 100%; text-align: left; cursor: pointer;
   background: linear-gradient(180deg, #1d1630, #12101c);
   border: 1.5px solid #4a3a6b; border-radius: 10px;
   padding: 10px 12px;
   transition: border-color .15s, transform .1s;
 }
-.boon-card:active { transform: scale(.98); }
-.boon-card:hover { border-color: #7a5fb0; }
+.boon-card:active, .bind-card:active { transform: scale(.98); }
+.boon-card:hover, .bind-card:hover { border-color: #7a5fb0; }
 .boon-card.upgrade {
   background: linear-gradient(180deg, #2a2110, #16120a);
   border-color: var(--bdr2);
@@ -720,13 +720,13 @@ body.picking-bind #bind-pick { display: flex; }
 .boon-card.upgrade .bc-tier { color: var(--gold); border-color: var(--bdr2); }
 .bc-arrow { color: #4fd98a; }
 /* Necromancy reads as its own faction the moment it's offered. */
-.boon-card.fac-necromancy {
+.boon-card.fac-necromancy, .bind-card.fac-necromancy {
   background: linear-gradient(180deg, #0f2318, #0a1410);
   border-color: #2f7a4e;
 }
-.boon-card.fac-necromancy:hover { border-color: #4fd98a; }
-.boon-card.fac-necromancy .bc-tier { color: #7ef0a8; border-color: #2f7a4e; }
-.boon-card.fac-necromancy .bc-name { color: #8bffbe; }
+.boon-card.fac-necromancy:hover, .bind-card.fac-necromancy:hover { border-color: #4fd98a; }
+.boon-card.fac-necromancy .bc-tier, .bind-card.fac-necromancy .bc-tier { color: #7ef0a8; border-color: #2f7a4e; }
+.boon-card.fac-necromancy .bc-name, .bind-card.fac-necromancy .bc-name { color: #8bffbe; }
 .bc-name {
   font-family: 'Cinzel', serif; font-size: 14px; color: var(--gold2);
   margin-bottom: 2px;
@@ -835,14 +835,12 @@ body.picking-bind #bind-pick { display: flex; }
   padding: 11px 8px; border-radius: 7px; cursor: pointer;
 }
 #run-fight {
-  flex: 2;
+  flex: 3;
   background: linear-gradient(180deg, #3a2a0c, #241a08);
   border-color: var(--gold); color: var(--gold2);
   box-shadow: 0 0 14px rgba(240,192,64,.22);
 }
 #run-fight:disabled { opacity: .4; box-shadow: none; cursor: default; }
-#run-auto { flex: 1; font-size: 10px; }
-#run-auto.on { border-color: var(--green); color: #aef0ae; background: #14200f; }
 #run-flee { flex: 1; font-size: 10px; }
 
 /* ===== Results ===== */
@@ -1173,7 +1171,6 @@ body.in-run #nav { display: none; }
   <div id="order-hint"></div>
   <div id="run-actions">
     <button id="run-fight">FIGHT</button>
-    <button id="run-auto">AUTO</button>
     <button id="run-flee">RETREAT</button>
   </div>
 

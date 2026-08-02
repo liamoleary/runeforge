@@ -704,7 +704,7 @@ function renderBindPick() {
   wrap.innerHTML = '';
   runState.bindPending.forEach(function (f, i) {
     const probe = { tier: from.tier + 1, form: f, power: 1 };
-    const card = el('button', 'boon-card fac-necromancy');
+    const card = el('button', 'bind-card fac-necromancy');
     card.innerHTML =
       '<div class="bc-head">' +
         '<span class="bc-ico">' + f.icon + '</span>' +
@@ -1302,6 +1302,13 @@ let levelFxBusy = false;
 function onLevelUp(key, level) {
   const s = SKILLS[key];
   feed('<b>' + s.icon + ' ' + s.name + '</b> advanced to level <b>' + level + '</b>.', 'lvl');
+  // Mid-delve the fanfare is just another thing covering the board. Bank it
+  // and report the lot on the results screen instead.
+  if (runState && !runState.over) {
+    if (!runState.levels) runState.levels = {};
+    runState.levels[key] = level;
+    return;
+  }
   levelQueue.push({ key: key, level: level });
   drainLevelQueue();
   pulseSkillTile(key);
@@ -1954,7 +1961,7 @@ function enterDungeon(index) {
     foes: [], orders: {}, focus: null, phase: 'orders', auto: autoFightDefault,
     idSeq: 0, bossWave: false, summoned: 0,
     fury: 0, powerArmed: false, bindPending: null, rot: null,
-    exchange: 0, bulwark: false,
+    afterBoon: 'wave', bulwark: false, levels: {},
     rampage: 0, hitCount: 0, round: 0,
     hpPenalty: 0, lastStandUsed: false,
     carryDetonate: 0, carryFreeze: false
@@ -1993,10 +2000,8 @@ const MINION_HIT_SHARE = 0.70;
 
 // Fury builds as you trade blows and buys one enormous swing. It is the
 // decision AUTO cannot take away from you.
-// A turn is a planning phase and then an exchange the board plays out on its
-// own. You are not tapping through single swings.
-const ROUNDS_PER_TURN = 3;
-
+// A turn is: plan, then one exchange — you and your host swing, then they and
+// theirs — then a boon, then plan again. One decision point per exchange.
 const FURY_MAX = 100;
 const FURY_PER_HIT = 9;
 const FURY_PER_TAKEN = 6;
@@ -2131,8 +2136,7 @@ function enterOrders() {
   const list = attackerList();
   if (!list.some(function (a) { return a.id === orderSel; })) orderSel = list[0].id;
   renderDungeonRun();
-  // AUTO plays the next exchange without a tap — and spends a full fury meter
-  // and any ready ability, since it is playing everything else too.
+  // Headless runs drive themselves; there is no auto button in the game.
   if (runState.auto) {
     if ((runState.fury || 0) >= FURY_MAX && !runState.powerArmed) unleashFury();
     hostUnits().forEach(function (u) {
@@ -2185,28 +2189,13 @@ function targetAll(foeId) {
   renderDungeonRun();
 }
 
-function toggleAuto() {
-  if (!runState) return;
-  runState.auto = !runState.auto;
-  renderDungeonRun();
-  if (runState.auto && runState.phase === 'orders') resolveTurn();
-}
-
 // ---- Playing the orders out ----------------------------------------
 
 function resolveTurn() {
   if (!runState || runState.over || runState.phase === 'resolving') return;
   if (!aliveFoes().length) return;
-  runState.exchange = ROUNDS_PER_TURN;
-  runState.bulwark = false;          // a Bulwark covers one exchange
-  playRound();
-}
-
-function playRound() {
-  if (!runState || runState.over || !aliveFoes().length) return;
   runState.phase = 'resolving';
   runState.round = (runState.round || 0) + 1;
-  runState.exchange -= 1;
   renderDungeonRun();
   stepAttack(attackerList(), 0);
 }
@@ -2643,13 +2632,12 @@ function endOfRound() {
     runTimer = setTimeout(function () { endRun(false); }, pace(700));
     return;
   }
-  if (!aliveFoes().length) { runTimer = setTimeout(advanceWave, pace(500)); return; }
-  // Mid-exchange the board keeps swinging; at the end of one you plan again.
-  if (runState.exchange > 0) {
-    runTimer = setTimeout(playRound, pace(150));
-    return;
-  }
-  enterOrders();
+  // Every exchange is paid for, whether or not it finished the wave.
+  runState.bulwark = false;
+  const cleared = !aliveFoes().length;
+  runTimer = setTimeout(function () {
+    offerBoons(cleared ? 'wave' : 'orders');
+  }, pace(cleared ? 400 : 200));
 }
 
 // Clear out the dead, paying out for each. Summoned minions give combat xp
@@ -2819,7 +2807,7 @@ function advanceWave() {
     }
   }
 
-  // Opportunist hands out a free first tier before the offered choice.
+  // Opportunist hands out a free first tier on top of the exchange's own.
   if (boonTier('scavenger') >= 3) {
     const free = rollBoonChoices(1).filter(function (c) { return c.tier === 1; })[0];
     if (free) {
@@ -2828,29 +2816,41 @@ function advanceWave() {
     }
   }
 
-  offerBoons();
+  startWave();
 }
 
 // ---- The between-wave level up ----
 
-function offerBoons() {
-  if (!runState) return;
+function offerBoons(next) {
+  if (!runState || runState.over) return;
+  runState.afterBoon = next || 'wave';
   const choices = rollBoonChoices(3);
-  if (!choices.length) { startWave(); return; }   // every line maxed out
+  if (!choices.length) return afterBoonPick();   // every line maxed out
   runState.runLevel = (runState.runLevel || 0) + 1;
   runState.pending = choices;
   if (autoBoonPick) {                       // headless balance runs
     const idx = autoBoonPick(choices, runState);
     if (typeof idx === 'number' && idx >= 0) {
       chooseBoon(idx);
-    } else {                                // negative index = decline the level
+    } else {                                // negative index = decline
       runState.pending = null;
-      startWave();
+      afterBoonPick();
     }
     return;
   }
   renderBoonPick();
   document.body.classList.add('picking-boon');
+}
+
+// What happens once the pick is made: either the next wave walks in, or you
+// go back to planning against what is still standing.
+function afterBoonPick() {
+  if (!runState || runState.over) return;
+  if (runState.afterBoon === 'wave') {
+    runTimer = setTimeout(advanceWave, pace(400));
+  } else {
+    enterOrders();
+  }
 }
 
 function chooseBoon(index) {
@@ -2862,7 +2862,7 @@ function chooseBoon(index) {
   grantBoon(pick.key, pick.tier);
   renderDungeonRun();
   renderTopBar();
-  startWave();
+  afterBoonPick();
 }
 
 function renderBoonPick() {
@@ -2953,6 +2953,14 @@ function endRun(cleared) {
         ' <span class="rr-tier">' + 'I'.repeat(rs.boons[k]) + '</span>';
     }).join('<br>'));
   }
+  const gained = rs.levels || {};
+  const gainedKeys = Object.keys(gained);
+  if (gainedKeys.length) {
+    row('Levels gained', gainedKeys.map(function (k) {
+      return SKILLS[k].icon + ' ' + SKILLS[k].name + ' <b>' + gained[k] + '</b>';
+    }).join('<br>'));
+  }
+
   // The host you ended with, if you walked a necromancer's run.
   if ((rs.retinue && rs.retinue.length) || rs.peakHost) {
     const tally = {};
@@ -3123,15 +3131,13 @@ function orderBadge(id) {
 }
 
 function renderOrderBar() {
-  const fight = $('run-fight'), auto = $('run-auto'), hint = $('order-hint');
+  const fight = $('run-fight'), hint = $('order-hint');
   if (!fight) return;
   const ordering = runState.phase === 'orders' && !runState.auto;
   fight.disabled = !ordering;
-  fight.textContent = ordering ? 'FIGHT' : '…';
+  fight.textContent = ordering ? 'FIGHT' : 'FIGHTING…';
   const board = $('run-board');
   if (board) board.classList.toggle('planning', ordering);
-  auto.classList.toggle('on', !!runState.auto);
-  auto.textContent = runState.auto ? 'AUTO ON' : 'AUTO';
 
   // The rite, offered only when three of a kind are standing.
   const bind = $('bind-bar');
@@ -3167,20 +3173,19 @@ function renderOrderBar() {
       : 'Playing itself — tap AUTO to take the reins back.';
     return;
   }
-  if (!ordering) { hint.textContent = 'Fighting…'; return; }
+  if (!ordering) { hint.textContent = 'The exchange plays out…'; return; }
   const ready = hostUnits().filter(function (u) {
     return u.form && u.form.ability && !u.abilityUsed;
   }).length;
   if (ready) {
     hint.innerHTML = 'Planning — <b>' + ready + '</b> ' +
-      (ready === 1 ? 'ability' : 'abilities') + ' ready. FIGHT plays ' +
-      ROUNDS_PER_TURN + ' rounds.';
+      (ready === 1 ? 'ability' : 'abilities') + ' ready to fire.';
     return;
   }
   const sel = orderSel === 'you' ? 'You' : 'Your risen';
   hint.innerHTML = many
     ? 'Planning — ' + sel + ': tap an enemy to aim, double-tap for all.'
-    : 'Planning — FIGHT plays ' + ROUNDS_PER_TURN + ' rounds.';
+    : 'Planning — FIGHT to trade blows.';
 }
 
 // The host, its condition, and how hard it hits — the escalation made visible.
@@ -3297,8 +3302,6 @@ function wire() {
   if (flee) flee.onclick = fleeRun;
   const fight = $('run-fight');
   if (fight) fight.onclick = function () { resolveTurn(); };
-  const auto = $('run-auto');
-  if (auto) auto.onclick = toggleAuto;
   const fury = $('fury-bar');
   if (fury) fury.onclick = unleashFury;
   const bind = $('bind-bar');
@@ -3371,7 +3374,7 @@ window.__rf = {
   hostMaxHit: hostMaxHit, raiseUnit: raiseUnit, rollBoonChoices: rollBoonChoices,
   unleashFury: unleashFury, FURY_MAX: FURY_MAX,
   performBind: performBind, bindableTier: bindableTier, BIND_COUNT: BIND_COUNT,
-  useAbility: useAbility, ROUNDS_PER_TURN: ROUNDS_PER_TURN,
+  useAbility: useAbility,
   completeBind: completeBind, bindOffers: bindOffers, BIND_FORMS: BIND_FORMS,
   KEYWORDS: KEYWORDS, FOE_MINION_KINDS: FOE_MINION_KINDS,
   setAutoBind: function (fn) { autoBindPick = fn; },
@@ -3380,8 +3383,10 @@ window.__rf = {
   fight: function () { resolveTurn(); },
   assignTarget: assignTarget, selectAttacker: selectAttacker, targetAll: targetAll,
   summonForTest: function () {
-    if (!runState || !runState.d.summon) return null;
-    const m = makeFoe(runState.d.summon, { minion: true });
+    if (!runState) return null;
+    const parent = aliveFoes()[0];
+    if (!parent) return null;
+    const m = makeMinion(parent);
     runState.foes.push(m);
     renderDungeonRun();
     return m.id;
@@ -3400,7 +3405,7 @@ window.__rf = {
                  keys: (f.keys || []).slice(), warded: !!f.warded };
       }),
       rot: runState.rot ? runState.rot.rounds : 0,
-      exchange: runState.exchange || 0, bulwark: !!runState.bulwark,
+      bulwark: !!runState.bulwark,
       allies: hostUnits().map(function (u) {
         return { id: u.id, tier: u.tier, hp: u.hp, max: u.max,
                  bound: !!u.bound, dmg: unitStats(u).dmg,
