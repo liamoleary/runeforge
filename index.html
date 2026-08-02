@@ -82,6 +82,13 @@ body.in-run { overflow: hidden; }
 
 /* ===== Layout ===== */
 #main { max-width: 520px; margin: 0 auto; padding: 10px 10px 20px; }
+/* Which build you are actually running — so "is my fix live?" is answerable. */
+#build-tag {
+  position: fixed; left: 0; right: 0; bottom: 68px; z-index: 5;
+  text-align: center; font-size: 9px; color: var(--text3); opacity: .5;
+  pointer-events: none; letter-spacing: .5px;
+}
+body.in-run #build-tag { display: none; }
 .screen { display: none; flex-direction: column; gap: 10px; }
 .screen.active { display: flex; }
 
@@ -1027,6 +1034,7 @@ body.in-run #nav { display: none; }
 <div id="levelfx"></div>
 <div id="nav"></div>
 <div id="toast"></div>
+<div id="build-tag"></div>
 
 </body>
 </html>

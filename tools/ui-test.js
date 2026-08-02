@@ -560,13 +560,48 @@ async function boardChecks(page, check) {
     crypt: __rf.DUNGEON_BOONS.crypt,
     spire: __rf.DUNGEON_BOONS.spire,
     lines: Object.keys(__rf.BOON_LINES).length,
-    branches: Object.keys(__rf.BOON_LINES).filter(k => __rf.BOON_LINES[k].req)
+    branches: Object.keys(__rf.BOON_LINES).filter(k => __rf.BOON_LINES[k].req),
+    everyHasNecro: Object.keys(__rf.DUNGEON_BOONS)
+      .every(k => ['necromancy', 'bonelegion', 'deathmagic']
+        .every(n => __rf.DUNGEON_BOONS[k].indexOf(n) >= 0)),
+    missingNecro: Object.keys(__rf.DUNGEON_BOONS)
+      .filter(k => __rf.DUNGEON_BOONS[k].indexOf('necromancy') < 0)
   }));
   check('ten boon lines exist', pools.lines === 10, pools.lines);
+  check('every dungeon offers the Necromancy path', pools.everyHasNecro,
+    pools.missingNecro.join(',') || 'all five');
   check('the Crypt offers necromancy', pools.crypt.indexOf('necromancy') >= 0, pools.crypt.join(','));
   check('the Spire offers stormcaller', pools.spire.indexOf('stormcaller') >= 0, pools.spire.join(','));
   check('pools differ between dungeons',
     pools.crypt.join(',') !== pools.spire.join(','));
+  const necroRates = await page.evaluate(() => {
+    __rf.setLevels({ attack: 70, strength: 70, defence: 70, hitpoints: 70 });
+    ['rune_sword', 'rune_platebody', 'rune_shield'].forEach(k => __rf.addItem(k, 1));
+    __rf.setGear(['rune_sword', 'rune_platebody', 'rune_shield']);
+    __rf.setPace(0); __rf.setAutoFight(false); __rf.setAutoBoon(() => -1);
+    const rates = {};
+    __rf.DUNGEONS.forEach((d, i) => {
+      window.G.dungeonsCleared = 4;
+      window.G.busy = false;
+      window.G.hp = __rf.maxHp();
+      __rf.enterDungeon(i);
+      if (!__rf.isInRun()) { rates[d.key] = -1; return; }
+      let hit = 0;
+      for (let n = 0; n < 300; n++) {
+        if (__rf.rollBoonChoices(3).some(c => c.key === 'necromancy')) hit++;
+      }
+      rates[d.key] = +(hit / 300).toFixed(2);
+      document.getElementById('run-flee').click();
+      const c = document.getElementById('result-continue');
+      if (c) c.click();
+    });
+    __rf.setAutoBoon(null); __rf.setPace(1);
+    return rates;
+  });
+  check('and it is rolled often enough to actually find',
+    Object.keys(necroRates).every(k => necroRates[k] > 0.4),
+    Object.keys(necroRates).map(k => k + ' ' + Math.round(necroRates[k] * 100) + '%').join('  '));
+
   check('the necromancy branches are gated behind their root',
     pools.branches.sort().join(',') === 'bonelegion,deathmagic', pools.branches.join(','));
 

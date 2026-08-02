@@ -455,12 +455,16 @@ const HOST_CAP = 7;             // seven stacks, as an army should be
 // Each dungeon draws from its own lines, so the Crypt reliably makes
 // necromancers and the Spire makes stormcallers. Branch lines sit in the
 // pool from the start but stay hidden until their root is taken.
+// The Necromancy path is offered everywhere — it is the game's headline
+// build, so no dungeon should be able to hide it. The rest of each pool is
+// still local, which is what keeps the dungeons feeling different.
+const NECRO_PATH = ['necromancy', 'bonelegion', 'deathmagic'];
 const DUNGEON_BOONS = {
-  warren: ['scavenger', 'emberbrand', 'stoneblood', 'bloodlust'],
-  crypt:  ['frostbite', 'necromancy', 'stoneblood', 'voidtouched', 'bonelegion', 'deathmagic'],
-  spire:  ['stormcaller', 'voidtouched', 'bloodlust', 'frostbite'],
-  roost:  ['emberbrand', 'bloodlust', 'stormcaller', 'stoneblood'],
-  abyss:  ['voidtouched', 'necromancy', 'emberbrand', 'frostbite', 'bonelegion', 'deathmagic']
+  warren: ['scavenger', 'emberbrand', 'stoneblood', 'bloodlust'].concat(NECRO_PATH),
+  crypt:  ['frostbite', 'stoneblood', 'voidtouched'].concat(NECRO_PATH),
+  spire:  ['stormcaller', 'voidtouched', 'bloodlust', 'frostbite'].concat(NECRO_PATH),
+  roost:  ['emberbrand', 'bloodlust', 'stormcaller', 'stoneblood'].concat(NECRO_PATH),
+  abyss:  ['voidtouched', 'emberbrand', 'frostbite'].concat(NECRO_PATH)
 };
 
 function boonTier(key) {
@@ -2673,8 +2677,12 @@ function startClocks() {
   }, 3000);
 }
 
+const BUILD = (typeof window !== 'undefined' && window.RF_BUILD) || 'dev';
+
 function init() {
   wire();
+  const tag = $('build-tag');
+  if (tag) tag.textContent = 'build ' + BUILD;
   load();
   render();
   startClocks();
@@ -2694,6 +2702,7 @@ window.render = render;
 
 // Exposed for the test harness and the balance simulator.
 window.__rf = {
+  BUILD: BUILD,
   SKILLS: SKILLS, SKILL_KEYS: SKILL_KEYS, ITEMS: ITEMS, GEAR: GEAR,
   METALS: METALS, DUNGEONS: DUNGEONS, TREES: TREES, ROCKS: ROCKS,
   AMULETS: AMULETS, GEAR_KINDS: GEAR_KINDS, SLOTS: SLOTS,

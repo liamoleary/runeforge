@@ -126,11 +126,24 @@ app.get('/sw.js', (req, res) => { res.setHeader('Content-Type', 'application/jav
 function generateIconSVG(size) { return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" rx="${size*0.15}" fill="#13100a"/><rect x="${size*0.05}" y="${size*0.05}" width="${size*0.9}" height="${size*0.9}" rx="${size*0.1}" fill="#1a1510" stroke="#f0c040" stroke-width="${size*0.02}"/><text x="${size*0.5}" y="${size*0.42}" font-family="serif" font-weight="bold" font-size="${size*0.22}" fill="#f0c040" text-anchor="middle">RUNE</text><text x="${size*0.5}" y="${size*0.68}" font-family="serif" font-weight="bold" font-size="${size*0.22}" fill="#c0392b" text-anchor="middle">FORGE</text></svg>`; }
 app.get('/icon-192.png', (req, res) => { res.setHeader('Content-Type', 'image/svg+xml'); res.send(generateIconSVG(192)); });
 app.get('/icon-512.png', (req, res) => { res.setHeader('Content-Type', 'image/svg+xml'); res.send(generateIconSVG(512)); });
+// A content hash per asset, so a deploy can never be answered from a stale
+// browser cache — the URL itself changes when the file does.
+function assetVersion(file) {
+  try {
+    return crypto.createHash('sha1')
+      .update(fs.readFileSync(path.join(__dirname, file)))
+      .digest('hex').slice(0, 8);
+  } catch (e) { return 'dev'; }
+}
+
 function buildPage() {
     let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+    const gv = assetVersion('game.js'), av = assetVersion('auth.js');
     const pwaHead = '<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#13100a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="/icon-192.png">';
     html = html.replace('</head>', pwaHead + '</head>');
-    const scripts = `<script src="/game.js"><\/script><script src="/auth.js"><\/script><script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}<\/script>`;
+    const scripts = `<script>window.RF_BUILD=${JSON.stringify(gv)};<\/script>` +
+      `<script src="/game.js?v=${gv}"><\/script><script src="/auth.js?v=${av}"><\/script>` +
+      `<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}<\/script>`;
     return html.replace('</body>', scripts + '</body>');
 }
 // Assemble once in production; re-read every request in dev so edits show up

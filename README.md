@@ -109,9 +109,14 @@ offer, and a run grows into an identity:
 > burns)* → 🔥 Immolation *(a burning corpse detonates onto the next foe)*
 
 **Every dungeon draws from its own pool**, so each one makes a different kind of
-character. The Frozen Crypt offers Necromancy and Frostbite; the Storm Spire
-offers Stormcaller and Voidtouched. The plain lines are Emberbrand, Frostbite,
-Stormcaller, Stoneblood, Bloodlust, Voidtouched and Scavenger.
+character — the Frozen Crypt offers Frostbite, the Storm Spire offers
+Stormcaller. The plain lines are Emberbrand, Frostbite, Stormcaller,
+Stoneblood, Bloodlust, Voidtouched and Scavenger.
+
+The one exception is the **Necromancy path**, which is offered everywhere. It
+is the headline build, so no dungeon gets to hide it: the root turns up in
+54–76% of offers depending on the dungeon, which over a run's worth of delve
+levels means you will always be given the chance to take it.
 
 **None of it persists.** Boons live and die with the run — walk out and they're
 gone. Your eight skills stay purely about gear, so the two halves of the game
@@ -297,6 +302,14 @@ Defaults to port `3000`. Override with `PORT`.
 | `NODE_ENV` | no | `production` enables Secure cookies and caches the assembled `index.html` in memory. In development the page is re-read per request so edits show up without a restart. |
 | `ADMIN_RESET_SECRET` | no | Enables `POST /api/admin-reset`. **The endpoint is disabled and returns 503 if this is unset.** Set it to a long random string and never commit it. |
 | `RAILWAY_VOLUME_MOUNT_PATH` | no | Path to the SQLite store on Railway. Falls back to `/tmp` on Railway, otherwise the repo root. |
+
+## Builds
+
+`game.js` and `auth.js` are served with a content hash in the query string, so
+a deploy can never be answered out of a stale browser cache. The same hash is
+printed at the bottom of the screen as `build xxxxxxxx` and exposed as
+`__rf.BUILD` — if a change appears to be missing, compare that against
+`git rev-parse` output for the deployed commit before looking anywhere else.
 
 ## Admin reset
 
